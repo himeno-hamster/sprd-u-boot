@@ -237,3 +237,9 @@ void recovery_mode(void)
     printf("%s\n", __func__);
     vlx_nand_boot(RECOVERY_PART, NULL, BACKLIGHT_ON);
 }
+
+void update_mode(void)
+{
+    printf("%s\n", __func__);
+    vlx_nand_boot(RECOVERY_PART, "androidboot.mode=update", BACKLIGHT_ON);
+}

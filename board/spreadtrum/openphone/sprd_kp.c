@@ -47,7 +47,7 @@ void board_keypad_init(void)
     }
 
     sprd_key_map->total_size = ARRAY_SIZE(board_key_map);
-    sprd_key_map->keycode_size = sizeof(board_key_map[0])*2;
+    sprd_key_map->keycode_size = 2;
     sprd_key_map->key_map = board_key_map;
     sprd_key_map->total_row = CONFIG_KEYPAD_ROW_CNT;
     sprd_key_map->total_col = CONFIG_KEYPAD_COL_CNT;
@@ -83,11 +83,11 @@ void board_keypad_init(void)
     return;
 }
 
-static char handle_scan_code(unsigned char scan_code)
+static uint32_t handle_scan_code(uint32_t scan_code)
 {
     int cnt;
     int key_map_cnt;
-    unsigned char * key_map;
+    uint32_t * key_map;
     int pos = 0;
 
     if(NULL == sprd_key_map){
@@ -98,7 +98,7 @@ static char handle_scan_code(unsigned char scan_code)
     key_map_cnt = sprd_key_map->total_size / sprd_key_map->keycode_size;
     key_map = sprd_key_map->key_map;
 #ifdef KEYPAD_DEBUG
-    printf("scan code %d\n", scan_code);
+    printf("scan code 0x%x\n", scan_code);
 #endif
     for(cnt = 0; cnt<key_map_cnt; cnt++){
         pos = cnt * 2;
@@ -109,42 +109,64 @@ static char handle_scan_code(unsigned char scan_code)
 }
 
 //it can only handle one key now
-unsigned char board_key_scan(void)
+uint32_t board_key_scan(void)
 {
     uint32_t s_int_status = REG_KPD_INT_RAW_STATUS;
     uint32_t s_key_status = REG_KPD_KEY_STATUS;
-    uint32_t scan_code = 0;
+    static uint32_t scan_code = 0;
     uint32_t key_code =0;
 
+	if(s_int_status & KPD_RELEASE_INT0){
+		s_int_status = s_int_status & (~(KPD_PRESS_INT0 | KPD_RELEASE_INT0 | KPD_LONG_KEY_INT0));
+		REG_KPD_INT_CLR = (KPD_PRESS_INT0 | KPD_RELEASE_INT0 | KPD_LONG_KEY_INT0);
+		scan_code = scan_code &(~(KPD1_ROW_CNT | KPD1_COL_CNT));
+	}
+	if(s_int_status & KPD_RELEASE_INT1){
+		s_int_status = s_int_status & (~(KPD_PRESS_INT1 | KPD_RELEASE_INT1 | KPD_LONG_KEY_INT1));
+		REG_KPD_INT_CLR = (KPD_PRESS_INT1 | KPD_RELEASE_INT1 | KPD_LONG_KEY_INT1);
+		scan_code = scan_code &(~(KPD2_ROW_CNT | KPD2_COL_CNT));
+	}
+	if(s_int_status & KPD_RELEASE_INT0){
+		s_int_status = s_int_status & (~(KPD_PRESS_INT2 | KPD_RELEASE_INT2 | KPD_LONG_KEY_INT2));
+		REG_KPD_INT_CLR = (KPD_PRESS_INT2 | KPD_RELEASE_INT2 | KPD_LONG_KEY_INT2);
+		scan_code = scan_code &(~(KPD3_ROW_CNT | KPD3_COL_CNT));
+	}
+	if(s_int_status & KPD_RELEASE_INT0){
+		s_int_status = s_int_status & (~(KPD_PRESS_INT3 | KPD_RELEASE_INT3 | KPD_LONG_KEY_INT3));
+		REG_KPD_INT_CLR = (KPD_PRESS_INT3 | KPD_RELEASE_INT3 | KPD_LONG_KEY_INT3);
+		scan_code = scan_code &(~(KPD4_ROW_CNT | KPD4_COL_CNT));
+	}
+
     if((s_int_status & KPD_PRESS_INT0) || (s_int_status & KPD_LONG_KEY_INT0)){
-        scan_code = s_key_status & (KPD1_ROW_CNT | KPD1_COL_CNT);
-        key_code = handle_scan_code(scan_code);
-    }else if((s_int_status & KPD_PRESS_INT1) || (s_int_status & KPD_LONG_KEY_INT1)){
-        scan_code = (s_key_status & (KPD2_ROW_CNT | KPD2_COL_CNT)>>8);
-        key_code = handle_scan_code(scan_code);
-    }else if((s_int_status & KPD_PRESS_INT2) || (s_int_status & KPD_LONG_KEY_INT2)){
-        scan_code = (s_key_status & (KPD3_ROW_CNT | KPD3_COL_CNT))>>16;
-        key_code = handle_scan_code(scan_code);
-    }else if((s_int_status & KPD_PRESS_INT3) || (s_int_status & KPD_LONG_KEY_INT3)){
-        scan_code = (s_key_status & (KPD4_ROW_CNT | KPD4_COL_CNT))>>24;
-        key_code = handle_scan_code(scan_code);
+        scan_code = (s_key_status & (KPD1_ROW_CNT | KPD1_COL_CNT)) | scan_code;
+    }
+	if((s_int_status & KPD_PRESS_INT1) || (s_int_status & KPD_LONG_KEY_INT1)){
+        scan_code = (s_key_status & (KPD2_ROW_CNT | KPD2_COL_CNT)) | scan_code;
+    }
+	if((s_int_status & KPD_PRESS_INT2) || (s_int_status & KPD_LONG_KEY_INT2)){
+        scan_code = (s_key_status & (KPD3_ROW_CNT | KPD3_COL_CNT)) | scan_code;
+    }
+	if((s_int_status & KPD_PRESS_INT3) || (s_int_status & KPD_LONG_KEY_INT3)){
+        scan_code = (s_key_status & (KPD4_ROW_CNT | KPD4_COL_CNT)) | scan_code;
     }
 
-    if(s_int_status)
-        REG_KPD_INT_CLR = KPD_INT_ALL;
+	if(s_int_status){
+		key_code = handle_scan_code(scan_code);
+	}
+
     return key_code;
 }
 
-unsigned int check_key_boot(unsigned char key)
+unsigned int check_key_boot(uint32_t key)
 {
-    if(KEY_MENU == key)
+    if(KEY_ENGTEST == key)
       return BOOT_CALIBRATE;
-    else if(KEY_HOME == key)
-      return BOOT_FASTBOOT;
-    else if(KEY_BACK == key)
+    else if(KEY_RECOVERY == key)
       return BOOT_RECOVERY;
-    else if(KEY_VOLUMEUP== key)
-      return BOOT_DLOADER;
-    else 
+    else if(KEY_FASTBOOT == key)
+      return BOOT_FASTBOOT;
+	else if(KEY_UPDATE == key)
+	  return BOOT_UPDATE;
+    else
       return 0;
 }

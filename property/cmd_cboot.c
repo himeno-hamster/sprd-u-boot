@@ -114,11 +114,12 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
         mdelay(50);
         for(i=0; i<10;i++){
             key_code = board_key_scan();
-            if(key_code != KEY_RESERVED)
-              break;
+            if(key_code != KEY_RESERVED){
+				key_mode = check_key_boot(key_code);
+				if(key_mode != 0)
+					break;
+			}
         }
-		DBG("key_code %d\n", key_code);
-        key_mode = check_key_boot(key_code);
 
         switch(key_mode){
             case BOOT_FASTBOOT:
@@ -126,6 +127,9 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
                 break;
             case BOOT_RECOVERY:
                 recovery_mode();
+                break;
+            case BOOT_UPDATE:
+                update_mode();
                 break;
             case BOOT_CALIBRATE:
                 engtest_mode();

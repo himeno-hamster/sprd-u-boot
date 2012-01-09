@@ -2,17 +2,15 @@
 #define _KEY_MAP_H_
 
 #include <linux/key_code.h>
+#include <boot_mode.h>
 
-static unsigned char board_key_map[]={
-#if 0
-    0x27, KEY_HOME,
-    0x42, KEY_BACK,
-    0x41, KEY_VOLUMEUP,
-#else
-    0x00, KEY_BACK,//DOWN
-    0x01, KEY_HOME,//CAM
-    0x10, KEY_MENU,//UP
-#endif
+//#define KEYPAD_DEBUG
+static uint32_t board_key_map[]={
+
+    0x00, KEY_RECOVERY,//DOWN
+    0x01, KEY_FASTBOOT,//CAM
+    0x10, KEY_ENGTEST,//UP
+
 };
 
 #define CONFIG_KEYPAD_ROW_CNT 5
