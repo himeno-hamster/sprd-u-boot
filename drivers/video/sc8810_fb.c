@@ -200,20 +200,21 @@ static int32_t panel_reset()
 
 static void lcdc_mcu_init(void)
 {
-	//uint32_t reg_val = 0;
+	uint32_t reg_val = 0;
 
 	//panel reset
 	panel_reset();
 
 	//LCDC module enable
-	__raw_bits_or(1<<0, LCDC_CTRL);
+	reg_val |= (1<<0);
 
 	/*FMARK mode*/
-	__raw_bits_or(1<<1, LCDC_CTRL);
+	reg_val |= (1<<1);  // no f-mark
 
 	/*FMARK pol*/
-	__raw_bits_and(~(1<<2), LCDC_CTRL);
+	//reg_val |= (1<<2);
 
+	__raw_writel(reg_val, LCDC_CTRL);
 	FB_PRINT("[%s] LCDC_CTRL: 0x%x\n", __FUNCTION__, __raw_readl(LCDC_CTRL));
 
 	/* set background*/
@@ -268,7 +269,7 @@ static uint32_t lcdc_calc_lcm_timing(struct timing_mcu *timing)
 		wlpw = MAX_LCDC_TIMING_VALUE ;
 	}
 
-	whpw = LCDC_CYCLES(timing->whpw, ahb_clk, 1000);
+	whpw = LCDC_CYCLES(timing->whpw, ahb_clk, 1000) - 1;
 	if (whpw > MAX_LCDC_TIMING_VALUE) {
 		whpw = MAX_LCDC_TIMING_VALUE ;
 	}
