@@ -97,26 +97,16 @@ int FDL_McuResetNormal (PACKET_T *packet, void *arg)
 
 int FDL_McuReadChipType (PACKET_T *packet, void *arg)
 {
-    unsigned int id;
+	unsigned char id[10];
 
+	memset(id, 0, 10);
+	McuReadNandType(id);
 
-    id   =  * (unsigned int *) (0x4FFC);
+    	packet->packet_body.type = BSL_REP_READ_CHIP_TYPE;
+    	packet->packet_body.size = 5;
+    	memcpy(packet->packet_body.content, id, packet->packet_body.size);
 
-    if (0x660000B6 != id)
-    {
-        // @Richard We should check if we want to support 6600C
-        id = 0x6600b500;
-    }
-    else
-    {
-        id = 0x6600b700;
-    }
-
-    packet->packet_body.type = BSL_REP_READ_CHIP_TYPE;
-    packet->packet_body.size = 4;
-    memcpy (packet->packet_body.content, &id, sizeof (unsigned int));
-
-    FDL_SendPacket (packet);
-    return 1;
+    	FDL_SendPacket (packet);
+    	return 1;
 }
 

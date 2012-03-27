@@ -883,6 +883,21 @@ void read_chip_id(void)
 #endif
 }
 
+#ifndef CONFIG_NAND_SPL
+void McuReadNandType(unsigned char *array)
+{
+	int i, cmd = NAND_CMD_READID;
+
+	nfc_mcr_inst_init();
+	nfc_mcr_inst_add(cmd, NF_MC_CMD_ID);
+	nfc_mcr_inst_add(0x00, NF_MC_ADDR_ID);
+	nfc_mcr_inst_add(7, NF_MC_RWORD_ID);
+	nfc_mcr_inst_exc_for_id();
+	sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
+	nand_copy(array, (void *)NFC_MBUF_ADDR, 5);
+}
+#endif
+
 void nand_scan_patition(int blocks, int erasesize, int writesize)
 {
 	int blk;
