@@ -17,6 +17,8 @@ SC6800     -gtp -cpu ARM926EJ-S -D_REF_SC6800_ -D_BL_NF_SC6800_
 #include <asm/arch/sdram.h>
 #include <asm/arch/chip.h>
 
+EMC_PARAM_T s_emc_config = {0};
+
 /*lint -e760 -e547 ,because pclint error e63 e26 with REG32()*/
 #define REG32(x)   (*((volatile uint32 *)(x)))
 /*lint +e760 +e547 ,because pclint error e63 e26 with REG32()*/
@@ -1521,7 +1523,9 @@ LOCAL uint32 Chip_ConfigClk (void)
 
 void ddr_init()
 {
-	unsigned int i;
+	volatile unsigned int i;
+	uint32 clkwr_dll = (64*s_emc_config.clk_wr)/(s_emc_config.read_value/2);
+	
 	REG32(0x20000004) = 0x00000049;
 	for(i = 0; i < 1000; i++);
 
@@ -1545,7 +1549,7 @@ void ddr_init()
 	REG32(0x20000170) = 0x0011080;
 	for(i = 0; i < 1000; i++);	
 
-	REG32(0x2000010C) = 0x8040;
+	REG32(0x2000010C) = (0x8000|clkwr_dll);
 	REG32(0x20000110) = 0x8020;
 	REG32(0x20000114) = 0x8020;
 	REG32(0x20000118) = 0x8020;
@@ -1566,27 +1570,27 @@ void ddr_init()
 	REG32(0x20000170) = 0x11480;
 
 	REG32(0x20000190) = 0x40010000;
-	for(i =0 ; i < 1000; i++)
+	for(i =0 ; i < 1000; i++);
 	
 	REG32(0x20000190) = 0x40020000;
-	for(i =0 ; i < 1000; i++)
+	for(i =0 ; i < 1000; i++);
 
 	REG32(0x20000190) = 0x40020000;
-	for(i =0 ; i < 1000; i++)
+	for(i =0 ; i < 1000; i++);
 
 	REG32(0x20000190) = 0x40040031;
-	for(i =0 ; i < 1000; i++)
+	for(i =0 ; i < 1000; i++);
 
 	REG32(0x20000190) = 0x40048000;
-	for(i =0 ; i < 1000; i++)
+	for(i =0 ; i < 1000; i++);
 
 	REG32(0x20000180) |= BIT_14;
-	for(i =0 ; i < 1000; i++)
+	for(i =0 ; i < 1000; i++);
 
 	//set column mode = 10
 	REG32(0x20000180) &= ~(0x70);
 	REG32(0x20000180) |= (0x20);
-	for(i =0 ; i < 1000; i++)
+	for(i =0 ; i < 1000; i++);
 	
 	//set row mode = 14
 	REG32(0x20000180) &= ~(0x3);
@@ -1640,17 +1644,21 @@ void 	set_emc_pad(uint32 clk_drv, uint32 ctl_drv, uint32 dat_drv, uint32 dqs_drv
 	REG32(PINMAP_REG_BASE + 0x224) = dat_drv;
 	REG32(PINMAP_REG_BASE + 0x24C) = dat_drv;
 	REG32(PINMAP_REG_BASE + 0x274) = dat_drv;
+	
+	// CKE OUTPUT in sleep
+	REG32(PINMAP_REG_BASE + 0x1d8) |= 0x1;
+	REG32(PINMAP_REG_BASE + 0x2a8) |= 0x1;
+	
 }
 
+#define ARMCLK_CONFIG_EN	1
 void sc8810_emc_Init()
 {
 	
-	unsigned int i;
-#ifdef CONFIG_SP8810 
-	set_emc_pad(0x200, 0x000,0x200,0x200);
-#else
-	set_emc_pad(0x200, 0x000,0x200,0x200);
-#endif
+	volatile unsigned int i;
+		
+	set_emc_pad(s_emc_config.clk_drv, s_emc_config.ctl_drv, s_emc_config.dat_drv, s_emc_config.dqs_drv);
+
 	// GPU AXI 256M
 	REG32(0x8b00002c) &= ~(0x3);
 	
@@ -1659,24 +1667,28 @@ void sc8810_emc_Init()
 	REG32(0x20900238) &= ~(1 <<12);
 
 	REG32(0x8b000018) |= (1 << 9);
+	
 	//set MPLL to 900MHz
 	i = REG32(0x8b000024);
 	i &= ~ 0x7ff;
-	i |= 0xFA;     //1000M
+#if ARMCLK_CONFIG_EN
+	i |= s_emc_config.arm_clk;
+#else
+	//i |= 0xFA;     //1000M
 	//i |= 0xe1;     //900M
-	//i |= 0xC8;   //800M
+	i |= 0xC8;   //800M
+#endif
 	REG32(0x8b000024) = i;
 	
 	//set DPLL of EMC to 400MHz
-#ifdef CONFIG_SP8810 
 	i = REG32(0x8b000040);
 	i &= ~ 0x7ff;
+	i |= s_emc_config.emc_clk;
 	//i |= 0x80;     //512M
 	//i |= 0x69;   //420M
-	i |= 0x64;   //400M
+	//i |= 0x64;   //400M
 	REG32(0x8b000040) = i;
 	REG32(0x8b000018) &= ~(1 << 9);
-#endif
 	
 	// AHB_ARM_CLK SET
 #if 1	// emc from DPLL
@@ -1700,6 +1712,17 @@ void sc8810_emc_Init()
 PUBLIC void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 {
 	volatile uint32 i = 0;
+	EMC_PARAM_T_PTR emc_ptr = EMC_GetPara();
+	
+	s_emc_config.arm_clk = emc_ptr->arm_clk/1000000/4;
+	s_emc_config.emc_clk = emc_ptr->emc_clk/1000000/4;
+	s_emc_config.dqs_drv = (emc_ptr->dqs_drv << 8);
+	s_emc_config.dat_drv = (emc_ptr->dat_drv << 8);
+	s_emc_config.ctl_drv = (emc_ptr->ctl_drv << 8);
+	s_emc_config.clk_drv = (emc_ptr->clk_drv << 8);
+	s_emc_config.clk_wr  = emc_ptr->clk_wr;
+	s_emc_config.read_value = (emc_ptr->read_value & 0xff);
+		
 	for (i = 0; i < 0xff1; ++i);	
 	sc8810_emc_Init();
 	g_ahb_clk = 200000000;
@@ -1715,5 +1738,5 @@ PUBLIC void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*
 	REG32(0x20000038) = 0x1c31F;
 	REG32(0x20000040) = 0x1c31F;
 	REG32(0x20000048) = 0x1c31F;
+	
 }
-

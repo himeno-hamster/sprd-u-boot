@@ -212,7 +212,7 @@ finished:
 
 .globl	MMU_DisableIDCM
 MMU_DisableIDCM:
-	STMFD   sp!, {a1-a4, lr}
+	STMFD   sp!, {r0-r7, r9-r11, lr}
 
 @   Disable the ICache, DCache, write buffer, MMU
 	MRC     p15, 0, r0, c1, c0, 0
@@ -231,5 +231,5 @@ MMU_DisableIDCM:
 	NOP
 	NOP
 @   Return
-	LDMFD   sp!, {a1-a4, PC}             @ restore registers
+	LDMFD   sp!, {r0-r7, r9-r11, PC}             @ restore registers
 
