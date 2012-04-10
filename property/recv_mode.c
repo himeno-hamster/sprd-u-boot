@@ -235,6 +235,7 @@ SEND_RECOVERY_MSG:
 	reboot_devices(0);
 	return 0;
 }
+#ifdef CONFIG_GENERIC_MMC
 #define FIX_SIZE (64*1024)
 void nv_patch(char * addr, int size)
 {
@@ -419,6 +420,9 @@ void try_update_modem(void)
 	printf("update done\n");
 	return;
 }
+#else
+#define try_update_modem()
+#endif
 
 void recovery_mode(void)
 {
