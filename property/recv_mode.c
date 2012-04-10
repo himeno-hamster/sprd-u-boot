@@ -12,6 +12,10 @@
 #include <environment.h>
 #include <jffs2/jffs2.h>
 #include <boot_mode.h>
+#include <fat.h>
+#include <asm/byteorder.h>
+#include <part.h>
+#include <mmc.h>
 
 #ifdef dprintf
 #undef dprintf
@@ -231,10 +235,195 @@ SEND_RECOVERY_MSG:
 	reboot_devices(0);
 	return 0;
 }
+#define FIX_SIZE (64*1024)
+void nv_patch(char * addr, int size)
+{
+	int i = 0;
+	for(i=0; i<FIX_SIZE-size; i++){
+		addr[size + i] = 0xff;
+	}
+	for(i=0; i<4; i++){
+		addr[FIX_SIZE + i] = 0x5a;
+	}
+	return;
+}
+
+#define BUF_ADDR 0x1000000
+#define SD_NV_NAME "nvitem.bin"
+#define NAND_NV_NAME "
+#define MODEM_PART "modem"
+#define SD_MODEM_NAME "modem.bin"
+#define DSP_PART "dsp"
+#define SD_DSP_NAME "dsp.bin"
+#define VM_PART "vmjaluna"
+#define SD_VM_NAME "vmjaluna.bin"
+
+void try_update_modem(void)
+{
+	struct mmc *mmc;
+	block_dev_desc_t *dev_desc=NULL;
+	loff_t off, size;
+	nand_info_t *nand;
+	struct mtd_device *dev;
+	u8 pnum;
+	struct part_info *part;
+	int ret;
+	char *backupfixnvpoint = "/backupfixnv";
+	char *backupfixnvfilename = "/backupfixnv/fixnv.bin";
+	char *backupfixnvfilename2 = "/backupfixnv/backupfixnvchange.bin";
+	nand_erase_options_t opts;
+
+	mmc = find_mmc_device(0);
+	if(mmc){
+		ret = mmc_init(mmc);
+		if(ret < 0){
+			printf("mmc init failed %d\n", ret);
+			return;
+		}
+	}else{
+		printf("no mmc card found\n");
+		return;
+	}
+
+	dev_desc = &mmc->block_dev;
+	if(dev_desc==NULL){
+		printf("no mmc block device found\n");
+		return;
+	}
+	ret = fat_register_device(dev_desc, 1);
+	if(ret < 0){
+		printf("fat regist fail %d\n", ret);
+		return;
+	}
+	ret = file_fat_detectfs();
+	if(ret){
+		printf("detect fs failed\n");
+		return;
+	}
+	do{
+		printf("reading %s\n", SD_NV_NAME);
+		ret = do_fat_read(SD_NV_NAME, BUF_ADDR, 0, LS_NO);
+		if(ret <= 0){
+			printf("sd file read error %d\n", ret);
+			break;
+		}
+		size = FIX_SIZE + 4;
+		nv_patch(BUF_ADDR, ret);
+		cmd_yaffs_mount(backupfixnvpoint);
+		cmd_yaffs_mwrite_file(backupfixnvfilename, BUF_ADDR, size);
+		cmd_yaffs_umount(backupfixnvpoint);
+	}while(0);
+
+	do{
+		printf("reading %s\n", SD_MODEM_NAME);
+		ret = do_fat_read(SD_MODEM_NAME, BUF_ADDR, 0, LS_NO);
+		if(ret <= 0){
+			printf("sd file read error %d\n", ret);
+			break;
+		}
+		size = ret;
+		ret = find_dev_and_part(MODEM_PART, &dev, &pnum, &part);
+		if (ret) {
+			printf("No partition named %s\n", MODEM_PART);
+			break;
+		} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
+			printf("Partition %s not a NAND device\n", MODEM_PART);
+			break;
+		}
+		off = part->offset;
+		nand = &nand_info[dev->id->num];
+		memset(&opts, 0, sizeof(opts));
+		opts.offset = off;
+		opts.length = part->size;
+		opts.quiet  = 1;
+		ret = nand_erase_opts(nand, &opts);
+		if(ret){
+			printf("nand erase bad %d\n", ret);
+			break;
+		}
+		ret = nand_write_skip_bad(nand, off, &size, BUF_ADDR);
+		if(ret){
+			printf("nand write bad %d\n", ret);
+			break;
+		}
+	}while(0);
+
+	do{
+		printf("reading %s\n", SD_DSP_NAME);
+		ret = do_fat_read(SD_DSP_NAME, BUF_ADDR, 0, LS_NO);
+		if(ret <= 0){
+			printf("sd file read error %d\n", ret);
+			break;
+		}
+		size = ret;
+		ret = find_dev_and_part(DSP_PART, &dev, &pnum, &part);
+		if (ret) {
+			printf("No partition named %s\n", DSP_PART);
+			break;
+		} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
+			printf("Partition %s not a NAND device\n", DSP_PART);
+			break;
+		}
+		off = part->offset;
+		nand = &nand_info[dev->id->num];
+		memset(&opts, 0, sizeof(opts));
+		opts.offset = off;
+		opts.length = part->size;
+		opts.quiet  = 1;
+		ret = nand_erase_opts(nand, &opts);
+		if(ret){
+			printf("nand erase bad %d\n", ret);
+			break;
+		}
+		ret = nand_write_skip_bad(nand, off, &size, BUF_ADDR);
+		if(ret < 0){
+			printf("nand write bad %d\n", ret);
+			break;
+		}
+	}while(0);
+
+	do{
+		printf("reading %s\n", SD_VM_NAME);
+		ret = do_fat_read(SD_VM_NAME, BUF_ADDR, 0, LS_NO);
+		if(ret <= 0){
+			printf("sd file read error %d\n", ret);
+			break;
+		}
+		size = ret;
+		ret = find_dev_and_part(VM_PART, &dev, &pnum, &part);
+		if (ret) {
+			printf("No partition named %s\n", VM_PART);
+			break;
+		} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
+			printf("Partition %s not a NAND device\n", VM_PART);
+			break;
+		}
+		off = part->offset;
+		nand = &nand_info[dev->id->num];
+		memset(&opts, 0, sizeof(opts));
+		opts.offset = off;
+		opts.length = part->size;
+		opts.quiet  = 1;
+		ret = nand_erase_opts(nand, &opts);
+		if(ret){
+			printf("nand erase bad %d\n", ret);
+			break;
+		}
+		ret = nand_write_skip_bad(nand, off, &size, BUF_ADDR);
+		if(ret < 0){
+			printf("nand write bad %d\n", ret);
+			break;
+		}
+	}while(0);
+
+	printf("update done\n");
+	return;
+}
 
 void recovery_mode(void)
 {
     printf("%s\n", __func__);
+	try_update_modem();
     vlx_nand_boot(RECOVERY_PART, NULL, BACKLIGHT_ON);
 }
 

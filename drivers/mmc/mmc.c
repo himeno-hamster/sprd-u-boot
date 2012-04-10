@@ -291,6 +291,7 @@ sd_send_op_cond(struct mmc *mmc)
 			return err;
 
 		udelay(1000);
+
 	} while ((!(cmd.response[0] & OCR_BUSY)) && timeout--);
 
 	if (timeout <= 0)
@@ -324,10 +325,13 @@ int mmc_send_op_cond(struct mmc *mmc)
 
 		err = mmc_send_cmd(mmc, &cmd, NULL);
 
-		if (err)
+		if (err) {
+			printf("%s send error %d\n", __func__, err);
 			return err;
+		}
 
 		udelay(1000);
+
 	} while (!(cmd.response[0] & OCR_BUSY) && timeout--);
 
 	if (timeout <= 0)
@@ -480,6 +484,7 @@ int sd_change_freq(struct mmc *mmc)
 	timeout = 3;
 
 retry_scr:
+	memset(scr, 0, 8);
 	data.dest = (char *)&scr;
 	data.blocksize = 8;
 	data.blocks = 1;
@@ -619,8 +624,9 @@ int mmc_startup(struct mmc *mmc)
 
 	err = mmc_send_cmd(mmc, &cmd, NULL);
 
-	if (err)
+	if (err) {
 		return err;
+	}
 
 	memcpy(mmc->cid, cmd.response, 16);
 
@@ -636,11 +642,13 @@ int mmc_startup(struct mmc *mmc)
 
 	err = mmc_send_cmd(mmc, &cmd, NULL);
 
-	if (err)
+	if (err) {
 		return err;
+	}
 
 	if (IS_SD(mmc))
 		mmc->rca = (cmd.response[0] >> 16) & 0xffff;
+
 
 	/* Get the Card-Specific Data */
 	cmd.cmdidx = MMC_CMD_SEND_CSD;
@@ -650,8 +658,9 @@ int mmc_startup(struct mmc *mmc)
 
 	err = mmc_send_cmd(mmc, &cmd, NULL);
 
-	if (err)
+	if (err) {
 		return err;
+	}
 
 	mmc->csd[0] = cmd.response[0];
 	mmc->csd[1] = cmd.response[1];
@@ -883,8 +892,9 @@ int mmc_init(struct mmc *mmc)
 	/* Reset the Card */
 	err = mmc_go_idle(mmc);
 
-	if (err)
+	if (err) {
 		return err;
+	}
 
 	/* Test for SD version 2 */
 	err = mmc_send_if_cond(mmc);
