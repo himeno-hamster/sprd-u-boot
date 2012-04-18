@@ -7,8 +7,8 @@
 
 uint16_t adc_voltage_table[2][2] =
 {
-    {947,4200},
-    {811,3600},
+    {928,4200},
+    {796,3600},
 };
 uint16_t CHGMNG_AdcvalueToVoltage (uint16_t adcvalue)
 {
