@@ -100,7 +100,7 @@ int FDL_McuReadChipType (PACKET_T *packet, void *arg)
 	unsigned char id[10];
 
 	memset(id, 0, 10);
-	McuReadNandType(id);
+       McuReadNandType(id);
 
     	packet->packet_body.type = BSL_REP_READ_CHIP_TYPE;
     	packet->packet_body.size = 5;
@@ -108,5 +108,24 @@ int FDL_McuReadChipType (PACKET_T *packet, void *arg)
 
     	FDL_SendPacket (packet);
     	return 1;
+}
+
+int FDL_McuReadMcpType (PACKET_T *packet, void *arg)
+{
+    unsigned char id[16];
+
+    memset(id, 0, 16);
+    McuReadNandType(id);
+
+    packet->packet_body.type = BSL_REP_READ_MCP_TYPE;
+    id[11] = 0xff;
+    id[10] = 0xff;
+    id[9] = 0xff;
+    id[8] = 0xff;
+    packet->packet_body.size = 16;
+    memcpy(packet->packet_body.content, id, packet->packet_body.size);
+
+    FDL_SendPacket (packet);
+    return 1;
 }
 

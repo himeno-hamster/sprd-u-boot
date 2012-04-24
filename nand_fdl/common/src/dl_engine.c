@@ -56,9 +56,6 @@ int FDL_DlEntry (DL_STAGE start)
         pkt_type = (cmd_pkt_type) (packet_ptr->packet_body.type);
      	pkt_type = (cmd_pkt_type)(EndianConv_16((unsigned short)pkt_type));
      	packet_ptr->packet_body.size = EndianConv_16(packet_ptr->packet_body.size);
-	if (pkt_type == BSL_CMD_TYPE_MAX) {
-		pkt_type = BSL_CMD_READ_CHIP_TYPE;
-	}
     	CALL_PROC(pkt_type, packet_ptr);
 
         FDL_FreePacket (packet_ptr);

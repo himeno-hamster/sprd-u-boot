@@ -26,6 +26,11 @@ int FDL_McuResetBoot (PACKET_T *pakcet, void *arg);
  ******************************************************************************/
 int FDL_McuReadChipType (PACKET_T *packet, void *arg);
 
+/******************************************************************************
+ * mcu_read_mcp_type
+ ******************************************************************************/
+int FDL_McuReadMcpType (PACKET_T *packet, void *arg);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

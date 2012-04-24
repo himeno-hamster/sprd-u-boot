@@ -25,6 +25,7 @@ typedef enum _CMD_TYPE
     BSL_SET_BAUDRATE,                           /* 0x9 */
     BSL_ERASE_FLASH,                            /* 0xA */
     BSL_REPARTITION,                            /* 0xB */
+    BSL_CMD_READ_MCP_TYPE,              /* 0xC */
 
     BSL_CMD_TYPE_MAX,
 
@@ -73,6 +74,7 @@ typedef enum _CMD_TYPE
 
     BSL_ILLEGAL_SDRAM,                      /* 0x99 */
     BSL_WRONG_SDRAM_PARAMETER,              /* 0x9a */
+    BSL_REP_READ_MCP_TYPE = 0x9D,
     BSL_EEROR_CHECKSUM = 0xA0,
     BSL_CHECKSUM_DIFF,
     BSL_WRITE_ERROR,

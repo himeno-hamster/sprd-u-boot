@@ -83,9 +83,10 @@ int main(void)
    		FDL_DlReg(BSL_CMD_READ_FLASH,     FDL2_ReadFlash,         0);
    		FDL_DlReg(BSL_ERASE_FLASH,        FDL2_EraseFlash,        0);
    		FDL_DlReg(BSL_CMD_NORMAL_RESET,   FDL_McuResetNormal/*mcu_reset_boot*/,   0);
-	    	FDL_DlReg(BSL_CMD_READ_CHIP_TYPE, FDL_McuReadChipType, 0);  
+	    	FDL_DlReg(BSL_CMD_READ_CHIP_TYPE, FDL_McuReadChipType, 0);
+	    	FDL_DlReg(BSL_CMD_READ_MCP_TYPE, FDL_McuReadMcpType, 0);
 	    	FDL_DlReg(BSL_REPARTITION,    	   FDL2_FormatFlash,       0);	
-			
+
 		/* Reply the EXEC cmd received in the 1st FDL. */
         FDL_SendAckPacket (NAND_SUCCESS == err ? BSL_REP_ACK :
                            BSL_INCOMPATIBLE_PARTITION);
