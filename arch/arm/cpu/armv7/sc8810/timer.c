@@ -104,7 +104,13 @@ void reset_timer_masked(void)
 unsigned long long get_ticks(void)
 {
 	ulong now = readl(SYS_CNT0);
+	ulong bak = 0;
 	
+	do {
+		bak = now;
+		now = readl(SYS_CNT0);
+	}while(now - bak);
+
 	if(now >= lastinc) {
 	/* not roll
 	 * move stamp forward with absolut diff ticks
