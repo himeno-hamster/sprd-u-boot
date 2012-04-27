@@ -323,7 +323,7 @@ static void real_refresh(struct sc8810fb_info *fb)
 
 	__raw_bits_or((1<<3), LCDC_CTRL); /* start refresh */
 	
-	while(__raw_readl(LCDC_IRQ_RAW) & (1<<0)); // wait util done
+	while(!(__raw_readl(LCDC_IRQ_RAW) & (1<<0))); // wait util done
 
 	__raw_bits_or((1<<0), LCDC_IRQ_CLR);
 
