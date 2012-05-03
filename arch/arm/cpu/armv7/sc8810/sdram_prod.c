@@ -134,7 +134,7 @@ LOCAL CONST EMC_PARAM_T s_emc_parm =
 LOCAL CONST EMC_PARAM_T s_emc_parm = 
 {
     // clock
-    1000000000,		// arm_clk 1G
+     850000000,		// arm_clk 850M
      333000000,		// emc_clk 333M
      
     // driver strength

@@ -1584,9 +1584,6 @@ void ddr_init()
 	REG32(0x20000190) = 0x40048000;
 	for(i =0 ; i < 1000; i++);
 
-	REG32(0x20000180) |= BIT_14;
-	for(i =0 ; i < 1000; i++);
-
 	//set column mode = 10
 	REG32(0x20000180) &= ~(0x70);
 	REG32(0x20000180) |= (0x20);
@@ -1608,6 +1605,11 @@ void ddr_init()
 	//REG32(0x20000188) = 0x121c0322;
 	
 	for(i =0 ; i < 1000; i++);	
+	
+	// auto refresh, must put last!!!
+	REG32(0x20000180) |= BIT_14;
+	for(i =0 ; i < 1000; i++);
+
 }
 void 	set_emc_pad(uint32 clk_drv, uint32 ctl_drv, uint32 dat_drv, uint32 dqs_drv)
 {
