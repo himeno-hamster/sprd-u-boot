@@ -147,6 +147,22 @@ static struct nand_ecclayout _nand_oob_224 = {
 		.length = 118}}
 };
 
+static struct nand_ecclayout _nand_oob_256 = {
+	.eccbytes = 104,
+	.eccpos = {
+		152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 
+		165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 
+		178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 
+		191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 
+		204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 
+		217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 
+		230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 
+		243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255},
+	.oobfree = {
+		{.offset = 2,
+		.length = 150}}
+};
+
 struct sc8810_nand_timing_param nand_timing =
 {
 	50,
@@ -163,7 +179,9 @@ static struct sc8810_nand_page_oob nand_config_table[] =
 	{0xec, 0xbc, 0x00, 0x66, 0x56, 4096, 128, 512, 4},
 	{0x2c, 0xb3, 0x90, 0x66, 0x64, 4096, 224, 512, 8},
 	{0x2c, 0xbc, 0x90, 0x66, 0x54, 4096, 224, 512, 8},
-	{0xec, 0xb3, 0x01, 0x66, 0x5a, 4096, 128, 512, 4}
+	{0xec, 0xb3, 0x01, 0x66, 0x5a, 4096, 128, 512, 4},
+	{0xad, 0xbc, 0x90, 0x11, 0x00, 4096, 128, 512, 1},
+	{0xec, 0xbc, 0x00, 0x6a, 0x56, 4096, 256, 512, 8}
 };
 
 /* some nand id could not be calculated the pagesize by mtd, replace it by a known id which has the same format. */
@@ -714,7 +732,10 @@ void nand_spl_hardware_config(struct nand_chip *this, u8 id[5])
 			case 8:
 				/* 8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 13 bytes */
 				this->ecc.bytes = 13;
-				this->ecc.layout = &_nand_oob_224;
+				if (nand_config_table[index].oobsize == 224)
+					this->ecc.layout = &_nand_oob_224;
+				else
+					this->ecc.layout = &_nand_oob_256;
 				mtdoobsize = nand_config_table[index].oobsize;
 			break;
 		}
