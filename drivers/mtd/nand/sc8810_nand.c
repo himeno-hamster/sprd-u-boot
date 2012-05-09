@@ -353,7 +353,7 @@ unsigned int sc8810_ecc_encode(struct sc8810_ecc_param *param)
 {
 	u32 reg;
 	reg = (param->m_size - 1);
-	memcpy((void *)NFC_MBUF_ADDR, param->p_mbuf, param->m_size);
+	nand_copy((void *)NFC_MBUF_ADDR, param->p_mbuf, param->m_size);
 	nfc_reg_write(NFC_ECC_CFG1, reg);	
 	reg = 0;
 	reg = (ecc_mode_convert(param->mode)) << NFC_ECC_MODE_OFFSET;
@@ -361,7 +361,7 @@ unsigned int sc8810_ecc_encode(struct sc8810_ecc_param *param)
 	reg |= NFC_ECC_ACTIVE;
 	nfc_reg_write(NFC_ECC_CFG0, reg);
 	sc8810_nfc_wait_command_finish(NFC_ECC_EVENT);
-	memcpy(param->p_sbuf, (u8 *)NFC_SBUF_ADDR,param->sp_size);
+	nand_copy(param->p_sbuf, (u8 *)NFC_SBUF_ADDR,param->sp_size);
 	return 0;
 }
 static u32 sc8810_get_decode_sts(void)
@@ -380,8 +380,8 @@ static u32 sc8810_ecc_decode(struct sc8810_ecc_param *param)
 	u32 reg;
 	u32 ret = 0;
 	s32 size = 0;
-	memcpy((void *)NFC_MBUF_ADDR, param->p_mbuf, param->m_size);
-	memcpy((void *)NFC_SBUF_ADDR, param->p_sbuf, param->sp_size);
+	nand_copy((void *)NFC_MBUF_ADDR, param->p_mbuf, param->m_size);
+	nand_copy((void *)NFC_SBUF_ADDR, param->p_sbuf, param->sp_size);
 	reg = (param->m_size - 1);
 	nfc_reg_write(NFC_ECC_CFG1, reg);	
 	reg = 0;
@@ -422,8 +422,8 @@ static u32 sc8810_ecc_decode(struct sc8810_ecc_param *param)
 	}
 	if((ret != -1) && (ret != 0))
 	{
-		memcpy(param->p_mbuf, (void *)NFC_MBUF_ADDR, param->m_size);
-		memcpy(param->p_sbuf, (void *)NFC_SBUF_ADDR, param->sp_size);	
+		nand_copy(param->p_mbuf, (void *)NFC_MBUF_ADDR, param->m_size);
+		nand_copy(param->p_sbuf, (void *)NFC_SBUF_ADDR, param->sp_size);	
 		ret = 0;
 	}
 	return  ret;
@@ -469,13 +469,13 @@ static void sc8810_nand_hw_init(void)
 }
 static void sc8810_nand_read_buf(struct mtd_info *mtd, uint8_t *buf, int len)
 {
-	memcpy(buf, g_info.b_pointer + io_wr_port,len);
+	nand_copy(buf, g_info.b_pointer + io_wr_port,len);
 	g_info.b_pointer += len;
 }
 static void sc8810_nand_write_buf(struct mtd_info *mtd, const uint8_t *buf,
 				   int len)
 {
-	memcpy(g_info.b_pointer + io_wr_port, (unsigned char*)buf,len);
+	nand_copy(g_info.b_pointer + io_wr_port, (unsigned char*)buf,len);
 	g_info.b_pointer += len;
 }
 static u_char sc8810_nand_read_byte(struct mtd_info *mtd)
@@ -537,7 +537,7 @@ static void correct_invalid_id(unsigned char *buf)
 	int num = sizeof(nand_id_replace_table) / sizeof(nand_id_replace_table[0]);
 	int index;
 
-	memcpy(id, (void *)NFC_MBUF_ADDR, 5);
+	nand_copy(id, (void *)NFC_MBUF_ADDR, 5);
 
 	for (index=0; index<num; index++)
 	{
@@ -564,7 +564,7 @@ static void correct_invalid_id(unsigned char *buf)
 	}
 	else
 	{
-		memcpy(buf, (void *)NFC_MBUF_ADDR, 5);
+		nand_copy(buf, (void *)NFC_MBUF_ADDR, 5);
 	}
 }
 
@@ -585,7 +585,7 @@ static void sc8810_nand_hwcontrol(struct mtd_info *mtd, int cmd,
 			nfc_mcr_inst_init();
 			nfc_reg_write(NFC_CMD, 0x80000070);
 			sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
-			memcpy(io_wr_port, (void *)NFC_ID_STS, 1);
+			nand_copy(io_wr_port, (void *)NFC_ID_STS, 1);
 			break;
 		case NAND_CMD_READID:
 			nfc_mcr_inst_init();
@@ -595,7 +595,7 @@ static void sc8810_nand_hwcontrol(struct mtd_info *mtd, int cmd,
 			nfc_mcr_inst_exc_for_id();
 			sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
 
-			//memcpy(io_wr_port, (void *)NFC_MBUF_ADDR, 5);
+			//nand_copy(io_wr_port, (void *)NFC_MBUF_ADDR, 5);
 			correct_invalid_id(io_wr_port);
 			break;					
 		case NAND_CMD_ERASE1:
@@ -622,14 +622,14 @@ static void sc8810_nand_hwcontrol(struct mtd_info *mtd, int cmd,
 			sc8810_nand_data_add(size, chip->options & NAND_BUSWIDTH_16, 1);
 			nfc_mcr_inst_exc();
 			sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
-			memcpy(io_wr_port, (void *)NFC_MBUF_ADDR, size);
+			nand_copy(io_wr_port, (void *)NFC_MBUF_ADDR, size);
 			break;	
 		case NAND_CMD_SEQIN:
 			nfc_mcr_inst_init();
 			nfc_mcr_inst_add(NAND_CMD_SEQIN, NF_MC_CMD_ID);
 			break;	
 		case NAND_CMD_PAGEPROG:
-			memcpy((void *)NFC_MBUF_ADDR, io_wr_port, g_info.b_pointer);
+			nand_copy((void *)NFC_MBUF_ADDR, io_wr_port, g_info.b_pointer);
 			sc8810_nand_data_add(g_info.b_pointer, chip->options & NAND_BUSWIDTH_16, 0);
 			nfc_mcr_inst_add(cmd, NF_MC_CMD_ID);
 			nfc_mcr_inst_add(0, NF_MC_WAIT_ID);
@@ -839,7 +839,7 @@ static unsigned long nfc_read_status(void)
 	nfc_mcr_inst_init();
 	nfc_reg_write(NFC_CMD, 0x80000070);
 	sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
-	memcpy(io_wr_port, (void *)NFC_ID_STS, 1);
+	nand_copy(io_wr_port, (void *)NFC_ID_STS, 1);
 	
 	status = io_wr_port[0];
 	return status;
@@ -887,7 +887,7 @@ static int sprd_scan_one_block(int blk, int erasesize, int writesize)
 		nfc_mcr_inst_exc();
 		sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
 	
-		memcpy(io_wr_port, (void *)NFC_MBUF_ADDR, size);
+		nand_copy(io_wr_port, (void *)NFC_MBUF_ADDR, size);
 #if 0
 		for (i = 0; i < size; i++) {
 			/*if ((i % 16) == 0)
@@ -943,7 +943,7 @@ void read_chip_id(void)
 	nfc_mcr_inst_add(7, NF_MC_RWORD_ID);
 	nfc_mcr_inst_exc_for_id();
 	sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
-	//memcpy(io_wr_port, (void *)NFC_MBUF_ADDR, 5);
+	//nand_copy(io_wr_port, (void *)NFC_MBUF_ADDR, 5);
 	correct_invalid_id(io_wr_port);
 
 #ifndef CONFIG_NAND_SPL
@@ -964,7 +964,7 @@ void McuReadNandType(unsigned char *array)
 	nfc_mcr_inst_add(7, NF_MC_RWORD_ID);
 	nfc_mcr_inst_exc_for_id();
 	sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
-	memcpy(array, (void *)NFC_MBUF_ADDR, 5);
+	nand_copy(array, (void *)NFC_MBUF_ADDR, 5);
 }
 #endif
 
