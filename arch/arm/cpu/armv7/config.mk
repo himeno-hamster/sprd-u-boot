@@ -23,7 +23,11 @@
 PLATFORM_RELFLAGS += -fno-common -ffixed-r8 -msoft-float
 
 # Make ARMv5 to allow more compilers to work, even though its v7a.
+ifndef CONFIG_SC8810
 PLATFORM_CPPFLAGS += -march=armv5
+else
+PLATFORM_CPPFLAGS += -march=armv7-a
+endif
 # =========================================================================
 #
 # Supply options according to compiler version
