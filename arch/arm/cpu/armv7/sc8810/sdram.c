@@ -1257,16 +1257,31 @@ LOCAL uint32 __col_row_detect(BOOLEAN is_col, SDRAM_CFG_INFO_T_PTR pCfg)
     return (num); 
 }
 
+LOCAL void set_row_col(SDRAM_CFG_INFO_T_PTR pCfg)
+{
+	uint32 value;
+	int i;
+
+	value = REG32(0x20000180);
+	value &= ~(0x73);
+	value |= ((pCfg->col_mode)<<4);
+	value |= (pCfg->row_mode);
+	REG32(0x20000180) = value;
+	for(i =0 ; i < 1000; i++);
+
+}
+
 LOCAL void __sdram_detect(uint32 clk)
 {
     SDRAM_CFG_INFO_T_PTR pCfg = &s_sdram_raw_cfg;
-    uint32 state = STATE_SDRAM_TYPE;
+//    uint32 state = STATE_SDRAM_TYPE;
+    uint32 state = STATE_COLUM; //in sc8810 just need to detect the DDR's row and col
     uint32 colum, row;
 
     //pCfg->bank_mode    = BK_MODE_4;
     pCfg->row_mode     = ROW_MODE_14;
     pCfg->col_mode     = COL_MODE_12;
-    pCfg->data_width   = DATA_WIDTH_16;
+    pCfg->data_width   = DATA_WIDTH_32;
     pCfg->burst_length = BURST_LEN_2;
     pCfg->cas_latency  = CAS_LATENCY_3;
     pCfg->ext_mode_val = SDRAM_EXT_MODE_REG;
@@ -1274,7 +1289,8 @@ LOCAL void __sdram_detect(uint32 clk)
         
     while(STATE_END != state)
     {     
-        __sdram_set_param(clk, pCfg);
+//        __sdram_set_param(clk, pCfg);
+	set_row_col(pCfg);
         switch(state)
         {
         case STATE_SDRAM_TYPE:
@@ -1584,15 +1600,13 @@ void ddr_init()
 	REG32(0x20000190) = 0x40048000;
 	for(i =0 ; i < 1000; i++);
 
-	//set column mode = 10
-	REG32(0x20000180) &= ~(0x70);
-	REG32(0x20000180) |= (0x20);
+	REG32(0x20000180) |= BIT_14;
 	for(i =0 ; i < 1000; i++);
-	
-	//set row mode = 14
-	REG32(0x20000180) &= ~(0x3);
-	REG32(0x20000180) |= (0x3);
+
+      //detect column mode and row mode
+	__sdram_detect(0);
 	for(i =0 ; i < 1000; i++);
+
 	//set cs map to 2G bit
 	REG32(0x20000000) &= ~(0x7);
 	REG32(0x20000000) |= (0x7);
@@ -1605,11 +1619,6 @@ void ddr_init()
 	//REG32(0x20000188) = 0x121c0322;
 	
 	for(i =0 ; i < 1000; i++);	
-	
-	// auto refresh, must put last!!!
-	REG32(0x20000180) |= BIT_14;
-	for(i =0 ; i < 1000; i++);
-
 }
 void 	set_emc_pad(uint32 clk_drv, uint32 ctl_drv, uint32 dat_drv, uint32 dqs_drv)
 {
