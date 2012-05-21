@@ -23,10 +23,20 @@ static int flash_page_size = 0;
 #define BACKUPFIXNV_PART "backupfixnv"
 #define RUNTIMEVN_PART "runtimenv"
 #define DSP_PART "dsp"
+#ifdef CONFIG_SP8810W
+#define FIRMWARE_PART "firmware"
+#endif
 
 #define DSP_SIZE		(3968 * 1024)
 #define VMJALUNA_SIZE		(300 * 1024)
+
+#ifdef CONFIG_SP8810W
+#define FIXNV_SIZE			(120 * 1024)
+#define FIRMWARE_SIZE 		(9933 * 1024) /* 9.7M */
+#else
 #define FIXNV_SIZE		(64 * 1024)
+#endif
+
 #define PRODUCTINFO_SIZE	(3 * 1024)
 #define RUNTIMENV_SIZE		(256 * 1024)
 #ifdef MCP_F2R1
@@ -38,10 +48,13 @@ static int flash_page_size = 0;
 #define DSP_ADR			0x00020000
 #define VMJALUNA_ADR		0x00400000
 #define FIXNV_ADR		0x00480000
-#define PRODUCTINFO_ADR		0x00490000
+#define PRODUCTINFO_ADR		0x0049E000
 #define RUNTIMENV_ADR		0x004a0000
 #define MODEM_ADR		0x00500000
 #define RAMDISK_ADR 		0x04c00000
+#ifdef CONFIG_SP8810W
+#define FIRMWARE_ADR		0x01600000
+#endif
 
 #if BOOT_NATIVE_LINUX
 //pls make sure uboot running area
@@ -717,7 +730,31 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	}
 
 	//array_value((unsigned char *)MODEM_ADR, MODEM_SIZE);
+#ifdef CONFIG_SP8810W
+	/* FIRMWARE_PART */
+	printf("Reading firmware to 0x%08x\n", FIRMWARE_ADR);
+	ret = find_dev_and_part(FIRMWARE_PART, &dev, &pnum, &part);
+	if (ret) {
+		printf("No partition named %s\n", FIRMWARE_PART);
+		return;
+	} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
+		printf("Partition %s not a NAND device\n", FIRMWARE_PART);
+		return;
+	}
 
+	off = part->offset;
+	nand = &nand_info[dev->id->num];
+	size = (FIRMWARE_SIZE +(flash_page_size - 1)) & (~(flash_page_size - 1));
+	if(size <= 0) {
+		printf("firmware image should not be zero\n");
+		return;
+	}
+	ret = nand_read_offset_ret(nand, off, &size, (void*)FIRMWARE_ADR, &off);
+	if(ret != 0) {
+		printf("firmware nand read error %d\n", ret);
+		return;
+	}
+#endif
 	////////////////////////////////////////////////////////////////
 	/* VMJALUNA_PART */
 	printf("Reading vmjaluna to 0x%08x\n", VMJALUNA_ADR);

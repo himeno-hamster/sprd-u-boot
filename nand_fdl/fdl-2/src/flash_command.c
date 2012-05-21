@@ -23,7 +23,12 @@ extern int cmd_yaffs_ls_chk(const char *dirfilename);
 extern void cmd_yaffs_mread_file(char *fn, unsigned char *addr);
 extern void cmd_yaffs_mwrite_file(char *fn, char *addr, int size);
 
+#ifdef CONFIG_SP8810W
+#define FIXNV_SIZE		(120 * 1024)
+#else
 #define FIXNV_SIZE		(64 * 1024)
+#endif
+
 #define PHASECHECK_SIZE		(3 * 1024)
 #define TRANS_CODE_SIZE		(12 * 1024) /* dloadtools optimization value */
 
