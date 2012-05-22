@@ -786,6 +786,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
     int str_len;
     char * buf;
     buf = malloc(1024);
+    memset (buf, 0, 1024);
 
     sprintf(buf, "initrd=0x%x,0x%x", RAMDISK_ADR, hdr->ramdisk_size);
     str_len = strlen(buf);
@@ -796,19 +797,14 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
             sprintf(&buf[str_len], " %s", cmdline);
     }
 	{
-		extern uint32_t load_lcd_id_to_kernel();
-		uint32_t lcd_id;
-
-		lcd_id = load_lcd_id_to_kernel();
 		//add lcd id
-		if(lcd_id) {
-			str_len = strlen(buf);
-			sprintf(&buf[str_len], " lcd_id=ID");
-			str_len = strlen(buf);
-			sprintf(&buf[str_len], "%x",lcd_id);
-			str_len = strlen(buf);
-			buf[str_len] = '\0';
-		}
+		extern uint32_t load_lcd_id_to_kernel();
+		uint32_t lcd_id = load_lcd_id_to_kernel();
+
+		str_len = strlen(buf);
+		sprintf(&buf[str_len], " video=sprdfb:fb0_id=0x%x,fb1_id=0x%x",
+				 lcd_id, 0);
+		str_len = strlen(buf);
 
 	}
 	{
