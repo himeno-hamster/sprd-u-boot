@@ -62,6 +62,7 @@ struct real_mtd_partition phy_partition;
 struct real_mtd_partition phy_nv_partition;
 static unsigned int is_nbl_write;
 static unsigned int is_phasecheck_write;
+static unsigned int is_phasecheck_write_secend = 0;
 static unsigned int g_NBLFixBufDataSize = 0;
 static unsigned char g_FixNBLBuf[0x8000];
 static unsigned int g_PhasecheckBUFDataSize = 0;
@@ -355,14 +356,15 @@ int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, un
 	if (strcmp(phypart->name, "productinfo") == 0) {
 		/* for dlstatus, read real length */
 		char *productinfopoint = "/productinfo";
-		char *productinfofilename = "/productinfo/dlstatus.txt";
+		//char *productinfofilename = "/productinfo/dlstatus.txt";
+		char *productinfofilename = "/productinfo/productinfo.bin";
 
 		if (read_dlstatus_flag == 0) {
 			memset(g_PhasecheckBUF, 0, 0x2000);
 			/* read dlstatus */
     			cmd_yaffs_mount(productinfopoint);
 			ret = cmd_yaffs_ls_chk(productinfofilename);
-			if (ret >= DL_OP_RECORD_LEN) {
+			if (ret > 0) {
 				cmd_yaffs_mread_file(productinfofilename, g_PhasecheckBUF);
 				read_dlstatus_flag = 1;//success
 			}
@@ -436,9 +438,16 @@ int FDL2_DataStart (PACKET_T *packet, void *arg)
 		is_nbl_write = 1;
 		g_NBLFixBufDataSize = 0;
 	} else if (strcmp(phy_partition.name, "productinfo") == 0) {
-		is_phasecheck_write = 1;
-		g_PhasecheckBUFDataSize = 0;
-		memset(g_PhasecheckBUF, 0xff, 0x2000);
+		if (is_phasecheck_write_secend == 0) {
+			is_phasecheck_write = 1;
+			is_phasecheck_write_secend = 1;
+			 
+			memset(g_PhasecheckBUF, 0xff, 0x2000);
+		} else {
+			printf("Error, write phase check repeatedly.");
+			ret = NAND_SYSTEM_ERROR;
+			break;
+		}
 	}
 
 #ifdef TRANS_CODE_SIZE
