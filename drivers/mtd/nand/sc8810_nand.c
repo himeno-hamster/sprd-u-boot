@@ -484,13 +484,17 @@ static void sc8810_nand_hw_init(void)
 }
 static void sc8810_nand_read_buf(struct mtd_info *mtd, uint8_t *buf, int len)
 {
-	memcpy(buf, g_info.b_pointer + io_wr_port,len);
+	memcpy(buf, (void *)(g_info.b_pointer + NFC_MBUF_ADDR),len);
 	g_info.b_pointer += len;
 }
 static void sc8810_nand_write_buf(struct mtd_info *mtd, const uint8_t *buf,
 				   int len)
 {
-	memcpy(g_info.b_pointer + io_wr_port, (unsigned char*)buf,len);
+	struct nand_chip *chip = (struct nand_chip *)(mtd->priv);
+	int eccsize = chip->ecc.size;
+	memcpy((void *)(g_info.b_pointer + NFC_MBUF_ADDR), (unsigned char*)buf,len);
+	if (g_info.b_pointer < eccsize)
+			memcpy(io_wr_port, (unsigned char*)buf,len);
 	g_info.b_pointer += len;
 }
 static u_char sc8810_nand_read_byte(struct mtd_info *mtd)
@@ -502,8 +506,11 @@ static u_char sc8810_nand_read_byte(struct mtd_info *mtd)
 static u16 sc8810_nand_read_word(struct mtd_info *mtd)
 {
 	u16 ch = 0;
-	ch = io_wr_port[g_info.b_pointer ++];
-	ch |= io_wr_port[g_info.b_pointer ++] << 8;
+	unsigned char *port = (void *)NFC_MBUF_ADDR;
+
+	ch = port[g_info.b_pointer ++];
+	ch |= port[g_info.b_pointer ++] << 8;
+
 	return ch;
 }
 
@@ -587,7 +594,7 @@ static void sc8810_nand_hwcontrol(struct mtd_info *mtd, int cmd,
 				   unsigned int ctrl)
 {
 	struct nand_chip *chip = (struct nand_chip *)(mtd->priv);
-	u32 size = 0;
+	u32 eccsize, size = 0;
 	if (ctrl & NAND_CLE) {
 		switch (cmd) {
 		case NAND_CMD_RESET:
@@ -637,14 +644,14 @@ static void sc8810_nand_hwcontrol(struct mtd_info *mtd, int cmd,
 			sc8810_nand_data_add(size, chip->options & NAND_BUSWIDTH_16, 1);
 			nfc_mcr_inst_exc();
 			sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
-			memcpy(io_wr_port, (void *)NFC_MBUF_ADDR, size);
 			break;	
 		case NAND_CMD_SEQIN:
 			nfc_mcr_inst_init();
 			nfc_mcr_inst_add(NAND_CMD_SEQIN, NF_MC_CMD_ID);
 			break;	
 		case NAND_CMD_PAGEPROG:
-			memcpy((void *)NFC_MBUF_ADDR, io_wr_port, g_info.b_pointer);
+			eccsize = chip->ecc.size;
+			memcpy((void *)NFC_MBUF_ADDR, io_wr_port, eccsize);
 			sc8810_nand_data_add(g_info.b_pointer, chip->options & NAND_BUSWIDTH_16, 0);
 			nfc_mcr_inst_add(cmd, NF_MC_CMD_ID);
 			nfc_mcr_inst_add(0, NF_MC_WAIT_ID);
