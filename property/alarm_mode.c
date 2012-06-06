@@ -35,7 +35,7 @@ int alarm_flag_check(void)
     char *file_partition = "/productinfo";
     char *file_name = "/productinfo/alarm_flag";
     int ret = 0;
-    char time_buf[20]={0};
+    char time_buf[200]={0};
     long time = 0;
     unsigned long now_rtc = 0;
     int time_lead = 0;
