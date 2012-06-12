@@ -1600,16 +1600,18 @@ void ddr_init()
 	REG32(0x20000190) = 0x40048000;
 	for(i =0 ; i < 1000; i++);
 
+/*
 	REG32(0x20000180) |= BIT_14;
 	for(i =0 ; i < 1000; i++);
 
       //detect column mode and row mode
 	__sdram_detect(0);
 	for(i =0 ; i < 1000; i++);
-
+*/
 	//set cs map to 2G bit
 	REG32(0x20000000) &= ~(0x7);
-	REG32(0x20000000) |= (0x7);
+//	REG32(0x20000000) |= (0x7);
+	REG32(0x20000000) |= (s_emc_config.cs_pos);
 	//REG32(0x20000010) = 0x223;
 	//REG32(0x20000014) = 0x223;
 
@@ -1617,8 +1619,12 @@ void ddr_init()
 	REG32(0x20000188) = 0x121c0172;
 	//REG32(0x20000184) = 0x02371422;
 	//REG32(0x20000188) = 0x121c0322;
-	
-	for(i =0 ; i < 1000; i++);	
+
+      //detect column mode and row mode
+	__sdram_detect(0);
+	for(i =0 ; i < 1000; i++);
+	REG32(0x20000180) |= BIT_14;
+	for(i =0 ; i < 1000; i++);
 }
 void 	set_emc_pad(uint32 clk_drv, uint32 ctl_drv, uint32 dat_drv, uint32 dqs_drv)
 {
@@ -1733,6 +1739,7 @@ PUBLIC void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*
 	s_emc_config.clk_drv = (emc_ptr->clk_drv << 8);
 	s_emc_config.clk_wr  = emc_ptr->clk_wr;
 	s_emc_config.read_value = (emc_ptr->read_value & 0xff);
+	s_emc_config.cs_pos = emc_ptr->cs_pos;
 		
 	for (i = 0; i < 0xff1; ++i);	
 	sc8810_emc_Init();
