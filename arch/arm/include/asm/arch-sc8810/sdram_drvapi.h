@@ -34,6 +34,9 @@ typedef struct
     // clk wr
     uint32 clk_wr;
     uint32 read_value;  // value from 0x20000174
+	 //set cs map to external memory
+	uint32 cs_pos;
+	
 			
 } EMC_PARAM_T, *EMC_PARAM_T_PTR;
  

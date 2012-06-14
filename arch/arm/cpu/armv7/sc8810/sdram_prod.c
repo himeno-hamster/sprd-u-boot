@@ -129,6 +129,9 @@ LOCAL CONST EMC_PARAM_T s_emc_parm =
     // clk wr
     12,						// clk_wr 
     0x818,				// value read from 0x20000174
+
+	//set cs map to external memory
+    7 ,                //set cs map to 2G bit
 };
 #else  // for openphone
 LOCAL CONST EMC_PARAM_T s_emc_parm = 
