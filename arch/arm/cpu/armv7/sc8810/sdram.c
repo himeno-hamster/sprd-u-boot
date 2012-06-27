@@ -1620,10 +1620,11 @@ void ddr_init()
 	//REG32(0x20000184) = 0x02371422;
 	//REG32(0x20000188) = 0x121c0322;
 
-      //detect column mode and row mode
-	__sdram_detect(0);
-	for(i =0 ; i < 1000; i++);
 	REG32(0x20000180) |= BIT_14;
+	for(i =0 ; i < 1000; i++);
+      
+       //detect column mode and row mode
+	__sdram_detect(0);
 	for(i =0 ; i < 1000; i++);
 }
 void 	set_emc_pad(uint32 clk_drv, uint32 ctl_drv, uint32 dat_drv, uint32 dqs_drv)
