@@ -302,6 +302,6 @@
 #define LOW_BAT_VOL_CHG	3300	//3.3V charger connect
 
 #define PWR_KEY_DETECT_CNT 12 /*this should match the count of boot_pwr_check() function */
-#define ALARM_LEAD_SET_MS 120 /* time set for alarm boot in advancd */
+#define ALARM_LEAD_SET_MS 0 /* time set for alarm boot in advancd */
 
 #endif /* __CONFIG_H */
