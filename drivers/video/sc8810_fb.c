@@ -280,6 +280,15 @@ static uint32_t lcdc_calc_lcm_timing(struct timing_mcu *timing)
 
 }
 
+#ifdef CONFIG_FB_LCDC_CS1
+static void lcdc_update_lcm_timing(uint32_t value)
+{
+	__raw_writel(value, LCM_PARAMETER1); /* FIXME: hardcoded for !CS1 */
+
+	FB_PRINT("[%s] LCM_PARAMETER1: 0x%x\n", __FUNCTION__, __raw_readl(LCM_PARAMETER1));
+}
+
+#else
 static void lcdc_update_lcm_timing(uint32_t value) 
 {
 	/* LCD_UpdateTiming() */
@@ -288,6 +297,7 @@ static void lcdc_update_lcm_timing(uint32_t value)
 
 	FB_PRINT("@fool2[%s] LCM_PARAMETER0: 0x%x\n", __FUNCTION__, __raw_readl(LCM_PARAMETER0));
 }
+#endif
 
 static int mount_panel(struct sc8810fb_info *fb, struct lcd_spec *panel)
 {
@@ -331,6 +341,48 @@ static void real_refresh(struct sc8810fb_info *fb)
 	lcdc_update_lcm_timing(fb->register_timing);
 }
 
+#ifdef CONFIG_FB_LCDC_CS1
+static void lcdc_lcm_configure(struct sc8810fb_info *fb)
+{
+	uint32_t reg_val = 0;
+	/* CS1 bus mode [BIT0]: 8080/6800 */
+	switch (fb->panel->info.mcu->bus_mode) {
+	case LCD_BUS_8080:
+
+		break;
+	case LCD_BUS_6800:
+		reg_val  |= (1 << 8);
+		break;
+	default:
+		break;
+	}
+	/* CS1 bus width [BIT1:0] */
+	switch (fb->panel->info.mcu->bus_width) {
+	case 8:
+		break;
+	case 9:
+		reg_val  |= ((1 << 9) | (1 << 12));
+		break;
+	case 16:
+		reg_val  |= (2 << 9);
+		break;
+	case 18:
+		reg_val  |= ((3 << 9) | (1 << 12));
+		break;
+	case 24:
+		reg_val  |= ((4 << 9) | (2 << 12));
+		break;
+	default:
+		break;
+
+	}
+
+	reg_val  |= (1 << 16);
+	__raw_writel(reg_val, LCM_CTRL);
+
+	FB_PRINT("[%s] LCM_CTRL: 0x%x\n", __FUNCTION__, __raw_readl(LCM_CTRL));
+}
+#else
 static void lcdc_lcm_configure(struct sc8810fb_info *fb)
 {
 	uint32_t reg_val = 0;;
@@ -369,7 +421,7 @@ static void lcdc_lcm_configure(struct sc8810fb_info *fb)
 
 	FB_PRINT("@fool2[%s] LCM_CTRL: 0x%x\n", __FUNCTION__, __raw_readl(LCM_CTRL));
 }
-
+#endif
 
 
 static inline int set_lcdsize(struct lcd_spec *panel)
