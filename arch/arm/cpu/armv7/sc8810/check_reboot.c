@@ -19,7 +19,8 @@ unsigned check_reboot_mode(void)
 		return RECOVERY_MODE;
 	else if(rst_mode == HWRST_STATUS_FASTBOOT)
 		return FASTBOOT_MODE;
-	else if(rst_mode == HWRST_STATUS_NORMAL)
+	else if(rst_mode == HWRST_STATUS_NORMAL ||
+		rst_mode == HWRST_STATUS_NORMAL2)
 		return NORMAL_MODE;
 	else if(rst_mode == HWRST_STATUS_ALARM)
 		return ALARM_MODE;
