@@ -794,12 +794,15 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, u8 id[5]
 			case 8:
 				/* 8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 13 bytes */
 				this->ecc.bytes = 13;
-				this->ecc.layout = &_nand_oob_224;
+				if (nand_config_table[index].oobsize == 224)
+					this->ecc.layout = &_nand_oob_224;
+				else
+					this->ecc.layout = &_nand_oob_256;
 				mtd->oobsize = nand_config_table[index].oobsize;
 			break;
 		}
 	} else 
-		printk("The type of nand flash is not in table, so use default configuration!\n");
+		printk("The type of nand flash is 2KB page, so use default configuration!\n");
 }
 
 int board_nand_init(struct nand_chip *this)
