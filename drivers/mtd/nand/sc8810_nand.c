@@ -764,7 +764,7 @@ void nand_spl_hardware_config(struct nand_chip *this, u8 id[5])
 	}
 }
 
-void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, u8 id[5])
+void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, unsigned char id[8])
 {
 	int index;
 	int array;
@@ -772,6 +772,8 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, u8 id[5]
 	/*for (index = 0; index < 5; index ++)
 		printk(" %02x ", id[index]);
 	printk("\n");*/
+	for (index = 0; index < 5; index ++)
+		this->nandid[index] = id[index];
 
 	array = sizeof(nand_config_table) / sizeof(struct sc8810_nand_page_oob);
 	for (index = 0; index < array; index ++) {

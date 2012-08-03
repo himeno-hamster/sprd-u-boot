@@ -259,6 +259,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	struct mtd_info *nand;
 	struct mtd_device *dev;
 	struct part_info *part;
+	struct nand_chip *chip;
 	u8 pnum;
 	int ret;
 	size_t size;
@@ -844,6 +845,21 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #else
     sprintf(&buf[str_len], " ram=256M");
 #endif
+
+	chip = (struct nand_chip *)(nand->priv);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " nandflash=nandid(0x%02x,", chip->nandid[0]);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "0x%02x,", chip->nandid[1]);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "0x%02x,", chip->nandid[2]);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "0x%02x,", chip->nandid[3]);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "0x%02x),", chip->nandid[4]);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "pagesize(%d),oobsize(%d),eccsize(%d),eccbit(%d)", nand->writesize, nand->oobsize, chip->ecc.size, chip->eccbitmode);
+
     printf("pass cmdline: %s\n", buf);
     //lcd_printf(" pass cmdline : %s\n",buf);
     //lcd_display();

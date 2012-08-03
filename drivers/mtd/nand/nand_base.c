@@ -2505,7 +2505,7 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 	int i, dev_id, maf_idx;
 	int tmp_id, tmp_manf;
 #ifdef CONFIG_MTD_NAND_SC8810
-	u8 id_data[5];
+	u8 id_data[8];
 #endif
 
 #ifdef CONFIG_MTD_NAND_SPRD
