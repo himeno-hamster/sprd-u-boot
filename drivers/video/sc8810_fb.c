@@ -83,7 +83,17 @@ struct lcd_cfg{
 };
 
 
-#ifdef CONFIG_SC8810_OPENPHONE
+#if defined CONFIG_SC8810_OPENPHONE
+
+extern struct lcd_spec lcd_panel_hx8357;
+static struct lcd_cfg lcd_panel[] = {
+	[0]={
+		.lcd_id = 0x57,
+		.panel = &lcd_panel_hx8357,
+		},
+};
+
+#elif defined CONFIG_SP8810G_BRCM
 
 extern struct lcd_spec lcd_panel_hx8357;
 static struct lcd_cfg lcd_panel[] = {
@@ -617,10 +627,16 @@ void LCD_SetBackLightBrightness( unsigned long  value)
 
 void set_backlight(uint32_t value)
 {
-#ifdef CONFIG_SC8810_OPENPHONE
+#if defined CONFIG_SC8810_OPENPHONE
 	ANA_REG_AND(WHTLED_CTL, ~(WHTLED_PD_SET | WHTLED_PD_RST));
 	ANA_REG_OR(WHTLED_CTL,  WHTLED_PD_RST);
 	ANA_REG_MSK_OR (WHTLED_CTL, ( (value << WHTLED_V_SHIFT) &WHTLED_V_MSK), WHTLED_V_MSK);
+
+#elif defined CONFIG_SP8810G_BRCM
+	ANA_REG_AND(WHTLED_CTL, ~(WHTLED_PD_SET | WHTLED_PD_RST));
+	ANA_REG_OR(WHTLED_CTL,  WHTLED_PD_RST);
+	ANA_REG_MSK_OR (WHTLED_CTL, ( (value << WHTLED_V_SHIFT) &WHTLED_V_MSK), WHTLED_V_MSK);
+	LCD_SetBackLightBrightness(value);
 
 #else
 	//if (gpio_request(143, "LCD_BL")) {
