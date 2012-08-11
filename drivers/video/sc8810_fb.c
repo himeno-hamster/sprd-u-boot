@@ -103,6 +103,20 @@ static struct lcd_cfg lcd_panel[] = {
 		},
 };
 
+#elif defined CONFIG_SP6820G_RTL_HL
+extern struct lcd_spec lcd_panel_r61581b;
+extern struct lcd_spec lcd_panel_ili9486;
+static struct lcd_cfg lcd_panel[] = {
+	[0]={
+		.lcd_id = 0x5480,
+		.panel = &lcd_panel_ili9486,
+		},
+	[1]={
+		.lcd_id = 0x01012215,
+		.panel = &lcd_panel_r61581b,
+		},
+};
+
 #else
 
 extern struct lcd_spec lcd_panel_hx8369;
