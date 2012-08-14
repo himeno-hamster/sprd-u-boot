@@ -651,6 +651,11 @@ void set_backlight(uint32_t value)
 	ANA_REG_OR(WHTLED_CTL,  WHTLED_PD_RST);
 	ANA_REG_MSK_OR (WHTLED_CTL, ( (value << WHTLED_V_SHIFT) &WHTLED_V_MSK), WHTLED_V_MSK);
 	LCD_SetBackLightBrightness(value);
+	
+#elif defined CONFIG_SP6820G_RTL_HL
+	ANA_REG_AND(WHTLED_CTL, ~(WHTLED_PD_SET | WHTLED_PD_RST));
+	ANA_REG_OR(WHTLED_CTL,  WHTLED_PD_RST);
+	ANA_REG_MSK_OR (WHTLED_CTL, ( (value << WHTLED_V_SHIFT) &WHTLED_V_MSK), WHTLED_V_MSK);
 
 #else
 	//if (gpio_request(143, "LCD_BL")) {
