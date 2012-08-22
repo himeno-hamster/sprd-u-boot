@@ -326,6 +326,8 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #endif
 	    lcd_display();
 	    set_backlight(255);
+       	    //printf("aftersetbacklight\n");
+	    udelay(1);	//zhuwenjian need a delay to effect register
     }
 #endif
     set_vibrator(0);
