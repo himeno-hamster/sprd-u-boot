@@ -240,4 +240,56 @@ U_BOOT_CMD(
 	"    - write file 'filename' from the address 'addr' in RAM\n"
 	"      to 'dev' on 'interface'"
 );
+
+static int do_fat_fsrm(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
+{
+	long size;
+	unsigned long addr;
+	unsigned long count;
+	block_dev_desc_t *dev_desc = NULL;
+	int dev = 0;
+	int part = 1;
+	char *ep;
+
+	if (argc < 4)
+		return cmd_usage(cmdtp);
+
+	dev = (int)simple_strtoul(argv[2], &ep, 16);
+	dev_desc = get_dev(argv[1], dev);
+	if (dev_desc == NULL) {
+		puts("\n** Invalid boot device **\n");
+		return 1;
+	}
+	if (*ep) {
+		if (*ep != ':') {
+			puts("\n** Invalid boot device, use `dev[:part]' **\n");
+			return 1;
+		}
+		part = (int)simple_strtoul(++ep, NULL, 16);
+	}
+	if (fat_register_device(dev_desc, part) != 0) {
+		printf("\n** Unable to use %s %d:%d for fatwrite **\n",
+			argv[1], dev, part);
+		return 1;
+	}
+
+	size = file_fat_rm(argv[3]);
+	if (size == -1) {
+		printf("\n** Unable to delete \"%s\" from %s %d:%d **\n",
+			argv[3], argv[1], dev, part);
+		return 1;
+	}
+
+	printf("%s delete\n", argv[3]);
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	fatrm,	4,	0,	do_fat_fsrm,
+	"rm file from a dos filesystem",
+	"<interface> <dev[:part]> <filename>\n"
+	"    - rm file 'filename' from 'dev' on 'interface'"
+);
 #endif
