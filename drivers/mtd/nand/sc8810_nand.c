@@ -1,4 +1,5 @@
 #include <config.h>
+#include <common.h>
 #include <asm/arch/bits.h>
 #include <asm/arch/chip_drv_config_extern.h>
 #include <asm/arch/regs_nfc.h>
@@ -62,6 +63,17 @@ struct sc8810_nand_page_oob {
 	int eccsize; /* per ??? bytes data for ecc calcuate once time */
 	int eccbit; /* ecc level per eccsize */
 };
+
+struct nand_spec_str{
+    u8          mid;
+    u8          did;
+    u8          id3;
+    u8          id4;
+    u8          id5;
+    struct sc8810_nand_timing_param timing_cfg;
+};
+
+static struct nand_spec_str *ptr_nand_spec = NULL;
 
 #define NF_MC_CMD_ID	(0xFD)
 #define NF_MC_ADDR_ID	(0xF1)
@@ -163,6 +175,7 @@ static struct nand_ecclayout _nand_oob_256 = {
 		.length = 150}}
 };
 
+#if 0
 struct sc8810_nand_timing_param nand_timing =
 {
 	50,
@@ -172,6 +185,7 @@ struct sc8810_nand_timing_param nand_timing =
 	40,
 	50
 };
+#endif
 
 /* only for special 4kpage or 8kpage nand flash, no 2kpage or normal 4kpage or normal 8kpage */
 static struct sc8810_nand_page_oob nand_config_table[] =
@@ -189,6 +203,27 @@ static unsigned char nand_id_replace_table[][10] =
     {0xad, 0xb3, 0x91, 0x11, 0x00, /*replace with*/ 0xec, 0xbc, 0x00, 0x66, 0x56},
     {0xad, 0xbc, 0x90, 0x11, 0x00, /*replace with*/ 0xec, 0xbc, 0x00, 0x66, 0x56}
 };
+
+
+static const struct nand_spec_str nand_spec_table[] = {
+    {0x2c, 0xb3, 0xd1, 0x55, 0x5a, {10, 10, 12, 10, 20, 50}},// MT29C8G96MAAFBACKD-5, MT29C4G96MAAHBACKD-5
+    {0x2c, 0xba, 0x80, 0x55, 0x50, {10, 10, 12, 10, 20, 50}},// MT29C2G48MAKLCJA-5 IT
+    {0x2c, 0xbc, 0x90, 0x55, 0x56, {10, 10, 12, 10, 20, 50}},// KTR0405AS-HHg1, KTR0403AS-HHg1, MT29C4G96MAZAPDJA-5 IT
+
+    {0x98, 0xac, 0x90, 0x15, 0x76, {12, 10, 12, 10, 20, 50}},// TYBC0A111392KC
+    {0x98, 0xbc, 0x90, 0x55, 0x76, {12, 10, 12, 10, 20, 50}},// TYBC0A111430KC, KSLCBBL1FB4G3A, KSLCBBL1FB2G3A
+
+    {0xad, 0xbc, 0x90, 0x11, 0x00, {25, 15, 25, 10, 20, 50}},// H9DA4VH4JJMMCR-4EMi, H9DA4VH2GJMMCR-4EM
+    {0xad, 0xbc, 0x90, 0x55, 0x54, {25, 15, 25, 10, 20, 50}},//
+
+    {0xec, 0xb3, 0x01, 0x66, 0x5a, {21, 10, 21, 10, 20, 50}},// KBY00U00VA-B450
+    {0xec, 0xbc, 0x00, 0x55, 0x54, {21, 10, 21, 10, 20, 50}},// KA100O015M-AJTT
+    {0xec, 0xbc, 0x00, 0x6a, 0x56, {21, 10, 21, 10, 20, 50}},// K524G2GACH-B050
+    {0xec, 0xbc, 0x01, 0x55, 0x48, {21, 15, 21, 10, 20, 50}},// KBY00N00HM-A448
+
+    {0, 0, 0, 0, 0, {0, 0, 0, 0, 0, 0}}
+};
+
 
 void read_chip_id(void);
 static void nfc_reg_write(unsigned int addr, unsigned int value)
@@ -443,6 +478,8 @@ static u32 sc8810_ecc_decode(struct sc8810_ecc_param *param)
 	}
 	return  ret;
 }
+
+#if 0
 static void set_nfc_param(unsigned long nfc_clk)
 {
 	u32 value = 0;
@@ -468,6 +505,53 @@ static void set_nfc_param(unsigned long nfc_clk)
 
 //	local_irq_restore(flags);	
 }
+#endif
+
+static struct nand_spec_str *get_nand_spec(u8 *nand_id)
+{
+    int i = 0;
+    while(nand_spec_table[i].mid != 0){
+        if (
+                (nand_id[0] == nand_spec_table[i].mid)
+                && (nand_id[1] == nand_spec_table[i].did)
+                && (nand_id[2] == nand_spec_table[i].id3)
+                && (nand_id[3] == nand_spec_table[i].id4)
+                && (nand_id[4] == nand_spec_table[i].id5)
+           ){
+                return &nand_spec_table[i];
+        }
+        i++;
+    }
+    return (struct nand_spec_str *)0;
+}
+
+static void set_nfc_timing(struct sc8810_nand_timing_param *nand_timing, u32 nfc_clk_MHz)
+{
+	u32 value = 0;
+	u32 cycles;
+	cycles = nand_timing->acs_time * nfc_clk_MHz / 1000 + 1;
+	value |= ((cycles & 0x1F) << NFC_ACS_OFFSET);
+
+	cycles = nand_timing->rwh_time * nfc_clk_MHz / 1000 + 2;
+	value |= ((cycles & 0x1F) << NFC_RWH_OFFSET);
+
+        cycles = nand_timing->rwl_time * nfc_clk_MHz / 1000 + 2;
+	value |= ((cycles & 0x3F) << NFC_RWL_OFFSET);
+
+        cycles = nand_timing->acr_time * nfc_clk_MHz / 1000 + 1;
+	value |= ((cycles & 0x1F) << NFC_ACR_OFFSET);
+
+        cycles = nand_timing->rr_time * nfc_clk_MHz / 1000 + 1;
+	value |= ((cycles & 0x1F) << NFC_RR_OFFSET);
+
+        cycles = nand_timing->ceh_time * nfc_clk_MHz / 1000 + 1;
+	value |= ((cycles & 0x3F) << NFC_CEH_OFFSET);
+
+        nfc_reg_write(NFC_TIMING, value);
+
+    debug("set_nfc_timing NFC_TIMING: %x ", nfc_reg_read(NFC_TIMING));
+}
+
 static void sc8810_nand_hw_init(void)
 {
 	int ik_cnt = 0;
@@ -478,8 +562,14 @@ static void sc8810_nand_hw_init(void)
 	REG_AHB_SOFT_RST &= ~BIT_5;
 
 	sc8810_nand_wp_en(0);
-	nfc_reg_write(NFC_TIMING, ((6 << 0) | (6 << 5) | (10 << 10) | (6 << 16) | (5 << 21) | (5 << 26)));	
-	nfc_reg_write(NFC_TIMING+0X4, 0xffffffff);//TIMEOUT
+
+    if (ptr_nand_spec != NULL)
+        set_nfc_timing(&ptr_nand_spec->timing_cfg, 153);
+    else
+        printf("ERROR! %s %d", __func__, __LINE__);
+	
+	//nfc_reg_write(NFC_TIMING, ((6 << 0) | (6 << 5) | (10 << 10) | (6 << 16) | (5 << 21) | (5 << 26)));	
+        nfc_reg_write(NFC_TIMING+0X4, 0xffffffff);//TIMEOUT
 	//set_nfc_param(0);//53MHz
 }
 static void sc8810_nand_read_buf(struct mtd_info *mtd, uint8_t *buf, int len)
@@ -581,7 +671,7 @@ static void correct_invalid_id(unsigned char *buf)
 		buf[3] = nand_id_replace_table[index][8];
 		buf[4] = nand_id_replace_table[index][9];
 
-		printf("nand id(%02x,%02x,%02x,%02x,%02x) is invalid, correct it by(%02x,%02x,%02x,%02x,%02x)\n",
+		debug("nand id(%02x,%02x,%02x,%02x,%02x) is invalid, correct it by(%02x,%02x,%02x,%02x,%02x)\n",
 			id[0],id[1],id[2],id[3],id[4], buf[0],buf[1],buf[2],buf[3],buf[4]);
 	}
 	else
@@ -830,6 +920,13 @@ int board_nand_init(struct nand_chip *this)
 
 	read_chip_id();
 	/* The 4th id byte is the important one */
+	ptr_nand_spec = get_nand_spec(io_wr_port);
+
+	if (ptr_nand_spec != NULL)
+		set_nfc_timing(&ptr_nand_spec->timing_cfg, 153);
+	else
+		printf("ERROR! %s %d", __func__, __LINE__);
+
 	extid = io_wr_port[3];
 	/* Calc pagesize */
 	mtdwritesize = 1024 << (extid & 0x3);
@@ -973,11 +1070,12 @@ void read_chip_id(void)
 	//memcpy(io_wr_port, (void *)NFC_MBUF_ADDR, 5);
 	correct_invalid_id(io_wr_port);
 
-#ifndef CONFIG_NAND_SPL
+#if DEBUG
+	printf("\r\n");
 	for (i = 0; i < 5; i++)
-                printf(" %02x ", io_wr_port[i]);
-	printf("\n");
-#endif
+        printf("read_chip_id NAND ID: %02x ", io_wr_port[i]);
+	printf("\r\n");
+#endif        
 }
 
 #ifndef CONFIG_NAND_SPL
