@@ -563,12 +563,7 @@ static void sc8810_nand_hw_init(void)
 
 	sc8810_nand_wp_en(0);
 
-    if (ptr_nand_spec != NULL)
-        set_nfc_timing(&ptr_nand_spec->timing_cfg, 153);
-    else
-        printf("ERROR! %s %d", __func__, __LINE__);
-	
-	//nfc_reg_write(NFC_TIMING, ((6 << 0) | (6 << 5) | (10 << 10) | (6 << 16) | (5 << 21) | (5 << 26)));	
+	nfc_reg_write(NFC_TIMING, ((6 << 0) | (6 << 5) | (10 << 10) | (6 << 16) | (5 << 21) | (5 << 26)));
         nfc_reg_write(NFC_TIMING+0X4, 0xffffffff);//TIMEOUT
 	//set_nfc_param(0);//53MHz
 }
