@@ -103,7 +103,9 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     ret = recovery_init();
     if(ret == 1){
         DBG("func: %s line: %d\n", __func__, __LINE__);
-        recovery_mode();
+        recovery_mode_without_update();
+    }else if(ret == 2){
+	    recovery_mode();
     }
 
     //find the power up trigger

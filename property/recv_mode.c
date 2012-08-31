@@ -108,7 +108,7 @@ int set_recovery_message(const struct recovery_message *in)
 	
 	size = pagesize*(MISC_COMMAND_PAGE + 1);
 
-	ret = nand_read_skip_bad(nand, offset, SCRATCH_ADDR, size);
+	ret = nand_read_skip_bad(nand, offset, size, (void *)SCRATCH_ADDR);
 	if(ret != 0){
 		dprintf("%s: nand read error %d\n", __FUNCTION__, ret);
 		return -1;
@@ -206,6 +206,15 @@ int recovery_init (void)
 		return 1;
 	}
 
+	if (!strcmp("boot-update",msg.command)) {
+		valid_command = 1;
+		strcpy(msg.command, "");	// to safe against multiple reboot into recovery
+		strcpy(msg.status, "OKAY");
+		set_recovery_message(&msg);	// send recovery message
+		// Boot in update mode
+		return 2;
+	}
+
 	if (!strcmp("update-radio",msg.command)) {
 		valid_command = 1;
 		strcpy(partition_name, "FOTA");
@@ -251,7 +260,7 @@ void nv_patch(char * addr, int size)
 
 #define BUF_ADDR 0x1000000
 #define SD_NV_NAME "nvitem.bin"
-#define NAND_NV_NAME "
+#define NAND_NV_NAME " "
 #define MODEM_PART "modem"
 #define SD_MODEM_NAME "modem.bin"
 #define DSP_PART "dsp"
@@ -313,6 +322,8 @@ void try_update_modem(void)
 		cmd_yaffs_mount(backupfixnvpoint);
 		cmd_yaffs_mwrite_file(backupfixnvfilename, BUF_ADDR, size);
 		cmd_yaffs_umount(backupfixnvpoint);
+
+		file_fat_rm(SD_NV_NAME);
 	}while(0);
 
 	do{
@@ -347,6 +358,8 @@ void try_update_modem(void)
 			printf("nand write bad %d\n", ret);
 			break;
 		}
+
+		file_fat_rm(SD_MODEM_NAME);
 	}while(0);
 
 	do{
@@ -381,6 +394,8 @@ void try_update_modem(void)
 			printf("nand write bad %d\n", ret);
 			break;
 		}
+
+		file_fat_rm(SD_DSP_NAME);
 	}while(0);
 
 	do{
@@ -415,6 +430,8 @@ void try_update_modem(void)
 			printf("nand write bad %d\n", ret);
 			break;
 		}
+
+		file_fat_rm(SD_VM_NAME);
 	}while(0);
 
 	printf("update done\n");
@@ -427,10 +444,16 @@ void try_update_modem(void)
 void recovery_mode(void)
 {
     printf("%s\n", __func__);
-	try_update_modem();
+    try_update_modem(); //update img from mmc
     vlx_nand_boot(RECOVERY_PART, NULL, BACKLIGHT_ON);
 }
 
+void recovery_mode_without_update(void)
+{
+    printf("%s\n", __func__);
+   //try_update_modem();//do not update img from mmc
+    vlx_nand_boot(RECOVERY_PART, NULL, BACKLIGHT_ON);
+}
 void update_mode(void)
 {
     printf("%s\n", __func__);
