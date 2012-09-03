@@ -267,8 +267,13 @@
 #ifdef CONFIG_LCD
 #define CONFIG_SPLASH_SCREEN
 #define LCD_BPP LCD_COLOR16
+#if defined(CONFIG_SP6820G_RTL_HL)   // HVGA 
+#define CONFIG_LCD_HVGA   1
+//#define CONFIG_LCD_WVGA   1
+#else
 //#define CONFIG_LCD_HVGA   1
 #define CONFIG_LCD_WVGA   1
+#endif
 //#define CONFIG_LCD_INFO
 //#define LCD_TEST_PATTERN
 //#define CONFIG_LCD_LOGO
