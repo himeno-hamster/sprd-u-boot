@@ -17,6 +17,10 @@ SC6800     -gtp -cpu ARM926EJ-S -D_REF_SC6800_ -D_BL_NF_SC6800_
 #include <asm/arch/sdram.h>
 #include <asm/arch/chip.h>
 
+#include <asm/arch/adi_hal_internal.h>
+#include <asm/arch/regs_ana.h>
+#include <asm/arch/regs_ahb.h>
+
 EMC_PARAM_T s_emc_config = {0};
 
 /*lint -e760 -e547 ,because pclint error e63 e26 with REG32()*/
@@ -1734,9 +1738,36 @@ void sc8810_emc_Init()
 	ddr_init();
 }
 
+static const int dcdc_ctl_vol[] = {
+	650, 700, 800, 900, 1000, 1100, 1200, 1300, 1400,
+};
+
+PUBLIC void dcdc_calibrate(int chan, int to_vol)
+{
+	int i;
+	uint32 cal_vol, ctl_vol = to_vol;
+	for (i = 0; i < ARRAY_SIZE(dcdc_ctl_vol) - 1; i++) {
+		if (ctl_vol < dcdc_ctl_vol[i + 1])
+			break;
+	}
+	if (i >= ARRAY_SIZE(dcdc_ctl_vol) - 1)
+		goto exit;
+
+	cal_vol = ((ctl_vol - dcdc_ctl_vol[i]) * 32 / 100) % 32;
+	ANA_REG_SET(ANA_DCDCARM_CTL_CAL, cal_vol | (0x1f - cal_vol) << 8);
+	ANA_REG_SET(ANA_DCDCARM_CTL, i | (0x07 - i) << 4);
+
+exit:
+	return ;
+}
 PUBLIC void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 {
 	volatile uint32 i = 0;
+
+	if (REG32(0x209003fc) == CHIP_ID_8810S) { /*SMIC CHIP*/
+		dcdc_calibrate(0, 1300);//vddarm 1.30v, vddcore 1.1v
+	}
+
 	EMC_PARAM_T_PTR emc_ptr = EMC_GetPara();
 	
 	s_emc_config.arm_clk = emc_ptr->arm_clk/1000000/4;
