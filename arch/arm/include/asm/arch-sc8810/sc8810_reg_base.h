@@ -146,7 +146,8 @@ extern   "C"
 #define ADC_BASE                        0x82000300
 #define ANA_INTC_BASE                   0x82000380
 #define ANA_REG_BASE                    0x82000600
-#define ANA_GPIO_BASE                   0x82000600
+#define ANA_GPIO_BASE                   0x82000400
+#define ANA_EIC_BASE                    0x82000700
 #define ARM_VBC_BASE                    0x82003000
 #define ARM_UART0_BASE                  0x83000000
 #define ARM_UART1_BASE                  0x84000000
@@ -159,6 +160,7 @@ extern   "C"
 #define PWM_BASE                        0x88000000
 #define EFUSE_BASE                      0x89000000  //efuse 
 #define GPIO_BASE                       0x8A000000
+#define EIC_BASE                        0x8A001000
 #define GREG_BASE                       0x8B000000  //Global Registers
 #define PIN_CTL_BASE                    0x8C000000
 #define ANA_PIN_CTL_BASE                0x82000180

@@ -47,12 +47,28 @@ static __inline int __get_gpio_die( u32 gpio)
 }
 static __inline u32 __get_base_addr (u32 gpio_id)
 {
-    if (gpio_id >= NR_D_DIE_GPIOS)
-    {
-       return ( (gpio_id - NR_D_DIE_GPIOS) >>4) * 0x80 + ANA_GPIO_BASE;
-    }
+	if (gpio_id > NR_D_DIE_GPIOS)
+	{
+		if(gpio_id < 176)
+		{
+			return ANA_EIC_BASE;
+		}
+		else if (gpio_id < 176 + 16)
+		{
+			return ANA_GPIO_BASE + 0x80;
+		}
+		else
+		{
+			return ANA_GPIO_BASE + 0xc0;
+		}
+	}
+	else if(gpio_id < 16)
+	{
+		return EIC_BASE;
+	}
 
-    return (gpio_id>>4) * 0x80 + (u32) GPIO_BASE;
+	return ((gpio_id>>4) -1) * 0x80 + (u32) GPIO_BASE;
+
 }
 
 static __inline u32 __get_bit_num (u32 gpio_id)
