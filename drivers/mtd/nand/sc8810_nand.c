@@ -536,7 +536,7 @@ static void set_nfc_timing(struct sc8810_nand_timing_param *nand_timing, u32 nfc
 	cycles = nand_timing->acs_time * nfc_clk_MHz / 1000 + 1;
 	value |= ((cycles & 0x1F) << NFC_ACS_OFFSET);
 
-	cycles = nand_timing->rwh_time * nfc_clk_MHz / 1000 + 1;
+	cycles = nand_timing->rwh_time * nfc_clk_MHz / 1000 + 2;
 	value |= ((cycles & 0x1F) << NFC_RWH_OFFSET);
 
         cycles = (nand_timing->rwl_time+DELAY_RWL) * nfc_clk_MHz / 1000 + 1;
