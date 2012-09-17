@@ -954,6 +954,7 @@ int board_nand_init(struct nand_chip *this)
 	return 0;
 }
 
+#ifndef CONFIG_NAND_SPL
 static unsigned long nfc_read_status(void)
 {
 	unsigned long status = 0;
@@ -1055,6 +1056,7 @@ static unsigned long nand_ctl_erase_block(int blk, int erasesize, int writesize)
 	status = nfc_read_status();
 	return status;
 }
+#endif
 
 void read_chip_id(void)
 {
@@ -1092,6 +1094,7 @@ void McuReadNandType(unsigned char *array)
 }
 #endif
 
+#ifndef CONFIG_NAND_SPL
 void nand_scan_patition(int blocks, int erasesize, int writesize)
 {
 	int blk;
@@ -1111,4 +1114,4 @@ void nand_scan_patition(int blocks, int erasesize, int writesize)
 		}
 	}
 }
-
+#endif

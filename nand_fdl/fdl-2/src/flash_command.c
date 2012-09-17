@@ -741,6 +741,14 @@ int FDL2_DataStart (PACKET_T *packet, void *arg)
 	if (NAND_SUCCESS != ret)
         	break;
 
+	if((strcmp(phy_partition.name, "spl") == 0)&&(size > 0x4200)){
+		printf("\n\nspl img size is  bigger than 16.5k \n");
+		ret = NAND_INVALID_SIZE;
+	}
+
+	if (NAND_SUCCESS != ret)
+        	break;
+
 	if (strcmp(phy_partition.name, "fixnv") == 0)
 		ret = get_nand_pageoob(&nand_page_oob_info);
 	else
