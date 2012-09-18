@@ -12,7 +12,7 @@
 #include "sc_reg.h"
 
 extern  const unsigned char FDL2_signature[][24];
-int sprd_clean_rtc(void);
+extern int sprd_clean_rtc(void);
 
 static void error (void)
 {
@@ -62,9 +62,9 @@ int main(void)
 	mem_malloc_init (_bss_end, CONFIG_SYS_MALLOC_LEN);	   
 #endif	   
 	   timer_init();
-#ifndef CONFIG_SC8810
+
        sprd_clean_rtc();
-#endif
+
 
 //        FDL_SendAckPacket (BSL_REP_ACK);
 	do {

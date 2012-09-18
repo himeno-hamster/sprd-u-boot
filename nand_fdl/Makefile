@@ -64,7 +64,7 @@ ifndef CONFIG_SC8810
 CPU_LIB = $(TOPDIR)/arch/arm/cpu/arm926ejs/sc8800g/timer.o $(TOPDIR)/arch/arm/cpu/arm926ejs/sc8800g/chip_cfg.o $(TOPDIR)/arch/arm/cpu/arm926ejs/sc8800g/chip_phy_v3.o $(TOPDIR)/arch/arm/cpu/arm926ejs/sc8800g/boot_mode.o $(TOPDIR)/arch/arm/cpu/arm926ejs/sc8800g/watchdog_hal.o $(TOPDIR)/arch/arm/cpu/arm926ejs/sc8800g/watchdog_phy_v3.o $(TOPDIR)/arch/arm/cpu/arm926ejs/sc8800g/adi_drv.o $(TOPDIR)/nand_spl/board/$(BOARDDIR)/mmu.o $(TOPDIR)/nand_spl/board/$(BOARDDIR)/mmu_asm.o $(TOPDIR)/arch/arm/cpu/arm926ejs/sc8800g/rtc-sprd.o
 else
 
-CPU_LIB = $(TOPDIR)/arch/arm/cpu/armv7/sc8810/timer.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/chip_cfg.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/chip_phy_v3.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/boot_mode.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/watchdog_hal.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/watchdog_phy_v3.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/adi_drv.o $(TOPDIR)/nand_spl/board/$(BOARDDIR)/mmu.o $(TOPDIR)/nand_spl/board/$(BOARDDIR)/mmu_asm.o 
+CPU_LIB = $(TOPDIR)/arch/arm/cpu/armv7/sc8810/timer.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/chip_cfg.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/chip_phy_v3.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/boot_mode.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/watchdog_hal.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/watchdog_phy_v3.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/adi_drv.o $(TOPDIR)/nand_spl/board/$(BOARDDIR)/mmu.o $(TOPDIR)/nand_spl/board/$(BOARDDIR)/mmu_asm.o $(TOPDIR)/arch/arm/cpu/armv7/sc8810/rtc-sprd.o
 endif
 
 GENERIC_LIB = $(TOPDIR)/lib/libgeneric.o
