@@ -825,6 +825,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		char *factorymodepoint = "/productinfo";
 		char *factorymodefilename = "/productinfo/factorymode.file";
 		char *usb_serialfilename = "/productinfo/usb_s.ini";
+		char *tpcalcoefilename = "/productinfo/tpcalcoef";  
 		cmd_yaffs_mount(factorymodepoint);
 		ret = cmd_yaffs_ls_chk(usb_serialfilename );
 		if (ret == -1) {
@@ -847,6 +848,21 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		} else {
 			str_len = strlen(buf);
 			sprintf(&buf[str_len], " factory");
+		}
+		ret = cmd_yaffs_ls_chk(tpcalcoefilename );
+		if (ret == -1) {
+			/* no tpcalcoef file */
+		} else {
+			str_len = strlen(buf);
+			sprintf(&buf[str_len], " cal_coef=");
+			str_len = strlen(buf);
+			cmd_yaffs_mread_file(tpcalcoefilename, &buf[str_len]);
+			while((buf[str_len] != '\n') && (buf[str_len] != '\r'))//\r is mac file; \n is unix/linux file; \n\r is windows file;
+			{
+				str_len++;
+			}
+			buf[str_len] = '\0';
+			buf[str_len+1] = '\0';
 		}
 		cmd_yaffs_umount(factorymodepoint);
 	}
