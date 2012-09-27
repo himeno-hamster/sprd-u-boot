@@ -4,6 +4,7 @@
 #include <asm/arch/chip_drv_config_extern.h>
 #include <asm/arch/regs_nfc.h>
 #include <asm/arch/regs_cpc.h>
+#include <asm/arch/sdram_cfg.h>
 #include <nand.h>
 #include <asm/io.h>
 #include <linux/mtd/nand.h>
@@ -204,6 +205,11 @@ static unsigned char nand_id_replace_table[][10] =
     {0xad, 0xbc, 0x90, 0x11, 0x00, /*replace with*/ 0xec, 0xbc, 0x00, 0x66, 0x56}
 };
 
+
+#ifdef CONFIG_NAND_SPL
+/* emc config */
+extern struct sc8810_ddr_reset_para  * ddr_config_table;
+#endif
 
 static const struct nand_spec_str nand_spec_table[] = {
     {0x2c, 0xb3, 0xd1, 0x55, 0x5a, {10, 10, 12, 10, 20, 50}},// MT29C8G96MAAFBACKD-5, MT29C4G96MAAHBACKD-5
@@ -817,10 +823,88 @@ static int sc8810_nand_correct_data(struct mtd_info *mtd, uint8_t *dat,
 	return ret;	
 }
 
+static void set_emc_pad(u32 clk_drv, u32 ctl_drv, u32 dat_drv, u32 dqs_drv)
+{
+	unsigned int i = 0;
+	REG32(PINMAP_REG_BASE + 0x27C) = clk_drv;
+	REG32(PINMAP_REG_BASE + 0x280) = clk_drv;
+	for(i = 0; i < 15; i++)
+	{
+		REG32(PINMAP_REG_BASE + 0x19c + i * 4) = ctl_drv;
+	}
+	REG32(PINMAP_REG_BASE + 0x1d8) = ctl_drv;
+
+	for(i = 0; i < 10; i++)
+	{
+		REG32(PINMAP_REG_BASE + 0x284 + i * 4) = ctl_drv;
+	}
+
+	for(i = 0; i < 8; i++)
+	{
+		REG32(PINMAP_REG_BASE + 0x1DC + i * 4) = dat_drv;
+		REG32(PINMAP_REG_BASE + 0x204 + i * 4) = dat_drv;
+		REG32(PINMAP_REG_BASE + 0x22C + i * 4) = dat_drv;
+		REG32(PINMAP_REG_BASE + 0x254 + i * 4) = dat_drv;
+	}
+	//dqs
+	REG32(PINMAP_REG_BASE + 0x200) = dqs_drv;
+	REG32(PINMAP_REG_BASE + 0x228) = dqs_drv;
+	REG32(PINMAP_REG_BASE + 0x250) = dqs_drv;
+	REG32(PINMAP_REG_BASE + 0x278) = dqs_drv;
+
+
+	//dqm
+	REG32(PINMAP_REG_BASE + 0x1FC) = dat_drv;
+	REG32(PINMAP_REG_BASE + 0x224) = dat_drv;
+	REG32(PINMAP_REG_BASE + 0x24C) = dat_drv;
+	REG32(PINMAP_REG_BASE + 0x274) = dat_drv;
+	
+	// CKE OUTPUT in sleep
+	REG32(PINMAP_REG_BASE + 0x1d8) |= 0x1;
+	REG32(PINMAP_REG_BASE + 0x2a8) |= 0x1;
+}
+
+
 void nand_spl_hardware_config(struct nand_chip *this, u8 id[5])
 {
 	int index;
 	int array;
+
+#ifdef CONFIG_NAND_SPL
+ // ddr_config_table
+	u32 emc_para[7];
+	u32 clkwr_dll;
+   u32 i;
+
+
+	array = sizeof(ddr_config_table) / sizeof(struct sc8810_ddr_reset_para);
+	for (index = 0; index < array; index ++) {
+		if ((ddr_config_table[index].m_c == id[0]) && (ddr_config_table[index].d_c == id[1]) && (ddr_config_table[index].cyc_3 == id[2]) && (ddr_config_table[index].cyc_4 == id[3]) && (ddr_config_table[index].cyc_5 == id[4]))
+			break;
+	}
+
+	if (index < array) {
+		emc_para[0] = (ddr_config_table[index].dqs_drv << 8);
+		emc_para[1] = (ddr_config_table[index].dat_drv << 8);
+		emc_para[2] = (ddr_config_table[index].ctl_drv << 8);
+		emc_para[3] = (ddr_config_table[index].clk_drv << 8);
+		emc_para[4] = (ddr_config_table[index].clk_wr);
+		emc_para[5] = (ddr_config_table[index].read_value & 0xff);
+		emc_para[6] = (ddr_config_table[index].emc_clk);
+
+		//set DPLL of EMC to 400MHz
+		i = REG32(0x8b000040);
+		i &= ~ 0x7ff;
+		i |= emc_para[6]; //emc_clk;
+		REG32(0x8b000040) = i;
+
+		//set EMC dll
+		clkwr_dll = (64*emc_para[4])/(emc_para[5]/2);
+		REG32(0x2000010C) = (0x8000|clkwr_dll);
+
+		set_emc_pad(emc_para[3], emc_para[2], emc_para[1], emc_para[0]);
+	}
+#endif
 	
 	array = sizeof(nand_config_table) / sizeof(struct sc8810_nand_page_oob);
 	for (index = 0; index < array; index ++) {

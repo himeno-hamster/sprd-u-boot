@@ -1193,6 +1193,30 @@ LOCAL uint32 __row_to_mode(uint32 row)
     return row_mode;
 }
 
+LOCAL uint32 __cs_to_map(uint32 haddr)
+{
+    uint32 cs_mode;
+    switch(haddr)
+    {
+        case 26:
+            cs_mode = 4;
+            break;
+        case 27:
+            cs_mode = 5;
+            break;
+        case 28:
+            cs_mode = 6;
+            break;
+        case 29:
+            cs_mode = 7;
+            break;
+        default:
+            for( ; ; ) {}
+            //break;          
+    }
+    return cs_mode;
+}
+
 LOCAL BOOLEAN __is_rw_ok(uint32 addr, uint32 val)
 {
     volatile uint32 i;
@@ -1219,6 +1243,7 @@ LOCAL uint32 __col_row_detect(BOOLEAN is_col, SDRAM_CFG_INFO_T_PTR pCfg)
     uint32 num, max, min;
     uint32 offset, addr;
     uint32 width_offset = (DATA_WIDTH_16 == pCfg->data_width)?(WIDTH16_OFFSET):(WIDTH32_OFFSET);
+	 uint32 cs_mode;
 
     if(is_col)
     {
@@ -1242,6 +1267,10 @@ LOCAL uint32 __col_row_detect(BOOLEAN is_col, SDRAM_CFG_INFO_T_PTR pCfg)
         else
         {
             offset = num + BANK_OFFSET + (uint32)s_colum +  width_offset -  BYTE_OFFSET;    // row+bank+colum+width-byteoff
+				cs_mode = __cs_to_map(offset);
+				//set cs map to HADDR[offset]
+				REG32(0x20000000) &= ~(0x7);
+				REG32(0x20000000) |= (cs_mode);
         }
         addr   = (1 << (offset - 1)) + ZERO_ADDR;
         if(__is_rw_ok(addr, MEM_REF_DATA1))
@@ -1620,9 +1649,10 @@ void ddr_init()
 	for(i =0 ; i < 1000; i++);
 */
 	//set cs map to 2G bit
-	REG32(0x20000000) &= ~(0x7);
+//	REG32(0x20000000) &= ~(0x7);
 //	REG32(0x20000000) |= (0x7);
-	REG32(0x20000000) |= (s_emc_config.cs_pos);
+//	REG32(0x20000000) |= (s_emc_config.cs_pos);
+
 	//REG32(0x20000010) = 0x223;
 	//REG32(0x20000014) = 0x223;
 

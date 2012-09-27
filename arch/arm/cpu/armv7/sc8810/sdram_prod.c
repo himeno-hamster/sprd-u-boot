@@ -114,6 +114,7 @@
  **                         Local Variables                                   *
  **---------------------------------------------------------------------------*/
 #ifdef CONFIG_SP8810 // for 8810&6820
+//if your emc_parm is different for kinds of MCP, just set the emc_parm in the u-boot/board/spreadtrum/sp8810/ddr_para.c again
 LOCAL CONST EMC_PARAM_T s_emc_parm = 
 {
     // clock
@@ -133,6 +134,7 @@ LOCAL CONST EMC_PARAM_T s_emc_parm =
 	//set cs map to external memory
     7 ,                //set cs map to 2G bit
 };
+
 #else  // for openphone
 LOCAL CONST EMC_PARAM_T s_emc_parm = 
 {
