@@ -13,15 +13,8 @@
 #include <boot_mode.h>
 #include <malloc.h>
 
-#include <asm/io.h>
-#include <asm/arch/analog_reg_v3.h>
-#include <asm/arch/adi_hal_internal.h>
-
 unsigned char raw_header[8192];
 static int flash_page_size = 0;
-
-typedef enum{false, true} bool;
-bool normal_shutdown = true;
 
 #define VMJALUNA_PART "vmjaluna"
 #define MODEM_PART "modem"
@@ -152,8 +145,6 @@ extern void cmd_yaffs_mount(char *mp);
 extern void cmd_yaffs_umount(char *mp);
 extern int cmd_yaffs_ls_chk(const char *dirfilename);
 extern void cmd_yaffs_mread_file(char *fn, unsigned char *addr);
-extern void cmd_yaffs_mwrite_file(char *fn, char *addr, int size);
-extern void cmd_yaffs_rm(const char *path);
 void set_vibrator(int on);
 void vibrator_hw_init(void);
 void MMU_InvalideICACHEALL(void);
@@ -297,18 +288,6 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		return;
 	}
 
-
-#ifdef CONFIG_LCD
-	extern int drv_lcd_init(void);
-	if(normal_shutdown)
-		drv_lcd_init();
-	else{
-		//while(1){};
-      set_backlight(255);
-	}
-#endif
-
-
 #ifdef CONFIG_SPLASH_SCREEN
 #define SPLASH_PART "boot_logo"
 	ret = find_dev_and_part(SPLASH_PART, &dev, &pnum, &part);
@@ -345,15 +324,13 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #ifdef CONFIG_SC8810
 	    Dcache_CleanRegion((unsigned int)(lcd_base), size);//Size is to large.
 #endif
-		if(normal_shutdown){ 
-	    	lcd_display();
-	    	set_backlight(255);	
-       	set_vibrator(0);
-	    	udelay(1);	//zhuwenjian need a delay to effect register
-		}
+	    lcd_display();
+	    set_backlight(255);
+       	    //printf("aftersetbacklight\n");
+	    udelay(1);	//zhuwenjian need a delay to effect register
     }
 #endif
-//    set_vibrator(0);
+    set_vibrator(0);
 
 #if !(BOOT_NATIVE_LINUX)
 	/*int good_blknum, bad_blknum;
@@ -833,41 +810,10 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
             str_len = strlen(buf);
             sprintf(&buf[str_len], " %s", cmdline);
     }
-
-	char *factorymodepoint = "/productinfo";
 	{
 		//add lcd id
 		extern uint32_t load_lcd_id_to_kernel();
-		
-		char *file_lcdid = "/productinfo/lcdid.file";
-		uint32_t lcd_id = 0;
-		char lcdid_buf[8]={0};
-		char lcdid_buf1[8]={0};
-
-
-		cmd_yaffs_mount(factorymodepoint);
-		if (normal_shutdown){
-			lcd_id = load_lcd_id_to_kernel();
-			sprintf(lcdid_buf,"%x",lcd_id);
-			printf("lcdid_buf = 0x%s\n",lcdid_buf);
-			cmd_yaffs_mwrite_file(file_lcdid,(char *)lcdid_buf,strlen(lcdid_buf)+4);
-			ret = cmd_yaffs_ls_chk(file_lcdid);
-			if(ret == -1)
-				printf("can't find lcdid.file\n");
-			cmd_yaffs_mread_file(file_lcdid, (unsigned char *)lcdid_buf1);
-			printf("lcdid_buf1 = 0x%s\n",lcdid_buf1);
-		}else{
-			cmd_yaffs_mread_file(file_lcdid, (unsigned char *)lcdid_buf);
-			printf("lcdid_buf--abnormal = 0x%s\n",lcdid_buf);
-			lcd_id = simple_strtol(lcdid_buf, NULL, 16);
-		}
-		cmd_yaffs_umount(factorymodepoint);
-
-		if(!normal_shutdown){
-			str_len = strlen(buf);
-			sprintf(&buf[str_len], " abnormal");
-		}
-
+		uint32_t lcd_id = load_lcd_id_to_kernel();
 
 		str_len = strlen(buf);
 		sprintf(&buf[str_len], " video=sprdfb:fb0_id=0x%x,fb1_id=0x%x",
@@ -876,7 +822,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 	}
 	{
-		//char *factorymodepoint = "/productinfo";
+		char *factorymodepoint = "/productinfo";
 		char *factorymodefilename = "/productinfo/factorymode.file";
 		char *usb_serialfilename = "/productinfo/usb_s.ini";
 		char *tpcalcoefilename = "/productinfo/tpcalcoef";  
@@ -965,28 +911,7 @@ void normal_mode(void)
     //MMU_Init(CONFIG_MMU_TABLE_ADDR);
 	vibrator_hw_init();
 #endif
-
-	unsigned rst_mode= 0;
-     
-   rst_mode = ANA_REG_GET(ANA_HWRST_STATUS);
-//	printf("ANA_REG_GET(ANA_HWRST_STATUS) = 0x%16x \n",ANA_REG_GET(ANA_HWRST_STATUS));
-	if((!rst_mode) || !(rst_mode &(BIT_9))){
-		normal_shutdown = true;
-	}else {
-		normal_shutdown = false;
-	}
-
-//	printf("__raw_readl(ANA_HWRST_RTC) = 0x%16x \n",ANA_REG_GET(ANA_HWRST_RTC));
-
-	if(!(normal_shutdown)&&!(ANA_REG_GET(ANA_HWRST_RTC) & (0x0100))){
-		normal_shutdown = true;
-		printf("cab plug out--\n");
-	}
-
-	if(normal_shutdown){
-		set_vibrator(1);
-	}
-    
+    set_vibrator(1);
 #if BOOT_NATIVE_LINUX
     vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS, BACKLIGHT_ON);
 #else
