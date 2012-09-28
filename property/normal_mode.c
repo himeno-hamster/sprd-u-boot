@@ -304,7 +304,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		drv_lcd_init();
 	else{
 		//while(1){};
-      set_backlight(100);
+      set_backlight(255);
 	}
 #endif
 
