@@ -30,7 +30,7 @@ AFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL
 CFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL -g
 
 SOBJS	= start.o _udivsi3.o _divsi3.o _umodsi3.o cpu_spec.o mmu_asm.o
-COBJS	= nand_boot.o sc8810_nand.o lowlevel_init.o div0.o adi_drv.o sdram.o mmu.o sdram_prod.o timer.o
+COBJS	= nand_boot.o sc8810_nand.o lowlevel_init.o div0.o adi_drv.o sdram.o mmu.o sdram_prod.o timer.o ddr_para.o
 
 #SRCS	:= $(SRCTREE)/nand_spl/nand_boot_fsl_nfc.c
 SRCS	:= $(SRCTREE)/arch/arm/cpu/armv7/start.S
@@ -89,6 +89,9 @@ $(obj)%.o:	$(SRCTREE)/arch/arm/cpu/armv7/sc8810/%.S
 	$(CC) $(AFLAGS) -mlittle-endian -c -o $@ $<
 
 $(obj)%.o:	$(SRCTREE)/drivers/serial/%.c
+	$(CC) $(CFLAGS) -mlittle-endian -c -o $@ $<
+
+$(obj)%.o:	$(SRCTREE)/board/$(BOARDDIR)/%.c
 	$(CC) $(CFLAGS) -mlittle-endian -c -o $@ $<
 # defines $(obj).depend target
 include $(SRCTREE)/rules.mk

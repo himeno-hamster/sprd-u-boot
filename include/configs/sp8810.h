@@ -287,6 +287,13 @@
 #define CONSOLE_COLOR_CYAN 0x001f
 #endif
 #endif // CONFIG_LCD
+
+
+#ifdef CONFIG_NAND_SPL
+/* DDR para adapt*/
+#define CONFIG_DDR_PARA   1
+#endif
+
 /*
  * MMC definition
  */
