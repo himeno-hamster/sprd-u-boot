@@ -26,7 +26,9 @@ static int flash_page_size = 0;
 #ifdef CONFIG_SP8810W
 #define FIRMWARE_PART "firmware"
 #endif
+#define SIMLOCK_PART "simlock"
 
+#define SIMLOCK_SIZE		1024
 #define DSP_SIZE		(3968 * 1024)
 #define VMJALUNA_SIZE		(300 * 1024)
 
@@ -56,6 +58,7 @@ static int flash_page_size = 0;
 #define FIRMWARE_ADR		0x01600000
 #else
 #define PRODUCTINFO_ADR		0x00490000
+#define SIMLOCK_ADR		0x4fe000
 #endif
 
 #if BOOT_NATIVE_LINUX
@@ -757,6 +760,30 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	ret = nand_read_offset_ret(nand, off, &size, (void*)FIRMWARE_ADR, &off);
 	if(ret != 0) {
 		printf("firmware nand read error %d\n", ret);
+		return;
+	}
+#else
+   /* SIMLOCK_PART */
+	printf("Reading simlock to 0x%08x\n", SIMLOCK_ADR);
+	ret = find_dev_and_part(SIMLOCK_PART, &dev, &pnum, &part);
+	if (ret) {
+		printf("No partition named %s\n", SIMLOCK_PART);
+		return;
+	} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
+		printf("Partition %s not a NAND device\n", SIMLOCK_PART);
+		return;
+	}
+
+	off = part->offset;
+	nand = &nand_info[dev->id->num];
+	size = (SIMLOCK_SIZE +(flash_page_size - 1)) & (~(flash_page_size - 1));
+	if(size <= 0) {
+		printf("simlock image should not be zero\n");
+		return;
+	}
+	ret = nand_read_offset_ret(nand, off, &size, (void*)SIMLOCK_ADR, &off);
+	if(ret != 0) {
+		printf("simlock nand read error %d\n", ret);
 		return;
 	}
 #endif
