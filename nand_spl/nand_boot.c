@@ -23,11 +23,41 @@
 #include <nand.h>
 #include <asm/io.h>
 
+#include <asm/arch/adi_hal_internal.h>
+#include <asm/arch/analog_reg_v3.h>
+
+//
+#include <common.h>
+#include <lcd.h>
+#include <asm/io.h>
+#include <asm/errno.h>
+
+#include <asm/arch/sc8810_reg_base.h>
+#include <asm/arch/sc8810_lcd.h>
+#include <asm/arch/lcdc_reg_v3.h>
+#include <asm/arch/lcm_reg_v3.h>
+
+#include <asm/arch/mfp.h>
+#include <asm/arch/adi_hal_internal.h>
+#include <asm/arch/regs_ana.h>
+#include <asm/arch/analog_reg_v3.h>
+
+#include <asm/arch/sc8810_reg_ahb.h>
+#include <asm/arch/sc8810_reg_global.h>
+
+#include <asm/arch/gpio_drvapi.h>
+
+#include <asm/arch/regs_global.h>
+#include <asm/arch/regs_cpc.h>
+//
+
 #define CONFIG_SYS_NAND_READ_DELAY \
 	{ volatile int dummy; int i; for (i=0; i<10000; i++) dummy = i; }
 
 #define CONFIG_SYS_NAND_BAD_BLOCK_POS	0
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE	1
+#define REG32(x)   (*((volatile uint32 *)(x)))
+#define LCD_RESUME 0xa5
 
 static int pageinblock = 0;
 
@@ -251,6 +281,17 @@ void board_init_f (ulong bootflag)
 }
 #endif
 
+static void __raw_bits_and(unsigned int v, unsigned int a)
+{
+        __raw_writel((__raw_readl(a) & v), a);
+
+}
+
+static void __raw_bits_or(unsigned int v, unsigned int a)
+{
+        __raw_writel((__raw_readl(a) | v), a);
+}
+
 /*
  * The main entry for NAND booting. It's necessary that SDRAM is already
  * configured and available since this code loads the main U-Boot image
@@ -261,7 +302,28 @@ void nand_boot(void)
 	struct nand_chip nand_chip;
 	nand_info_t nand_info;
 	int ret;
+	unsigned rst_mode= 0;
 	__attribute__((noreturn)) void (*uboot)(void);
+
+#ifndef CONFIG_ENG
+	rst_mode = ANA_REG_GET(ANA_HWRST_STATUS);
+   if(rst_mode){
+//		if((ANA_REG_GET(ANA_HWRST_RTC) & (0x0100)) && (rst_mode &(BIT_9)) && (rst_mode &(BIT_10))){
+		if((ANA_REG_GET(ANA_HWRST_RTC) & (0x0100)) && (rst_mode &(BIT_9)) && (REG32(0x40007ff0) == LCD_RESUME)){
+			__raw_bits_or(CLK_PWM0_EN, GR_CLK_EN);
+			__raw_bits_or(CLK_PWM0_SEL, GR_CLK_EN);
+			__raw_bits_or(PIN_PWM0_MOD_VALUE, CPC_LCD_PWM_REG);
+			__raw_writel(LCD_PWM_PRESCALE_VALUE, SPRD_PWM0_PRESCALE);
+			__raw_writel(0xFFF, SPRD_PWM0_CNT);
+			__raw_writel(PWM_REG_MSK_VALUE, SPRD_PWM0_PAT_LOW);
+			__raw_writel(PWM_REG_MSK_VALUE, SPRD_PWM0_PAT_HIG);
+
+			__raw_bits_or(LCD_PWM0_EN, SPRD_PWM0_PRESCALE);
+		}
+	}
+
+#endif
+
 #if 0
 	unsigned int i = 0;
 	for(i=0xffffffff;i>0;)

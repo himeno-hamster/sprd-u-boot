@@ -58,9 +58,11 @@ void fastboot_mode(void)
 		printf("function: %s nand read error %d\n", __FUNCTION__, ret);
 		return;
 	}
+	 extern int drv_lcd_init(void);
     extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
     extern lcd_display(void);
     extern void set_backlight(uint32_t value);
+	 drv_lcd_init();
     lcd_display_bitmap((ulong)bmp_img, 0, 0);
     lcd_printf("   fastboot mode");
     lcd_display();

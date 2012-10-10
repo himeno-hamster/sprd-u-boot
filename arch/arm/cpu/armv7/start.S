@@ -33,8 +33,8 @@
 #include <config.h>
 #include <common.h>
 #include <version.h>
-#define SVC_STACK_TEMP 0x40008000
-
+/*#define SVC_STACK_TEMP 0x40008000*/
+#define SVC_STACK_TEMP 0x40007f00
 .globl _start
 _start: b	reset
 #ifdef CONFIG_PRELOADER

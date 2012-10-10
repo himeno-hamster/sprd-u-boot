@@ -200,6 +200,11 @@ ifeq ($(AUTOBOOT_FLAG), true)
 CFLAGS += -DCONFIG_AUTOBOOT
 endif
 
+ifeq ($(BUILD_VARIANT), eng)
+CFLAGS += -DCONFIG_ENG
+endif
+
+
 # $(CPPFLAGS) sets -g, which causes gcc to pass a suitable -g<format>
 # option to the assembler.
 AFLAGS_DEBUG :=
