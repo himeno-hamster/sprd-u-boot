@@ -338,6 +338,8 @@ static int nand_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 	struct nand_chip *chip = mtd->priv;
 	u16 bad;
 
+
+	printf("nand_block_bad read: chip->bbt=0x%x, chip->options=0x%x!\n", chip->bbt, chip->options);
 	page = (int)(ofs >> chip->page_shift) & chip->pagemask;
 
 	if (getchip) {
@@ -380,12 +382,14 @@ static int nand_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 static int nand_default_block_markbad(struct mtd_info *mtd, loff_t ofs)
 {
 	struct nand_chip *chip = mtd->priv;
-	uint8_t buf[2] = { 0, 0 };
+	uint8_t buf[2] = {0x55, 0xaa};
 	int block, ret;
 #ifndef	CONFIG_MTD_NAND_SC8810
 	mtd_oob_mode_t sprd_mode;
 #endif
-	/* Get block number */
+	printf("nand_default_block_markbad_u: chip->bbt=0x%x, chip->options=0x%x!\n", chip->bbt, chip->options);
+        
+        /* Get block number */
 	block = (int)(ofs >> chip->bbt_erase_shift);
 	if (chip->bbt)
 		chip->bbt[block >> 2] |= 0x01 << ((block & 0x03) << 1);

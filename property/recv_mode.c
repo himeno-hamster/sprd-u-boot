@@ -108,7 +108,7 @@ int set_recovery_message(const struct recovery_message *in)
 	
 	size = pagesize*(MISC_COMMAND_PAGE + 1);
 
-	ret = nand_read_skip_bad(nand, offset, size, (void *)SCRATCH_ADDR);
+	ret = nand_read_skip_bad(nand, offset, &size, (void *)SCRATCH_ADDR);
 	if(ret != 0){
 		dprintf("%s: nand read error %d\n", __FUNCTION__, ret);
 		return -1;
@@ -255,6 +255,8 @@ void nv_patch(char * addr, int size)
 	for(i=0; i<4; i++){
 		addr[FIX_SIZE + i] = 0x5a;
 	}
+	//generate crc16 flag and restore it.
+	*(unsigned short*)&addr[FIX_SIZE-2] = crc16(0,(unsigned const char*)addr,FIX_SIZE-2);	
 	return;
 }
 
@@ -278,9 +280,9 @@ void try_update_modem(void)
 	u8 pnum;
 	struct part_info *part;
 	int ret;
-	char *backupfixnvpoint = "/backupfixnv";
-	char *backupfixnvfilename = "/backupfixnv/fixnv.bin";
-	char *backupfixnvfilename2 = "/backupfixnv/backupfixnvchange.bin";
+	char *fixnvpoint = "/fixnv";
+	//char *fixnvfilename = "/fixnv/fixnv.bin";
+	char *fixnvfilename = "/fixnv/fixnvchange.bin";
 	nand_erase_options_t opts;
 
 	mmc = find_mmc_device(0);
@@ -319,9 +321,9 @@ void try_update_modem(void)
 		}
 		size = FIX_SIZE + 4;
 		nv_patch(BUF_ADDR, ret);
-		cmd_yaffs_mount(backupfixnvpoint);
-		cmd_yaffs_mwrite_file(backupfixnvfilename, BUF_ADDR, size);
-		cmd_yaffs_umount(backupfixnvpoint);
+		cmd_yaffs_mount(fixnvpoint);
+		cmd_yaffs_mwrite_file(fixnvfilename, BUF_ADDR, size);
+		cmd_yaffs_umount(fixnvpoint);
 
 		file_fat_rm(SD_NV_NAME);
 	}while(0);

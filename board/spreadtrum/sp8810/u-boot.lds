@@ -53,4 +53,5 @@ SECTIONS
 	__bss_start = .;
 	.bss (NOLOAD) : { *(.bss) . = ALIGN(4); }
 	_end = .;
+ .u-boot-version : { *(.u-boot-version) }
 }

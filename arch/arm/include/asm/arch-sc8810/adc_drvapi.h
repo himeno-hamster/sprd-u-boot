@@ -50,6 +50,8 @@ typedef enum{false, true} bool;
 #define ADC_CHANNEL_VBAT 5
 #define ADC_CHANNEL_PROG 4
 #define ADC_CHANNEL_VCHG 6
+#define ADC_CHANNEL_DCDCARM 10
+#define ADC_CHANNEL_DCDC 11
 
 #ifdef __cplusplus
 extern   "C"
