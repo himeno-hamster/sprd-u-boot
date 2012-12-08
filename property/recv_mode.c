@@ -257,6 +257,7 @@ void nv_patch(char * addr, int size)
 	}
 	//generate crc16 flag and restore it.
 	*(unsigned short*)&addr[FIX_SIZE-2] = crc16(0,(unsigned const char*)addr,FIX_SIZE-2);	
+	*((unsigned int*)&addr[FIX_SIZE-8])= size;//keep the real  fixnv file size.
 	return;
 }
 

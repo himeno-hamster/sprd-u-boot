@@ -295,6 +295,51 @@ void nand_block_info(struct mtd_info *nand, int *good, int *bad)
 	*bad = badblk;
 }
 
+static unsigned int Vlx_CalcFixnvLen(unsigned int search_start, unsigned int search_end)
+{
+	unsigned int start_addr, end_addr;
+	unsigned short id, len;
+	volatile unsigned short *flash_ptr;
+
+	start_addr = search_start;
+	end_addr   = search_end;
+	start_addr += sizeof(unsigned int); //skip update flag
+	
+	while(start_addr < end_addr)
+	{
+		flash_ptr = (volatile unsigned short *)(start_addr);
+		id  = *flash_ptr++;
+		len = *flash_ptr;
+		if(0xFFFF == id)
+		{
+			return (start_addr-search_start);
+		}
+		else
+		{
+			start_addr += 4 + len +(len & 0x1);
+			VLX_RAND_TO_U32( start_addr );
+		}
+	}
+	return 0xffffffff;
+}
+
+static int check_fixnv_struct(unsigned int addr,unsigned int size){
+	int length = 0,keep_length=0;
+	volatile unsigned int *flash_ptr;
+	
+	flash_ptr = (volatile unsigned int *)(addr+size-8);
+	keep_length = *flash_ptr;
+	printf("keep_length=%d  line=%d\r\n",keep_length ,__LINE__);
+	if(keep_length != 0xffffffff){
+		length = Vlx_CalcFixnvLen(addr, addr+size);
+		if(keep_length != length){
+			printf("keep_length=%d  length=%d line=%d\r\n",keep_length ,length,__LINE__);
+			return -1;
+		}
+	}
+	return 1;
+}
+
 /*
 * retval : -1 is wrong  ;  1 is correct
 */
@@ -634,6 +679,12 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		}
 	}	
 
+	//finally we check the fixnv structure,if fail,then u-boot will hung up!!!		
+	if(check_fixnv_struct(FIXNV_ADR,FIXNV_SIZE) == -1){
+
+		return -1;
+	}
+
 	///////////////////////////////////////////////////////////////////////
 	/* PRODUCTINFO_PART */
 	check_compatibilty = 1;
@@ -651,13 +702,13 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 	///////////////////////////////////////////////////////////////////////
 	/* RUNTIMEVN_PART */
-	check_compatibilty = 1;
+	//check_compatibilty = 1;
 	ret = load_sector_to_memory(runtimenvpoint,
 							runtimenvfilename2,
 							runtimenvfilename,
 							(unsigned char *)RUNTIMENV_ADR,
 							RUNTIMENV_SIZE + 4);
-	check_compatibilty = 0;
+	//check_compatibilty = 0;
 	if(ret == -1){
 		//clear memory
 		memset(RUNTIMENV_ADR, 0xff,RUNTIMENV_SIZE + 4);

@@ -72,7 +72,7 @@ SECTIONS
 		 . = ALIGN(4);
 		_end = .;
 	}
-
+	 .u-boot-version : { *(.u-boot-version) }
 	/DISCARD/ : { *(.dynstr*) }
 	/DISCARD/ : { *(.dynamic*) }
 	/DISCARD/ : { *(.plt*) }
