@@ -11,7 +11,7 @@
 
 #define ALL_EXTRA_FLAGS		0xF0000000
 
-//#define YAFFS_IGNORE_TAGS_ECC	1
+#define YAFFS_IGNORE_TAGS_ECC	1
 
 /* Also, the top 4 bits of the object Id are set to the object type. */
 #define EXTRA_OBJECT_TYPE_SHIFT (28)
