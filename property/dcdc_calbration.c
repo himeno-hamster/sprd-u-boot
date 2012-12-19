@@ -50,7 +50,7 @@ static int dcdc_calibrate(int adc_chan, int def_vol, int to_vol)
 	}
 	sum /= ARRAY_SIZE(val);	//get average value
 	printf("adc chan %d, value %d\n", adc_chan, sum);
-	adc_vol = CHGMNG_AdcvalueToVoltage(sum) * (8 * 5) / (30 * 4);
+	adc_vol = dcdc_AdcvalueToVoltage(sum) * (8 * 5) / (30 * 4);
 
 	if (!def_vol) {
 		switch (adc_chan) {
@@ -125,7 +125,7 @@ void do_dcdc_work()
 
 	printf("%s %d\n", __func__, cnt);
 
-	if (REG32(0x209003fc) == CHIP_ID_8810S) { 
+	if (REG32(0x209003fc) == CHIP_ID_8810S) {
 		dcdcarm_to_vol = 1300;//vddarm 1.30v
 	}
 

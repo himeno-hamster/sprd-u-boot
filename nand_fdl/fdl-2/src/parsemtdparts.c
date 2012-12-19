@@ -221,7 +221,7 @@ static struct mtd_partition * newpart(char *s,
 	     parts[this_part].offset,
 	     parts[this_part].size,
 	     parts[this_part].mask_flags);*/
-	
+
 	     if (real_current_part >= 0) {
 		real_current_part --;
 		memset(realpart[real_current_part].name, 0, PARTITION_NAME_LEN);
@@ -331,7 +331,7 @@ int real_parse_cmdline_partitions(struct real_mtd_partition *current, unsigned l
 			  		realpart[i].offset = offset;
 				else
 			  		offset = realpart[i].offset;
-			
+
 				if (realpart[i].size == SIZE_REMAINING)
 			  		realpart[i].size = mastersize - offset;
 
@@ -351,7 +351,8 @@ int real_parse_cmdline_partitions(struct real_mtd_partition *current, unsigned l
 	}
 
 	//printf("current->offset = 0x%08x,  real_current_part = %d\n", current->offset, real_current_part);
-	if ((strcmp(current->name, "fixnv") == 0) || ((strcmp(current->name, "backupfixnv") == 0))) {
+	if ((strcmp(current->name, "fixnv") == 0) || ((strcmp(current->name, "backupfixnv") == 0))
+                    || ((strcmp(current->name, "productinfo") == 0))) {
 		for (j = real_current_part; j < MTDPARTITION_MAX; j ++)
 			if (strcmp(realpart[j].name, current->name) == 0) {
 				current->offset = realpart[j].offset;
@@ -363,7 +364,7 @@ int real_parse_cmdline_partitions(struct real_mtd_partition *current, unsigned l
 		current->offset = 0xffffffff;
 		return 0;
 	}
-	
+
 	index = (current->offset & 0x0000FFFF) + real_current_part;
 	if ((index >= real_current_part) && (index < MTDPARTITION_MAX)) {
 		current->offset = realpart[index].offset;

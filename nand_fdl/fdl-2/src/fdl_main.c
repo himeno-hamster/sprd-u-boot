@@ -13,7 +13,7 @@
 
 extern  const unsigned char FDL2_signature[][24];
 extern int sprd_clean_rtc(void);
-
+extern int nand_bbt_init(void);
 static void error (void)
 {
     //sio_putstr("The second FDL failed!\r\n");
@@ -40,7 +40,7 @@ int main(void)
 	 * so we don't do initialization stuff here.
 	 * The UART has also been opened by the 1st FDL and the baudrate
 	 * has been setted correctly.
-	 */  
+	 */
 	int err;
 	uint32 sigture_address;
 	unsigned int i, j;
@@ -48,19 +48,19 @@ int main(void)
   	MMU_Init(0);
  	sigture_address = (uint32)FDL2_signature;
 
-#if defined(CHIP_ENDIAN_DEFAULT_LITTLE) && defined(CHIP_ENDIAN_BIG)    
-	usb_boot(1);  
+#if defined(CHIP_ENDIAN_DEFAULT_LITTLE) && defined(CHIP_ENDIAN_BIG)
+	usb_boot(1);
 #endif
 
        FDL_PacketInit();
 
-#ifdef CONFIG_SC8810	
+#ifdef CONFIG_SC8810
 	bss_start_start = _bss_start;
 	bss_end_end = _bss_end;
 	mem_malloc_init (&mempool[0], 1024*1024);
 #else
-	mem_malloc_init (_bss_end, CONFIG_SYS_MALLOC_LEN);	   
-#endif	   
+	mem_malloc_init (_bss_end, CONFIG_SYS_MALLOC_LEN);
+#endif
 	   timer_init();
 
        sprd_clean_rtc();
@@ -74,7 +74,8 @@ int main(void)
 			FDL_SendAckPacket (convert_err (err));
 			break;
 		}
-		/* Register command handler */
+		nand_bbt_init();
+                /* Register command handler */
 		FDL_DlInit();
 
   		FDL_DlReg(BSL_CMD_START_DATA,     FDL2_DataStart,         0);
@@ -85,7 +86,7 @@ int main(void)
    		FDL_DlReg(BSL_CMD_NORMAL_RESET,   FDL_McuResetNormal/*mcu_reset_boot*/,   0);
 	    	FDL_DlReg(BSL_CMD_READ_CHIP_TYPE, FDL_McuReadChipType, 0);
 	    	FDL_DlReg(BSL_CMD_READ_MCP_TYPE, FDL_McuReadMcpType, 0);
-	    	FDL_DlReg(BSL_REPARTITION,    	   FDL2_FormatFlash,       0);	
+	    	FDL_DlReg(BSL_REPARTITION,    	   FDL2_FormatFlash,       0);
 
 		/* Reply the EXEC cmd received in the 1st FDL. */
         FDL_SendAckPacket (NAND_SUCCESS == err ? BSL_REP_ACK :
