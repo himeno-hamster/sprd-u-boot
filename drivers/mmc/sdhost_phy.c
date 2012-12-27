@@ -2368,7 +2368,9 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
             }
             break;
     }
-
+#ifdef CONFIG_SC8825
+    REG32(0x4C00000C) |= (0x1ff<<8);//  set emmc data line, cmd line pull up resistor 4.7k
+#endif
     sdio_port_ctl[slot_NO].sigCallBack = fun;
     sdio_port_ctl[slot_NO].err_filter = 0;
     SDHOST_RST (&sdio_port_ctl[slot_NO],RST_ALL);
