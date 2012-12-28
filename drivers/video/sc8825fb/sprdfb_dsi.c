@@ -314,6 +314,8 @@ int32_t sprdfb_dsi_ready(struct sprdfb_device *dev)
 		udelay(100);
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PWR_UP, 1);
 		udelay(10*1000);
+		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST0);
+		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST1);
 	}
 	return 0;
 }
