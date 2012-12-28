@@ -18,6 +18,16 @@
 #undef dprintf
 #endif
 #define dprintf(fmt, args...) printf(fmt, ##args)
+
+void nv_patch(char * addr, int size)
+{
+	int i = 0;
+	
+	for(i=0; i<4; i++){
+		addr[FIXNV_SIZE + i] = 0x5a;
+	}
+	return;
+}
 extern int get_recovery_message(struct recovery_message *out);
 extern int set_recovery_message(const struct recovery_message *in);
 int read_update_header_for_bootloader(struct update_header *header)
@@ -121,6 +131,17 @@ SEND_RECOVERY_MSG:
 }
 
 void recovery_mode(void)
+{
+    printf("%s\n", __func__);
+#if BOOT_NATIVE_LINUX
+    vlx_nand_boot(RECOVERY_PART, CONFIG_BOOTARGS, BACKLIGHT_ON);
+#else
+    try_update_modem(); //update img from mmc
+    vlx_nand_boot(RECOVERY_PART, NULL, BACKLIGHT_ON);
+#endif
+}
+
+void recovery_mode_without_update(void)
 {
     printf("%s\n", __func__);
 #if BOOT_NATIVE_LINUX
