@@ -87,8 +87,11 @@
 
 /*#define CMDLINE_NEED_CONV */
 
-#define WATCHDOG_LOAD_VALUE	0x4000
+#define WATCHDOG_LOAD_VALUE	    0x4000
 #define CONFIG_SYS_STACK_SIZE	0x400
+
+//SDIO HOST NUM for handshake
+#define SDIO_APCP_HOST_SLOT_NUM  1
 
 /* SDIO GPIO HANDSHAKE */
 #define AP_CP_RTS           38

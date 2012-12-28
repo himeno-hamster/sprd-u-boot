@@ -32,7 +32,7 @@
 @ Invalid a memory region in the cache.
 @============================================================================
 Dcache_InvalRegion:
-    stmfd sp!, {r0-r3, lr}
+    stmfd sp!, {r0-r3,r9,r10, lr}
     add r1,r1,r0
 
     mrc p15, 1, r3, c0, c0, 0
@@ -56,7 +56,7 @@ Dcache_InvalRegion:
     blo 1b
     .word 0xf57ff04f
 
-    ldmfd sp!, {r0-r3, lr}
+    ldmfd sp!, {r0-r3,r9,r10, lr}
 
 @============================================================================
 @ Dcache_CleanRegion
@@ -69,7 +69,7 @@ Dcache_InvalRegion:
 @ clean a memory region in the cache.
 @============================================================================
 Dcache_CleanRegion:
-	stmfd sp!, {r0-r3, lr}
+	stmfd sp!, {r0-r3,r9,r10, lr}
 
 	add r1,r1,r0
 	mrc p15, 1, r3, c0, c0, 0
@@ -88,11 +88,11 @@ Dcache_CleanRegion:
 
 	.word 0xf57ff04f
 	.word 0xf57ff05f
-	ldmfd sp!, {r0-r3,pc}
+	ldmfd sp!, {r0-r3,r9,r10,pc}
 
 
 MMU_InvalideICACHEALL:
-    STMFD   sp!, {a1-a4, lr}            @ save lr_USR and non-callee
+    STMFD   sp!, {a1-a4,r9,r10, lr}            @ save lr_USR and non-callee
 
     MOV     r0, #0
     MCR     p15, 0, r0, c7, c5, 0       @Invalidate(flush)the ICache
@@ -103,12 +103,12 @@ MMU_InvalideICACHEALL:
     NOP
     NOP
 
-    LDMFD   sp!, {a1-a4, PC}            
+    LDMFD   sp!, {a1-a4,r9,r10, PC}            
 
 
 MMU_EnableIDCM:
 @ save lr_USR and non-callee
-    STMFD   sp!, {a1-a4, lr}
+    STMFD   sp!, {a1-a4,r9,r10, lr}
 
 @   Set the MMU page table address
     LDR     r2, =g_mmu_page_table
@@ -131,10 +131,10 @@ MMU_EnableIDCM:
     NOP
     NOP
     NOP
-    LDMFD   sp!, {a1-a4, PC}             
+    LDMFD   sp!, {a1-a4,r9,r10, PC}             
 
 v7_flush_dcache_all:
-	stmfd	sp!,	{a1-a4,lr}
+	stmfd	sp!,	{a1-a4,r9,r10,lr}
 	mov r1, #0x1f0
 	add r1,r1,#0xf
 
@@ -162,7 +162,7 @@ set_loop2:
 
 	.word 0xf57ff04f
 	.word 0xf57ff06f
-	ldmfd sp!, {a1-a4,pc}
+	ldmfd sp!, {a1-a4,r9,r10,pc}
 
 
 v7_flush_dcache_all1:
@@ -212,7 +212,7 @@ finished:
 
 .globl	MMU_DisableIDCM
 MMU_DisableIDCM:
-	STMFD   sp!, {a1-a4, lr}
+	STMFD   sp!, {a1-a4,r9,r10, lr}
 
 @   Disable the ICache, DCache, write buffer, MMU
 	MRC     p15, 0, r0, c1, c0, 0
@@ -231,5 +231,5 @@ MMU_DisableIDCM:
 	NOP
 	NOP
 @   Return
-	LDMFD   sp!, {a1-a4, PC}             @ restore registers
+	LDMFD   sp!, {a1-a4,r9,r10, PC}             @ restore registers
 

@@ -251,10 +251,17 @@ int sdio_read(SDIO_HANDLE handle,unsigned char *buffer,int size)
 SDIO_HANDLE sdio_open(void)
 { 
     CARD_SDIO_HANDLE sio_handle;
+	int slot_num;
+	
     MMU_DisableIDCM();
     SDIO_PRINTF(("init slot0 ...\r\n"));
+#if defined(CONFIG_SP8810W)  //samsung kylew
+	slot_num = 0;
+#else
+	slot_num = SDIO_APCP_HOST_SLOT_NUM;
+#endif
        
-    sio_handle = __init_slot(0);
+    sio_handle = __init_slot(slot_num);
     if(NULL == sio_handle){
             SDIO_PRINTF(("slot0 handle is NULL!!\r\n"));
     }

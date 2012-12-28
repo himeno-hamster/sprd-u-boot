@@ -20,7 +20,7 @@
 #include <asm/arch/bits.h>
 #include "sdio_card_pal.h"
 
-#define CARD_SDIO_SLOT_MAX 1
+#define CARD_SDIO_SLOT_MAX 4
 #define DEFAULT_CARD_BLOCKLEN 512
 #define CARD_CMD_MAX_TIME 5000
 #define SDIO_CLK_25M	    (25000000)

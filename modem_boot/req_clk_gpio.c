@@ -35,10 +35,15 @@
 #define GEN0_EN_GPIO      (BIT_5)
 #ifdef __SPI_MODE__
 #define	PINREG_SPICLK_REQ	(0x8C000000 + 0x44C)
-#define SPI_CLK_REQ	 (65-16) // GPIO_PROD_APCP_SRDY
+#define SPI_CLK_REQ	 (CP_AP_LIV-16) // GPIO_PROD_APCP_SRDY
+#else
+#if defined(CONFIG_SP7702)
+#define	PINREG_SPICLK_REQ	(0x8C000000 + 0x380)
 #else
 #define	PINREG_SPICLK_REQ	(0x8C000000 + 0x398)
-#define SPI_CLK_REQ	 (98-16) // GPIO_PROD_APCP_SRDY
+#endif
+
+#define SPI_CLK_REQ	 (CP_AP_LIV-16) // GPIO_PROD_APCP_SRDY
 #endif
 //define gpio func
 #define PIN_DS_3          (BIT_8|BIT_9)

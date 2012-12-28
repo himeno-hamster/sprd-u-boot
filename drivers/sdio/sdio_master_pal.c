@@ -70,7 +70,7 @@ static CMD_CTL_FLG s_cmdDetail[] =
 #define SDIO_CARD_PAL_MAGICNUM 0x5344494F
 
 
-#define SDIO_CARD_PAL_SUPPORT_NUM  1
+#define SDIO_CARD_PAL_SUPPORT_NUM  2
 extern void _SDHOST_IrqHandle(unsigned int isrnum);
 static SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0,0}};
 static volatile unsigned int s_CardErrCode = 0;
@@ -408,14 +408,18 @@ SDIO_CARD_PAL_ERROR_E SPRD_SDSlave_Pal_SendCmd(
 #else
     do{
 	//_SDHOST_IrqHandle(Handle2SlotNo(handle));
+#if defined(CONFIG_SP8810W)  //samsung kylew
         _SDHOST_IrqHandle(0);
+#else
+        _SDHOST_IrqHandle(SDIO_APCP_HOST_SLOT_NUM);
+#endif
     }while(_WaitCardEvent(handle,s_cmdDetail[cmd].intFilter)==0);
 #endif    
     
     if(0 != s_CardErrCode){
         SDIO_CARD_PRINT(("SDIO_Card error = 0x%x",s_CardErrCode));
         SDHOST_RST(handle->sdio_port,RST_CMD_DAT_LINE);
-//        SDHOST_Dump_SDIO_Registers(0);
+//        SDHOST_Dump_SDIO_Registers(1);
         return s_CardErrCode;
     }
 

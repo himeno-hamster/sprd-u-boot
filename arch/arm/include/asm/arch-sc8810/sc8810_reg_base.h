@@ -188,7 +188,11 @@ extern   "C"
 #ifdef CONFIG_EMMC_BOOT
 #define SDIO1_BASE_ADDR                 0x20600000
 #else
+#ifdef CONFIG_SP7702
+#define SDIO1_BASE_ADDR                 0x20600000
+#else
 #define SDIO1_BASE_ADDR                 0x20500100
+#endif
 #endif
 #endif
 

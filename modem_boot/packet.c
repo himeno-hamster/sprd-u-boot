@@ -670,13 +670,13 @@ struct modem_image_info download_images_info[]={
         },
 #endif
         {
-                0x00020000,	//source address in AP memory
-                0x003e0000,     //image size
+                0x00020000,	    //source address in AP memory
+                0x00200000,     //image size, dsp
                 0x00020000,     //dest address in CP memory
         },
         {
                 0x01600000,
-                0x009F8000,
+                0x009F8000,    //cp image
                 0x00400000,
         },
 };

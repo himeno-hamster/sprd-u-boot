@@ -12,7 +12,6 @@
 #include <jffs2/jffs2.h>
 #include <boot_mode.h>
 
-
 static int s_is_calibration_mode = 0;
 
 /* calibration support uart only */
@@ -419,7 +418,11 @@ void calibration_detect(int key)
         }
         sprintf(cmd_buf, "calibration=%d,%d", caliberate_mode&0xff, (caliberate_mode&(~0xff))>>8);
         s_is_calibration_mode=1;
+#if defined( CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined(CONFIG_SC7710G2)
+		vlx_nand_boot(BOOT_PART, buf, BACKLIGHT_OFF);
+#else
         vlx_nand_boot(BOOT_PART, cmd_buf, BACKLIGHT_OFF);
+#endif
 	}	
     
     //nerver come to here
