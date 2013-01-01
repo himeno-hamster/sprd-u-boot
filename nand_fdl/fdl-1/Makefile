@@ -1,12 +1,17 @@
 
 include  $(TOPDIR)/config.mk
-include  $(TOPDIR)/nand_fdl/board/$(BOARDDIR)/config.mk
+include  $(TOPDIR)/nand_fdl/board/$(VENDOR)/$(SOC)/config.mk
 include  $(TOPDIR)/board/$(BOARDDIR)/config.mk
 sinclude $(TOPDIR)/include/idh_config.mk
 
 gcclibdir    := $(shell dirname `$(CC) -print-libgcc-file-name`)
 
-LDSCRIPT      = $(TOPDIR)/nand_fdl/board/$(BOARDDIR)/fdl1.lds
+
+ifdef CONFIG_SC7710G2
+LDSCRIPT      = $(TOPDIR)/nand_fdl/board/$(VENDOR)/$(SOC)/fdl17710.lds
+else
+LDSCRIPT      = $(TOPDIR)/nand_fdl/board/$(VENDOR)/$(SOC)/fdl1.lds
+endif
 FDL1_LDFLAGS  = -Bstatic -T $(LDSCRIPT) $(PLATFORM_LDFLAGS)
 
 AFLAGS       += -I $(OBJTREE)/include/asm/arch

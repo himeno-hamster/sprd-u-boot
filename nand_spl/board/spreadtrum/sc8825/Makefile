@@ -22,31 +22,40 @@
 CONFIG_NAND_SPL	= y
 
 include $(TOPDIR)/config.mk
-include $(TOPDIR)/nand_spl/board/$(BOARDDIR)/config.mk
+include $(TOPDIR)/nand_spl/board/$(VENDOR)/$(SOC)/config.mk
 
 nandobj	:= $(OBJTREE)/nand_spl/
-LDSCRIPT= $(TOPDIR)/nand_spl/board/$(BOARDDIR)/u-boot.lds
+LDSCRIPT= $(TOPDIR)/nand_spl/board/$(VENDOR)/$(SOC)/u-boot.lds
 LDFLAGS	= -Bstatic -T $(nandobj)u-boot.lds -Ttext $(CONFIG_SYS_TEXT_BASE) $(PLATFORM_LDFLAGS)
 AFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL
 CFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL -g
 
 SOBJS	= start.o _udivsi3.o _divsi3.o _umodsi3.o cpu_spec.o
-COBJS	= nand_boot.o nand_ecc.o sc8810_nand.o lowlevel_init.o div0.o adi_drv.o sdram.o sdram_prod.o chip_cfg.o sec_boot.o string.o serial_sc8800x.o timer.o
+ifdef CONFIG_EMMC_BOOT
+COBJS	= emmc_boot.o mmc.o lowlevel_init.o div0.o adi_drv.o chip_cfg.o 
+COBJS += sec_boot.o string.o serial_sc8800x.o
+else
+COBJS	= lowlevel_init.o sprd_tiger_nand_boot.o nand_ecc.o tiger_nand.o div0.o adi_drv.o chip_cfg.o sec_boot.o string.o serial_sc8800x.o
+endif
+
+ifdef CONFIG_SC8825
+COBJS   += mcu.o emc.o
+endif
 
 #SRCS	:= $(SRCTREE)/nand_spl/nand_boot_fsl_nfc.c
 SRCS	:= $(SRCTREE)/arch/arm/cpu/armv7/start.S
-SRCS	+= $(SRCTREE)/arch/arm/cpu/armv7/sc8810/lowlevel_init.c
-SRCS	+= $(SRCTREE)/arch/arm/cpu/armv7/sc8810/clk_config.c
-SRCS    += $(SRCTREE)/arch/arm/cpu/armv7/sc8810/sdram.c
-SRCS    += $(SRCTREE)/arch/arm/cpu/armv7/sc8810/adi_drv.c
-SRCS    += $(SRCTREE)/arch/arm/cpu/armv7/sc8810/remap.c
+SRCS	+= $(SRCTREE)/arch/arm/cpu/armv7/sc8825/lowlevel_init.c
+SRCS	+= $(SRCTREE)/arch/arm/cpu/armv7/sc8825/clk_config.c
+SRCS    += $(SRCTREE)/arch/arm/cpu/armv7/sc8825/emc.c
+SRCS    += $(SRCTREE)/arch/arm/cpu/armv7/sc8825/adi_drv.c
+SRCS    += $(SRCTREE)/arch/arm/cpu/armv7/sc8825/remap.c
 SRCS    += $(SRCTREE)/arch/arm/lib/_udivsi3.S
 SRCS    += $(SRCTREE)/arch/arm/lib/_divsi3.S
 SRCS    += $(SRCTREE)/arch/arm/lib/div0.c
 
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 __OBJS	:= $(SOBJS) $(COBJS)
-LNDIR	:= $(OBJTREE)/nand_spl/board/$(BOARDDIR)
+LNDIR	:= $(OBJTREE)/nand_spl/board/$(VENDOR)/$(SOC)
 
 
 ALL	= $(nandobj)u-boot-spl $(nandobj)u-boot-spl.bin $(nandobj)u-boot-spl-16k.bin
@@ -70,7 +79,7 @@ $(nandobj)u-boot-spl:	$(OBJS) $(LDSCRIPT) $(nandobj)u-boot.lds
 $(obj)%.o:	$(SRCTREE)/arch/arm/cpu/armv7/%.S
 	$(CC) $(AFLAGS) -mlittle-endian -c -o $@ $<
 
-$(obj)%.o:	$(SRCTREE)/arch/arm/cpu/armv7/sc8810/%.c
+$(obj)%.o:	$(SRCTREE)/arch/arm/cpu/armv7/sc8825/%.c
 	$(CC) $(CFLAGS) -mlittle-endian -c -o $@ $<
 
 $(obj)%.o:	$(SRCTREE)/nand_spl/%.c
@@ -85,7 +94,7 @@ $(obj)%.o:      $(SRCTREE)/arch/arm/lib/%.c
 $(obj)%.o:      $(SRCTREE)/drivers/mtd/nand/%.c
 	$(CC) $(CFLAGS) -mlittle-endian -c -o $@ $<
 
-$(obj)%.o:	$(SRCTREE)/arch/arm/cpu/armv7/sc8810/%.S
+$(obj)%.o:	$(SRCTREE)/arch/arm/cpu/armv7/sc8825/%.S
 	$(CC) $(AFLAGS) -mlittle-endian -c -o $@ $<
 
 $(obj)%.o:	$(SRCTREE)/drivers/serial/%.c
@@ -94,6 +103,10 @@ $(obj)%.o:	$(SRCTREE)/lib/%.c
 	$(CC) $(CFLAGS) -mlittle-endian -c -o $@ $<
 $(nandobj)u-boot.lds: $(LDSCRIPT)
 	$(CPP) $(CPPFLAGS) $(LDPPFLAGS) -ansi -D__ASSEMBLY__ -P - <$^ >$@
+ifdef CONFIG_EMMC_BOOT
+$(obj)%.o:	$(SRCTREE)/drivers/mmc/%.c
+	$(CC) $(CFLAGS) -mlittle-endian -c -o $@ $<
+endif
 # defines $(obj).depend target
 include $(SRCTREE)/rules.mk
 
