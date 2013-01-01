@@ -317,5 +317,7 @@ void try_update_modem(void)
 	return;
 }
 #else
-#define try_update_modem()
+void try_update_modem(void)
+{
+}
 #endif
