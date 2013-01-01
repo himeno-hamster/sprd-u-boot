@@ -402,15 +402,15 @@ void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
         LPDDR1_MEM_DS = emc_data->mem_drv;
         LPDDR2_MEM_DS = emc_data->mem_drv;
         
-        B0_SDLL_PHS_DLY = emc_data->sdll_phase&0xff;
-        B1_SDLL_PHS_DLY = (emc_data->sdll_phase&0xff00)>>8;
-        B2_SDLL_PHS_DLY = (emc_data->sdll_phase&0xff0000)>>16;
-        B3_SDLL_PHS_DLY = (emc_data->sdll_phase&0xff000000)>>24;
+        B0_SDLL_PHS_DLY = (emc_data->sdll_phase&0xff000000)>>24;
+        B1_SDLL_PHS_DLY = (emc_data->sdll_phase&0xff0000)>>16;
+        B2_SDLL_PHS_DLY = (emc_data->sdll_phase&0xff00)>>8;
+        B3_SDLL_PHS_DLY = emc_data->sdll_phase&0xff;
         
-        B0_DQS_STEP_DLY = emc_data->dqs_step&0xff;
-        B1_DQS_STEP_DLY = (emc_data->dqs_step&0xff00)>>8;
-        B2_DQS_STEP_DLY = (emc_data->dqs_step&0xff0000)>>16;
-        B3_DQS_STEP_DLY = (emc_data->dqs_step&0xff000000)>>24;        
+        B0_DQS_STEP_DLY = (emc_data->dqs_step&0xff000000)>>24;        
+        B1_DQS_STEP_DLY = (emc_data->dqs_step&0xff0000)>>16;
+        B2_DQS_STEP_DLY = (emc_data->dqs_step&0xff00)>>8;
+        B3_DQS_STEP_DLY = emc_data->dqs_step&0xff;
     }
 
     DMC_Dev_Init(400000000);
