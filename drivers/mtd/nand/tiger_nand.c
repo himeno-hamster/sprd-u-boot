@@ -27,7 +27,7 @@
 #include <nand.h>
 #include <asm/io.h>
 #include <linux/mtd/nand.h>
-
+#include <asm/arch/pin_reg_v3.h>
 //#define NAND_DBG
 #ifdef CONFIG_NAND_SPL
 #define printf(arg...) do{}while(0)
@@ -1157,6 +1157,8 @@ static void sprd_tiger_nand_hw_init(struct sprd_tiger_nand_info *tiger)
 	
 	sprd_tiger_reg_write(NFC_TIMING_REG, val);
 	sprd_tiger_reg_write(NFC_TIMEOUT_REG, 0x80400000);
+	sprd_tiger_reg_or(PIN_NFRB_REG, BIT_7);   //set PIN_NFRB pull up
+	sprd_tiger_reg_or(PIN_CTL2_REG, BIT_17);  //set PIN_NFRB pull up resiter 4.7k
 	//close write protect
 	sprd_tiger_nand_wp_en(tiger, 0);
 }

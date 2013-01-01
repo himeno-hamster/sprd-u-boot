@@ -29,6 +29,10 @@
 #endif
 #include "asm/arch/ldo.h"
 
+#ifdef CONFIG_SC8825
+#include <asm/arch/pin_reg_v3.h>
+#endif
+
 #if defined (CONFIG_SC8810) || defined (CONFIG_SC8825)
 #define PLATFORM_SC8800G
 #endif
@@ -2288,8 +2292,17 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
 	SDHOST_Reset_Controller(slot_NO);
 
     // select slot 0
-#if defined (CONFIG_TIGER)
-//    SDHOST_Slot_select(slot_NO); if necessary
+#if defined (CONFIG_SC8825)
+	REG32(PIN_CTL3_REG)  |= (0x1ff<<8);//  set emmc data line, cmd line pull up resistor 4.7k
+	REG32(PIN_SD3CMD_REG)= 0x280;
+	REG32(PIN_SD3D0_REG) = 0x280;
+	REG32(PIN_SD3D1_REG) = 0x280;
+	REG32(PIN_SD3D2_REG) = 0x280;
+	REG32(PIN_SD3D3_REG) = 0x280;
+	REG32(PIN_SD3D4_REG) = 0x280;
+	REG32(PIN_SD3D5_REG) = 0x280;
+	REG32(PIN_SD3D6_REG) = 0x280;
+	REG32(PIN_SD3D7_REG) = 0x280;
 	sdio_port_ctl[slot_NO].open_flag = TRUE;
 	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_384M);
 #elif defined(CONFIG_SC7710G2)
@@ -2297,7 +2310,7 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
 	sdio_port_ctl[slot_NO].open_flag = TRUE;
 	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_384M);
 #else
-    _SDHOST_Pin_select(slot_NO);
+	_SDHOST_Pin_select(slot_NO);
 	sdio_port_ctl[slot_NO].open_flag = TRUE;
 	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_48M);
 #endif
@@ -2368,9 +2381,6 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
             }
             break;
     }
-#ifdef CONFIG_SC8825
-    REG32(0x4C00000C) |= (0x1ff<<8);//  set emmc data line, cmd line pull up resistor 4.7k
-#endif
     sdio_port_ctl[slot_NO].sigCallBack = fun;
     sdio_port_ctl[slot_NO].err_filter = 0;
     SDHOST_RST (&sdio_port_ctl[slot_NO],RST_ALL);
