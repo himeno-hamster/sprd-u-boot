@@ -35,7 +35,7 @@ ifdef CONFIG_EMMC_BOOT
 COBJS	= emmc_boot.o mmc.o lowlevel_init.o div0.o adi_drv.o chip_cfg.o 
 COBJS += sec_boot.o string.o serial_sc8800x.o
 else
-COBJS	= lowlevel_init.o sprd_tiger_nand_boot.o nand_ecc.o tiger_nand.o div0.o adi_drv.o chip_cfg.o sec_boot.o string.o serial_sc8800x.o
+COBJS	= lowlevel_init.o sprd_tiger_nand_boot.o nand_ecc.o tiger_nand.o div0.o adi_drv.o chip_cfg.o sec_boot.o string.o
 endif
 
 ifdef CONFIG_SC8825
