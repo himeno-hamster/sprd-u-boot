@@ -1180,8 +1180,12 @@ void EMC_PHY_Mode_Set(DRAM_INFO_T_PTR dram_info)
 
 	//DSGCR
     temp = REG32(PUBL_CFG_DSGCR);
-    temp &= ~0xfff; // only applicable for LPDDR    
-    temp |= (0xB|(DQS_GATE_EARLY<<8)|(DQS_GATE_EXTEN<<5)); 
+    temp &= ~0xfff; // only applicable for LPDDR    
+    #ifdef CONFIG_MEM_LPDDR1     
+    temp |= (0xB|(1<<8)|(1<<5));     
+    #else     
+    temp |= (0xB|(2<<8)|(2<<5));     
+    #endif    
     REG32(PUBL_CFG_DSGCR) = temp;
 	
 	//DCR
@@ -1588,9 +1592,25 @@ PUBLIC void DMC_Dev_Init(CLK_TYPE_E emc_clk)
 	}	
 		
 	dram_info = get_dram_info(dram_chip_name);
-
+    if(dram_info->mode_info->mem_type == DRAM_LPDDR1)   
+   {
+        //disable EMC module
+           REG32(AHB_CTL0) &= ~BIT_28;
+           //set SDLL bias trim accuraty
+           REG32(PUBL_CFG_DLLGCR)   |= BIT_23;
+           //disable dll
+           REG32(PUBL_CFG_ACDLLCR)  |= BIT_31;
+           REG32(PUBL_CFG_DX0DLLCR) |= BIT_31;
+           REG32(PUBL_CFG_DX1DLLCR) |= BIT_31;
+           REG32(PUBL_CFG_DX2DLLCR) |= BIT_31;
+           REG32(PUBL_CFG_DX3DLLCR) |= BIT_31;
+   }    
 	set_emc_clk(emc_clk);	
-		
+ 
+      if(dram_info->mode_info->mem_type == DRAM_LPDDR1)
+     {        //disable EMC module
+       REG32(AHB_CTL0) |= BIT_28;
+     }
 	EMC_Init(emc_clk, EMC_CHN_INFO_ARRAY,dram_info); 
 
 }
@@ -1601,3 +1621,4 @@ PUBLIC void DMC_Dev_Init(CLK_TYPE_E emc_clk)
 
 
  
+
