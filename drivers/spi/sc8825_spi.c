@@ -8,7 +8,8 @@
 
 #include <asm/arch/sc8825_spi.h>
 
-#define SPI_USED_BASE SPI_BASE
+#define SPI2_BASE 0x4e006000
+#define SPI_USED_BASE SPI2_BASE
 
 
 /**---------------------------------------------------------------------------*
@@ -51,18 +52,30 @@ typedef enum LCM_DMA_RETURN_E
 	LCM_ERR_ENDIAN
 } LCM_DMA_RETURN_E;       //SHOULD define in lcd.h
 
+#define GEN0_SPI2_EN	1
+
+
 /**---------------------------------------------------------------------------*
  **                         Function Define                                    *
  **---------------------------------------------------------------------------*/
-
 PUBLIC void SPI_Enable( uint32 spi_id, BOOLEAN is_en)
 {
 	if(is_en)
 	{
-		if (spi_id == 0) 
-			*(volatile uint32 *)GR_GEN0 |= ( 1 << GEN0_SPI0_EN);
-		else 
-			*(volatile uint32 *)GR_GEN0 |= ( 1 << GEN0_SPI1_EN);			
+		switch(spi_id){
+			case 0:
+				*(volatile uint32 *)GR_GEN0 |= ( 1 << GEN0_SPI0_EN);
+				break;
+			case 1:
+				*(volatile uint32 *)GR_GEN0 |= ( 1 << GEN0_SPI1_EN);
+				break;
+			case 2: 
+				*(volatile uint32 *)GR_GEN0 |= ( 1 << GEN0_SPI2_EN);
+				break;
+			default:
+				break;
+
+		}
 	}
 	else
 	{
@@ -306,32 +319,39 @@ PUBLIC void SPI_Init(SPI_INIT_PARM *spi_parm)
 	uint32 ctl0, ctl1, ctl2, ctl3;
 	//SCI_ASSERT((spi_parm->data_width >=0) && (spi_parm->data_width < 32));
 
-	SPI_Reset(0, 1000);  //Reset spi0&spi1
-	//SPI_Reset(1, 1000);
-
-	spi_ctr_ptr->clkd = spi_parm->clk_div;
+	/*default clk is 500k 192M /(0xc0 * 2)*/
+	spi_ctr_ptr->clkd =0xc0;
 
 	temp  = 0;
 	temp |= (spi_parm->tx_edge << 0)    |
 		(spi_parm->rx_edge << 1)    |
-		(spi_parm->data_width << 2) |
+		(0x9 << 2) |
 		(spi_parm->msb_lsb_sel<< 7) |
-		(0xE<<8);//CS-------------------------select cs0/cs1: 0-selected. 1-none
+		(0xf<<8);
 	spi_ctr_ptr->ctl0 = temp;
+	/* mode 0
+	  * bitlen = 32 bits
+	  * cs = cs0
+	*/
 
-	// storage registers
-	ctl0 = spi_ctr_ptr->ctl0;
-	ctl1 = spi_ctr_ptr->ctl1;
-	ctl3 = spi_ctr_ptr->ctl3;
-
-	spi_ctr_ptr->ctl0  =  ctl0 & ~0x7C;                 // set bit-length to 32
 	//spi_ctr_ptr->ctl1  = (ctl1 & ~BIT_12) | BIT_13;     // set transmite mode
-	spi_ctr_ptr->ctl1  = (ctl1 | BIT_12 | BIT_13);     // set rx/tx mode
+	spi_ctr_ptr->ctl1  |= BIT_12 | BIT_13;     // set rx/tx mode
 
+	/*rx fifo full watermark is 16*/
+	spi_ctr_ptr->ctl3 = 0x10;
+
+	/*set SPIMODE_3WIRE_9BIT_SDIO mode*/
+	spi_ctr_ptr->ctl7 &= ~(0x7 << 3);
+	spi_ctr_ptr->ctl7 |= SPIMODE_3WIRE_9BIT_SDIO << 3;
+	
+	
+
+#if 0
 	// set water mark of reveive FIFO
 	spi_ctr_ptr->ctl3  = (ctl3 & ~0xFFFF) | 
 		((BURST_SIZE >>2) <<8) | 
 		(BURST_SIZE >>2);
+#endif
 }
 
 PUBLIC void SPI_WaitTxFinish()

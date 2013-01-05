@@ -33,7 +33,9 @@ extern   "C"
 	 **---------------------------------------------------------------------------*/
 #define SPI0_ID        0
 #define SPI1_ID        1
-#define SPI_USED_ID    SPI0_ID   
+#define SPI2_ID        2
+#define SPI3_ID        3
+#define SPI_USED_ID    SPI2_ID   
 
 #define CHN_SPI_INT			9
 #define DMA_SPI_TX			0x13

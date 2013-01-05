@@ -21,12 +21,20 @@
  SPI_INIT_PARM spi_int_parm[] =
  {  //                                                                clk_div
 	{
-	 TX_POS_EDGE,RX_NEG_EDGE,
-	 TX_RX_MSB,RX_TX_MODE,NO_SWITCH,MASTER_MODE,
-	 0x0,0x0,
-	 0xF0,   //clk_div:(n+1)*2
-	 0x0,    //data_width.0-32bits per word; n-nbits per word
-	 0x0,SPI_TX_FIFO_DEPTH - 1,0x0,SPI_RX_FIFO_DEPTH - 1
+	 TX_POS_EDGE,
+	 RX_NEG_EDGE,
+	 TX_RX_MSB,
+	 RX_TX_MODE,
+	 NO_SWITCH,
+	 MASTER_MODE,
+	 0x0,
+	 0x0,
+	 0xF0, //clk_div:(n+1)*2
+	 0x0, //data_width.0-32bits per word; n-nbits per word
+	 0x0,
+	 SPI_TX_FIFO_DEPTH - 1,
+	 0x0,
+	 SPI_RX_FIFO_DEPTH - 1
 	 },  //for spi_lcm test
 	//{TX_POS_EDGE,RX_NEG_EDGE,TX_RX_LSB,RX_TX_MODE,NO_SWITCH,SLAVE_MODE,0x0,0x0,0xF0,0x0,0x0,SPI_TX_FIFO_DEPTH - 1,0x0,SPI_RX_FIFO_DEPTH - 1},
  };
@@ -83,13 +91,16 @@ static void SPI_Read( uint32_t* data)
 	SPI_SetDatawidth(8);
 
 	//Read data 16bits
-	lcm_id = SPI_ReadData(2, 0);  //unit of buswidth
+	lcm_id = SPI_ReadData(1, 0);  //unit of buswidth
 
 	*data = lcm_id;
 }
 
 void SPI_PinCfg( void )
 {
+	/*enable access the spi reg*/
+	*((volatile uint32 *)(0x4b000008)) |= BIT_1;
+	*((volatile uint32 *)(0x4b0000c0)) |= BIT_0;
 /*
 	//select spi0_2
 	CHIP_REG_SET (PIN_LCD_D6_REG, (PIN_FPD_EN | PIN_FUNC_1 | PIN_O_EN)); //SPI0_2_CD
@@ -119,12 +130,17 @@ BOOLEAN sprdfb_spi_init(struct sprdfb_device *dev)
 {
 	SPI_PinCfg();
 
-	SPI_Enable(SPI_USED_ID, TRUE);
-	SPI_Init( spi_int_parm );
+	/*reset the spi2*/
+	*((volatile uint32 *)(0x4b00004c))|= BIT_31;
+	udelay(50000);
+	*((volatile uint32 *)(0x4b00004c)) &= ~BIT_31;
 
-	SPI_ClkSetting( SPI_USED_ID, SPICLK_SEL_78M, 0);
-	//SPI_SetDatawidth(9);
-	SPI_SetSpiMode( SPIMODE_3WIRE_9BIT_SDIO );
+//	SPI_Enable(SPI_USED_ID, TRUE);
+	SPI_Init( spi_int_parm);
+
+//	SPI_ClkSetting( SPI_USED_ID, SPICLK_SEL_78M, 0);
+//	SPI_SetDatawidth(9);
+//	SPI_SetSpiMode( SPIMODE_3WIRE_9BIT_SDIO );
 	return TRUE;
 }
 

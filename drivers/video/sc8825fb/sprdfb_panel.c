@@ -57,6 +57,7 @@ static struct panel_cfg lcd_panel[] = {
  };
 
 #elif defined CONFIG_SC8825EB
+#if 0				//add for debug
 extern struct panel_spec lcd_nt35516_mcu_spec;
 static struct panel_cfg lcd_panel[] = {
     [0]={
@@ -64,6 +65,15 @@ static struct panel_cfg lcd_panel[] = {
         .panel = &lcd_nt35516_mcu_spec ,
         },
 };
+#else
+extern struct panel_spec lcd_panel_hx8362_rgb_spi_spec;
+static struct panel_cfg lcd_panel[] = {
+    [0]={
+        .lcd_id = 0x62,
+        .panel = &lcd_panel_hx8362_rgb_spi_spec ,
+        },
+};
+#endif
 
 #elif defined CONFIG_LCD_788
 extern struct panel_spec lcd_panel_hx8357;
@@ -84,6 +94,7 @@ static struct panel_cfg lcd_panel[] = {
  };
 
 #elif defined CONFIG_SP6825GA
+/*
 extern struct panel_spec lcd_nt35516_mcu_spec;
 static struct panel_cfg lcd_panel[] = {
     [0]={
@@ -91,15 +102,14 @@ static struct panel_cfg lcd_panel[] = {
         .panel = &lcd_nt35516_mcu_spec ,
         },
 };
-
-#elif defined CONFIG_SP8825GA_OPENPHONE
-extern struct panel_spec lcd_nt35516_mipi_spec;
-static struct panel_cfg lcd_panel[] = {
-    [0]={
-        .lcd_id = 0x16,
-        .panel = &lcd_nt35516_mipi_spec ,
-        },
-};
+*/
+	extern struct panel_spec lcd_panel_hx8362_rgb_spi_spec;
+	static struct panel_cfg lcd_panel[] = {
+		[0]={
+			.lcd_id = 0x62,
+			.panel = &lcd_panel_hx8362_rgb_spi_spec ,
+			},
+	};
 
 #else
 #ifdef CONFIG_LCD_QVGA
@@ -130,15 +140,15 @@ static struct panel_cfg lcd_panel[] = {
 #endif
 #endif
 
-#ifdef CONFIG_LCD_WVGA
+//#ifdef CONFIG_LCD_WVGA
 vidinfo_t panel_info = {
 	.vl_col = 480,
 	.vl_bpix = 4,
 	.vl_row = 800,
 	.cmap = colormap,
 };
-#endif
-
+//#endif
+/*
 #ifdef CONFIG_LCD_HVGA
 vidinfo_t panel_info = {
 	.vl_col = 320,
@@ -165,7 +175,7 @@ vidinfo_t panel_info = {
 	.cmap = colormap,
 };
 #endif
-
+*/
 extern struct panel_if_ctrl sprdfb_mcu_ctrl;
 extern struct panel_if_ctrl sprdfb_rgb_ctrl;
 extern struct panel_if_ctrl sprdfb_mipi_ctrl;
@@ -280,8 +290,8 @@ static struct panel_spec *adapt_panel_from_readid(struct sprdfb_device *dev)
 	for(i = 0;i<(sizeof(lcd_panel))/(sizeof(lcd_panel[0]));i++) {
 		FB_PRINT("sprdfb: [%s]: try panel 0x%x\n", __FUNCTION__, lcd_panel[i].lcd_id);
 		panel_mount(dev, lcd_panel[i].panel);
-		panel_init(dev);
 		panel_reset(lcd_panel[i].panel);
+		panel_init(dev);
 		id = dev->panel->ops->panel_readid(dev->panel);
 		if(id == lcd_panel[i].lcd_id) {
 			FB_PRINT("sprdfb: [%s]: LCD Panel 0x%x is attached!\n", __FUNCTION__, lcd_panel[i].lcd_id);
@@ -292,7 +302,7 @@ static struct panel_spec *adapt_panel_from_readid(struct sprdfb_device *dev)
 			panel_ready(dev);
 			return lcd_panel[i].panel;
 		} else {							//zxdbg for LCD adaptor
-			FB_PRINT("sprdfb: [%s]: LCD Panel 0x%x attached fail!go next\n ", __FUNCTION__, lcd_panel[i].lcd_id);
+			FB_PRINT("sprdfb: [%s]: LCD Panel 0x%x attached fail!go next ", __FUNCTION__, lcd_panel[i].lcd_id);
 			sprdfb_panel_remove(dev);				//zxdebug modify for LCD adaptor 
 		}
 	}

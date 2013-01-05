@@ -54,7 +54,7 @@ static void rgb_dispc_init_config(struct panel_spec *panel)
 	}
 
 	if(SPRDFB_PANEL_TYPE_RGB != panel->type){
-		FB_PRINT("sprdfb: [%s] fail.(not  mcu panel)\n", __FUNCTION__);
+		FB_PRINT("sprdfb: [%s] fail.(not  rgb panel)\n", __FUNCTION__);
 		return;
 	}
 
@@ -76,7 +76,7 @@ static void rgb_dispc_init_config(struct panel_spec *panel)
 	}
 
 	/*always run mode*/
-	reg_val |= (1<<3);
+	reg_val &= ~ (1<<3);
 
 	/*dpi bits*/
 	switch(panel->info.rgb->video_bus_width){
@@ -211,8 +211,24 @@ static void sprdfb_rgb_panel_init(struct sprdfb_device *dev)
 	}else if(SPRDFB_RGB_BUS_TYPE_SPI == dev->panel->info.rgb->cmd_bus_mode) {
 		sprdfb_spi_init(dev);
 	}
+	
+	printk("0x4b000008 = 0x%x\n", __raw_readl(0x4b000008));
+	printk("0x4b00001c = 0x%x\n", __raw_readl(0x4b00001c));
+	printk("0x4b00004c = 0x%x\n", __raw_readl(0x4b00004c));
+	printk("0x4b0000c0 = 0x%x\n", __raw_readl(0x4b00004c));
+
+	printk("0x4e006000 = 0x%x\n", __raw_readl(0x4e006000));
+	printk("0x4e006004 = 0x%x\n", __raw_readl(0x4e006004));
+	printk("0x4e006008 = 0x%x\n", __raw_readl(0x4e006008));
+	printk("0x4e00600c = 0x%x\n", __raw_readl(0x4e00600c));
+	printk("0x4e006010 = 0x%x\n", __raw_readl(0x4e006010));
+	printk("0x4e006014 = 0x%x\n", __raw_readl(0x4e006014));
+	
 	rgb_dispc_init_config(dev->panel);
 	rgb_dispc_set_timing(dev);
+
+	dispc_set_bits((1 << 4), DISPC_CTRL);	//rgb panel need to out put clock before init
+	udelay(1200000);
 }
 
 static void sprdfb_rgb_panel_uninit(struct sprdfb_device *dev)
