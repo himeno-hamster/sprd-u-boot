@@ -228,7 +228,8 @@ static void sprdfb_rgb_panel_init(struct sprdfb_device *dev)
 	rgb_dispc_set_timing(dev);
 
 	dispc_set_bits((1 << 4), DISPC_CTRL);	//rgb panel need to out put clock before init
-	udelay(1200000);
+	udelay(1200);
+	dispc_clear_bits((1 << 4), DISPC_CTRL);	
 }
 
 static void sprdfb_rgb_panel_uninit(struct sprdfb_device *dev)
