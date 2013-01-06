@@ -22,7 +22,9 @@
 void nv_patch(char * addr, int size)
 {
 	int i = 0;
-	
+	for(i=0; i<FIXNV_SIZE-size; i++){
+		addr[size + i] = 0xff;
+	}
 	for(i=0; i<4; i++){
 		addr[FIXNV_SIZE + i] = 0x5a;
 	}
