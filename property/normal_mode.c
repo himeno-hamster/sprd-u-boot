@@ -683,6 +683,11 @@ void creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 	sprintf(&buf[str_len], " lpj=%d", CONFIG_LOOP_PER_JIFFY);
 #endif
 
+#ifdef CONFIG_AP_VERSION
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " %s", "apv=" CONFIG_AP_VERSION);
+#endif
+
 	if(cmdline && cmdline[0]){
 		str_len = strlen(buf);
 		sprintf(&buf[str_len], " %s", cmdline);

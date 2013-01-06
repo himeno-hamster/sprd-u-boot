@@ -197,6 +197,10 @@ ifeq ($(AUTOBOOT_FLAG), true)
 CFLAGS += -DCONFIG_AUTOBOOT
 endif
 
+ifneq ($(AP_VERSION), )
+CFLAGS += -DCONFIG_AP_VERSION='"$(AP_VERSION)"'
+endif
+
 # $(CPPFLAGS) sets -g, which causes gcc to pass a suitable -g<format>
 # option to the assembler.
 AFLAGS_DEBUG :=
