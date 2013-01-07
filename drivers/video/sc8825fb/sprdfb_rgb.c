@@ -211,19 +211,7 @@ static void sprdfb_rgb_panel_init(struct sprdfb_device *dev)
 	}else if(SPRDFB_RGB_BUS_TYPE_SPI == dev->panel->info.rgb->cmd_bus_mode) {
 		sprdfb_spi_init(dev);
 	}
-	
-	printk("0x4b000008 = 0x%x\n", __raw_readl(0x4b000008));
-	printk("0x4b00001c = 0x%x\n", __raw_readl(0x4b00001c));
-	printk("0x4b00004c = 0x%x\n", __raw_readl(0x4b00004c));
-	printk("0x4b0000c0 = 0x%x\n", __raw_readl(0x4b00004c));
-
-	printk("0x4e006000 = 0x%x\n", __raw_readl(0x4e006000));
-	printk("0x4e006004 = 0x%x\n", __raw_readl(0x4e006004));
-	printk("0x4e006008 = 0x%x\n", __raw_readl(0x4e006008));
-	printk("0x4e00600c = 0x%x\n", __raw_readl(0x4e00600c));
-	printk("0x4e006010 = 0x%x\n", __raw_readl(0x4e006010));
-	printk("0x4e006014 = 0x%x\n", __raw_readl(0x4e006014));
-	
+		
 	rgb_dispc_init_config(dev->panel);
 	rgb_dispc_set_timing(dev);
 

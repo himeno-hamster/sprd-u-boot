@@ -52,38 +52,6 @@ static int32_t hx8362_init(struct panel_spec *self)
 
 	LCD_PRINT("hx8362_init\n");
 
-#if 1	//add for debug spi read
-	LCD_PRINT("zxdbg add -hx8362_set_window: %d, %d, %d, %d\n",left, top, right, bottom);
-
-	HX8362_SpiWriteCmd(0x2A); 
-	HX8362_SpiWriteData((left>>8));// set left address
-	HX8362_SpiWriteData((left&0xff));
-	HX8362_SpiWriteData((right>>8));// set right address
-	HX8362_SpiWriteData((right&0xff));
-
-	HX8362_SpiWriteCmd(0x2B); 
-	HX8362_SpiWriteData((top>>8));// set left address
-	HX8362_SpiWriteData((top&0xff));
-	HX8362_SpiWriteData((bottom>>8));// set bottom address
-	HX8362_SpiWriteData((bottom&0xff));
-
-	LCD_PRINT("zxdbg add -hx8362_read before read: %x, %x, %x, %x\n",test_data[0], test_data[1], test_data[2], test_data[3]);
-
-	HX8362_SpiWriteCmd(0x2A); 
-	spi_read(test_data);
-	spi_read(test_data+1);
-	spi_read(test_data+2);
-	spi_read(test_data+3);
-	HX8362_SpiWriteCmd(0x2B); 
-	spi_read(test_data+4);
-	spi_read(test_data+5);
-	spi_read(test_data+6);
-	spi_read(test_data+7);
-
-	LCD_PRINT("zxdbg add -hx8362_read after read: %x, %x, %x, %x\n",test_data[0], test_data[1], test_data[2], test_data[3]);
-	
-#endif
-
 	HX8362_SpiWriteCmd(0xB9); // SET password
 	HX8362_SpiWriteData(0xFF); // 
 	HX8362_SpiWriteData(0x83); // 
