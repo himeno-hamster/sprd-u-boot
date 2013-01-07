@@ -1587,8 +1587,13 @@ PUBLIC void DMC_Dev_Init(CLK_TYPE_E emc_clk)
 	}
 	else
 	{
-	    dram_chip_name ="NORMAL_LPDDR1_2CS_4G_32BIT";
-        emc_clk = CLK_200MHZ;
+        #ifdef CONFIG_MEM_LPDDR1_2CS_4GBIT
+	        dram_chip_name ="NORMAL_LPDDR1_2CS_4G_32BIT";
+        #else
+           dram_chip_name ="NORMAL_LPDDR1_1CS_2G_32BIT";
+        #endif
+
+           emc_clk = CLK_200MHZ;
 	}	
 		
 	dram_info = get_dram_info(dram_chip_name);
