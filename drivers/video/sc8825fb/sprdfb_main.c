@@ -179,8 +179,10 @@ static int tiger_probe(void * lcdbase)
 	LDO_SetVoltLevel(LDO_LDO_VDD28, LDO_VOLT_LEVEL3);
 	LDO_TurnOnLDO(LDO_LDO_VDD28);
 #endif
+#ifdef CONFIG_GARDA
 	LDO_SetVoltLevel(LDO_LDO_SIM1, LDO_VOLT_LEVEL2);
 	LDO_TurnOnLDO(LDO_LDO_SIM1);
+#endif
 /*
 	__raw_writel((__raw_readl(0x20900208) | 0xAFE), 0x20900208);
 	__raw_writel((__raw_readl(0x20900200) | 0xFFFFFFFF), 0x20900200);
