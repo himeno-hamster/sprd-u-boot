@@ -75,7 +75,6 @@ int power_button_pressed(void)
     sprd_gpio_direction_input(&power_button_chip,POWER_BUTTON_GPIO_NUM); 
     return sprd_gpio_get(&power_button_chip, POWER_BUTTON_GPIO_NUM);
 #else
-	int pbint1, pbint2;
 
 	ANA_REG_OR(ANA_APB_CLK_EN, BIT_3|BIT_11);
 	ANA_REG_SET(ADI_EIC_MASK, 0xff);
@@ -85,9 +84,7 @@ int power_button_pressed(void)
 	#if !(defined (CONFIG_SC8825))
 	return !!(status & (1 << 3)/*PBINT*/);//low level if pb hold
 	#else
-	pbint1 = !(status & (1 << 3)); /* PBINT1 */
-	pbint2 = !(status & (1 << 7)); /* PBINT2 */
-	return (pbint1 && pbint2);
+	return !(status & (1 << 3)/*PBINT*/);
 	#endif
 #endif
 }
