@@ -79,6 +79,17 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     board_keypad_init();
     boot_pwr_check();
 
+    int recovery_init(void);
+    int ret =0;
+    ret = recovery_init();
+    if(ret == 1){
+        DBG("func: %s line: %d\n", __func__, __LINE__);
+        recovery_mode_without_update();
+    }else if(ret == 2){
+	    try_update_modem(); //update img from mmc
+	    normal_mode();
+    }
+
     unsigned check_reboot_mode(void);
     unsigned rst_mode= check_reboot_mode();
     if(rst_mode == RECOVERY_MODE){
@@ -106,15 +117,6 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 #endif
     DBG("func: %s line: %d\n", __func__, __LINE__);
 
-    int recovery_init(void);
-    int ret =0;
-    ret = recovery_init();
-    if(ret == 1){
-        DBG("func: %s line: %d\n", __func__, __LINE__);
-        recovery_mode_without_update();
-    }else if(ret == 2){
-	    recovery_mode();
-    }
    if(charger_connected()){
         DBG("%s: charger connected\n", __FUNCTION__);
         charge_mode();
