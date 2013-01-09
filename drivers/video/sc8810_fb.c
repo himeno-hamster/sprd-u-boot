@@ -173,17 +173,17 @@ static struct ops_mcu lcm_mcu_ops = {
 
 static int32_t panel_reset()
 {
-#ifndef CONFIG_MACH_CORI        
+#if (CONFIG_MACH_CORI || CONFIG_MACH_MINT)
 	//panel reset
 	__raw_writel(0, LCM_RSTN);
 	udelay(10);
 	__raw_writel(1, LCM_RSTN);
-	mdelay(10);
+	mdelay(0x80);
 #else
 	__raw_writel(0, LCM_RSTN);
 	udelay(10);
 	__raw_writel(1, LCM_RSTN);
-	mdelay(0x80);
+	mdelay(10);
 #endif
 
 	return 0;

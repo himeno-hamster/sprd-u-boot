@@ -1260,6 +1260,11 @@ cori2g_config	: unconfig
 	@mkdir -p $(obj)include
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 	@$(MKCONFIG) $@ arm armv7 cori2g spreadtrum sc8810
+
+mint_config	: unconfig
+	@mkdir -p $(obj)include
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@$(MKCONFIG) $@ arm armv7 mint spreadtrum sc8810
 	
 amazing_config	: unconfig
 	@mkdir -p $(obj)include

@@ -30,6 +30,10 @@ extern struct lcd_spec lcd_panel_ili9341s;
 extern struct lcd_spec lcd_panel_ili9341boe;
 #endif
 
+#ifdef CONFIG_LCD_ILI9341_BOE_MINT
+extern struct lcd_spec lcd_panel_ili9486;
+#endif
+
 #ifdef CONFIG_LCD_NT35510
 extern struct lcd_spec lcd_nt35510_spec;
 #endif
@@ -58,6 +62,12 @@ struct lcd_cfg lcd_panel[] = {
 		.lcd_id = 0x61a4,
 		.panel = &lcd_panel_ili9341boe,
         },
+#endif
+#ifdef CONFIG_LCD_ILI9341_BOE_MINT
+	{
+		.lcd_id = 0x60b4,
+		.panel = &lcd_panel_ili9486,
+	},
 #endif
 #ifdef CONFIG_LCD_ILI9486
 	{
