@@ -1,6 +1,6 @@
 #include "../../../disk/part_uefi.h"
 
-PARTITION_CFG const g_sprd_emmc_partition_cfg[] = {
+PARTITION_CFG const g_sprd_emmc_partition_cfg[MAX_PARTITION_INFO] = {
 	{PARTITION_VM, 512, PARTITION_RAW},		/* 512KB , save modem fdl in samsung stingray*/
 	{PARTITION_MODEM, 10 * 1024, PARTITION_RAW},	/* 10 * 1024KB not used in samsung stingray*/
 	{PARTITION_DSP, 5 * 1024, PARTITION_RAW},       /*save dsp image in samsung stingray*/

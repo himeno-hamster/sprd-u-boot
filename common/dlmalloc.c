@@ -2908,7 +2908,7 @@ Void_t* pvALLOc(bytes) size_t bytes;
 #endif
 {
   size_t pagesize = malloc_getpagesize;
-  return mEMALIGn (pagesize, (bytes + pagesize - 1) & ~(pagesize - 1));
+  return mEMALIGn (pagesize, ((bytes + pagesize - 1) & ~(pagesize - 1)));
 }
 
 /*

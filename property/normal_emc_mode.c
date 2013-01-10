@@ -359,7 +359,6 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	struct mtd_device *dev;
 	struct part_info *part;
 	u8 pnum;
-	int ret;
 	size_t size;
 	loff_t off = 0;
 	int orginal_right, backupfile_right;
@@ -796,7 +795,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	*/
 	extern void DSP_ForceSleep(void);
 	DSP_ForceSleep();
-	printf("dsp nand read ok1 %d\n", ret);
+	printf("dsp nand read ok1 \n");
 #endif
 
 	if(poweron_by_calibration()){
@@ -911,9 +910,8 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 			printf("ramdisk size error\n");
 			return;
 		}
-                                     if(TRUE !=  Emmc_Read(PARTITION_USER, info.start+noffsetsector, size/EMMC_SECTOR_SIZE, (uint8*)RAMDISK_ADR))
-		if(ret != 0){
-			printf("ramdisk nand read error %d\n", ret);
+		if(TRUE !=  Emmc_Read(PARTITION_USER, info.start+noffsetsector, size/EMMC_SECTOR_SIZE, (uint8*)RAMDISK_ADR)){
+			printf("ramdisk nand read error \n");
 			return;
 		}
 	}

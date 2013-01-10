@@ -1075,7 +1075,6 @@ static int erase_worker(struct ubi_device *ubi, struct ubi_work *wl_wrk,
 
 	ubi_err("failed to erase PEB %d, error %d", pnum, err);
 	kfree(wl_wrk);
-	kmem_cache_free(ubi_wl_entry_slab, e);
 
 	if (err == -EINTR || err == -ENOMEM || err == -EAGAIN ||
 	    err == -EBUSY) {
