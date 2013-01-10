@@ -3428,8 +3428,10 @@ static int yaffs_PutChunkIntoFile(yaffs_Object * in, int chunkInInode,
 			 * not be loaded during a scan
 			 */
 
-			newSerial = newTags.serialNumber;
-			existingSerial = existingTags.serialNumber;
+			if (inScan > 0) {
+				newSerial = newTags.serialNumber;
+				existingSerial = existingTags.serialNumber;
+			}
 
 			if ((inScan > 0) &&
 			    (in->myDev->isYaffs2 ||

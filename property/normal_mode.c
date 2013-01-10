@@ -453,7 +453,7 @@ unsigned long read_dir(struct nv_dev *dev, unsigned short id, struct direntry_ta
 	return ret;
 }
 
-unsigned long read_itemhdr(struct nv_dev *dev, unsigned long offset, struct item_tag *header)
+void read_itemhdr(struct nv_dev *dev, unsigned long offset, struct item_tag *header)
 {
 	unsigned char *addr;
 
@@ -461,7 +461,7 @@ unsigned long read_itemhdr(struct nv_dev *dev, unsigned long offset, struct item
 	memcpy(header, addr, sizeof(struct item_tag));
 }
 
-unsigned long read_itemdata(struct nv_dev *dev, unsigned long offset, unsigned long size, unsigned char *buffer)
+void read_itemdata(struct nv_dev *dev, unsigned long offset, unsigned long size, unsigned char *buffer)
 {
 	unsigned char *addr;
 
@@ -727,8 +727,10 @@ void creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 
 	addcmdline(buf);
 	ret =read_spldata();
-	if(ret != 0)
+	if(ret != 0){
+		free(buf);
 		return;
+	}
 	if(harsh_data == NULL){
 		printf("harsh_data malloc failed\n");
 		return;

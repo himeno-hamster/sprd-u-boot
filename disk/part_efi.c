@@ -226,16 +226,16 @@ int get_partition_info_efi_with_partnum(block_dev_desc_t * dev_desc, int part,
 	debug("%s: start 0x%lX, size 0x%lX, name %s", __FUNCTION__,
 		info->start, info->size, info->name);
 
-	/* Remember to free pte */
-	if (pgpt_pte != NULL) {
-		debug("%s: Freeing pgpt_pte\n", __FUNCTION__);
-		free(pgpt_pte);
-	}
-
 	/* copy sd info */
 	if (sdidx < (le32_to_int(gpt_head.num_partition_entries))) {
 		sdinfo->start = (ulong) le64_to_int((pgpt_pte)[sdpart - 1].starting_lba);
 		sdinfo->size = ((ulong)le64_to_int((pgpt_pte)[sdpart - 1].ending_lba) + 1) - sdinfo->start;
+	}
+
+	/* Remember to free pte */
+	if (pgpt_pte != NULL) {
+		debug("%s: Freeing pgpt_pte\n", __FUNCTION__);
+		free(pgpt_pte);
 	}
 
 	if (total == 0)

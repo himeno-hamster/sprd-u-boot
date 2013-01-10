@@ -119,6 +119,8 @@ LOCAL int SIO_Read (struct FDL_ChannelHandler  *channel, const unsigned char *bu
     }
 
     return pstart - (unsigned char *) buf;
+#else
+	return 0;
 #endif
 }
 LOCAL char SIO_GetChar (struct FDL_ChannelHandler  *channel)
@@ -132,6 +134,8 @@ LOCAL char SIO_GetChar (struct FDL_ChannelHandler  *channel)
     }
 
     return SIO_GET_CHAR (port->regBase);
+#else
+	return 0;
 #endif
 }
 LOCAL int SIO_GetSingleChar (struct FDL_ChannelHandler  *channel)
@@ -151,6 +155,8 @@ LOCAL int SIO_GetSingleChar (struct FDL_ChannelHandler  *channel)
     }
 
     return ch;
+#else
+	return 0;
 #endif
 }
 LOCAL int SIO_Write (struct FDL_ChannelHandler  *channel, const unsigned char *buf, unsigned int len)
@@ -181,6 +187,8 @@ LOCAL int SIO_Write (struct FDL_ChannelHandler  *channel, const unsigned char *b
     }
 
     return pstart - (const unsigned char *) buf;
+#else
+	return 0;
 #endif
 }
 
@@ -203,6 +211,8 @@ LOCAL int SIO_PutChar (struct FDL_ChannelHandler  *channel, const unsigned char 
     }
 
     return 0;
+#else
+	return 0;
 #endif
 }
 LOCAL int SIO_SetBaudrate (struct FDL_ChannelHandler  *channel,  unsigned int baudrate)

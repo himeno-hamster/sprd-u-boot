@@ -1194,7 +1194,9 @@ static dir_entry *delete_directory_entry(fsdata *mydata, int startsect,
 {
 	__u32 curclust = (startsect - mydata->data_begin) / mydata->clust_size;
 	__u32 find_curclust = curclust;
-	dir_entry *find_dentptr;
+#ifdef CONFIG_SUPPORT_VFAT
+	dir_entry *find_dentptr = NULL;
+#endif
 
 	debug("get_dentfromdir: %s\n", filename);
 
@@ -1274,7 +1276,7 @@ static dir_entry *delete_directory_entry(fsdata *mydata, int startsect,
 						get_dentfromdir_block,
 						mydata->clust_size * mydata->sect_size) != 0) {
 				printf("error: wrinting directory entry\n");
-				return;
+				return NULL;
 			}
 			debug("DentName: %s", s_name);
 			debug(", start: 0x%x", START(dentptr));

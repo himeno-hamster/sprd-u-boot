@@ -877,7 +877,7 @@ LOCAL void _Reset_ALL (SDHOST_HANDLE sdhost_handler)
 //      NONE
 //  Note:
 /*****************************************************************************/
-LOCAL  SDHOST_Reset_Controller(SDHOST_SLOT_NO slot_NO)
+LOCAL  void SDHOST_Reset_Controller(SDHOST_SLOT_NO slot_NO)
 {
 #if defined (CONFIG_TIGER)
 	REG32 (AHB_CTL0)	  |= BIT_23;

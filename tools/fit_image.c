@@ -129,6 +129,7 @@ static int fit_handle_file (struct mkimage_params *params)
 		fprintf (stderr, "%s Can't add hashes to FIT blob",
 				params->cmdname);
 		unlink (tmpfile);
+		close (tfd);
 		return (EXIT_FAILURE);
 	}
 

@@ -266,8 +266,6 @@ static void kwdimage_set_ext_header (struct kwb_header *kwbhdr, char* name) {
 				if (cmd != CMD_DATA)
 					goto INVL_CMD;
 
-				exthdr->rcfg[datacmd_cnt].rdata =
-						check_get_hexval (token);
 
 				if (datacmd_cnt > KWBIMAGE_MAX_CONFIG ) {
 					printf ("Error:%s[%d] - Found more "
@@ -276,8 +274,11 @@ static void kwdimage_set_ext_header (struct kwb_header *kwbhdr, char* name) {
 						fname, lineno,
 						KWBIMAGE_MAX_CONFIG);
 				exit (EXIT_FAILURE);
-				} else
+				} else{
+					exthdr->rcfg[datacmd_cnt].rdata =
+						check_get_hexval (token);
 					datacmd_cnt++;
+				}
 				break;
 
 			default:
