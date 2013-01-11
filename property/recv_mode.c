@@ -206,6 +206,7 @@ int recovery_init (void)
 		return 1;
 	}
 
+#if 0 //in the latest 'recovery' we have done most of the update works,so,we needn't to do it anymore!!!
 	if (!strcmp("boot-update",msg.command)) {
 		valid_command = 1;
 		strcpy(msg.command, "");	// to safe against multiple reboot into recovery
@@ -214,7 +215,7 @@ int recovery_init (void)
 		// Boot in update mode
 		return 2;
 	}
-
+#endif
 	if (!strcmp("update-radio",msg.command)) {
 		valid_command = 1;
 		strcpy(partition_name, "FOTA");
@@ -447,7 +448,8 @@ void try_update_modem(void)
 void recovery_mode(void)
 {
     printf("%s\n", __func__);
-    try_update_modem(); //update img from mmc
+    //there is no need to do it  anymore!!!
+    //try_update_modem(); //update img from mmc
     vlx_nand_boot(RECOVERY_PART, NULL, BACKLIGHT_ON);
 }
 

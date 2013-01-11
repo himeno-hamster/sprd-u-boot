@@ -232,7 +232,7 @@ static int nand_read_page(struct mtd_info *mtd, int block, int page, uchar *dst)
 		 * from correct_data(). We just hope that all possible errors
 		 * are corrected by this routine.
 		 */
-		stat = this->ecc.correct(mtd, p, &ecc_code[i], &ecc_calc[i]);
+		stat = this->ecc.correct(mtd, p, &ecc_code[i],NULL);
 	}
 
 	return 0;

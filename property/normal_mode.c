@@ -90,6 +90,25 @@ bool lcd_resume = true;
 #define SP09_SPPH_MAGIC_NUMBER          (0X53503039)    // "SP09"
 #define SP09_MAX_LAST_DESCRIPTION_LEN   (32)
 
+//the following fixnv parameters's ids may need to be customized,please pay attention to this!!!
+	//calibration   0x2
+#define FIXNV_CALIBRATION_ID        0x2
+	//IMEI 0x5,0x179,0x186,0x1e4,
+#define FIXNV_IMEI1_ID        0x5
+#define FIXNV_IMEI2_ID        0x179
+#define FIXNV_IMEI3_ID        0x186
+#define FIXNV_IMEI4_ID        0x1e4
+	//TD_calibration 0x516
+#define FIXNV_TD_CALIBRATION_ID        0x516
+	//blue tooth 0x191
+#define FIXNV_BT_ID        0x191
+	//band select 0xd
+#define FIXNV_BAND_SELECT_ID        0xd
+	//WIFI 0x199
+#define FIXNV_WIFI_ID        0x199
+	//MMITEST 0x19a
+#define FIXNV_MMITEST_ID        0x19a
+
 typedef struct _tagSP09_PHASE_CHECK
 {
 	unsigned long 	Magic;                	// "SP09"
@@ -324,12 +343,12 @@ static unsigned int Vlx_CalcFixnvLen(unsigned int search_start, unsigned int sea
 }
 
 static int check_fixnv_struct(unsigned int addr,unsigned int size){
-	int length = 0,keep_length=0;
+	unsigned int length = 0,keep_length=0;
 	volatile unsigned int *flash_ptr;
 	
 	flash_ptr = (volatile unsigned int *)(addr+size-8);
 	keep_length = *flash_ptr;
-	printf("keep_length=%d  line=%d\r\n",keep_length ,__LINE__);
+	//printf("keep_length=%d  line=%d\r\n",keep_length ,__LINE__);
 	if(keep_length != 0xffffffff){
 		length = Vlx_CalcFixnvLen(addr, addr+size);
 		if(keep_length != length){
@@ -360,7 +379,7 @@ int nv_is_correct_endflag(unsigned char *array, unsigned long size)
 		//return 1;
 	//else
 		//return -1;
-	//check both crc16 and fixed flag.
+	//check both crc16 and fixed flag.	
 	if( (0xffff == *((unsigned short*)&array[size-2])&&
 		0x5a5a5a5a == *((unsigned int*)&array[size])&&
 		check_compatibilty)||/*old flag*/
@@ -586,6 +605,44 @@ static int load_kernel_and_layout(struct mtd_info *nand,
 
 	return ret;
 }
+
+void update_fixnv(unsigned char *old_addr,unsigned char*new_addr){
+	unsigned short item_id = 0,i = 0,item_array[] = {FIXNV_CALIBRATION_ID,
+                                                 FIXNV_IMEI1_ID,
+                                                 FIXNV_IMEI2_ID,
+                                                 FIXNV_IMEI3_ID,
+                                                 FIXNV_IMEI4_ID,
+                                                 FIXNV_TD_CALIBRATION_ID,
+                                                 FIXNV_BT_ID,
+                                                 FIXNV_BAND_SELECT_ID,
+                                                 FIXNV_WIFI_ID,
+                                                 FIXNV_MMITEST_ID,
+                                                 0x0};
+	unsigned int old_item_base = 0,new_item_base = 0,length = 0;
+	unsigned short old_item_len=0, new_item_len=0;
+	
+	while(item_id = item_array[i++]){
+		old_item_base = Vlx_GetFixedBvitemAddr(item_id, old_addr, (old_addr+FIXNV_SIZE));
+		new_item_base = Vlx_GetFixedBvitemAddr(item_id, new_addr, (new_addr+FIXNV_SIZE));
+		if(old_item_base == 0xffffffff || new_item_base == 0xffffffff){
+			continue;
+		}
+		old_item_len =*(unsigned short*)(old_item_base-2);
+		new_item_len =*(unsigned short*)(new_item_base-2);
+		printf("item_id = 0x%x,old_item_len = %d,new_item_len = %d\n",item_id,new_item_len,old_item_len);
+		if(old_item_len == new_item_len&&old_item_len != 0xffffffff){
+			printf("copy from 0x%x to 0x%x and size = %d\n",old_item_base,new_item_base,old_item_len);
+			memcpy(new_item_base,old_item_base,old_item_len);
+		}
+	}
+
+	length = Vlx_CalcFixnvLen(new_addr, new_addr+FIXNV_SIZE);	
+	*((unsigned int*)&new_addr[FIXNV_SIZE-8])= length;//keep the real  fixnv file size.	
+	*(unsigned short*)&new_addr[FIXNV_SIZE-2] = crc16(0,(unsigned const char*)new_addr,FIXNV_SIZE-2);
+	*(unsigned int*)&new_addr[FIXNV_SIZE] = 0x5a5a5a5a;
+	memcpy(old_addr,new_addr,FIXNV_SIZE+4);
+}
+
 //if not to boot native linux, cmdline=NULL, kerne_pname=boot, backlight_set=on.
 void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 {
@@ -629,6 +686,53 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	printf("good is %d  bad is %d\n", good_blknum, bad_blknum);*/
 
 	///////////////////////////////////////////////////////////////////////
+	printf("test if there is a need to update spl......\n");
+	{
+		char *spl_mount_point = "/spl";
+		char *tmp_mount_point = "/backupfixnv";
+		char *tmp_file_name = "/backupfixnv/spl.bin";
+		int length = 0;
+
+		ret = find_dev_and_part("spl", &dev, &pnum, &part);
+                 if(!ret)
+                         nand = &nand_info[dev->id->num];
+		cmd_yaffs_mount(tmp_mount_point);
+		length = cmd_yaffs_ls_chk(tmp_file_name);
+		if(length > 0){
+			//try to update spl.
+			int ret = 0;
+			printf("trying to update spl ......\n");
+			memset((unsigned char*)RUNTIMENV_ADR, 0xff,16*1024);//spl.bin's valid size is 16K
+			cmd_yaffs_mread_file(tmp_file_name, RUNTIMENV_ADR);
+			extern int nand_write_spl(u8 *buf, struct mtd_info *mtd);
+			ret = nand_write_spl((u8*)RUNTIMENV_ADR, nand);
+			if(ret != 0){
+				return -1;
+			}
+			printf("spl is updated remove the tmp bin file in backupfixnv partition!\n");
+			cmd_yaffs_rm(tmp_file_name);
+		}
+		cmd_yaffs_umount(tmp_mount_point);	
+		
+	}
+
+	printf("test if there is a need to update fixnv......\n");
+	{
+		int length = 0,need_update = 0;
+		char *nvitem_point = "/backupfixnv";
+		char *nvitem_name = "/backupfixnv/nvitem.bin";
+		cmd_yaffs_mount(nvitem_point);
+		length = cmd_yaffs_ls_chk(nvitem_name);
+		if(length > 0&&length < FIXNV_SIZE){
+			memset((unsigned char*)RUNTIMENV_ADR, 0xff,FIXNV_SIZE + 4);
+			cmd_yaffs_mread_file(nvitem_name, RUNTIMENV_ADR);
+			need_update = 1;
+			check_compatibilty = 1;//some times the fixnv files in the phone is old style and use OTA!!
+		}
+		cmd_yaffs_umount(nvitem_point);
+	}
+
+
 	/* FIXNV_PART */
 	printf("Reading fixnv to 0x%08x\n", FIXNV_ADR);
 	//try "/fixnv/fixnvchange.bin" first,if fail,
@@ -664,20 +768,30 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		}
 	}else{
 		//everything is right!!
-		//we can chose to do it or not.
-		ret = load_sector_to_memory(backupfixnvpoint,
-						backupfixnvfilename,
-						0,//backupfixnvfilename2,
-						(unsigned char *)RUNTIMENV_ADR,//we just test if it's correct.
-						FIXNV_SIZE + 4);		
-		if(ret == -1){
-			recovery_sector(backupfixnvpoint, 
-				backupfixnvfilename, 
-				0,//backupfixnvfilename2, 
-				(unsigned char *)FIXNV_ADR,
-				FIXNV_SIZE + 4);
-		}
+        //there's nothing to do here ......
 	}	
+
+	
+	
+	if(check_compatibilty){		
+		char *nvitem_point = "/backupfixnv";
+		char *nvitem_name = "/backupfixnv/nvitem.bin";
+		cmd_yaffs_mount(nvitem_point);		
+		
+		printf("update fixnv's items\n");	
+		update_fixnv(FIXNV_ADR,RUNTIMENV_ADR);
+		printf("update fixnv partition");
+		recovery_sector(fixnvpoint, 
+			fixnvfilename, 
+			fixnvfilename2, 
+			(unsigned char *)FIXNV_ADR,
+			FIXNV_SIZE + 4);
+		printf("remove /fixnv/nvitem.bin");
+		cmd_yaffs_rm(nvitem_name);
+		cmd_yaffs_umount(nvitem_point);	
+		check_compatibilty = 0;//ensure the value is 0!
+	}
+
 
 	//finally we check the fixnv structure,if fail,then u-boot will hung up!!!		
 	if(check_fixnv_struct(FIXNV_ADR,FIXNV_SIZE) == -1){
@@ -702,13 +816,11 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 	///////////////////////////////////////////////////////////////////////
 	/* RUNTIMEVN_PART */
-	//check_compatibilty = 1;
 	ret = load_sector_to_memory(runtimenvpoint,
 							runtimenvfilename2,
 							runtimenvfilename,
 							(unsigned char *)RUNTIMENV_ADR,
 							RUNTIMENV_SIZE + 4);
-	//check_compatibilty = 0;
 	if(ret == -1){
 		//clear memory
 		memset(RUNTIMENV_ADR, 0xff,RUNTIMENV_SIZE + 4);

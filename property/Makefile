@@ -38,6 +38,7 @@ COBJS-y += engtest_mode.o
 COBJS-y += sleep_mode.o
 COBJS-y += vbat_check.o
 COBJS-y += dcdc_calbration.o
+COBJS-y += spl_writer.o
 
 
 
