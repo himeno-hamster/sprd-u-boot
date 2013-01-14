@@ -685,7 +685,7 @@ void creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 
 #ifdef CONFIG_AP_VERSION
 	str_len = strlen(buf);
-	sprintf(&buf[str_len], " %s", "apv=" CONFIG_AP_VERSION);
+	sprintf(&buf[str_len], " apv=\"%s\"", CONFIG_AP_VERSION);
 #endif
 
 	if(cmdline && cmdline[0]){
