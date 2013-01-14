@@ -189,6 +189,7 @@ extern int usb_is_configured(void);
 extern int usb_is_port_open(void);
 extern void udc_power_on(void);
 extern void udc_power_off(void);
+extern void usb_in_cal(int flag);
 
 #define mdelay(_ms) udelay(_ms*1000)
 
@@ -294,6 +295,7 @@ void calibration_detect(int key)
 	uint8_t buf[20];
 	for(i = 0; i<20; i++)
 		buf[i] = i+'a';
+	usb_in_cal(1);
 	dwc_otg_driver_init();
 	usb_serial_init();
 #if IO_DEBUG 

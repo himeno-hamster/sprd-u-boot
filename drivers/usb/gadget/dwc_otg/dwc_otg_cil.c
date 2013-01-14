@@ -61,8 +61,17 @@
 #include "dwc_otg_regs.h"
 #include "dwc_otg_cil.h"
 
+static int in_calibration = 0;
 static int dwc_otg_setup_params(dwc_otg_core_if_t * core_if);
 
+void usb_in_cal(int flag)
+{
+	if(flag){
+		in_calibration = 1;
+	}else{
+		in_calibration = 0;
+	}
+}
 /**
  * This function is called to initialize the DWC_otg CSR data
  * structures.	The register addresses in the device and host
@@ -402,6 +411,9 @@ static void init_devspd(dwc_otg_core_if_t * core_if)
 		/* High speed PHY running at high speed */
 		val = 0x0;
 	}
+
+	if(in_calibration) //force full speed in calibration
+		val = 0x1;
 
 	DWC_DEBUGPL(DBG_CIL, "Initializing DCFG.DevSpd to 0x%1x\n", val);
 
@@ -880,7 +892,6 @@ void dwc_otg_core_dev_init(dwc_otg_core_if_t * core_if)
 	dcfg.d32 = dwc_read_reg32(&dev_if->dev_global_regs->dcfg);
 	dcfg.b.descdma = (core_if->dma_desc_enable) ? 1 : 0;
 	dcfg.b.perfrint = DWC_DCFG_FRAME_INTERVAL_80;
-	dcfg.b.devspd = 1;
 	dwc_write_reg32(&dev_if->dev_global_regs->dcfg, dcfg.d32);
 
 	/* Configure data FIFO sizes */
