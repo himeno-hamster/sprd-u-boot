@@ -94,12 +94,19 @@ PUBLIC void SPI_Reset( uint32 spi_id, uint32 ms)
 		for (i=0; i<0x100; i++);
 		*(volatile uint32 *)GR_SOFT_RST &=~(1 << 14);        
 	}
-	else
+	else if(spi_id == 1)
 	{
 		*(volatile uint32 *)GR_SOFT_RST |= (1 << 15);
 		for (i=0; i<0x100; i++);
-		*(volatile uint32 *)GR_SOFT_RST |=~(1 << 15);
+		*(volatile uint32 *)GR_SOFT_RST &=~(1 << 15);
 	}
+	else if(spi_id == 2)
+	{
+		*(volatile uint32 *)GR_SOFT_RST |= (1 << 31);
+		for (i=0; i<0x100; i++);
+		*(volatile uint32 *)GR_SOFT_RST &=~(1 << 31);
+	}
+
 
 }
 
@@ -126,9 +133,12 @@ PUBLIC void SPI_ClkSetting(uint32 spi_id, uint32 clk_src, uint32 clk_div)
 	{
 		*(volatile uint32 *) GR_CLK_DLY |= (clk_src&3)<<26;
 		*(volatile uint32 *) GR_GEN2   |= (clk_div&7)<<21;
-	} else {
+	} else if(spi_id == 1){
 		*(volatile uint32 *) GR_CLK_DLY |= (clk_src&3)<<30;
 		*(volatile uint32 *) GR_GEN2   |= (clk_div&7)<<11;    
+	} else if(spi_id == 2){
+		*(volatile uint32 *) GR_GEN3 |= (clk_src&3)<<3;
+		*(volatile uint32 *) GR_GEN3   |= (clk_div&7)<<5;    
 	}
 }
 
@@ -187,10 +197,7 @@ PUBLIC void SPI_SetSpiMode(uint32 spi_mode)
 	temp &= ~SPI_MODE_MASK;
 	temp |= (spi_mode<<SPI_MODE_SHIFT);
 
-	//SCI_TraceLow("SPI_SetSpiMode: temp=%d\r\n",temp); 
-
 	spi_ctr_ptr->ctl7 = temp;
-	//SCI_TraceLow("SPI_SetSpiMode: spi_ctr_ptr->ctl7=%d\r\n",spi_ctr_ptr->ctl7); 
 }
 
 // Transmit data bit number:spi_ctl0[6:2] 
@@ -262,6 +269,13 @@ PUBLIC void SPI_SetRxLen(uint32 data_len, uint32 dummy_bitlen)
 	spi_ctr_ptr->ctl10 = (ctl10 | (dummy_bitlen<<4) | (data_len>>16));
 	// set data_len[15:00]
 	spi_ctr_ptr->ctl11 = (ctl11 | (data_len&0xFFFF));
+
+	/* in SPIMODE_3WIRE_9BIT_SDI ,DO
+	the tx len has to set 0 to generate 8 clk, or generate 9clk */
+	if(0x10==(spi_ctr_ptr->ctl7&(0x7 << 3))){
+		spi_ctr_ptr->ctl8 &= 0xfff0;
+		spi_ctr_ptr->ctl9 &= 0x0;
+		}
 }
 
 // Request txt trans before send data
@@ -317,25 +331,18 @@ PUBLIC void SPI_Init(SPI_INIT_PARM *spi_parm)
 	volatile SPI_CTL_REG_T *spi_ctr_ptr = (volatile SPI_CTL_REG_T *)(SPI_USED_BASE);
 	uint32 temp;
 	uint32 ctl0, ctl1, ctl2, ctl3;
-	//SCI_ASSERT((spi_parm->data_width >=0) && (spi_parm->data_width < 32));
 
 	/*default clk is 500k 192M /(0xc0 * 2)*/
 	spi_ctr_ptr->clkd =0xc0;
 
 	temp  = 0;
-	temp |= (spi_parm->tx_edge << 0)    |
-		(spi_parm->rx_edge << 1)    |
-		(0x9 << 2) |
-		(spi_parm->msb_lsb_sel<< 7) |
-		(0xf<<8);
+	temp |= (spi_parm->tx_edge << 1)    |
+		(spi_parm->rx_edge << 0)    |
+		(0x1 << 13) |
+		(spi_parm->msb_lsb_sel<< 7) ;
 	spi_ctr_ptr->ctl0 = temp;
-	/* mode 0
-	  * bitlen = 32 bits
-	  * cs = cs0
-	*/
 
-	//spi_ctr_ptr->ctl1  = (ctl1 & ~BIT_12) | BIT_13;     // set transmite mode
-	spi_ctr_ptr->ctl1  |= BIT_12 | BIT_13;     // set rx/tx mode
+	spi_ctr_ptr->ctl1 |= BIT_12 | BIT_13;     // set rx/tx mode
 
 	/*rx fifo full watermark is 16*/
 	spi_ctr_ptr->ctl3 = 0x10;

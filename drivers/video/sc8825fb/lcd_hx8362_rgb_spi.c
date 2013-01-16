@@ -63,10 +63,10 @@ static int32_t hx8362_init(struct panel_spec *self)
 	HX8362_SpiWriteData(0x44);
 	HX8362_SpiWriteData(0x08);
 	HX8362_SpiWriteData(0x01);
-	HX8362_SpiWriteData(0x11);
-	HX8362_SpiWriteData(0x11);
-	HX8362_SpiWriteData(0x36);
-	HX8362_SpiWriteData(0x3E);
+	HX8362_SpiWriteData(0x0E); //
+	HX8362_SpiWriteData(0x0E); //
+	HX8362_SpiWriteData(0x1B); //the lower ,Saturation is better
+	HX8362_SpiWriteData(0x23); //the lower ,Saturation is better
 	HX8362_SpiWriteData(0x3F);
 	HX8362_SpiWriteData(0x3F);
 	HX8362_SpiWriteData(0x40);
@@ -313,7 +313,7 @@ static int32_t hx8362_set_window(struct panel_spec *self,
 	uint32_t *test_data[4] = {0};
 	spi_send_cmd_t spi_send_cmd = self->info.rgb->bus_info.spi->ops->spi_send_cmd; 
 	spi_send_data_t spi_send_data = self->info.rgb->bus_info.spi->ops->spi_send_data; 
-	spi_read_t spi_read = self->info.rgb->bus_info.spi->ops->spi_read; 
+	spi_read_t spi_read = self->info.rgb->bus_info.spi->ops->spi_read;
 #if 0
 
 	LCD_PRINT("zxdbg add -hx8362_set_window: %d, %d, %d, %d\n",left, top, right, bottom);
@@ -366,6 +366,23 @@ static int32_t hx8362_invalidate_rect(struct panel_spec *self,
 static int32_t hx8362_read_id(struct panel_spec *self)
 {
 	int32_t id  = 0x62;
+	int32_t data  = 0;
+	spi_send_cmd_t spi_send_cmd = self->info.rgb->bus_info.spi->ops->spi_send_cmd;
+	spi_send_data_t spi_send_data = self->info.rgb->bus_info.spi->ops->spi_send_data;
+	spi_read_t spi_read = self->info.rgb->bus_info.spi->ops->spi_read;
+
+	HX8362_SpiWriteCmd(0xB9); // SET password
+	HX8362_SpiWriteData(0xFF); //
+	HX8362_SpiWriteData(0x83); //
+	HX8362_SpiWriteData(0x63); //
+
+	HX8362_SpiWriteCmd(0xFE); // SET SPI READ INDEX
+	HX8362_SpiWriteData(0xF4); // GETHXID
+	HX8362_SpiWriteCmd(0xFF); // GET SPI READ
+
+	spi_read(&id);
+	id &= 0xff;
+	LCD_PRINT(" hx8362_read_id u-boot id = %d\n",id);
 
 	return id;
 }

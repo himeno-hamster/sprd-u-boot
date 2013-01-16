@@ -59,6 +59,7 @@ static void rgb_dispc_init_config(struct panel_spec *panel)
 	}
 
 	/*use dpi as interface*/
+	dispc_clear_bits((3<<1), DISPC_CTRL);
 
 	/*h sync pol*/
 	if(SPRDFB_POLARITY_NEG == panel->info.rgb->h_sync_pol){
