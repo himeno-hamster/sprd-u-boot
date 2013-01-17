@@ -93,8 +93,17 @@ static struct panel_cfg lcd_panel[] = {
 	},
  };
 
-#elif defined CONFIG_SP6825GA
 
+#elif defined(CONFIG_SP6825GA) || defined(CONFIG_SP6825GB)
+/*
+extern struct panel_spec lcd_nt35516_mcu_spec;
+static struct panel_cfg lcd_panel[] = {
+    [0]={
+        .lcd_id = 0x16,
+        .panel = &lcd_nt35516_mcu_spec ,
+        },
+};
+*/
 extern struct panel_spec lcd_panel_hx8362_rgb_spi_spec;
 static struct panel_cfg lcd_panel[] = {
 	[0]={

@@ -62,7 +62,7 @@ typedef struct ARM_EMC_AHB_CLK_TAG
     uint32         ahb_clk;
     MCU_CLK_TYPE_E clk_type;
 } ARM_EMC_AHB_CLK_T;
-
+#if 0
 static const ARM_EMC_AHB_CLK_T s_arm_emc_ahb_clk[] =
 {
 //   mcu_clk       arm_clk       emc_clk       ahb_clk
@@ -92,7 +92,7 @@ static uint32 GetClockCfg(MCU_CLK_TYPE_E clk_type, uint32 *mcu_clk, uint32 *arm_
     }
     return -1;
 }
-
+#endif
 static void delay()
 {
     uint32 i;
@@ -188,7 +188,7 @@ static uint32 GetDPllClk(void)
 {
     return GET_DPLL_M()*GET_DPLL_N()*1000000;
 }
-
+#if 0
 static uint32 EmcClkConfig(uint32 emc_clk)
 {
     uint32 src_clk, div, ahb_arm_clk;
@@ -216,7 +216,7 @@ static uint32 EmcClkConfig(uint32 emc_clk)
     delay();
     return 0;
 }
-
+#endif
 static uint32 AhbClkConfig(uint32 ahb_clk)
 {
     uint32 ahb_arm_clk, div, mcu_clk;
@@ -282,16 +282,16 @@ static uint32 McuClkConfig(uint32 mcu_clk)
     return 0;
 }
 
-static uint32 ClkConfig(MCU_CLK_TYPE_E clk_type)
+static uint32 ClkConfig()
 {
-    uint32 mcu_clk, arm_clk, emc_clk, ahb_clk, ahb_arm_clk, div;
-    if (GetClockCfg(clk_type, &mcu_clk, &arm_clk, &emc_clk, &ahb_clk))
-        return -1;
+    //uint32 mcu_clk, arm_clk, emc_clk, ahb_clk, ahb_arm_clk, div;
+    //if (GetClockCfg(clk_type, &mcu_clk, &arm_clk, &emc_clk, &ahb_clk))
+    //    return -1;
 
     AxiClkConfig();
-    McuClkConfig(mcu_clk);
-    AhbClkConfig(ahb_clk);
-    EmcClkConfig(emc_clk);
+    McuClkConfig(1000000000);
+    AhbClkConfig(200000000);
+    //EmcClkConfig(emc_clk);
 
     return 0;
 }
@@ -308,7 +308,7 @@ uint32 MCU_Init()
     //clk_type = ARM800_EMC200_AHB200;
     //clk_type = ARM800_EMC400_AHB200;
 
-    if (ClkConfig(clk_type))
+    if (ClkConfig())
         while(1);
     return 0;
 }
