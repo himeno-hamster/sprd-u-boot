@@ -1,6 +1,6 @@
 
 //uefi patition can see http://en.wikipedia.org/wiki/GUID_Partition_Table for more information
-
+#include <config.h>
 #include <common.h>
 #include "part_efi.h"
 #include "part_uefi.h"
@@ -120,6 +120,11 @@ PARTITION_CFG g_partition_cfg[]={
 	{PARTITION_RECOVERY, 10 * 1024, PARTITION_RAW},
 	{PARTITION_FASTBOOT_LOGO, 1 * 1024, PARTITION_RAW},
 	{PARTITION_MISC, 256, PARTITION_RAW},
+#if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined (CONFIG_SC7710G2)
+	{PARTITION_FIRMWARE, 10*1024, PARTITION_RAW},	/*save modem image in samsung stingray0*/
+#else
+	{PARTITION_SD, 1000 * 1024, PARTITION_RAW},
+#endif
 	{0,0,0}
 };
 
@@ -388,7 +393,9 @@ unsigned int write_uefi_parition_table(PARTITION_CFG *p_partition_cfg)
 
 	//write gpt
 	if( NULL == p_partition_cfg )
-		p_partition_cfg = &g_partition_cfg;
+	{
+		p_partition_cfg = &g_partition_cfg;  
+	}
 	_gen_gpt(&gpt_head,p_partition_cfg);
 	_write_gpt(&gpt_head);
 

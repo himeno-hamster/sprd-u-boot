@@ -99,6 +99,9 @@ static ADDR_TO_PART g_eMMC_Addr2Part_Table[] = {
 	{0x8000000e, PARTITION_MISC}, 
 	{0x8000000f, PARTITION_LOGO},
 	{0x80000010, PARTITION_FASTBOOT_LOGO},
+#if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined (CONFIG_SC7710G2)
+	{0x80000013, PARTITION_FIRMWARE},
+#endif
 	{0x90000001, PARTITION_FIX_NV1}, 
 	{0x90000002, PARTITION_PROD_INFO1},
 	{0x9000000f, PARTITION_PROD_INFO3},
@@ -339,7 +342,9 @@ int FDL_Check_Partition_Table(void)
 	}
 
 	if (!uefi_get_part_info(parttotal))
+	{
 		return 0;
+	}
 
 	for (i=0; i < MAX_PARTITION_INFO; i++) {
 		if (g_sprd_emmc_partition_cfg[i].partition_index == 0)
@@ -738,6 +743,7 @@ uint32 fdl_emmc_dram_download(uint32 start_addr, char* mem_addr, uint32 size)
 	FDL2_eMMC_DataEnd(&packet, NULL);
 }
 #endif
+
 #ifdef FPGA_TRACE_DOWNLOAD
 int FDL2_eMMC_DataStart (TRACE_PACKET_T *packet, void *arg)
 #else

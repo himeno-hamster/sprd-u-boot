@@ -245,6 +245,14 @@ LIBS += drivers/usb/host/libusb_host.o
 LIBS += drivers/usb/musb/libusb_musb.o
 LIBS += drivers/usb/phy/libusb_phy.o
 LIBS += drivers/video/libvideo.o
+ifdef CONFIG_SP8810W
+LIBS += drivers/sdio/libsdio.o
+LIBS += modem_boot/bootup.o
+endif
+ifdef CONFIG_SC7710G2
+LIBS += drivers/sdio/libsdio.o
+LIBS += modem_boot/bootup.o
+endif
 ifeq ($(BOARD),sp7702)
 LIBS += drivers/sdio/libsdio.o
 LIBS += modem_boot/bootup.o
@@ -1310,6 +1318,11 @@ tiger_openphone_config	: unconfig
 	@mkdir -p $(obj)include
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 	@$(MKCONFIG) $@ arm armv7 tiger spreadtrum tiger
+
+kylew_native_config	: unconfig
+	@mkdir -p $(obj)include
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@$(MKCONFIG) $@ arm armv7 kylew spreadtrum sc8810
 
 sp8825_config	: unconfig
 	@mkdir -p $(obj)include

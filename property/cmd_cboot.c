@@ -119,6 +119,9 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
    if(charger_connected()){
         DBG("%s: charger connected\n", __FUNCTION__);
+#if defined (CONFIG_SP8810W)
+        calibration_detect(1);
+#endif
         charge_mode();
     }
     //find the power up trigger
@@ -156,10 +159,14 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     else if(alarm_triggered() && alarm_flag_check()){
         DBG("%s: alarm triggered\n", __FUNCTION__);
         int flag =alarm_flag_check();
-        if(flag == 1)
-		alarm_mode();
-        else if(flag == 2)
-              normal_mode();
+
+        if(flag == 1){
+			alarm_mode();
+        }
+        else if(flag == 2){
+			normal_mode();
+        }
+		
     }else{
 #if BOOT_NATIVE_LINUX_MODEM
         *(volatile u32*)CALIBRATION_FLAG = 0xca;

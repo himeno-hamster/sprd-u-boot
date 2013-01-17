@@ -38,6 +38,10 @@ extern struct lcd_spec lcd_panel_ili9486;
 extern struct lcd_spec lcd_nt35510_spec;
 #endif
 
+#ifdef CONFIG_LCD_S6D04H0
+extern struct lcd_spec lcd_s6d04h0_spec;
+#endif
+
 struct lcd_cfg lcd_panel[] = {
 #ifdef CONFIG_LCD_HX8357_1
 	{
@@ -91,6 +95,13 @@ struct lcd_cfg lcd_panel[] = {
 	{
 		.lcd_id = 0x69,
 		.panel = &lcd_panel_hx8369,
+	},
+#endif
+
+#ifdef CONFIG_LCD_S6D04H0
+	{
+		.lcd_id = 0x61bc11,
+		.panel = &lcd_s6d04h0_spec,
 	},
 #endif
 };

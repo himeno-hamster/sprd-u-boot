@@ -575,7 +575,7 @@ static int Calibration_data_handler(void) {
 }
 #endif
 
-#if defined(CONFIG_MACH_KYLEW) || defined (CONFIG_SP7702)
+#if defined(CONFIG_MACH_KYLEW) || defined (CONFIG_SP7702) || defined (CONFIG_SC7710G2)
 /*static*/ int Calibration_SpiReadData(void)
 {
 	int i;
@@ -799,7 +799,7 @@ static int Calibration_ProcessFixNv(nv_sync_type *p_syncdata)
 		return Calibration_ProcessFixNv(p_syncdata);
 }
 
-#if defined(CONFIG_MACH_KYLEW) || defined (CONFIG_SP7702)
+#if defined(CONFIG_MACH_KYLEW) || defined (CONFIG_SP7702) || defined(CONFIG_SC7710G2)
 int Calibration_SpiWritePacket(unsigned char *buf, uint32 size)
 {
 	int ret;

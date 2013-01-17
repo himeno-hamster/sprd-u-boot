@@ -54,6 +54,7 @@ COBJS-$(CONFIG_LCD_ILI9486)  += lcd_ili9486.o
 COBJS-$(CONFIG_LCD_RM61581_TRULY)  += lcd_rm6158_truly.o
 COBJS-$(CONFIG_LCD_HX8357)  += lcd_hx8357.o
 COBJS-$(CONFIG_LCD_HX8369)  += lcd_hx8369.o
+COBJS-$(CONFIG_LCD_S6D04H0)  += lcd_s6d04h0.o
 #endif
 
 COBJS	:= $(COBJS-y)

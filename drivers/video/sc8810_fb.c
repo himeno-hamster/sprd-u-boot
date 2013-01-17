@@ -1,16 +1,15 @@
-/******************************************************************************
- ** File Name:    sc8810_fb.h                                            *
- ** Author:                                                           *
- ** DATE:                                                           *
- ** Copyright:    2005 Spreatrum, Incoporated. All Rights Reserved.           *
- ** Description:                                                            *
- ******************************************************************************/
-/******************************************************************************
- **                   Edit    History                                         *
- **---------------------------------------------------------------------------*
- ** DATE          NAME            DESCRIPTION                                 *
- **
- ******************************************************************************/
+/*
+ * Copyright (C) 2010 Spreadtrum
+ *
+ * This software is licensed under the terms of the GNU General Public
+ * License version 2, as published by the Free Software Foundation, and
+ * may be copied, distributed, and modified under those terms.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
 
 #include <common.h>
 #include <lcd.h>
@@ -173,7 +172,7 @@ static struct ops_mcu lcm_mcu_ops = {
 
 static int32_t panel_reset()
 {
-#if (CONFIG_MACH_CORI || CONFIG_MACH_MINT)
+#if (CONFIG_MACH_CORI || CONFIG_MACH_MINT || CONFIG_MACH_KYLEW) 
 	//panel reset
 	__raw_writel(0, LCM_RSTN);
 	udelay(10);

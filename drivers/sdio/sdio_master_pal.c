@@ -408,11 +408,7 @@ SDIO_CARD_PAL_ERROR_E SPRD_SDSlave_Pal_SendCmd(
 #else
     do{
 	//_SDHOST_IrqHandle(Handle2SlotNo(handle));
-#if defined(CONFIG_SP8810W)  //samsung kylew
-        _SDHOST_IrqHandle(0);
-#else
         _SDHOST_IrqHandle(SDIO_APCP_HOST_SLOT_NUM);
-#endif
     }while(_WaitCardEvent(handle,s_cmdDetail[cmd].intFilter)==0);
 #endif    
     

@@ -223,7 +223,7 @@ int  parse_version_string(unsigned char *buffer,int length)
 void   bootup_modem(char *data,int size)
 {
 	
-#ifdef CONFIG_SP7702
+#if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined (CONFIG_SC7710G2)
 	int i=0,delay=0;
 	unsigned char hand_shake_flag = 0x7e;
 	int is_empty=1;

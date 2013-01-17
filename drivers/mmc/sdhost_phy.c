@@ -351,9 +351,14 @@ PUBLIC void SDHOST_Cfg_Voltage (SDHOST_HANDLE sdhost_handler,SDHOST_VOL_RANGE_E 
     LDO_SetVoltLevel (LDO_LDO_SDIO3, LDO_VOLT_LEVEL3);
     LDO_SetVoltLevel (LDO_LDO_VDD30, LDO_VOLT_LEVEL1); 
 #else
-    LDO_SetVoltLevel (LDO_LDO_SDIO1, LDO_VOLT_LEVEL3);
-    
-    LDO_SetVoltLevel (LDO_LDO_SIM2, LDO_VOLT_LEVEL1);
+    if(&sdio_port_ctl[SDHOST_SLOT_0] == sdhost_handler){
+        LDO_SetVoltLevel (LDO_LDO_SDIO0, LDO_VOLT_LEVEL3);
+    }
+	else
+	{
+	    LDO_SetVoltLevel (LDO_LDO_SDIO1, LDO_VOLT_LEVEL3);
+	    LDO_SetVoltLevel (LDO_LDO_SIM2, LDO_VOLT_LEVEL1);
+	}
 #endif
     
     //__udelay(20*1000);
@@ -451,7 +456,8 @@ PUBLIC void SDHOST_SD_POWER (SDHOST_HANDLE sdhost_handler,SDHOST_PWR_ONOFF_E on_
     return;
 #else
     SCI_ASSERT (TRUE == _RegisterVerifyHOST (sdhost_handler));/*assert verified*/
-#if defined(PLATFORM_SC8800G) || defined(PLATFORM_SC6800H)
+
+#if defined(PLATFORM_SC8800G)
 
     ///added by mingwei, Andy need to check again.
     if (POWR_ON == on_off)
@@ -461,8 +467,13 @@ PUBLIC void SDHOST_SD_POWER (SDHOST_HANDLE sdhost_handler,SDHOST_PWR_ONOFF_E on_
 		LDO_TurnOnLDO(LDO_LDO_SDIO3);
 		LDO_TurnOnLDO(LDO_LDO_VDD30);
 #else
-        LDO_TurnOnLDO(LDO_LDO_SDIO1);
-        LDO_TurnOnLDO(LDO_LDO_SIM2);
+		if(&sdio_port_ctl[SDHOST_SLOT_0] == sdhost_handler){
+			LDO_TurnOnLDO(LDO_LDO_SDIO0);
+		}else
+		{
+	        LDO_TurnOnLDO(LDO_LDO_SDIO1);
+	        LDO_TurnOnLDO(LDO_LDO_SIM2);
+		}
 #endif
     }
     else
@@ -472,8 +483,13 @@ PUBLIC void SDHOST_SD_POWER (SDHOST_HANDLE sdhost_handler,SDHOST_PWR_ONOFF_E on_
 		LDO_TurnOffLDO(LDO_LDO_SDIO3);
 		LDO_TurnOffLDO(LDO_LDO_VDD30);
 #else
-        LDO_TurnOffLDO (LDO_LDO_SDIO1);
-        LDO_TurnOffLDO (LDO_LDO_SIM2);
+		if(&sdio_port_ctl[SDHOST_SLOT_0] == sdhost_handler){
+			LDO_TurnOffLDO (LDO_LDO_SDIO0);
+		}else
+		{
+	        LDO_TurnOffLDO (LDO_LDO_SDIO1);
+	        LDO_TurnOffLDO (LDO_LDO_SIM2);
+		}
 #endif
     }
 
@@ -2146,7 +2162,11 @@ LOCAL SDHOST_SLOT_NO _GetIntSDHOSTSlotNum (uint32 port)
 #if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
         ret = SDHOST_SLOT_7;
 #else
-        ret = SDHOST_SLOT_1;  //tbd....
+		if(port == 0){
+			ret = SDHOST_SLOT_0;  
+		}else{
+	        ret = SDHOST_SLOT_1;  
+		}
 #endif
     }
     else if ( (tmpReg& (0x01<<1)))

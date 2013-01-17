@@ -1,3 +1,4 @@
+#include <config.h>
 #include "normal_mode.h"
 
 #include "../disk/part_uefi.h"
@@ -795,12 +796,12 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	*/
 	extern void DSP_ForceSleep(void);
 	DSP_ForceSleep();
-	printf("dsp nand read ok1 \n");
+	printf("8810 dsp read ok1 \n");
 #endif
 
-	if(poweron_by_calibration()){
+	if(poweron_by_calibration())
+	{
 		/* recovery damaged fixnv*//*to do later*/
-		fixnv_right = 0;
 		memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
 		if(0 == nv_read_partition(p_block_dev, PARTITION_FIX_NV1, (char *)FIXNV_ADR, FIXNV_SIZE + 4)){
 			//should do something here!!!!
@@ -839,7 +840,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		}
 
 		/*MODEM FDL PART*/   
-		printf("Reading vmjaluna to 0x%08x\n", VMJALUNA_ADR);
+		printf("Reading cp fdl to 0x%08x\n", VMJALUNA_ADR);
 		size = (VMJALUNA_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
 		if(size <= 0) {
 			printf("vmjuluna image should not be zero\n");
@@ -859,11 +860,6 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 		bootup_modem((char *)VMJALUNA_ADR,0x3000);
 		calibration_mode(cmdline, 10);
-		memset(VMJALUNA_ADR,0,VMJALUNA_SIZE);
-		memset(FIXNV_ADR,0,FIXNV_SIZE+4);
-		memset(MODEM_ADR,0,MODEM_SIZE);
-		memset(DSP_ADR,0,DSP_SIZE);
-		memset(RUNTIMENV_ADR,0,RUNTIMENV_SIZE+4);
 	}
 #endif
 

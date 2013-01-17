@@ -51,7 +51,7 @@ extern unsigned char raw_header[8192];
 #define VLX_TAG_ADDR     0x85100000 //after initrd
 #endif //BOOT_NATIVE_LINUX
 
-#elif defined(CONFIG_SP7702)
+#elif defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined(CONFIG_SC7710G2)
 #define DSP_ADR          0x00020000
 #define VMJALUNA_ADR     0x00400000
 #define FIXNV_ADR        0x00480000

@@ -1,3 +1,4 @@
+#include <config.h>
 #include "../../../disk/part_uefi.h"
 
 PARTITION_CFG const g_sprd_emmc_partition_cfg[MAX_PARTITION_INFO] = {
@@ -19,7 +20,7 @@ PARTITION_CFG const g_sprd_emmc_partition_cfg[MAX_PARTITION_INFO] = {
 	{PARTITION_RECOVERY, 10 * 1024, PARTITION_RAW},
 	{PARTITION_FASTBOOT_LOGO, 1 * 1024, PARTITION_RAW},
 	{PARTITION_MISC, 256, PARTITION_RAW},
-#ifdef CONFIG_SP7702
+#if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined (CONFIG_SC7710G2)
 	{PARTITION_FIRMWARE, 10*1024, PARTITION_RAW},   /*save modem image in samsung stingray0*/
 #else
 	{PARTITION_SD, 1000 * 1024, PARTITION_RAW},

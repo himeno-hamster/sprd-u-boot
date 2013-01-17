@@ -26,6 +26,7 @@
  * SUCH DAMAGE.
  */
 //#define DEBUG
+#include <config.h>
 #include <common.h>
 #include <asm/errno.h>
 #include <linux/usb/ch9.h>
