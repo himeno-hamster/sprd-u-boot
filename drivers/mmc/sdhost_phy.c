@@ -2222,6 +2222,9 @@ PUBLIC ISR_EXE_T _SDHOST_IrqHandle (uint32 isrnum)
     SDHOST_HANDLE sdhost_handler;
 
     buffer.slotNum = _GetIntSDHOSTSlotNum(isrnum);
+    if(buffer.slotNum == SDHOST_SLOT_MAX_NUM){
+	return ISR_DONE;
+    }
     sdhost_handler = &sdio_port_ctl[buffer.slotNum];
     buffer.pSdhost_handler = &sdio_port_ctl[buffer.slotNum];
 
