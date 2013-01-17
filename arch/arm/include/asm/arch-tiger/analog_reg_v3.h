@@ -76,7 +76,7 @@ extern   "C"
 #define   ANA_INT_GPI_DEBUG     (ANA_REG_BASE + 0x94)
 #define   ANA_HWRST_RTC         (ANA_REG_BASE + 0x98)
 #define   ANA_IF_SPR_CTRL       (ANA_REG_BASE + 0x9C)
-#define   ANA_CHIP_ID_LOW       (ANA_REG_BASE + 0xFB)
+#define   ANA_CHIP_ID_LOW       (ANA_REG_BASE + 0xF8)
 #define   ANA_CHIP_ID_HIGH      (ANA_REG_BASE + 0xFC)
 
 /*
