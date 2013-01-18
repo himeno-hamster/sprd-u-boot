@@ -40,9 +40,18 @@ void CHG_SetRecharge (void)
 
 void CHG_Init (void)
 {
+	unsigned int chip_id = 0;
+
 	ANA_REG_MSK_OR(ANA_CHGR_CTL0,CHGR_CC_EN_BIT,(CHGR_CC_EN_BIT | CHGR_CC_EN_RST_BIT));
 	ANA_REG_MSK_OR(ANA_CHGR_CTL1,
 		    (2 << CHGR_CHG_CUR_SHIFT) & CHGR_CHG_CUR_MSK,CHGR_CHG_CUR_MSK); //set charge current 500mA
 	CHG_SetRecharge();
+
+	chip_id = ANA_REG_GET(ANA_CHIP_ID_LOW);
+	chip_id |= (ANA_REG_GET(ANA_CHIP_ID_HIGH) << 16);
+	if (chip_id == 0x8820A001) {	//metalfix
+		adc_voltage_table[0][0] = 3329;
+		adc_voltage_table[1][0] = 2855;
+	}
 }
 
