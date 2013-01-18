@@ -219,6 +219,62 @@ static inline long IS_ERR(const void *ptr)
 #define MODULE_AUTHOR(...)
 #define MODULE_LICENSE(...)
 
+#define might_sleep_if(...)
+#define trace_gpio_value(...)
+#define trace_gpio_direction(...)
+
+#define printk printf
+#ifndef pr_fmt
+#define pr_fmt(fmt) fmt
+#endif
+#define pr_emerg(fmt, ...) \
+	printk(pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_alert(fmt, ...) \
+	printk(pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_crit(fmt, ...) \
+	printk(pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_err(fmt, ...) \
+	printk(pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_warning(fmt, ...) \
+	printk(pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_warn pr_warning
+#define pr_notice(fmt, ...) \
+	printk(pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_info(fmt, ...) \
+	printk(pr_fmt(fmt), ##__VA_ARGS__)
+#define pr_cont(fmt, ...) \
+	printk(fmt, ##__VA_ARGS__)
+#ifdef DEBUG
+#define pr_debug(fmt, ...) \
+	printk(fmt, ##__VA_ARGS__)
+#else
+#define pr_debug(fmt, ...) 
+#endif
+
+#ifndef __WARN
+#define __WARN() printf("warning @ %s: %d\n", __func__, __LINE__)
+#endif
+#ifndef __WARN_printf
+#define __WARN_printf(arg...) do { printf(arg); __WARN(); } while (0)
+#endif
+#ifndef WARN_ON
+#define WARN_ON(condition) ({						\
+	int __ret_warn_on = !!(condition);				\
+	if (unlikely(__ret_warn_on))					\
+		__WARN();						\
+	unlikely(__ret_warn_on);					\
+})
+#endif
+
+#ifndef WARN
+#define WARN(condition, format...) ({						\
+	int __ret_warn_on = !!(condition);				\
+	if (unlikely(__ret_warn_on))					\
+		__WARN_printf(format);					\
+	unlikely(__ret_warn_on);					\
+})
+#endif
+
 #ifndef __UBIFS_H__
 #include "../drivers/mtd/ubi/ubi.h"
 #endif
