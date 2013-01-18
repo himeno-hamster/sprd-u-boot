@@ -7,6 +7,7 @@
 #include <asm/arch/gpio_phy.h>
 #include <asm/arch/rtc_reg_v3.h>
 #include <asm/arch/mfp.h>
+#include <linux/gpio.h>
 
 unsigned check_reboot_mode(void)
 {
@@ -59,21 +60,16 @@ void power_down_devices(unsigned pd_cmd)
     power_down_cpu(0);
 }
 
-#define POWER_BUTTON_GPIO_NUM 163
-extern int sprd_gpio_get( struct gpio_chip * chip, unsigned offset);
-extern int sprd_gpio_request(struct gpio_chip *chip, unsigned offset);
-extern void sprd_gpio_init(void);
-static unsigned long pwr_gpio_cfg =
-    MFP_ANA_CFG_X(PBINT, AF0, DS1, F_PULL_UP,S_PULL_UP, IO_IE);
 int power_button_pressed(void)
 {
-#if 0
-    struct gpio_chip power_button_chip;
-    sprd_gpio_init();
-    sprd_mfp_config(&pwr_gpio_cfg, 1);
-    sprd_gpio_request(&power_button_chip, POWER_BUTTON_GPIO_NUM);
-    sprd_gpio_direction_input(&power_button_chip,POWER_BUTTON_GPIO_NUM); 
-    return sprd_gpio_get(&power_button_chip, POWER_BUTTON_GPIO_NUM);
+#if 1
+	static int init_done = 0;
+	if(init_done == 0){
+		gpio_request(EIC_KEY_POWER, "power_key");
+		gpio_direction_input(EIC_KEY_POWER);
+		init_done = 1;
+	}
+    return ! gpio_get_value_cansleep(EIC_KEY_POWER);
 #else
 
 	ANA_REG_OR(ANA_APB_CLK_EN, BIT_3|BIT_11);
@@ -89,18 +85,24 @@ int power_button_pressed(void)
 #endif
 }
 
-#define CHG_GPIO_NUM 162
-static unsigned long chg_gpio_cfg =
-    MFP_ANA_CFG_X(CHIP_RSTN, AF0, DS1, F_PULL_UP,S_PULL_UP, IO_IE);
-    //MFP_ANA_CFG_X(CHIP_RSTN, AF0, DS1, F_PULL_DOWN,S_PULL_UP, IO_IE);
 int charger_connected(void)
 {
+#if 1
+	static int init_done = 0;
+	if(init_done == 0){
+		gpio_request(EIC_CHARGER_DETECT, "charger_key");
+		gpio_direction_input(EIC_CHARGER_DETECT);
+		init_done = 1;
+	}
+    return !! gpio_get_value_cansleep(EIC_CHARGER_DETECT);
+#else
 	ANA_REG_OR(ANA_APB_CLK_EN, BIT_3|BIT_11);
 	ANA_REG_SET(ADI_EIC_MASK, 0xff);
 	udelay(3000);
 	int status = ANA_REG_GET(ADI_EIC_DATA);
 	//printf("charger_connected eica status %x\n", status);
 	return !!(status & (1 << 2));
+#endif
 }
 
 int alarm_triggered(void)
