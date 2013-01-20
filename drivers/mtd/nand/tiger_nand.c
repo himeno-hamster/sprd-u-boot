@@ -280,6 +280,7 @@ void nand_hardware_config(struct mtd_info *mtd,struct nand_chip *chip)
 		tiger->info_pos = param->info_pos;
 		tiger->info_size = param->info_size;
 		tiger->write_size = tiger->m_size * tiger->sct_pg;
+		tiger->ecc_pos = param->ecc_pos;
 		if(param->bus_width)
 		{
 			chip->options |= NAND_BUSWIDTH_16;
@@ -378,6 +379,8 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *chip, u8 id[5]
 		tiger->info_size = param->info_size;
 		tiger->write_size = tiger->m_size * tiger->sct_pg;
 		tiger->ecc_pos = param->ecc_pos;
+		chip->eccbitmode = param->eccbit;
+		chip->ecc.bytes  = (param->eccbit*14+7)/8;
 		//tiger->bus_width = param->bus_width;
 		if(param->bus_width)
 		{
@@ -1159,6 +1162,11 @@ static void sprd_tiger_nand_hw_init(struct sprd_tiger_nand_info *tiger)
 	sprd_tiger_reg_write(NFC_TIMEOUT_REG, 0x80400000);
 	sprd_tiger_reg_or(PIN_NFRB_REG, BIT_7);   //set PIN_NFRB pull up
 	sprd_tiger_reg_or(PIN_CTL2_REG, BIT_17);  //set PIN_NFRB pull up resiter 4.7k
+	for (i=PIN_NFWPN_REG; i<=PIN_NFD15_REG; i+=4)
+	{
+		sprd_tiger_reg_or( i, BIT_9);
+		sprd_tiger_reg_and(i, ~(BIT_8|BIT_10|BIT_6));
+	}
 	//close write protect
 	sprd_tiger_nand_wp_en(tiger, 0);
 }
