@@ -16,6 +16,7 @@ void set_vibrator(int on)
 	int i = 0;
 	ANA_REG_SET(ANA_VIBR_WR_PROT, VIBRATOR_REG_UNLOCK); //unlock vibrator registor
 	if(on == 0){
+		mdelay(150);
 		ANA_REG_AND(ANA_VIBRATOR_CTL0, ~(VIBR_PD_SET | VIBR_PD_RST));
 		ANA_REG_OR(ANA_VIBRATOR_CTL0, VIBR_PD_SET);
 	}else{
