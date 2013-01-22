@@ -435,9 +435,7 @@ typedef struct
 
 /*******************************************************************************
                            Variable and Array definiation
-*******************************************************************************/
-#define DQS_GATE_EXTEN 2
-#define DQS_GATE_EARLY 2	                      
+*******************************************************************************/                     
 #define DRAM_BURST_TYPE DRAM_BT_SEQ
 #define DRAM_BURST_WRAP DRAM_NO_WRAP
 #define NONE_MDR 0XFF
@@ -480,10 +478,10 @@ const DRAM_TIMING_INFO_T DRAM_TIMING_INFO_ARRAY[] =
 //  ns	 ns	     ns  tRFC(ns) ns  tRP(ns) ns   ns  clk  ns   ns  clk  ns     ns    ns
 //  tREFI tRAS    tRC  /tRFCab tRCD /tRPpb tRRD tWR tWTR tXSR tXP tMRR tCKESR tZQCS tZQCL
 //	{7800, 50, 	80, 110, 	30,  30,    15,  15, 3,   140, 20, 0,  0, 		0, 	  0},//NORMAL_LPDDR1_1CS_1G_32BIT
-	{7800, 50, 	80, 90,  	30,  30,    15,  15, 3,   140, 20, 0,  0, 		0, 	  0},//NORMAL_LPDDR1_1CS_2G_32BIT
-	{7800, 50, 	80, 90,  	30,  30,    15,  15, 3,   140, 20, 0,  0, 		0,    0},//NORMAL_LPDDR1_2CS_4G_32BIT
-	{3900, 50, 	80, 130,  	20,  30,    15,  15, 3,   140, 20, 2,  15,	   90,  360},//NORMAL_LPDDR2_1CS_4G_32BIT			
-	{3900, 50, 	80, 130,  	20,  30,    15,  15, 3,   140, 20, 2,  15,	   90,  360} //NORMAL_LPDDR2_2CS_8G_32BIT				
+	{7800, 40, 	80, 90,  	20,  15,    15,  15, 2,   140, 20, 0,  0, 		0, 	  0},//NORMAL_LPDDR1_1CS_2G_32BIT
+	{7800, 40, 	80, 90,  	20,  15,    15,  15, 2,   140, 20, 0,  0, 		0,    0},//NORMAL_LPDDR1_2CS_4G_32BIT
+	{3900, 43, 	65, 130,  	20,  20,    10,  15, 3,   140, 20, 2,  15,	   90,  360},//NORMAL_LPDDR2_1CS_4G_32BIT			
+	{3900, 43, 	65, 130,  	20,  20,    10,  15, 3,   140, 20, 2,  15,	   90,  360} //NORMAL_LPDDR2_2CS_8G_32BIT				
 //	{7800, 50, 	80, 90,  	30,  30,    15,  15, 3,   140, 20, 0,  0, 		0,    0},//HYNIX_LPDDR1_H9DA4GH4JJAMCR4EM
 //	{3900, 50, 	80, 130,  	20,  30,    15,  15, 3,   140, 20, 2,  15,	   90,  360} //SAMSUNG_LPDDR2_KMKJS000VM	
 };
