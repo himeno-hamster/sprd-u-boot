@@ -19,8 +19,7 @@
 #include <asm/arch/sc8810_reg_ahb.h>
 #include <asm/arch/sc8810_reg_global.h>
 #include <asm/arch/adi_hal_internal.h>
-#include <asm/arch/analog_reg_v3.h>
-
+#include <asm/arch/analog_reg_v3.h>
 
 #ifdef   __cplusplus
     extern   "C"
@@ -148,7 +147,7 @@ void wait_us(uint32 us)
 	volatile uint32 j;
 	for(i=0;i<us;i++) 
 	{
-	    for(j=0;j<1000;j++);
+	    for(j=0;j<300;j++);
 	}
 }
 
@@ -180,6 +179,9 @@ void modify_dpll_freq (CLK_TYPE_E emc_clk)
 
 void set_emc_clk(CLK_TYPE_E emc_clk) 
 {
+   uint32 emc_clk_div = 0;
+    emc_clk_div = 400000000/emc_clk -1;
+
 	REG32(GR_GEN1_SET) = BIT_9;
 
 	//ensure emc is in idle state
@@ -193,11 +195,10 @@ void set_emc_clk(CLK_TYPE_E emc_clk)
 	set_reg_fld(PUBL_CFG_DX2DLLCR,30,1,0);
 	set_reg_fld(PUBL_CFG_DX3DLLCR,30,1,0);	
 
-
 	//step3,modify dpll 
-	modify_dpll_freq(emc_clk);		
+	modify_dpll_freq(400000000);		
 	set_reg_fld(AHB_ARM_CLK,12,2,1);
-	set_reg_fld(AHB_ARM_CLK,8,4,0);	 //clk_emc_div=0
+	set_reg_fld(AHB_ARM_CLK,8,4,emc_clk_div);	 //clk_emc_div
 	set_reg_fld(AHB_ARM_CLK,3,1,1);	 //clk_emc_sync	
 	wait_us(150); //PLL lock time. 150us should be enough.  please define this function by yourself
 
@@ -210,7 +211,7 @@ void set_emc_clk(CLK_TYPE_E emc_clk)
 	set_reg_fld(PUBL_CFG_DX1DLLCR,30,1,1);
 	set_reg_fld(PUBL_CFG_DX2DLLCR,30,1,1);
 	set_reg_fld(PUBL_CFG_DX3DLLCR,30,1,1);	
-	wait_us(10); //for DLL to lock, spec is 5.12us. we reserve more cycles. please define this function by yourself
+	wait_us(7); //for DLL to lock, spec is 5.12us. we reserve more cycles. please define this function by yourself
 
 	REG32(GR_GEN1_CLR) = BIT_9;
 }
@@ -363,6 +364,7 @@ void EMC_MEM_Mode_set(DRAM_INFO_T_PTR dram_info)
 	{
 		mddr_lpddr2_en = 0;	
 	}
+
 	#ifdef EMC_SMALL_CODE_SIZE
         REG32(UMCTL_CFG_MCFG) = 0x60010;
         REG32(UMCTL_CFG_MCFG) |=((mddr_lpddr2_en<<22)|
@@ -396,29 +398,13 @@ void EMC_MEM_Mode_set(DRAM_INFO_T_PTR dram_info)
 							(0x0<<0) );		//Self Refresh idle period. Memories are placed into Self-Refresh mode if the NIF is idle in Access state for sr_idle * 32 * n_clk cycles
 
      #endif                            
-	if(dram_info->mode_info->io_width == IO_WIDTH_32)//x32
+	if(dram_info->mode_info->io_width == IO_WIDTH_16)//x16
 	{
+        REG32(UMCTL_CFG_PPCFG) = 0x18;
 	}
-	else if(dram_info->mode_info->io_width == IO_WIDTH_16)//x16
+	else if(dram_info->mode_info->io_width == IO_WIDTH_8)//x16//x8
 	{
-        	#ifdef EMC_SMALL_CODE_SIZE
-         REG32(UMCTL_CFG_PPCFG) = 0x18;
-         #else   
-		REG32(UMCTL_CFG_PPCFG) =(1<<0) |	//Reduced Population Enable
-		                        (1<<3) |	//byte2 disable
-		                        (1<<4); 	//byte3 disable
-        #endif		                        
-	}
-	else//x8
-	{
-         #ifdef EMC_SMALL_CODE_SIZE
-         REG32(UMCTL_CFG_PPCFG) = 0x1c;
-         #else
-		REG32(UMCTL_CFG_PPCFG) =(1<<0) |	//Reduced Population Enable
-		                        (1<<2) |	//byte1 disable		
-		                        (1<<3) |	//byte2 disable
-		                        (1<<4);  	//byte3 disable
-        #endif		                        
+        REG32(UMCTL_CFG_PPCFG) = 0x1c;
 	}
 
 	REG32(UMCTL_CFG_LPDDR2ZQCFG) = 0xAB0A560A;//[31:24]:zqcl_op	 [23:16]:zqcl_ma  [15:8]:zqcs_op  [7:0]:zqcs_ma
@@ -432,67 +418,46 @@ void EMC_MEM_Timing_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 	DRAM_MODE_INFO_T_PTR   mode_info = dram_info->mode_info;	
 
 	uint32 mem_t = 0;
+   uint32 emc_clk_d = 0;
 
+   emc_clk_d = emc_clk/1000000;
 	mem_t = (1000000000/emc_clk);
 		
-	REG32(UMCTL_CFG_TOGCNT1U) 	= emc_clk/1000000+1;		
+	REG32(UMCTL_CFG_TOGCNT1U) 	= emc_clk/1000000;		
 	REG32(UMCTL_CFG_TINIT) 	= 200; //200us
-	#ifndef EMC_SMALL_CODE_SIZE
-	REG32(UMCTL_CFG_TRSTH) 	= dram_info->mode_info->mem_type==DRAM_DDR3? 500:0; //500us when ddr3,others 0
-	#else
 	REG32(UMCTL_CFG_TRSTH) 	= 0; //500us when ddr3,others 0
-    #endif
-	REG32(UMCTL_CFG_TOGCNT100N) = emc_clk/10000000+1;
-	
+	REG32(UMCTL_CFG_TOGCNT100N) = emc_clk/10000000;
     REG32(UMCTL_CFG_TREFI)	= time_info->tREFI/100;				//unit is TOGCNT100N
-    	#ifndef EMC_SMALL_CODE_SIZE
-    REG32(UMCTL_CFG_TMRD) 	= (mode_info->mem_type==DRAM_LPDDR1)? 2: ((mode_info->mem_type==DRAM_DDR3)?4:5);
-    #else
     REG32(UMCTL_CFG_TMRD) 	= (mode_info->mem_type==DRAM_LPDDR1)? 2:5;
-    #endif
-    
-    REG32(UMCTL_CFG_TRTW) 	= 0x00000006; //modify by johnnywang
-    REG32(UMCTL_CFG_TAL) 	= 0x00000000; //no al for lpddr1/lpddr2,ddr3:0, CL-1, CL-2 (depending on AL=0,1,2 in MR1)
-    REG32(UMCTL_CFG_TCL) 	= mode_info->rl;
-    REG32(UMCTL_CFG_TCWL) 	= (mode_info->mem_type == DRAM_LPDDR1) ? 1 : mode_info->wl;
-    REG32(UMCTL_CFG_TDPD) 	= (((mode_info->mem_type)&DRAM_LPDDR2)==DRAM_LPDDR2) ? 500 : 0;
-
-    REG32(UMCTL_CFG_TXP) 	= time_info->tXP;	//tXPmin=7.5ns,fast exit	
-
-    REG32(UMCTL_CFG_TCKE) 	= (mode_info->mem_type==DRAM_LPDDR1)? 2:3;
+    REG32(UMCTL_CFG_TRTW)     = (mode_info->mem_type==DRAM_LPDDR1)? 3: ((emc_clk>CLK_200MHZ)? 2:1);
+    REG32(UMCTL_CFG_TAL) 	    = 0; //no al for lpddr1/lpddr2,ddr3:0, CL-1, CL-2 (depending on AL=0,1,2 in MR1)
+    REG32(UMCTL_CFG_TCL) 	    = mode_info->rl;
+    REG32(UMCTL_CFG_TCWL)     = (mode_info->mem_type == DRAM_LPDDR1) ? 1 : mode_info->wl;
+    REG32(UMCTL_CFG_TDPD)     = (((mode_info->mem_type)&DRAM_LPDDR2)==DRAM_LPDDR2) ? 500 : 0;
+    REG32(UMCTL_CFG_TXP) 	    = time_info->tXP;	//tXPmin=7.5ns,fast exit	
+    REG32(UMCTL_CFG_TCKE)     = (mode_info->mem_type==DRAM_LPDDR1)? 2:3;
     //REG32(UMCTL_CFG_TZQCSI)= (mode_info->mem_type==DRAM_LPDDR1)? 0:0;	
-    REG32(UMCTL_CFG_TZQCSI)= 0;	
-    REG32(UMCTL_CFG_TZQCL)	= (mode_info->mem_type==DRAM_LPDDR1)? 0:(time_info->tZQCL/mem_t+1);	//???
-
-    	#ifndef EMC_SMALL_CODE_SIZE
-    REG32(UMCTL_CFG_TMOD)= (mode_info->mem_type==DRAM_DDR3)? 12:0;	//???
-    #else
-    REG32(UMCTL_CFG_TMOD) 	= 0;	//???
-    #endif
-    
-    	#ifndef EMC_SMALL_CODE_SIZE
-    REG32(UMCTL_CFG_TRSTL) = (mode_info->mem_type==DRAM_DDR3)? (100/mem_t+1):0;	//???
-    #else
-    REG32(UMCTL_CFG_TRSTL) = 0;	//???
-    #endif
-	REG32(UMCTL_CFG_TMRR) 	= 2;	// default value,don't need set    
+    REG32(UMCTL_CFG_TZQCSI)   = 0;	
+    REG32(UMCTL_CFG_TZQCL)    = (mode_info->mem_type==DRAM_LPDDR1)? 0:(time_info->tZQCL*emc_clk_d/1000);	//???
+    REG32(UMCTL_CFG_TMOD)     = 0;	//???
+    REG32(UMCTL_CFG_TRSTL)    = 0;	//???
+	REG32(UMCTL_CFG_TMRR) 	    = 2;	// default value,don't need set    
+	REG32(UMCTL_CFG_TRFC)     = (time_info->tRFC*emc_clk_d/1000);
+	REG32(UMCTL_CFG_TRC)      = (time_info->tRC*emc_clk_d/1000);
+	REG32(UMCTL_CFG_TRCD)     = (time_info->tRCD*emc_clk_d/1000);
+	REG32(UMCTL_CFG_TRRD)     = (time_info->tRRD*emc_clk_d/1000);
+	REG32(UMCTL_CFG_TWR)      = (time_info->tWR*emc_clk_d/1000);
+	REG32(UMCTL_CFG_TWTR)     = time_info->tWTR;
+    REG32(UMCTL_CFG_TEXSR)   = time_info->tXSR*emc_clk_d/1000;
+	REG32(UMCTL_CFG_TXPDLL)   = 0;	//slow exit should be 0???		
+	REG32(UMCTL_CFG_TDQS) 	   = 2;
 	
 	if(mode_info->mem_type==DRAM_LPDDR1)
 	{
-		set_reg_val_min_max(UMCTL_CFG_TRFC, (time_info->tRFC/mem_t+1),7,28);
-		REG32(UMCTL_CFG_TRP)    = 3;
-		set_reg_val_min_max(UMCTL_CFG_TRAS, (time_info->tRAS/mem_t+1),4,8);		
-		set_reg_val_min_max(UMCTL_CFG_TRC,  (time_info->tRC/mem_t+1),5,11);				
-		REG32(UMCTL_CFG_TRCD)   = 3;
-		REG32(UMCTL_CFG_TRRD)   = 2;
+		REG32(UMCTL_CFG_TRP)    = (time_info->tRP*emc_clk_d/1000);
+		REG32(UMCTL_CFG_TRAS)   = (time_info->tRAS*emc_clk_d/1000);
 		REG32(UMCTL_CFG_TRTP)   = 0;
-		REG32(UMCTL_CFG_TWR)    = 3;
-		REG32(UMCTL_CFG_TZQCS)	= 0;
-
-		set_reg_val_min_max(UMCTL_CFG_TWTR, time_info->tWTR,1,2);				
-	    set_reg_val_min_max(UMCTL_CFG_TEXSR, time_info->tXSR/mem_t+1,17,40);
-	    REG32(UMCTL_CFG_TXPDLL) = 0;	//slow exit should be 0???		
-		REG32(UMCTL_CFG_TDQS) 	= 2;
+		REG32(UMCTL_CFG_TZQCS)  = 0;
     	REG32(UMCTL_CFG_TCKSRE) = 0;
     	REG32(UMCTL_CFG_TCKSRX) = 0;		
     	REG32(UMCTL_CFG_TZQCL)  = 0;				
@@ -500,47 +465,19 @@ void EMC_MEM_Timing_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 	}
 	else if(((mode_info->mem_type)&DRAM_LPDDR2)==DRAM_LPDDR2)
 	{
-		set_reg_val_min_max(UMCTL_CFG_TRFC, (time_info->tRFC/mem_t+1),15,112);
-		set_reg_val_min_max(UMCTL_CFG_TRP,  (0x10000)+(time_info->tRP/mem_t+1), 0x10003, 0x1000d);		
-		set_reg_val_min_max(UMCTL_CFG_TRAS, (time_info->tRAS/mem_t+1),7,23);
-		set_reg_val_min_max(UMCTL_CFG_TRC,  (time_info->tRC/mem_t+1),10,36);			
-		set_reg_val_min_max(UMCTL_CFG_TRCD, (time_info->tRCD/mem_t+1),3,13);			
-		set_reg_val_min_max(UMCTL_CFG_TRRD, (time_info->tRRD/mem_t+1),2,6);			
-		REG32(UMCTL_CFG_TRTP) = 4;
-		set_reg_val_min_max(UMCTL_CFG_TWR,  (time_info->tWR/mem_t+1),3,8);		
-		//REG32(UMCTL_CFG_TWR)  = 6;
-		set_reg_val_min_max(UMCTL_CFG_TWTR, time_info->tWTR,2,4);										
-	    REG32(UMCTL_CFG_TEXSR) 	= 512;
-	    REG32(UMCTL_CFG_TXPDLL) = 0;
-		set_reg_val_min_max(UMCTL_CFG_TZQCS, (time_info->tZQCS/mem_t+1),15,48);			
-		REG32(UMCTL_CFG_TDQS) 	= 2;		    
+		REG32(UMCTL_CFG_TRP)  = (time_info->tRP*emc_clk_d/1000)+0x20000;
+		REG32(UMCTL_CFG_TRAS) = (time_info->tRAS*emc_clk_d/1000) + 1; 
+		REG32(UMCTL_CFG_TRTP) = 3;
+		REG32(UMCTL_CFG_TZQCS) =(time_info->tZQCS*emc_clk_d/1000);
     	REG32(UMCTL_CFG_TCKSRE) = 0;			
     	REG32(UMCTL_CFG_TCKSRX) = 0;	
-	    set_reg_val_min_max(UMCTL_CFG_TZQCL, time_info->tZQCL/mem_t+1,60,192);
-	    set_reg_val_min_max(UMCTL_CFG_TCKESR, time_info->tCKESR/mem_t+1,3,8);
+	    REG32(UMCTL_CFG_TZQCL)  = (time_info->tZQCL*emc_clk_d/1000);
+	    REG32(UMCTL_CFG_TCKESR) = (time_info->tCKESR*emc_clk_d/1000);
 			
 	}		
 	else //DRAM_DDR3
 	{
-        	#ifndef EMC_SMALL_CODE_SIZE
-		set_reg_val_min_max(UMCTL_CFG_TRFC, (time_info->tRFC/mem_t+1),36,374);	
-		set_reg_val_min_max(UMCTL_CFG_TRP,  (1<<16)+(time_info->tRP/mem_t+1), 5, 14);
-		set_reg_val_min_max(UMCTL_CFG_TRAS, (time_info->tRAS/mem_t+1),15,38);
-		set_reg_val_min_max(UMCTL_CFG_TRC,  (time_info->tRC/mem_t+1),20,52);			
-		set_reg_val_min_max(UMCTL_CFG_TRCD, (time_info->tRCD/mem_t+1),5,14);						
-		set_reg_val_min_max(UMCTL_CFG_TRRD, (time_info->tRRD/mem_t+1),4,8);			
-		REG32(UMCTL_CFG_TRTP) = 4;
-		set_reg_val_min_max(UMCTL_CFG_TWR,  (time_info->tWR/mem_t+1),6,16);			
-		set_reg_val_min_max(UMCTL_CFG_TWTR, time_info->tWTR,3,8);							
-	    set_reg_val_min_max(UMCTL_CFG_TEXSR, time_info->tXSR/mem_t+1,17,117);	
-	    REG32(UMCTL_CFG_TXPDLL) = 10;
-		REG32(UMCTL_CFG_TZQCS) 	= 64;
-		REG32(UMCTL_CFG_TDQS) 	= 4;		    
-    	REG32(UMCTL_CFG_TCKSRE) = 5;
-    	REG32(UMCTL_CFG_TCKSRX) = 5;
-	    set_reg_val_min_max(UMCTL_CFG_TZQCL, time_info->tZQCL/mem_t+1,0,1023);	
-		REG32(UMCTL_CFG_TCKESR) = REG32(UMCTL_CFG_TCKE)+1;
-        #endif
+        while(1);//don't support ddr3 now
 	}
 }
 
@@ -553,7 +490,7 @@ void EMC_MEM_Power_Up()
 	do{i = (REG32(UMCTL_CFG_POWSTAT)&0X1);}
 	while(i == 0);
 
-	wait_us(10);
+	wait_us(2);
 }
 
 
@@ -565,6 +502,10 @@ void EMC_CTL_Mode_Set(DRAM_INFO_T_PTR dram_info)
 	uint32 dram_dsty_cs1 = cal_cs_val(dram_info->mode_info->cs1_cap);
 	uint32 dram_io_width = dram_info->mode_info->io_width;
 
+    if(dram_info->mode_info->cs1_cap == DRAM_0BIT)
+    {
+        dram_dsty_cs1 = dram_dsty_cs0;
+    }
 	if(dram_info->mode_info->mem_type==DRAM_LPDDR2_S4)
 	{
 		dram_type = 1;
@@ -745,7 +686,7 @@ MEM_CMD_RESULT_E EMC_CTL_MDR_Issue(DRAM_INFO_T_PTR dram_info,DRAM_CS_NUM_E cs_nu
 	//wait memory cmd finished
 	do{temp = (REG32(UMCTL_CFG_MCMD))&0x80000000;}
 	while( temp != 0x00000000);
-    wait_us(10);
+    wait_us(2);
 
 	//return
 	return CMD_MDR_SUCCESS;	
@@ -783,41 +724,10 @@ BOOLEAN EMC_MEM_Init(DRAM_INFO_T_PTR dram_info)
 	}
 	else if((mem_type&DRAM_LPDDR2) == DRAM_LPDDR2)	//lpddr2
 	{
-        #if 0
 		//memory reset
 		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_MRS, 63);
-		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_NOP, 0xff);
-		wait_us(20);
+        wait_us(11);
 
-		//zqcl to cs0
-		EMC_CTL_MDR_Issue(dram_info,FIRST_CS, CMD_MRS, 10);
-		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_NOP, 0xff);
-		wait_us(1);
-		
-		//zqcl to cs1
-		EMC_CTL_MDR_Issue(dram_info,SECOND_CS, CMD_MRS, 10);
-		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_NOP, 0xff);
-		wait_us(1);		
-		
-		//set lpddr2 mode register 1
-		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_MRS, 1);
-		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_NOP, 0xff);
-
-		//set lpddr2 mode mode register 2
-		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_MRS, 2);
-		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_NOP, 0xff);				
-
-		//set lpddr2 mode mode register 3
-		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_MRS, 3);
-		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_NOP, 0xff);
-
-		//refresh
-		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_REF, 0xff);
-		#else
-		//memory reset
-		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_MRS, 63);
-         wait_us(11);
-         
 		//zqcl to cs0
 		EMC_CTL_MDR_Issue(dram_info,FIRST_CS, CMD_MRS, 10);
 		
@@ -842,7 +752,6 @@ BOOLEAN EMC_MEM_Init(DRAM_INFO_T_PTR dram_info)
 		//refresh
 		EMC_CTL_MDR_Issue(dram_info,ALL_TWO_CS, CMD_REF, NONE_MDR);
         
-        #endif
 	}
 	else //ddr3 not support in tiger
 	{
@@ -923,49 +832,23 @@ BOOLEAN EMC_MEM_Init(DRAM_INFO_T_PTR dram_info)
 void EMC_DFI_Set(DRAM_INFO_T_PTR dram_info)
 {
 	volatile uint32 temp = 0;
-    //REG32(UMCTL_CFG_DFITCTRLDELAY) = 0x2; //fixed value,see PUBL P143,default value,don't need to set
-    //REG32(UMCTL_CFG_DFITPHYWRDATA) = 0x1; //fixed value,see PUBL P143,default value,don't need to set
 
-	#if 0//must check here!!!!!!!!!!!!!!!!!!!
-	if(((dram_info->mode_info->mem_type)&DRAM_LPDDR2) == DRAM_LPDDR2)
+   	if((dram_info->mode_info->mem_type&DRAM_LPDDR2) == DRAM_LPDDR2)
+   	{
+       	REG32(UMCTL_CFG_DFITPHYWRLAT)  = dram_info->mode_info->wl;
+       	REG32(UMCTL_CFG_DFITRDDATAEN)  = dram_info->mode_info->rl-1;
+   	}    	
+    else
     {
-       	REG32(UMCTL_CFG_DFITPHYWRLAT)  = 3;
-    	REG32(UMCTL_CFG_DFITRDDATAEN)  = 5;
+       	REG32(UMCTL_CFG_DFITPHYWRLAT)  = (dram_info->mode_info->wl>=1)? (dram_info->mode_info->wl-1):0; //WL-1, see PUBL P143
+       	REG32(UMCTL_CFG_DFITRDDATAEN)  = (dram_info->mode_info->rl>=2)? (dram_info->mode_info->rl-2):0; //RL-2, see PUBL P143
+    }
 
-	}
-	else
-	#endif	
-	{
-        	if((dram_info->mode_info->mem_type&DRAM_LPDDR2) == DRAM_LPDDR2)
-        	{
-            	REG32(UMCTL_CFG_DFITPHYWRLAT)  = dram_info->mode_info->wl;
-            	REG32(UMCTL_CFG_DFITRDDATAEN)  = dram_info->mode_info->rl-1;
-        	}    	
-         else
-         {
-            	REG32(UMCTL_CFG_DFITPHYWRLAT)  = (dram_info->mode_info->wl>=1)? (dram_info->mode_info->wl-1):0; //WL-1, see PUBL P143
-            	REG32(UMCTL_CFG_DFITRDDATAEN)  = (dram_info->mode_info->rl>=2)? (dram_info->mode_info->rl-2):0; //RL-2, see PUBL P143
-         }
-        
-	}		
-    
+
     REG32(UMCTL_CFG_DFITPHYRDLAT)  = 0xf; //fixed value,see PUBL P143
-//    REG32(UMCTL_CFG_DFITPHYUPDTYPE0)  = 0x1; //fixed value,see PUBL P143
-//    REG32(UMCTL_CFG_DFITPHYUPDTYPE1)  = 0x1; //fixed value,see PUBL P143
-//    REG32(UMCTL_CFG_DFITPHYUPDTYPE2)  = 0x1; //fixed value,see PUBL P143
-//    REG32(UMCTL_CFG_DFITPHYUPDTYPE3)  = 0x1; //fixed value,see PUBL P143
-//    REG32(UMCTL_CFG_DFITCTRLUPDMIN)   = 0x10;//???
-//    REG32(UMCTL_CFG_DFITCTRLUPDMAX)   = 0x10;//???
-//    REG32(UMCTL_CFG_DFITCTRLUPDDLY)   = 0x10;//???
-//    REG32(UMCTL_CFG_DFIUPDCFG)   		= 0x3;//???
-//    REG32(UMCTL_CFG_DFITREFMSKI)   	= 0x0;//???
-//    REG32(UMCTL_CFG_DFITCTRLUPDI)   	= 0x0;//???
     REG32(UMCTL_CFG_DFISTCFG0) 	  = 0x7;
     REG32(UMCTL_CFG_DFISTCFG1) 	  = 0x3;
     REG32(UMCTL_CFG_DFISTCFG2) 	  = 0x3;	
-//	REG32(UMCTL_CFG_DFITDRAMCLKEN)= 0x2; //fixed value,see PUBL P143
-//	REG32(UMCTL_CFG_DFITDRAMCLKDIS)= 0x2; //fixed value,see PUBL P143
-
     REG32(UMCTL_CFG_DFILPCFG0) 	  = 0x00078101;				
 
 
@@ -978,9 +861,10 @@ void EMC_DFI_Set(DRAM_INFO_T_PTR dram_info)
 void EMC_PHY_Timing_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 {
 	uint32 mem_t = 0;
+   uint32 emc_clk_d = 0;
 
 	mem_t = (1000000000/emc_clk);
-
+   emc_clk_d = emc_clk/1000000;
 		
     //PTR0, to set tDLLSRST, tDLLLOCK, tITMSRST
     {
@@ -989,14 +873,14 @@ void EMC_PHY_Timing_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 		//Register (PIR). This must correspond to a value that is equal to or more than 50ns
 		//or 8 controller clock cycles, whichever is bigger
     	uint32 tDLLSRST = 50; //ns
-    	uint32 tDLLSRST_T = ((tDLLSRST/mem_t +1<8)? 8:(tDLLSRST/mem_t +1));
+    	uint32 tDLLSRST_T = ((tDLLSRST*emc_clk_d/1000 < 8)? 8:(tDLLSRST*emc_clk_d/1000));
 				
 		//DLL Lock Time: Number of clock cycles for the DLL to stabilize and lock, i.e. number
 		//of clock cycles from when the DLL reset pin is de-asserted to when the DLL has
 		//locked and is ready for use. Refer to the PHY databook for the DLL lock time.
 		//Default value corresponds to 5.12us at 533MHz.		
     	uint32 tDLLLOCK = 5120;//ns
-    	uint32 tDLLLOCK_T = tDLLLOCK/mem_t;
+    	uint32 tDLLLOCK_T = tDLLLOCK*emc_clk_d/1000;
 
 		//ITM Soft Reset Time: Number of controller clock cycles that the ITM soft reset pin
 		//must remain asserted when the soft reset is applied to the ITMs. This must
@@ -1008,28 +892,16 @@ void EMC_PHY_Timing_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 	
     //PTR1, to set tINT0, tINT1
     {
-    	    uint32 tINT0 = 0;
-    	    uint32 tINT0_T = 0;
+        uint32 tINT0 = 0;
+        uint32 tINT0_T = 0;
 		uint32 tINT1 = 0;
 		uint32 tINT1_T = 0;
 		
-        	tINT0 = 200*1000; //ns, CKE high time to first command,lpddr2
-        	#ifndef EMC_SMALL_CODE_SIZE
-        	if(dram_info->mode_info->mem_type==DRAM_DDR3)
-    	    {
-    			tINT0 = 500*1000;
-    	    }
-         #endif    			
-        	tINT0_T = tINT0/mem_t;
+       	tINT0 = 200*1000; //ns, CKE high time to first command,lpddr2
+      	tINT0_T = tINT0*emc_clk_d/1000;
 
 		tINT1 = 100;	//ns, CKE low time with power and clock stable
-		#ifndef EMC_SMALL_CODE_SIZE
-        	if(dram_info->mode_info->mem_type==DRAM_DDR3)
-        	{
-    			tINT1 = 360;
-        	}		
-         #endif
-		tINT1_T = tINT1/mem_t;
+      	tINT0_T = tINT0*emc_clk_d/1000;
 		
 		REG32(PUBL_CFG_PTR1 ) = tINT1_T<<19 | tINT0_T;
 		
@@ -1043,17 +915,11 @@ void EMC_PHY_Timing_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 		uint32 tINT3_T = 0;
 	
 		tINT2 = 11*1000;	//ns, time for reset command to end of auto initialization
-		#ifndef EMC_SMALL_CODE_SIZE
-		if(dram_info->mode_info->mem_type==DRAM_DDR3)
-		{
-			tINT2 = 200*1000;
-		}
-        #endif
-		tINT2_T = tINT2/mem_t;
+		tINT2_T = tINT2*emc_clk_d/1000;
 		
 
 		tINT3 = 1000;	//ns, time for ZQ initialization command to first command
-		tINT3_T = tINT3/mem_t;		    	
+		tINT3_T = tINT3*emc_clk_d/1000;		    	
     
     	REG32(PUBL_CFG_PTR2 ) = tINT3_T<<17 | tINT2_T;
     }
@@ -1112,7 +978,6 @@ void EMC_PHY_Mode_Set(DRAM_INFO_T_PTR dram_info)
 	temp |= ((mem_type==DRAM_LPDDR1)? 1:0);
 	temp |= (1<<1); //dqs gating mode, 0:active windows mode 1:passive windows mode
 	temp |= (cs_num ==2)? (0x3<<18):(0x1<<18);
-//	temp |= (0x3<<18);
 	REG32(PUBL_CFG_PGCR) = temp;
 
 	//DXnDLLCR
@@ -1180,12 +1045,16 @@ void EMC_PHY_Mode_Set(DRAM_INFO_T_PTR dram_info)
 
 	//DSGCR
     temp = REG32(PUBL_CFG_DSGCR);
-    temp &= ~0xfff; // only applicable for LPDDR    
-    #ifdef CONFIG_MEM_LPDDR1     
-    temp |= (0xB|(1<<8)|(1<<5));     
-    #else     
-    temp |= (0xB|(2<<8)|(2<<5));     
-    #endif    
+    temp &= ~0xfff; // only applicable for LPDDR
+
+    if(mem_type==DRAM_LPDDR1)
+    {
+       temp |= (0xB|(1<<8)|(1<<5));
+    }
+    else
+    {
+       temp |= (0xB|(2<<8)|(2<<5));
+    }
     REG32(PUBL_CFG_DSGCR) = temp;
 	
 	//DCR
@@ -1226,18 +1095,22 @@ void EMC_PHY_Mode_Set(DRAM_INFO_T_PTR dram_info)
 	if(mem_type!=DRAM_LPDDR1)
 	{
 		//trigger zqcl
-		wait_pclk(50);
+		//wait_pclk(50);
+		wait_pclk(10); //temp1
 		REG32(PUBL_CFG_PIR) = 0x9; 
-		wait_pclk(50);
+		//wait_pclk(50);
+		wait_pclk(10); //temp1
 		//wait trigger zqcl done
 		do temp = REG32(PUBL_CFG_PGSR);
 		while((temp&0x1) == 0);
 	}	
 
 	//Controller DRAM Initialization
-	wait_pclk(50);
+	//wait_pclk(50);
+	wait_pclk(10); //temp1
 	REG32(PUBL_CFG_PIR) = 0x40001; 
-	wait_pclk(50);    
+	//wait_pclk(50);    
+	wait_pclk(10); //temp1
 	//wait done
 	do {temp = REG32(PUBL_CFG_PGSR);}
 	while((temp&0x1) == 0);
@@ -1250,7 +1123,9 @@ void EMC_PHY_MDR_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 #ifndef CONFIG_MEM_LPDDR1
 	uint32 temp = 0;
 	uint32 mem_t = 0;
+   uint32 emc_clk_d = 0;
 
+   emc_clk_d = emc_clk/1000000;
 	mem_t = (1000000000/emc_clk);
 
 	switch(dram_info->mode_info->mem_type)
@@ -1259,11 +1134,11 @@ void EMC_PHY_MDR_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 		{
 		    //MR0
 		    //lpddr1 mode register
-	    	temp = REG32(PUBL_CFG_MR0);	
-			temp &= ~0XFF;
-			temp |=((0<<7)							|	//operation mode, 0:normal_mode 1:test_mode
-					(dram_info->mode_info->rl<<4)	|	//cas latency	
-					(0<<3)							|	//burst type,0:sequential 1:interleaved
+	    	    temp = REG32(PUBL_CFG_MR0);	
+		    temp &= ~0XFF;
+		    temp |=( (0<<7)						|	//operation mode, 0:normal_mode 1:test_mode
+		        		(dram_info->mode_info->rl<<4)	|	//cas latency	
+					(0<<3)						|	//burst type,0:sequential 1:interleaved
 					(dram_info->mode_info->bl+1));	  		  	  		   		  
 		    REG32(PUBL_CFG_MR0) = temp;		
 
@@ -1325,6 +1200,7 @@ void EMC_PHY_MDR_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 		}break;
 		case DRAM_DDR3:
 		{
+
 			//MR0
 			//ddr3 mode register 0
 			{
@@ -1333,7 +1209,7 @@ void EMC_PHY_MDR_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 				uint32 wr=1;
 				bl = (dram_info->mode_info->bl == DRAM_BL4)?2:0;
 				cl = (dram_info->mode_info->rl <5)?1:(dram_info->mode_info->rl-4);
-				switch(dram_info->time_info->tWR/mem_t+1)
+				switch(dram_info->time_info->tWR*emc_clk_d/1000)
 				{
 					case 5: wr=1;break;	
 					case 6: wr=2;break;
@@ -1363,7 +1239,7 @@ void EMC_PHY_MDR_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 			//ddr3 mode register 3
 			REG32(PUBL_CFG_MR3) = 0x0;	//bit0~1:Multi-Purpose Register (MPR) Location
 											//bit2:  Multi-Purpose Register Enable
-		}break;
+		} break;
 
 		default: break;
 	}
@@ -1384,14 +1260,16 @@ BOOLEAN EMC_PHY_Training()
 	//for(i = 0; i < 1000; i++);	
 	
 	//do dqs training
-	wait_pclk(50);	
+	//wait_pclk(50);	
+	wait_pclk(10);//temp1
 	REG32(PUBL_CFG_PIR) |= (PHY_ACT_INIT|PHY_ACT_DQSTRN);
-	wait_pclk(50);	
+	wait_pclk(10);//temp1
+	//wait_pclk(50);	
 
 	//wait PHY dqs training finished
 	while((PHY_CURRENT_STATE&PHY_STATE_INIT_DONE) !=PHY_STATE_INIT_DONE);
 	while((PHY_CURRENT_STATE&PHY_STATE_DTDONE)	  !=PHY_STATE_DTDONE);
-	wait_us(50);	
+	wait_pclk(3);//temp1
 
 	if((PHY_CURRENT_STATE&PHY_STATE_DTERR)||
    	   (PHY_CURRENT_STATE&PHY_STATE_DTIERR))
@@ -1576,8 +1454,6 @@ PUBLIC void DMC_Dev_Init(CLK_TYPE_E emc_clk)
 {
 	DRAM_INFO_T_PTR dram_info;
 	char* dram_chip_name = NULL;
-
-    
     ADI_init();
     
 	if(__is_bond_lpddr2())
@@ -1597,29 +1473,33 @@ PUBLIC void DMC_Dev_Init(CLK_TYPE_E emc_clk)
 	}	
 		
 	dram_info = get_dram_info(dram_chip_name);
-    if(dram_info->mode_info->mem_type == DRAM_LPDDR1)   
+
+   if(dram_info->mode_info->mem_type == DRAM_LPDDR1)   
    {
         //disable EMC module
-           REG32(AHB_CTL0) &= ~BIT_28;
-           //set SDLL bias trim accuraty
-           REG32(PUBL_CFG_DLLGCR)   |= BIT_23;
-           //disable dll
-           REG32(PUBL_CFG_ACDLLCR)  |= BIT_31;
-           REG32(PUBL_CFG_DX0DLLCR) |= BIT_31;
-           REG32(PUBL_CFG_DX1DLLCR) |= BIT_31;
-           REG32(PUBL_CFG_DX2DLLCR) |= BIT_31;
-           REG32(PUBL_CFG_DX3DLLCR) |= BIT_31;
-   }    
-	set_emc_clk(emc_clk);	
+        REG32(AHB_CTL0) &= ~BIT_28;
+
+        //set SDLL bias trim accuraty
+        REG32(PUBL_CFG_DLLGCR)   |= BIT_23;
+
+        //disable dll
+        REG32(PUBL_CFG_ACDLLCR)  |= BIT_31;
+        REG32(PUBL_CFG_DX0DLLCR) |= BIT_31;
+        REG32(PUBL_CFG_DX1DLLCR) |= BIT_31;
+        REG32(PUBL_CFG_DX2DLLCR) |= BIT_31;
+        REG32(PUBL_CFG_DX3DLLCR) |= BIT_31;
+   }
+    
+    set_emc_clk(emc_clk);	
  
-      if(dram_info->mode_info->mem_type == DRAM_LPDDR1)
-     {        //disable EMC module
-       REG32(AHB_CTL0) |= BIT_28;
-     }
+    if(dram_info->mode_info->mem_type == DRAM_LPDDR1)
+    {
+        //disable EMC module
+        REG32(AHB_CTL0) |= BIT_28;
+    }
+
 	EMC_Init(emc_clk, EMC_CHN_INFO_ARRAY,dram_info); 
-
 }
-
 #ifdef   __cplusplus
     }
 #endif
@@ -1627,3 +1507,4 @@ PUBLIC void DMC_Dev_Init(CLK_TYPE_E emc_clk)
 
  
 
+
