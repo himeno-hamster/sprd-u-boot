@@ -125,6 +125,9 @@ PARTITION_CFG g_partition_cfg[]={
 #else
 	{PARTITION_SD, 1000 * 1024, PARTITION_RAW},
 #endif
+#ifdef CONFIG_AP_ADC_CALIBRATION
+	{PARTITION_PROD_INFO4, 256, PARTITION_RAW},   /*save modem image in samsung stingray0*/
+#endif
 	{0,0,0}
 };
 

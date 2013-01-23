@@ -743,7 +743,26 @@ void creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 			*(uint32_t*)(harsh_data+8), *(uint32_t*)(harsh_data+12));
 	}
 
-    printf("pass cmdline: %s\n", buf);
+#ifdef CONFIG_AP_ADC_CALIBRATION
+{
+	extern int read_adc_calibration_data(char *buffer,int size);
+	unsigned int *adc_data;
+	ret=0;
+	adc_data = malloc(64);
+	memset(adc_data,0,64);
+	if(adc_data){
+		ret = read_adc_calibration_data(adc_data,48);
+		if(ret > 0){
+			if(((adc_data[2]&0xffff) < 4500 )&&((adc_data[2]&0xffff) > 3000)&&
+			((adc_data[3]&0xffff) < 4500 )&&((adc_data[3]&0xffff) > 3000)){
+				str_len = strlen(buf);
+				sprintf(&buf[str_len], " adc_cal=%d,%d",adc_data[2],adc_data[3]);
+			}
+		}
+	}
+}
+#endif
+    printf("pass cmdline: %s \n",buf);
     //lcd_printf(" pass cmdline : %s\n",buf);
     //lcd_display();
     creat_atags(VLX_TAG_ADDR, buf, NULL, 0);

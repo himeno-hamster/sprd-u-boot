@@ -48,6 +48,27 @@ void CHG_Init (void)
 		adc_voltage_table[1][1]=efuse_cal_data[1]&0xffff;
 		adc_voltage_table[1][0]=(efuse_cal_data[1]>>16)&0xffff;
 	}
+#ifdef CONFIG_AP_ADC_CALIBRATION
+        {
+                extern int read_adc_calibration_data(char *buffer,int size);
+                unsigned int *adc_data;
+                int ret=0;
+                adc_data = malloc(64);
+                if(adc_data){
+                        ret = read_adc_calibration_data(adc_data,48);
+                        if((ret > 0) &&
+                           ((adc_data[2]&0xffff) < 4500 )&&((adc_data[2]&0xffff) > 3000)&&
+                           ((adc_data[3]&0xffff) < 4500 )&&((adc_data[3]&0xffff) > 3000)){
+                                printf("adc_para = 0x%x 0x%x \n",adc_data[2],adc_data[3]);
+                                adc_voltage_table[0][1]=adc_data[2]&0xffff;
+                                adc_voltage_table[0][0]=(adc_data[2]>>16)&0xffff;
+                                adc_voltage_table[1][1]=adc_data[3]&0xffff;
+                                adc_voltage_table[1][0]=(adc_data[3]>>16)&0xffff;
+                        }
+                }
+        }
+#endif
+
 	CHG_SetRecharge();
 }
 

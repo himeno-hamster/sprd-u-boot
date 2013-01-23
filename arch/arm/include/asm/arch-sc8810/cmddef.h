@@ -103,7 +103,8 @@ typedef enum
     DIAG_DIRECT_NV           = 94,
     DIAG_DIRECT_PHSCHK       = 95,   
     DIAG_ENDIAN_CHECK_F      = 97,
-    REQ_MAX_F                = 98                  
+    DIAG_AP_F                = 98,
+    REQ_MAX_F                = 99                 
 } diag_cmd_code_enum_type;
 
 
@@ -600,6 +601,28 @@ typedef enum _TOOL_TV_MSG_ID_E
     TOOL_TV_CLOSE_WAITING_WIN,         // 关闭等待窗口(非工具命令)
     TOOL_TV_CMD_INVALID                // 无效命令
 } TOOL_TV_MSG_ID_E;
+
+typedef enum
+{
+    DIAG_AP_CMD_ADC  = 0x0001,
+    MAX_DIAG_AP_CMD
+} DIAG_AP_CMD_E;
+
+typedef struct {
+    uint16  cmd;        // DIAG_AP_CMD_E
+    uint16  length;   // Length of structure 
+} TOOLS_DIAG_AP_CMD_T;
+
+typedef struct {
+    uint32 operate; // 0: Get ADC   1: Load ADC    2: Save ADC 
+    uint32 parameters[12];
+}TOOLS_AP_ADC_REQ_T;
+
+typedef struct {
+    uint16 status;   // ==0: success, != 0: fail
+    uint16 length;   // length of  result
+} TOOLS_DIAG_AP_CNF_T;
+
 /**---------------------------------------------------------------------------*
  **                         Compiler Flag                                     *
  **---------------------------------------------------------------------------*/

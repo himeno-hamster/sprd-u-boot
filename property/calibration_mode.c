@@ -136,7 +136,8 @@ extern void cmd_yaffs_umount(char *mp);
 extern SDIO_HANDLE sdio_open(void);
 extern int sdio_read(SDIO_HANDLE handle,unsigned char *buffer,int size);
 extern int sdio_write(SDIO_HANDLE handle,unsigned char *buffer,int size);
-
+extern void init_calibration_mode(void);
+extern uint32 ap_calibration_proc(uint8 *data,uint32 count,uint8 *out_msg);
 unsigned short EndianConv_16 (unsigned short value)
 {
 #if 0 //def _LITTLE_ENDIAN
@@ -863,7 +864,7 @@ void Calibration_SyncResponse(int ret)
 }
 #endif
 
-extern void init_calibration_mode(void);
+
 void calibration_mode(const uint8_t *pcmd, int length)
 {
 	int ret;
@@ -914,15 +915,17 @@ void calibration_mode(const uint8_t *pcmd, int length)
 			if(usb_trans_status)
 				printf("func: %s line %d usb trans with error %d\n", __func__, __LINE__, usb_trans_status);
 		}
-		if(count > 0){
-			if(count != gUsedChannel->Write(gUsedChannel, g_usb_buf, count)) {
-				return ;
+		if((index = ap_calibration_proc( g_usb_buf, count,g_uart_buf)) == 0){
+			if(count > 0){
+				if(count != gUsedChannel->Write(gUsedChannel, g_usb_buf, count)) {
+					return ;
+				}
+        	                mdelay(3);
 			}
-                        mdelay(3);
-		}
-		count = 0;		
-		while(-1 != (ret = gUsedChannel->GetSingleChar(gUsedChannel))){
-			g_uart_buf[index++] = (ret & 0xff);
+			count = 0;		
+			while(-1 != (ret = gUsedChannel->GetSingleChar(gUsedChannel))){
+				g_uart_buf[index++] = (ret & 0xff);
+			}
 		}
 		while(index > 0){
 			ret = gs_write(g_uart_buf, index);
@@ -951,7 +954,6 @@ void calibration_mode(const uint8_t *pcmd, int length)
 #endif		
 		
 	}
-
 #ifndef __DL_UART0__
 		__dl_log_share__ = 0;
 #endif	
