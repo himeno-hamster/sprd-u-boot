@@ -33,19 +33,15 @@
 
 uint32 LPDDR1_MEM_DS = LPDDR1_DS_39_OHM; //lpddr1 driver strength,refer to multiPHY p155
 uint32 LPDDR2_MEM_DS = LPDDR2_DS_40_OHM; //lpddr1 driver strength,
-
 uint32 B0_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte0 dqs step delay
 uint32 B1_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte1 dqs step delay
 uint32 B2_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte2 dqs step delay
 uint32 B3_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte3 dqs step delay
-
 uint32 B0_SDLL_PHS_DLY = SDLL_PHS_DLY_DEF; //byte0 sll dll phase delay 
 uint32 B1_SDLL_PHS_DLY = SDLL_PHS_DLY_DEF; //byte1 sll dll phase delay 
 uint32 B2_SDLL_PHS_DLY = SDLL_PHS_DLY_DEF; //byte2 sll dll phase delay 
 uint32 B3_SDLL_PHS_DLY = SDLL_PHS_DLY_DEF; //byte3 sll dll phase delay 
-
 DRAM_INFO_T static_dram_info={0};
-
 
 int mem_name_cmp(char *str1,char *str2)
 {
@@ -140,6 +136,18 @@ uint32 cal_cs_val(DRAM_DENSITY_E density)
 	}
 }
 
+uint32 cal_mem_drv(LPDDR2_MEM_DS_T_E mem_drv)
+{
+	switch(mem_drv)
+	{
+		case LPDDR2_DS_34_OHM:return 1;
+		case LPDDR2_DS_40_OHM:return 2;
+		case LPDDR2_DS_48_OHM:return 3;
+		case LPDDR2_DS_60_OHM:return 4;
+		case LPDDR2_DS_80_OHM:return 6;
+		default              :return 2;
+	}
+}
 
 void wait_us(uint32 us) 
 {
@@ -565,7 +573,7 @@ MEM_CMD_RESULT_E EMC_CTL_MDR_Issue(DRAM_INFO_T_PTR dram_info,DRAM_CS_NUM_E cs_nu
 	wl = dram_info->mode_info->wl;
 	rl = dram_info->mode_info->rl;	
 	nwr = REG32(UMCTL_CFG_TWR)-2;
-	mem_ds = LPDDR2_MEM_DS + 1;
+	mem_ds = cal_mem_drv(LPDDR2_MEM_DS);
 	mem_type = dram_info->mode_info->mem_type&DRAM_LPDDR2;
 
 
