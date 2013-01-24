@@ -818,7 +818,7 @@ int nand_bbt_init(void)
             {
                 printf("%s: erase address=0x%x\n", __FUNCTION__, addr+i*nand->erasesize);
                 //nand_erase_fdl(addr+i*nand->erasesize, nand->erasesize);
-		startblock -= i;
+		startblock -= 1;
 		printf("%s: blocnum=0x%x\n", __FUNCTION__, startblock );
 		nand_scan_block(startblock, nand->erasesize, nand->writesize);
             }
