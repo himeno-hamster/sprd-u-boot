@@ -71,23 +71,23 @@ void Init_7702_modem(void)
 
 void init_calibration_gpio(void)
 {
-	__raw_writel(0x1BA, 0x8C000124);
+	__raw_writel(0x131, 0x8C000124);
 	gpio_direction_output(AP_CP_RTS, 1);
 	gpio_set_value(AP_CP_RTS, 0);
 
-        __raw_writel(0x1BA, 0x8C000120);
+        __raw_writel(0x174, 0x8C000120);
         gpio_direction_output(CP_AP_RDY, 0);
         //gpio_set_value(CP_AP_RDY, 0);
 
-        __raw_writel(0x1B9, 0x8C00039c);
+        __raw_writel(0x1BA, 0x8C00039c);
         gpio_direction_output(CP_AP_RTS, 0);
         //gpio_set_value(CP_AP_RTS, 0);
 
-        __raw_writel(0x1B1, 0x8C0000d4);
+        __raw_writel(0x130, 0x8C0000d4);
         gpio_direction_output(AP_CP_RDY, 1);
         gpio_set_value(AP_CP_RDY, 1);
 
-        __raw_writel(0x134, 0x8C000380);
+        __raw_writel(0x176, 0x8C000380);
         gpio_direction_output(CP_AP_LIV, 0);
         //gpio_set_value(CP_AP_LIV, 0);
 }
