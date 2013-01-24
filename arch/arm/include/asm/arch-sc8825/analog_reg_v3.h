@@ -77,6 +77,7 @@ extern   "C"
 #define   ANA_INT_GPI_DEBUG     (ANA_REG_BASE + 0x94)
 #define   ANA_HWRST_RTC         (ANA_REG_BASE + 0x98)
 #define   ANA_IF_SPR_CTRL       (ANA_REG_BASE + 0x9C)
+#define   ANA_POR_SRC_STATUS	(ANA_REG_BASE + 0xA0)
 #define   ANA_CHIP_ID_LOW       (ANA_REG_BASE + 0xF8)
 #define   ANA_CHIP_ID_HIGH      (ANA_REG_BASE + 0xFC)
 
@@ -307,6 +308,19 @@ extern   "C"
 #define IF_SPR_IN	BIT_2
 #define	IF_SPR_OE	BIT_1
 #define IF_SPR_OUT	BIT_0
+
+/*the POR_SRC_STATUS register bit*/
+#define POR_PBCHGR_MASK_SET	BIT_15
+#define EXT_RSTN_FLAG		BIT_10
+#define CHGR_INT_FLAG		BIT_9
+#define PB_INT2_FLAG		BIT_8
+#define PB_INT_FLAG		BIT_7
+#define ALARM_INT_SET		BIT_6
+#define CHGR_INT_1S_SET		BIT_5
+#define CHGR_INT_DEBC		BIT_4
+#define PB_INT2_DEBC		BIT_3
+#define PB_INT_1S_SET		BIT_1
+#define PB_INT_DEBC		BIT_0
 
 //ANA_HWRST_STATUS
 #define HWRST_STATUS_POWERON_MASK (0xf0)

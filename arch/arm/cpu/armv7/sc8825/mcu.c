@@ -421,6 +421,10 @@ static uint32 GET_SPL_Data()
 void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 {
     uint32 ret;
+#if defined CONFIG_GARDA
+    /*disable 1s debounce at system boot.*/
+    REG32(ANA_POR_SRC_STATUS) = POR_PBCHGR_MASK_SET;
+#endif
     MCU_Init();
     
     ret = GET_SPL_Data();
