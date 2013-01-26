@@ -19,6 +19,55 @@ SC6800     -gtp -cpu ARM926EJ-S -D_REF_SC6800_ -D_BL_NF_SC6800_
 
 #define REG32(x)   (*((volatile uint32 *)(x)))
 
+
+typedef enum
+{
+	LPDDR2_DS_34_OHM = 0xd,
+	LPDDR2_DS_40_OHM = 0xb,
+	LPDDR2_DS_48_OHM = 0x9,
+	LPDDR2_DS_60_OHM = 0x7,
+	LPDDR2_DS_80_OHM = 0x5
+}LPDDR2_MEM_DS_T_E;
+
+typedef enum
+{
+	LPDDR1_DS_33_OHM = 0xa,
+	LPDDR1_DS_31_OHM = 0xb,
+	LPDDR1_DS_48_OHM = 0xc,
+	LPDDR1_DS_43_OHM = 0xd,
+	LPDDR1_DS_39_OHM = 0xe,
+	LPDDR1_DS_55_OHM = 0x5,
+	LPDDR1_DS_64_OHM = 0x4
+}LPDDR1_MEM_DS_T_E;
+
+typedef enum
+{
+	SDLL_PHS_DLY_DEF  = 0x0,
+	SDLL_PHS_DLY_36   = 0x3,
+	SDLL_PHS_DLY_54   = 0x2,
+	SDLL_PHS_DLY_72   = 0x1,
+	SDLL_PHS_DLY_90   = 0x0,
+	SDLL_PHS_DLY_108  = 0x4,
+	SDLL_PHS_DLY_126  = 0x8,
+	SDLL_PHS_DLY_144  = 0x12
+}SDLL_PHS_DLY_E;
+
+typedef enum
+{
+	DQS_STEP_DLY_MIN  = 0,
+	DQS_STEP_DLY_SUB3 = 0,
+	DQS_STEP_DLY_SUB2 = 1,
+	DQS_STEP_DLY_SUB1 = 2,
+	DQS_STEP_DLY_NOM  = 3,
+	DQS_STEP_DLY_DEF  = 3,
+	DQS_STEP_DLY_ADD1 = 4,
+	DQS_STEP_DLY_ADD2 = 5,
+	DQS_STEP_DLY_ADD3 = 6,
+	DQS_STEP_DLY_ADD4 = 7,
+	DQS_STEP_DLY_MAX  = 7
+}DQS_STEP_DLY_E;
+
+
 #if 1
 extern uint32 LPDDR1_MEM_DS; //lpddr1 driver strength,refer to multiPHY p155
 extern uint32 LPDDR2_MEM_DS; //lpddr1 driver strength,
@@ -397,6 +446,24 @@ void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
     DMC_Init(0, 0, 0, 0);
 #endif
 #else
+
+    if(CONFIG_DDR_TIMING_CUSTOM == TRUE)
+    {
+        LPDDR1_MEM_DS = CONFIG_LPDDR1_DS;
+        LPDDR2_MEM_DS = CONFIG_LPDDR2_DS;
+
+        B0_SDLL_PHS_DLY = CONFIG_BYTE0_PHS_DLY;
+        B1_SDLL_PHS_DLY = CONFIG_BYTE1_PHS_DLY;
+        B2_SDLL_PHS_DLY = CONFIG_BYTE2_PHS_DLY;
+        B3_SDLL_PHS_DLY = CONFIG_BYTE3_PHS_DLY;
+
+        B0_DQS_STEP_DLY = CONFIG_BYTE0_STEP_DLY;
+        B1_DQS_STEP_DLY = CONFIG_BYTE1_STEP_DLY;
+        B2_DQS_STEP_DLY = CONFIG_BYTE2_STEP_DLY;
+        B3_DQS_STEP_DLY = CONFIG_BYTE3_STEP_DLY;
+    }
+
+
     if (ret == 0) //chesum is pass       
     {
         LPDDR1_MEM_DS = emc_data->mem_drv;
