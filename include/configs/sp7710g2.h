@@ -284,7 +284,7 @@
 #define CONFIG_AP_ADC_CALIBRATION
 #define CONFIG_MODEM_CALIBERATE
 //#define CONFIG_MODEM_CALI_UART  /* uart calibration only */
-#define CALIBRATION_CHANNEL 1 // 0 : UART0 1: UART1, 3 uart3
+#define CALIBRATION_CHANNEL 3 // 0 : UART0 1: UART1, 3 uart3
 
 /*
 #define CONFIG_UPDATE_TFTP
