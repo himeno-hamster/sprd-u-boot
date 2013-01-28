@@ -99,6 +99,16 @@ extern   "C"
 #define EXT_MEM_DCFG8                   (EXT_MEM_CTL_BASE + 0x01A0)
 
 
+#define EXT_MEM_CFG0_CH0_BASE     (EXT_MEM_CFG0_ACH0)
+#define EXT_MEM_CFG1_CH0_BASE     (EXT_MEM_CFG1_ACH0)
+
+
+#define HCH_RF_AUTO_SLEEP_EN_CHX     (BIT_17)
+#define ACH_RF_AUTO_SLEEP_EN_CHX   (BIT_7)
+#define ACH_RF_CH_EN_CHX                     (BIT_6)
+#define ACH_RF_ENDIAN_SWT_CHX        (3<<4)
+#define ACH_RF_BRESP_MODE_CH           (BIT_6)
+#define ACH_RF_SYNC_SEL_CHX                (BIT_4)
 
 
 

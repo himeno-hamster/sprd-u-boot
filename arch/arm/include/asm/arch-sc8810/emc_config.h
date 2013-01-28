@@ -67,6 +67,7 @@ extern void EMC_PHY_Timing_Set(SDRAM_CFG_INFO_T_PTR mem_info,
                         EMC_PHY_L1_TIMING_T_PTR emc_phy_l1_timing,
                         EMC_PHY_L2_TIMING_T_PTR emc_phy_l2_timing);
 extern EMC_PHY_L2_TIMING_T_PTR EMC_GetPHYL2_Timing(void);
+extern SDRAM_MODE_PTR SDRAM_GetModeTable(void);
 
 #endif
 

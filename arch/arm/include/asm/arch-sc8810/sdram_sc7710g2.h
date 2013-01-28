@@ -6,7 +6,7 @@
 /******************************************************************************
                            Macro define
 ******************************************************************************/
-
+#define INVALIDE_VAL        0xFFFFFFFF
 #define STATE_SDRAM_TYPE    0UL
 #define STATE_BIT_WIDTH     1UL
 #define STATE_COLUM         2UL
@@ -118,7 +118,7 @@ typedef enum
     BURST_LEN_4_WORD,
     BURST_LEN_8_WORD,
     BURST_LEN_16_WORD,
-    BURST_LEN_FULLPAGE
+    BURST_LEN_MAX = BURST_LEN_16_WORD
 }SDRAM_BURST_LEN_E;
 
 
@@ -126,15 +126,15 @@ typedef enum SDRAM_CAS_LATENCY_TAG
 {
     CAS_LATENCY_1 = 1,
     CAS_LATENCY_2,
-    CAS_LATENCY_3
+    CAS_LATENCY_3,
+    CAS_LATENCY_MAX = CAS_LATENCY_3
 }SDRAM_CAS_LATENCY_E;
 
 typedef enum SDRAM_CHIP_FEATURE_CL_TAG
 {
     SDRAM_FEATURE_CL_2 = (1<<0),
     SDRAM_FEATURE_CL_3 = (1<<1),
-
-    SDRAM_FEATURE_CL_MAX
+    SDRAM_FEATURE_CL_MAX = SDRAM_FEATURE_CL_3
 }
 SDRAM_CHIP_FEATURE_CL_E;
 
@@ -144,21 +144,22 @@ typedef enum SDRAM_CHIP_FEATURE_BL_TAG
     SDRAM_FEATURE_BL_2 = (1<<1),
     SDRAM_FEATURE_BL_4 = (1<<2),
     SDRAM_FEATURE_BL_8 = (1<<3),
-
-    SDRAM_FEATURE_BL_MAX
+    SDRAM_FEATURE_BL_16 = (1<<4),
+    SDRAM_FEATURE_BL_MAX = SDRAM_FEATURE_BL_16
 }
 SDRAM_CHIP_FEATURE_BL_E;
 
 typedef enum SDRAM_CAP_TYPE_TAG
 {
-    CAP_64M_BIT     =0X00800000,
-    CAP_128M_BIT    =0X01000000,
-    CAP_256M_BIT    =0X02000000,
-    CAP_512M_BIT    =0X04000000,
-    CAP_1G_BIT      =0X08000000,
-    CAP_2G_BIT      =0X10000000,
-    CAP_4G_BIT      =0X20000000,
-    CAP_6G_BIT      =0X30000000,
+    CAP_ZERO        = 0,
+    CAP_64M_BIT     =0x00800000,
+    CAP_128M_BIT    =0x01000000,
+    CAP_256M_BIT    =0x02000000,
+    CAP_512M_BIT    =0x04000000,
+    CAP_1G_BIT      =0x08000000,
+    CAP_2G_BIT      =0x10000000,
+    CAP_4G_BIT      =0x20000000,
+    CAP_6G_BIT      =0x30000000,
     CAP_MAX         = CAP_6G_BIT
 }
 SDRAM_CAP_TYPE_E;
@@ -197,8 +198,7 @@ typedef enum{
     CLK_537MHZ   = 537000000,
     CLK_540MHZ   = 540000000,
     CLK_550MHZ   = 550000000
-}
-SYS_CLK_TYPE_E;
+}SYS_CLK_TYPE_E;
 
 typedef enum{
     MEM_1K_BYTE  = 1024,
@@ -288,8 +288,8 @@ typedef enum EMC_CS_MAP_TAG
     EMC_ONE_CS_MAP_512MBIT     = 4,
     EMC_ONE_CS_MAP_1GBIT       = 5,
     EMC_ONE_CS_MAP_2GBIT       = 6,
-    EMC_TWO_CS_MAP_4GBIT       = 7,
-    EMC_MAP_MAX                 = EMC_TWO_CS_MAP_4GBIT
+    EMC_ONE_CS_MAP_4GBIT       = 7,
+    EMC_MAP_MAX                 = EMC_ONE_CS_MAP_4GBIT
 }
 EMC_CS_MAP_E;
 
@@ -320,13 +320,12 @@ typedef enum EMC_CHL_NUM_TAG
     EMC_AXI_GPU,
     EMC_AXI_DISPC,
     EMC_AHB_MIN = 3,
-    EMC_AHB_MST_MTX = EMC_AHB_MIN,
-    EMC_AHB_CP_MTX,
+    EMC_AHB_CP_MTX = EMC_AHB_MIN,
+    EMC_AHB_MST_MTX,
+    EMC_AHB_LCDC,
     EMC_AHB_DCAM,
     EMC_AHB_VSP,
-    EMC_AHB_LCD,
-    EMC_AHB_MAX,
-
+    EMC_AHB_MAX = EMC_AHB_VSP
 }
 EMC_CHL_NUM_E;
 
@@ -433,25 +432,26 @@ typedef struct
 
 typedef struct SDRAM_CFG_INFO_TAG 
 {
-	SDRAM_ROW_MODE_E        row_mode;
-	SDRAM_COLUMN_MODE_E     col_mode;
-	DMEM_DATA_WIDTH_E       data_width;
-	SDRAM_BURST_LEN_E       burst_length;
-	SDRAM_CAS_LATENCY_E     cas_latency;
-	uint32                  ext_mode_val;
+    SDRAM_ROW_MODE_E        row_mode;
+    SDRAM_COLUMN_MODE_E     col_mode;
+    DMEM_DATA_WIDTH_E       data_width;
+    SDRAM_BURST_LEN_E       burst_length;
+    SDRAM_CAS_LATENCY_E     cas_latency;
+    uint32                  ext_mode_val;
     DMEM_TYPE_E             sdram_type;
     EMC_CS_MAP_E            cs_position;
 } SDRAM_CFG_INFO_T, *SDRAM_CFG_INFO_T_PTR;
 
 
-typedef struct SDRAM_MODE_INFO_TAG 
+typedef struct SDRAM_MODE_TAG 
 {
     SDRAM_CAP_TYPE_E        capacity;
     EMC_CS_MAP_E            cs_position;
     SDRAM_ROW_MODE_E        row_mode;
     SDRAM_COLUMN_MODE_E     col_mode;
     DMEM_DATA_WIDTH_E       data_width;
-} SDRAM_MODE_INFO_T;
+    void *                  reserved;
+} SDRAM_MODE_T, * SDRAM_MODE_PTR;
 
 
 typedef struct EMC_PHY_L1_TIMING_TAG
