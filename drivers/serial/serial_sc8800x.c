@@ -51,11 +51,20 @@ UartPort_T gUart0PortInfo =
     ARM_UART0_BASE,
     115200
 };
+
 UartPort_T gUart1PortInfo =
 {
     ARM_UART1_BASE,
     115200
 };
+
+#if defined(CONFIG_SC7710G2)
+UartPort_T gUart3PortInfo =
+{
+    ARM_UART3_BASE,
+    115200
+};
+#endif
 
 LOCAL unsigned int SIO_GetHwDivider (unsigned int baudrate)
 {
@@ -224,6 +233,7 @@ LOCAL int SIO_Close (struct FDL_ChannelHandler  *channel)
 {
     return 0;
 }
+
 struct FDL_ChannelHandler gUart0Channel =
 {
     SIO_Open,
@@ -236,6 +246,7 @@ struct FDL_ChannelHandler gUart0Channel =
     SIO_Close,
     &gUart0PortInfo
 };
+
 struct FDL_ChannelHandler gUart1Channel =
 {
     SIO_Open,
@@ -248,6 +259,21 @@ struct FDL_ChannelHandler gUart1Channel =
     SIO_Close,
     &gUart1PortInfo
 };
+
+#if defined(CONFIG_SC7710G2)
+struct FDL_ChannelHandler gUart3Channel =
+{
+    SIO_Open,
+    SIO_Read,
+    SIO_GetChar,
+    SIO_GetSingleChar,
+    SIO_Write,
+    SIO_PutChar,
+    SIO_SetBaudrate,
+    SIO_Close,
+    &gUart3PortInfo
+};
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 int __dl_log_share__ = 0;
@@ -307,44 +333,44 @@ int serial_init (void)
 /*
 *   add UART0 driver for modem boot
 */
-#if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) 
-void serial0_setbrg(void)
+#if defined(CONFIG_SC7710G2)
+void serial3_setbrg(void)
 {
-	SIO_SetBaudrate(&gUart0Channel, 115200);
+	SIO_SetBaudrate(&gUart3Channel, 115200);
 }
-int serial0_getc(void)
+int serial3_getc(void)
 {
-	return SIO_GetChar (&gUart0Channel);
+	return SIO_GetChar (&gUart3Channel);
 }
 
-void serial0_putc(const char c)
+void serial3_putc(const char c)
 {
-	SIO_PutChar(&gUart0Channel, c);
+	SIO_PutChar(&gUart3Channel, c);
 }
 
 /*
  *  * Test whether a character is in the RX buffer
  *   */
-int serial0_tstc (void)
+int serial3_tstc (void)
 {
-	UartPort_T *port  = (&gUart0Channel)->priv;
+	UartPort_T *port  = (&gUart3Channel)->priv;
 	/* If receive fifo is empty, return false */
 	return SIO_RX_READY( SIO_GET_RX_STATUS( port->regBase) ) ;
 }
 
-void serial0_puts (const char *s)
+void serial3_puts (const char *s)
 {
 	while (*s) {
-		serial0_putc (*s++);
+		serial3_putc (*s++);
 	}
 }
 
-int serial0_init (void)
+int serial3_init (void)
 {
-	SIO_Open(&gUart0Channel, 115200);
+	SIO_Open(&gUart3Channel, 115200);
 	/* clear input buffer */
-	if(serial0_tstc())
-	  serial0_getc();
+	if(serial3_tstc())
+	  serial3_getc();
 	return 0;
 }
 #endif

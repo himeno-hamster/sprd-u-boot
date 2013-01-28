@@ -60,6 +60,10 @@ void Init_7702_modem(void)
 	gpio_direction_output(34,1);
 	gpio_set_value(34,1);
 
+	__raw_writel(0x176, 0x8C000380);
+	gpio_direction_output(CP_AP_LIV, 0);
+	//gpio_set_value(CP_AP_LIV, 0);
+
 #if 0 //not used in flashless mode.only do powerdown.
 	/*Modem Power On*/
 	__raw_writel(0x31,0x8C0003b8);
@@ -75,21 +79,21 @@ void init_calibration_gpio(void)
 	gpio_direction_output(AP_CP_RTS, 1);
 	gpio_set_value(AP_CP_RTS, 0);
 
-        __raw_writel(0x174, 0x8C000120);
-        gpio_direction_output(CP_AP_RDY, 0);
-        //gpio_set_value(CP_AP_RDY, 0);
+	__raw_writel(0x174, 0x8C000120);
+	gpio_direction_output(CP_AP_RDY, 0);
+	//gpio_set_value(CP_AP_RDY, 0);
 
-        __raw_writel(0x1BA, 0x8C00039c);
-        gpio_direction_output(CP_AP_RTS, 0);
-        //gpio_set_value(CP_AP_RTS, 0);
+	__raw_writel(0x1BA, 0x8C00039c);
+	gpio_direction_output(CP_AP_RTS, 0);
+	//gpio_set_value(CP_AP_RTS, 0);
 
-        __raw_writel(0x130, 0x8C0000d4);
-        gpio_direction_output(AP_CP_RDY, 1);
-        gpio_set_value(AP_CP_RDY, 1);
+	__raw_writel(0x130, 0x8C0000d4);
+	gpio_direction_output(AP_CP_RDY, 1);
+	gpio_set_value(AP_CP_RDY, 1);
 
-        __raw_writel(0x176, 0x8C000380);
-        gpio_direction_output(CP_AP_LIV, 0);
-        //gpio_set_value(CP_AP_LIV, 0);
+	__raw_writel(0x176, 0x8C000380);
+	gpio_direction_output(CP_AP_LIV, 0);
+	//gpio_set_value(CP_AP_LIV, 0);
 }
 
 void init_calibration_mode(void)

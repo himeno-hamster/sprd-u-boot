@@ -56,8 +56,11 @@ void Init_7702_modem(void)
 	__raw_writel(0x31,0x8C0003b8);
 	gpio_direction_output(106,1);
 	gpio_set_value(106,1);
-	/*Wait Modem Power On 5s*/
-	mdelay(5000);
+
+	__raw_writel(0x174, 0x8C000398);
+	gpio_direction_output(CP_AP_LIV, 0);
+	//gpio_set_value(CP_AP_LIV, 0);
+
 }
 
 void init_calibration_gpio(void)
@@ -66,26 +69,26 @@ void init_calibration_gpio(void)
 	gpio_direction_output(AP_CP_RTS, 1);
 	gpio_set_value(AP_CP_RTS, 0);
 
-        __raw_writel(0x1B4, 0x8C000424);
-        gpio_direction_output(CP_AP_RDY, 0);
-        //gpio_set_value(CP_AP_RDY, 0);
+	__raw_writel(0x1B4, 0x8C000424);
+	gpio_direction_output(CP_AP_RDY, 0);
+	//gpio_set_value(CP_AP_RDY, 0);
 
-        __raw_writel(0x1B0, 0x8C00039c);
-        gpio_direction_output(CP_AP_RTS, 0);
-        //gpio_set_value(CP_AP_RTS, 0);
+	__raw_writel(0x1B0, 0x8C00039c);
+	gpio_direction_output(CP_AP_RTS, 0);
+	//gpio_set_value(CP_AP_RTS, 0);
 
-        __raw_writel(0x134, 0x8C000304);
-        gpio_direction_output(AP_CP_RDY, 1);
-        gpio_set_value(AP_CP_RDY, 1);
+	__raw_writel(0x134, 0x8C000304);
+	gpio_direction_output(AP_CP_RDY, 1);
+	gpio_set_value(AP_CP_RDY, 1);
 
-        __raw_writel(0x174, 0x8C000398);
-        gpio_direction_output(CP_AP_LIV, 0);
-        //gpio_set_value(CP_AP_LIV, 0);
+	__raw_writel(0x174, 0x8C000398);
+	gpio_direction_output(CP_AP_LIV, 0);
+	//gpio_set_value(CP_AP_LIV, 0);
 }
 
 void init_calibration_mode(void)
 {
-        *(volatile unsigned long *)PIN_REG_SIMDA3  |= 0x000003a0;
+    *(volatile unsigned long *)PIN_REG_SIMDA3  |= 0x000003a0;
 	*(volatile unsigned long *)PIN_REG_SIMRST3 |= 0x000003a0;
 	*(volatile unsigned long *)PIN_CTRL_REG |= 0x00000040;
 	

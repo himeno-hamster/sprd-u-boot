@@ -70,7 +70,7 @@ static CMD_CTL_FLG s_cmdDetail[] =
 #define SDIO_CARD_PAL_MAGICNUM 0x5344494F
 
 
-#define SDIO_CARD_PAL_SUPPORT_NUM  2
+#define SDIO_CARD_PAL_SUPPORT_NUM  4
 extern void _SDHOST_IrqHandle(unsigned int isrnum);
 static SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0,0}};
 static volatile unsigned int s_CardErrCode = 0;

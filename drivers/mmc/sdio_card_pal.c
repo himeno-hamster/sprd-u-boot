@@ -166,12 +166,12 @@ typedef struct SDIO_CARD_PAL_Struct
     SDIO_CARD_PAL_SLOT_E sdio_No;
 } SDIO_CARD_PAL_Struct_T;
 
-#define SDIO_CARD_PAL_SUPPORT_NUM 2
+#define SDIO_CARD_PAL_SUPPORT_NUM 4
 #if defined (UCOS_BSD_EVENT)
 #elif defined (CARD_SDIO_EVENT)
-LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0,0,0},{FALSE,0,0,0,0}};
+LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0}};
 #else
-LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0},{FALSE,0,0}};
+LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0},{FALSE,0,0},{FALSE,0,0},{FALSE,0,0}};
 #endif
 
 #ifdef DUAL_TCARD_SUPPORT
@@ -446,11 +446,7 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
             {
                 SDHOST_RST(handle->sdio_port, RST_MODULE);
                 SDHOST_Cfg_BusWidth (handle->sdio_port,SDIO_1BIT_WIDTH);
-#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2)
-                SDHOST_Cfg_SpeedMode (handle->sdio_port, EMMC_SDR12);
-#else
-                SDHOST_Cfg_SpeedMode (handle->sdio_port,SDIO_LOWSPEED);
-#endif
+                SDHOST_Cfg_SpeedMode (handle->sdio_port, SDIO_LOWSPEED/*EMMC_SDR12*/);
                 SDHOST_Cfg_Voltage (handle->sdio_port,VOL_3_0);
 
                 SDHOST_SD_POWER (handle->sdio_port,POWR_ON);

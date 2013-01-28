@@ -17,43 +17,59 @@
 
 //#define __TEST_SPI_ONLY__
 //#define __DL_UART0__
+#if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W)
+#define __DL_UART1__
+#endif
+
+#ifdef CONFIG_SC7710G2
+#define __DL_UART3__
+#endif
+
 #ifndef __SPI_MODE__
-#define hs_channel_open	sdio_channel_open
-#define hs_channel_close	sdio_channel_close
+#define hs_channel_open    sdio_channel_open
+#define hs_channel_close   sdio_channel_close
 #else
-#define hs_channel_open	SPI_channel_open
-#define hs_channel_close	SPI_channel_close
+#define hs_channel_open    SPI_channel_open
+#define hs_channel_close   SPI_channel_close
 
 #endif
 #define mdelay(_ms) udelay(_ms*1000)
 
 static int	boot_status = 0;
 
-
-extern int serial0_init (void);
-extern int serial0_getc(void);
-extern int serial0_tstc (void);
-extern void serial0_putc(const char c);
-
+extern int serial3_init (void);
+extern int serial3_getc(void);
+extern int serial3_tstc (void);
+extern void serial3_putc(const char c);
 extern int serial_init (void);
 extern int serial_getc(void);
 extern int serial_tstc (void);
 extern void serial_putc(const char c);
-#ifdef __DL_UART0__
-	#define uart_init serial0_init
-	#define uart_getc serial0_getc
-	#define uart_tstc serial0_tstc
-	#define uart_putc serial0_putc
+
+#if defined( __DL_UART0__)
+#error please defined macro in xxxxconfig.h
+#elif defined(__DL_UART1__) 
+#define uart_init  serial_init
+#define uart_getc  serial_getc
+#define uart_tstc  serial_tstc
+#define uart_putc  serial_putc
+#elif defined(__DL_UART3__)	
+#define uart_init  serial3_init
+#define uart_getc  serial3_getc
+#define uart_tstc  serial3_tstc
+#define uart_putc  serial3_putc
 #else
-	#define uart_init serial_init
-	#define uart_getc serial_getc
-	#define uart_tstc serial_tstc
-	#define uart_putc serial_putc
+#error please defined macro in xxxxconfig.h
 #endif
-#define		PIN_REG_SIMDA3		(0x8C000470)
-#define		PIN_REG_SIMRST3		(0x8C000478)
-#define		PIN_CTRL_REG     	(0x8b000028)
+
+#if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W)
+#define	PIN_REG_SIMDA3   (0x8C000470)
+#define	PIN_REG_SIMRST3  (0x8C000478)
+#define	PIN_CTRL_REG     (0x8b000028)
+#endif
+
 extern int __dl_log_share__;
+
 void	print_message(int dir,char *buffer,int size)
 {
 	int i;
@@ -123,6 +139,7 @@ int	try_read_version_string(void)
 	mdelay(10);
 	if(!uart_tstc())
 		return 1;
+	
 	while(uart_tstc()){
 		read_char = uart_getc();	
 		version_string[version_string_length++] = read_char;
@@ -168,13 +185,13 @@ static void download_fdl(char *data,int size)
 	try_read_version_string();
         uart_send_change_spi_mode_message();
 #if 0 //def __DL_UART0__
-        *(volatile unsigned long *)PIN_REG_SIMDA3  |= 0x00000380;
-	*(volatile unsigned long *)PIN_REG_SIMRST3 |= 0x00000380;
-	*(volatile unsigned long *)PIN_CTRL_REG &= 0xffffffbf;
+    *(volatile unsigned long *)PIN_REG_SIMDA3  |= 0x00000380;
+    *(volatile unsigned long *)PIN_REG_SIMRST3 |= 0x00000380;
+    *(volatile unsigned long *)PIN_CTRL_REG &= 0xffffffbf;
         
-        uart_init();
-        __dl_log_share__ = 0;
-        printf("__dl_log_share__ = %d \n",__dl_log_share__);
+    uart_init();
+    __dl_log_share__ = 0;
+    printf("__dl_log_share__ = %d \n",__dl_log_share__);
 #endif
 	
 	mdelay(2);
@@ -222,21 +239,23 @@ int  parse_version_string(unsigned char *buffer,int length)
 
 void   bootup_modem(char *data,int size)
 {
-	
-#if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined (CONFIG_SC7710G2)
 	int i=0,delay=0;
 	unsigned char hand_shake_flag = 0x7e;
 	int is_empty=1;
 	int retval=0;
 	int retry_count;
-#ifndef __DL_UART0__
-        __dl_log_share__ = 1;
-        uart_init();
+#ifdef __DL_UART1__
+    __dl_log_share__ = 1;
+    uart_init();
 
-        *(volatile unsigned long *)PIN_REG_SIMDA3  |= 0x000003a0;
+    *(volatile unsigned long *)PIN_REG_SIMDA3  |= 0x000003a0;
 	*(volatile unsigned long *)PIN_REG_SIMRST3 |= 0x000003a0;
 	*(volatile unsigned long *)PIN_CTRL_REG |= 0x00000040;
 #endif
+#ifdef __DL_UART3__
+    uart_init();
+#endif
+
 modem_reset:
 	retry_count = 0;
 	{
@@ -244,14 +263,15 @@ modem_reset:
 		
 		modem_poweroff();
 		mdelay(2000);
-
 	}
 	
-	uart_putc(0x7E);
-        uart_putc(0x7E); 
+    uart_putc(0x7E);
+    uart_putc(0x7E); 
+	
 #ifdef __TEST_SPI_ONLY__
 	download_fdl(data,size);
 #endif
+
 	{
 		extern void modem_poweron(void);
 		modem_poweron();
@@ -286,9 +306,10 @@ modem_reset:
 	//printf("\nsuccessfully read version string !!!\n");
 	download_fdl(data,size);
 	boot_status = 2;
-#endif
+
 }
 
 inline int modem_status(void) {
 	return boot_status;
 }
+

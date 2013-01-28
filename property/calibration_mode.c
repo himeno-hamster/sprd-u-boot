@@ -26,7 +26,6 @@
 #define EMMC_SECTOR_SIZE 512
 #endif
 
-#define CALIBRATION_CHANNEL 1 // 0 : UART0 1: UART1
 #define MODE_REQUEST_LENGTH 10
 #define RUNMODE_REQUESET_CMD 0xFE
 #define CALIBRATION_REQUEST_SUBCMD 0x1
@@ -174,6 +173,9 @@ static struct FDL_ChannelHandler *Calibration_ChannelGet(int nchannel)
         case 0:
             channel = &gUart0Channel;
             break;
+		case 3:
+			channel = &gUart3Channel;
+			break;
         default:
             channel = &gUart0Channel;
             break;
@@ -297,7 +299,7 @@ static unsigned char rbuf[MAX_SPI_BUF_LEN];
 void Calibration_SyncResponse(int ret);
 
 static void Calibration_read_empty(void) {
-    unsigned char p[128];
+//    unsigned char p[128];
     //while(sdio_read(sdio_handle, p, 128));
 }
 

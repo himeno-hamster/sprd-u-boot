@@ -284,14 +284,18 @@
 #define CONFIG_USB_GADGET_SC8800G
 #define CONFIG_USB_DWC
 #define CONFIG_USB_GADGET_DUALSPEED
-#define CONFIG_CALIBRATION_MODE_NEW
+
 //#define CONFIG_USB_ETHER
 #define CONFIG_CMD_FASTBOOT
 #define SCRATCH_ADDR    (CONFIG_SYS_SDRAM_BASE + 0x100000)
 #define FB_DOWNLOAD_BUF_SIZE (250*1024*1024)
 
+/*calibration opt*/
+#define CONFIG_CALIBRATION_MODE_NEW
+#define CONFIG_AP_ADC_CALIBRATION
 #define CONFIG_MODEM_CALIBERATE
 //#define CONFIG_MODEM_CALI_UART  /* uart calibration only */
+#define CALIBRATION_CHANNEL 1 // 0 : UART0 1: UART1, 3 uart3
 
 /*
 #define CONFIG_UPDATE_TFTP
@@ -351,5 +355,5 @@
 
 #define PWR_KEY_DETECT_CNT 12 /*this should match the count of boot_pwr_check() function */
 #define ALARM_LEAD_SET_MS 0 /* time set for alarm boot in advancd */
-#define CONFIG_AP_ADC_CALIBRATION
 #endif /* __CONFIG_H */
+

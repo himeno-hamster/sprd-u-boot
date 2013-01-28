@@ -143,6 +143,8 @@ extern "C" {
 
 extern struct FDL_ChannelHandler gUart0Channel;
 extern struct FDL_ChannelHandler gUart1Channel;
+extern struct FDL_ChannelHandler gUart3Channel;
+
 #define sio_trace printf
 
 
