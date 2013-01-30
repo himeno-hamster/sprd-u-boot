@@ -137,7 +137,7 @@ int set_recovery_message(const struct recovery_message *in)
 #ifdef CONFIG_GENERIC_MMC
 #define FIX_SIZE (64*1024)
 
-#define BUF_ADDR 0x1000000
+#define BUF_ADDR CONFIG_SYS_SDRAM_BASE+0x1000000
 #define SD_NV_NAME "nvitem.bin"
 #define NAND_NV_NAME " "
 #define MODEM_PART "modem"
