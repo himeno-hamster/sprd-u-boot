@@ -59,7 +59,7 @@
 #endif
 
 /********** DDR timing configuration for customer begin *************/
-#define CONFIG_DDR_TIMING_CUSTOM FALSE //TRUE or FALSE
+#define CONFIG_DDR_TIMING_CUSTOM TRUE //TRUE or FALSE
 
 // name: CONFIG_LPDDR1_DS
 // description: to config lpddr1 driver strength
@@ -72,7 +72,7 @@
 // LPDDR1_DS_39_OHM
 // LPDDR1_DS_55_OHM
 // LPDDR1_DS_64_OHM
-#define CONFIG_LPDDR1_DS  LPDDR1_DS_39_OHM 
+#define CONFIG_LPDDR1_DS  LPDDR1_DS_48_OHM 
 
 // name: CONFIG_LPDDR2_DS
 // note: to config lpddr2 driver strength, when lpddr1, don't need to set this parameter
@@ -82,7 +82,7 @@
 // LPDDR2_DS_48_OHM
 // LPDDR2_DS_60_OHM
 // LPDDR2_DS_80_OHM
-#define CONFIG_LPDDR2_DS LPDDR2_DS_40_OHM
+#define CONFIG_LPDDR2_DS LPDDR2_DS_48_OHM
 
 // name: CONFIG_BYTEx_PHY_DLY
 // description: to config BYTE0~BYTE3 slave dll phase delay in ddr controller
