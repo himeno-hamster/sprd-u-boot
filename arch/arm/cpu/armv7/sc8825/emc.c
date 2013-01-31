@@ -888,7 +888,8 @@ void EMC_PHY_Timing_Set(CLK_TYPE_E emc_clk,DRAM_INFO_T_PTR dram_info)
 		//locked and is ready for use. Refer to the PHY databook for the DLL lock time.
 		//Default value corresponds to 5.12us at 533MHz.		
     	uint32 tDLLLOCK = 5120;//ns
-    	uint32 tDLLLOCK_T = tDLLLOCK*emc_clk_d/1000;
+    	//uint32 tDLLLOCK_T = tDLLLOCK*emc_clk_d/1000;
+	uint32 tDLLLOCK_T = ((tDLLLOCK * 26)/ 1000) + 1;//dll lock clk use APB clk(now is 26M)
 
 		//ITM Soft Reset Time: Number of controller clock cycles that the ITM soft reset pin
 		//must remain asserted when the soft reset is applied to the ITMs. This must
@@ -1515,4 +1516,4 @@ PUBLIC void DMC_Dev_Init(CLK_TYPE_E emc_clk)
 
  
 
-
+
