@@ -94,7 +94,8 @@ uint8_t mipi_dsih_hal_dpi_get_color_config(dsih_ctrl_t * instance)
     switch (mipi_dsih_read_part(instance, R_DSI_HOST_DPI_CFG, 2, 3))                                                                   
     {                                                                                                                                  
         case 0:                                                                                                                        
-            color_config = 1;                                                                                                          
+            color_config = 1;    
+            break;
         case 1:                                                                                                                        
             color_config = 2;                                                                                                          
             break;                                                                                                                     

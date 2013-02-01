@@ -90,7 +90,7 @@ int32_t dsi_early_int(void)
 
 static int32_t dsi_edpi_setbuswidth(struct info_mipi * mipi)
 {
-	dsih_color_coding_t color_coding;
+	dsih_color_coding_t color_coding = 0;
 
 	switch(mipi->video_bus_width){
 	case 16:
@@ -368,7 +368,7 @@ static int32_t sprdfb_dsi_dcs_write(uint8_t *param, uint16_t param_length)
 static int32_t sprdfb_dsi_dcs_read(uint8_t command, uint8_t bytes_to_read, uint8_t *read_buffer)
 {
 	uint16_t result;
-	mipi_dsih_dcs_rd_cmd(&(dsi_ctx.dsi_inst), 0, command, bytes_to_read, read_buffer);
+	result = mipi_dsih_dcs_rd_cmd(&(dsi_ctx.dsi_inst), 0, command, bytes_to_read, read_buffer);
 	if(0 == result){
 		FB_PRINT("sprdfb: [%s] error (%d)\n", __FUNCTION__, result);
 		return -1;
