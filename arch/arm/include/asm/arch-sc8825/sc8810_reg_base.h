@@ -165,6 +165,7 @@ extern   "C"
 #define PWM_BASE                        0x48000000
 #define EFUSE_BASE                      0x49000000  //efuse 
 #define GPIO_BASE                       0x4A000000
+#define EIC_BASE                       0x4A001000
 #define GREG_BASE                       0x4B000000  //Global Registers
 #define PIN_CTL_BASE                    0x4C000000
 #define ANA_PIN_CTL_BASE                0x42000180

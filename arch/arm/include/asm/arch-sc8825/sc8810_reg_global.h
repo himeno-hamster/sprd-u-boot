@@ -81,6 +81,7 @@ extern   "C"
 #define GEN0_ADI_EN                     BIT_6
 #define GEN0_EFUSE_EN                   BIT_7
 #define GEN0_KPD_EN                     BIT_8
+#define GEN0_EIC_EN                     BIT_9
 //reserved
 #define GEN0_MCU_DSP_RST                BIT_10
 #define GEN0_MCU_SOFT_RST               BIT_11

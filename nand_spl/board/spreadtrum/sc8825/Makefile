@@ -30,7 +30,7 @@ LDFLAGS	= -Bstatic -T $(nandobj)u-boot.lds -Ttext $(CONFIG_SYS_TEXT_BASE) $(PLAT
 AFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL
 CFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL -g
 
-SOBJS	= start.o _udivsi3.o _divsi3.o _umodsi3.o cpu_spec.o
+SOBJS	= start.o _udivsi3.o _divsi3.o _umodsi3.o
 ifdef CONFIG_EMMC_BOOT
 COBJS	= emmc_boot.o mmc.o lowlevel_init.o div0.o adi_drv.o chip_cfg.o 
 COBJS += sec_boot.o string.o serial_sc8800x.o

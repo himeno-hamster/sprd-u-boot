@@ -25,9 +25,21 @@
 /*
  * Function prototypes to keep gcc -Wall happy.
  */
-extern void set_bit(int nr, volatile void * addr);
+static inline void set_bit(int nr, volatile unsigned long * addr)
+{
+	unsigned long mask = BIT_MASK(nr);
+	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
 
-extern void clear_bit(int nr, volatile void * addr);
+	*p  |= mask;
+}
+
+static inline void clear_bit(int nr, volatile unsigned long * addr)
+{
+	unsigned long mask = BIT_MASK(nr);
+	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
+
+	*p &= ~mask;
+}
 
 extern void change_bit(int nr, volatile void * addr);
 
