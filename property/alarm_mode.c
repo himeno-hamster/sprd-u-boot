@@ -11,6 +11,7 @@
 #include <environment.h>
 #include <jffs2/jffs2.h>
 #include <boot_mode.h>
+#include <asm/arch/sc_reg.h>
 
 
 #define msleep(a) udelay(a * 1000)
@@ -18,6 +19,9 @@ void alarm_mode(void)
 {
     printf("%s\n", __func__);
 
+	unsigned rst_mode = 0;
+	rst_mode = 0;
+	ANA_REG_SET(ANA_HWRST_STATUS, rst_mode);
 #if BOOT_NATIVE_LINUX
     vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=alarm", BACKLIGHT_OFF);
 #else
