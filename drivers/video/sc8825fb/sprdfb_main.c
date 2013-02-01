@@ -84,8 +84,10 @@ void LCD_SetBackLightBrightness( unsigned long  value)
 	if(value > LCD_PWM_MOD_VALUE)
 		value = LCD_PWM_MOD_VALUE;
 
+/*
 	if(value < 0)
 		value = 0;
+*/
 
 	duty_mod = (value << 8) | LCD_PWM_MOD_VALUE;
 	LCD_SetPwmRatio(duty_mod);

@@ -247,6 +247,10 @@ static int panel_mount(struct sprdfb_device *dev, struct panel_spec *panel)
 		break;
 	};
 
+	if(NULL == dev->if_ctrl){
+		return -1;
+	}
+
 	if(dev->if_ctrl->panel_if_check){
 		rval = dev->if_ctrl->panel_if_check(panel);
 	}
@@ -337,6 +341,7 @@ uint16_t sprdfb_panel_probe(struct sprdfb_device *dev)
 
 	if(NULL == dev){
 		FB_PRINT("sprdfb: [%s]: Invalid param\n", __FUNCTION__);
+		return -1;
 	}
 
 	FB_PRINT("sprdfb: [%s]\n",__FUNCTION__);
