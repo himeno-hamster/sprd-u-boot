@@ -79,6 +79,10 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     board_keypad_init();
     boot_pwr_check();
 
+#ifdef CONFIG_SPRD_SYSDUMP
+	write_sysdump_before_boot();
+#endif
+
     int recovery_init(void);
     int ret =0;
     ret = recovery_init();
