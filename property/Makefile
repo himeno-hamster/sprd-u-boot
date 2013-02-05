@@ -35,6 +35,7 @@ COBJS-y += normal_nand_mode.o
 COBJS-y += alarm_nand_mode.o
 COBJS-y += recv_nand_mode.o
 endif
+COBJS-y += sysdump.o
 COBJS-y += normal_mode.o
 COBJS-y += recv_mode.o
 COBJS-y += fastboot_mode.o
