@@ -41,7 +41,7 @@ static int32_t ili9486_init(struct lcd_spec *self)
 
 	send_cmd(0xCF); 
 	send_data(0x00); 
-	send_data(0xF9); 
+	send_data(0xc1); 
 	send_data(0x30); 
 
 	send_cmd(0xED); 
@@ -65,17 +65,17 @@ static int32_t ili9486_init(struct lcd_spec *self)
 	send_data(0x00); 
 
 	send_cmd(0xC0); 
-	send_data(0x1D);  
+	send_data(0x1b);  
 
 	send_cmd(0xC1); 
 	send_data(0x10);  
 
 	send_cmd(0xC5);
-	send_data(0x3C);//14
-	send_data(0x2A);//44
+	send_data(0x14);//14
+	send_data(0x44);//44
 
 	send_cmd( 0xC7); 
-	send_data(0x00);
+	send_data(0xc2);
 
 	send_cmd( 0xE8);
 	send_data( 0x85);
@@ -93,11 +93,11 @@ static int32_t ili9486_init(struct lcd_spec *self)
 #endif	
 
 	send_cmd( 0x3A); 
-	send_data( 0x05);//66
+	send_data( 0x55);//66
 
 	send_cmd( 0xB1);
 	send_data( 0x00);
-	send_data( 0x16);
+	send_data( 0x18);
 	
 	send_cmd( 0xB5);
 	send_data( 0x04);
@@ -114,145 +114,45 @@ static int32_t ili9486_init(struct lcd_spec *self)
 	send_data( 0x30); 
 	send_data( 0x00); 
 
-	send_cmd( 0xF2); 
-	send_data( 0x03);
+	send_cmd(0xF2); 
+	send_data(0x00);
+
+	send_cmd(0x26); 
+	send_data(0x01);
 	
-	send_cmd( 0xE0); 
-	send_data( 0x0F);
-	send_data( 0x24);	  
-	send_data( 0x20);
-	send_data( 0x0F);	  
-	send_data( 0x0F);
+	send_cmd(0xE0); 
+	send_data(0x0F);
+	send_data(0x1c);
+	send_data(0x19);
+	send_data(0x0b);
+	send_data(0x0e);
+	send_data(0x09);
+	send_data(0x46);
+	send_data(0x52);
+	send_data(0x36);
+	send_data(0x0a);
+	send_data(0x14);
+	send_data(0x06);
+	send_data(0x0c);
+	send_data(0x07);
+	send_data(0x00);
 
-	send_data( 0x0B);	  
-	send_data( 0x50);
-	send_data( 0xA4);	  
-	send_data( 0x3E);
-	send_data( 0x06);
-
-	send_data( 0x10);
-	send_data( 0x01);
-	send_data( 0x1A);
-	send_data( 0x19);
-	send_data( 0x0F);
-
-	send_cmd( 0xE1); 
-	send_data(  0x00);
-	send_data(  0x18);	  
-	send_data(  0x19);
-	send_data(  0x03);	  
-	send_data(  0x0F);
-
-	send_data(  0x04);	  
-	send_data(  0x31);
-	send_data(  0x53);	  
-	send_data(  0x46);
-	send_data(  0x09);
-
-	send_data(  0x12);
-	send_data(  0x0F);
-	send_data(  0x26);
-	send_data(  0x2A);
-	send_data(  0x03);
-
-	send_cmd( 0xE2 ); 
-	send_data(  0x08);
-	send_data(  0x09);	  
-	send_data(  0x09);
-	send_data(  0x09);	  
-	send_data(  0x09);
-
-	send_data(  0x09);	  
-	send_data(  0x09);
-	send_data(  0x09);	  
-	send_data(  0x09);
-	send_data(  0x09);
-
-	send_data(  0x09);
-	send_data(  0x09);
-	send_data(  0x09);
-	send_data(  0x09);
-	send_data(  0x88);
-
-	send_data(  0x88);
-
-	send_cmd( 0xE3 ); 
-	send_data(  0x00);
-	send_data(  0x00);	  
-	send_data(  0x00);
-	send_data(  0x00);	  
-	send_data(  0x06);
-
-	send_data(  0x06);	  
-	send_data(  0x07);
-	send_data(  0x03);	  
-	send_data(  0x05);
-	send_data(  0x04);
-
-	send_data(  0x04);
-	send_data(  0x04);
-	send_data(  0x04);
-	send_data(  0x04);
-	send_data(  0x02);
-
-	send_data(  0x02);
-	send_data(  0x01);
-	send_data(  0x01);
-	send_data(  0x01);
-	send_data(  0x01);
-
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);	  
-
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-	send_data(  0x00);
-
-	send_data(  0x00);
-	send_data(  0x80);
-	send_data(  0x80);
-	send_data(  0x80);
-	send_data(  0x80);
-
-	send_data(  0x82);
-	send_data(  0x82);
-	send_data(  0x82);
-	send_data(  0x82);
+	send_cmd(0xE1); 
+	send_data(0x00);
+	send_data(0x23);
+	send_data(0x27);
+	send_data(0x04);
+	send_data(0x10);
+	send_data(0x07);
+	send_data(0x3a);
+	send_data(0x00);
+	send_data(0x4a);
+	send_data(0x05);
+	send_data(0x0b);
+	send_data(0x09);
+	send_data(0x33);
+	send_data(0x37);
+	send_data(0x0f);
 
        //Display on
 
