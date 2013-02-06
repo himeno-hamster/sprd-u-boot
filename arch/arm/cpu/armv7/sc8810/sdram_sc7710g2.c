@@ -36,8 +36,8 @@ extern   "C"
 /*----------------------------------------------------------------------------*
 **                          Sub Function                                      *
 **----------------------------------------------------------------------------*/
-LOCAL void EMC_PHY_Mode_Set(SDRAM_CFG_INFO_T_PTR mem_info);
-LOCAL void EMC_Base_Mode_Set(void);
+
+
 
 uint32 DRAM_CAP;
 uint32  SDRAM_BASE    =    	0x00000000;//(128*1024*1024/2)//0x30000000
@@ -47,7 +47,7 @@ uint32  SDRAM_BASE    =    	0x00000000;//(128*1024*1024/2)//0x30000000
 #define COL_MODE_MASK           0x7
 #define DATA_WIDTH_MASK         0x1
 #define AUTO_PRECHARGE_MASK     0x3
-#define CS_POSITION_MASK        0X3
+#define CS_POSITION_MASK        0x3
 
 #define MEM_REF_DATA0       0x12345678
 #define MEM_REF_DATA1       0x55AA9889
@@ -89,61 +89,16 @@ void EMC_AddrMode_Set(SDRAM_CFG_INFO_T_PTR mem_info)
     REG32(EXT_MEM_DCFG0) = reg_val;
 }
 
-void EMC_DataWidth_Set(SDRAM_CFG_INFO_T_PTR mem_info)
-{
-    uint32 reg_val = 0;
-
-    reg_val = REG32(EXT_MEM_DCFG0);
-    reg_val &= ~(DATA_WIDTH_MASK<<8);
-
-    if (DATA_WIDTH_32 == mem_info->data_width)
-    {
-        reg_val |= ((mem_info->data_width & DATA_WIDTH_MASK)<< 8);
-    }
-    
-    REG32(EXT_MEM_DCFG0) = reg_val;
-}
-
-void EMC_ColumnMode_Set(SDRAM_CFG_INFO_T_PTR mem_info)
-{
-    uint32 reg_val = 0;
-
-    reg_val = REG32(EXT_MEM_DCFG0);
-    reg_val &= ~(COL_MODE_MASK<<4);
-    reg_val |= ((mem_info->col_mode & COL_MODE_MASK) << 4);
-
-    REG32(EXT_MEM_DCFG0) = reg_val;
-}
-
-void EMC_RowMode_Set(SDRAM_CFG_INFO_T_PTR mem_info)
-{
-    uint32 reg_val = 0;
-
-    reg_val = REG32(EXT_MEM_DCFG0);
-    reg_val &= ~(ROW_MODE_MASK<<4);
-    reg_val |= ((mem_info->row_mode & ROW_MODE_MASK) << 4);
-
-    REG32(EXT_MEM_DCFG0) = reg_val;
-}
-
 LOCAL BOOLEAN SDRAM_Type_Set(SDRAM_CFG_INFO_T_PTR mem_info)
 {
     uint32 err_line = 0;
     DMEM_TYPE_E sdram_mode = mem_info->sdram_type;
 
-    
-
     REG32(EXT_MEM_DCFG0) &= ~ BIT_14;
 
     if (SDR_SDRAM == sdram_mode)
     {
-        REG32(EXT_MEM_CFG1) = 0X2;
-        REG32(EXT_MEM_CFG0_CS0) = 0X3;
-        REG32(EXT_MEM_CFG0_CS1) = 0X3;
-
-        //REG32(EXT_MEM_DCFG5) = 0X620209;
-        EMC_PHY_Latency_Set(mem_info);
-        
+                
         REG32(EXT_MEM_DCFG6) = 0X400020;
         REG32(EXT_MEM_DCFG7) = 0XF0000E;
         REG32(EXT_MEM_DCFG8) = 0X400001;
@@ -163,19 +118,11 @@ LOCAL BOOLEAN SDRAM_Type_Set(SDRAM_CFG_INFO_T_PTR mem_info)
         delay(100);
 
         REG32(EXT_MEM_DCFG0) &= ~(AUTO_PRECHARGE_MASK<<2);
-
     }
     else if (DDR_SDRAM == sdram_mode)
     {
-        REG32(EXT_MEM_CFG1) = 0x00000049;
 
         REG32(EXT_MEM_DCFG0) &= ~(AUTO_PRECHARGE_MASK<<2);
-
-//        REG32(EXT_MEM_DCFG0) |= BIT_8;
-        REG32(EXT_MEM_DCFG1) = 0x03382434;
-        REG32(EXT_MEM_DCFG2) = 0x1a261000;
-        //REG32(EXT_MEM_DCFG5) = 0x0062272A;
-        EMC_PHY_Latency_Set(mem_info);
 
         if (DATA_WIDTH_16 == mem_info->data_width)
         {
@@ -183,7 +130,7 @@ LOCAL BOOLEAN SDRAM_Type_Set(SDRAM_CFG_INFO_T_PTR mem_info)
             {
                 REG32(EXT_MEM_DCFG6) = 0x00080004;
             }
-            else
+            else if (CAS_LATENCY_3 == mem_info->cas_latency)
             {
                 REG32(EXT_MEM_DCFG6) = 0x00200010;
             }
@@ -194,7 +141,7 @@ LOCAL BOOLEAN SDRAM_Type_Set(SDRAM_CFG_INFO_T_PTR mem_info)
             {
                 REG32(EXT_MEM_DCFG6) = 0x00200010;
             }
-            else
+            else if (CAS_LATENCY_3 == mem_info->cas_latency)
             {
                 REG32(EXT_MEM_DCFG6) = 0x00400020;
             }
@@ -273,21 +220,14 @@ LOCAL BOOLEAN SDRAM_Type_Set(SDRAM_CFG_INFO_T_PTR mem_info)
     }
     else
     {
-        err_line = __LINE__;
-        goto err_print;
+        SCI_ASSERT(0);
     }
 
     //enable auto refresh.
     REG32(EXT_MEM_DCFG3) |= BIT_15;  //clear refresh count.
-    REG32(EXT_MEM_DCFG0) |= BIT_14;  //Enable auto refresh.
-
+    REG32(EXT_MEM_DCFG0) |= DCFG0_AUTOREF_EN;  //Enable auto refresh.
+    
     return TRUE;
-
-err_print:
-
-    //SCI_TraceLow("\r\nERR! %s %d sdram_mode:0x%x", __func__, err_line, sdram_mode);
-
-    return FALSE;
 }
 
 
@@ -299,28 +239,13 @@ LOCAL void EMC_SoftReset(void)
     delay(10);
 }
 
-
-
 PUBLIC uint32 SDRAM_GetCap(SDRAM_CFG_INFO_T_PTR mem_info)  // capability in bytes
 {
     uint32 SDRAM_Cap;
 
-#ifdef SDRAM_AUTODETECT_SUPPORT
-    uint32 width_offset = (DATA_WIDTH_16 == mem_info->data_width)?(WIDTH16_OFFSET):(WIDTH32_OFFSET);
-
-    SDRAM_Cap = 1 << (BANK_OFFSET + (mem_info->col_mode + ROW_LINE_MIN)
-                      + (mem_info->row_mode + COLUMN_LINE_MIN) + width_offset - BYTE_OFFSET);
-
-//    SDRAM_Cap = 0x10000000;
-#else
     SDRAM_CHIP_FEATURE_T_PTR mem_feature = SDRAM_GetFeature();
 
     SDRAM_Cap = mem_feature->cap;
-#endif
-
-#ifdef _FAST_TEST_
-    SDRAM_Cap = 0x10000000;
-#endif
 
     return SDRAM_Cap;
 }
@@ -377,9 +302,12 @@ PUBLIC EMC_PHY_L2_TIMING_T_PTR EMC_GetPHYL2_Timing(void)
 //  Note:			The default cs map space is 4g, if dram capability is larger than 4g,
 //				emc_cs_map parameter must adjust.
 /*****************************************************************************/
-LOCAL void EMC_Base_Mode_Set(void)
+LOCAL void EMC_Base_Mode_Set(SDRAM_CFG_INFO_T_PTR mem_info)
 {
     uint32 i = 0;
+    EMC_CS_MAP_E cs_position;
+
+    cs_position = mem_info->cs_position;
 
     i = REG32(EXT_MEM_CFG0);
     i &= ~0x1fff;
@@ -388,19 +316,7 @@ LOCAL void EMC_Base_Mode_Set(void)
         (EMC_AUTO_SLEEP_EN		<<10)	|
         (EMC_2DB_1CB			<<6)	|
         (EMC_CS_MODE_DEFAULT	<<3)	|
-        (EMC_TWO_CS_MAP_4GBIT   <<0)	;
-
-    REG32(EXT_MEM_CFG0) = i;
-}
-
-
-LOCAL void EMC_CS_Mapping_Set(EMC_CS_MAP_E cs_position)
-{
-    uint32 i = 0;
-
-    i = REG32(EXT_MEM_CFG0);
-    i &= ~CS_POSITION_MASK;
-    i |= cs_position;
+        (cs_position   <<0)	;
 
     REG32(EXT_MEM_CFG0) = i;
 }
@@ -424,18 +340,24 @@ PUBLIC void EMC_CSx_Burst_Set(EMC_CS_NUM_E emc_cs_num, SDRAM_CFG_INFO_T_PTR mem_
 {
     uint32 i = 0;
     uint32 emc_cs_cfg = EXT_MEM_CFG0_CS0 + emc_cs_num*4;
-
     uint32 burst_len = 0;
 
-    if (DATA_WIDTH_16 == mem_info ->data_width)
+    if (DDR_SDRAM == mem_info ->sdram_type)
     {
-        burst_len = mem_info->burst_length -1;
+        if (DATA_WIDTH_16 == mem_info ->data_width)
+        {
+            burst_len = mem_info->burst_length -1;
+        }
+        else
+        {
+            burst_len = mem_info->burst_length;
+        }
     }
-    else
+    else if (SDR_SDRAM == mem_info ->sdram_type)
     {
-        burst_len = mem_info->burst_length;
+        burst_len = 0;
     }
-
+    
     i = REG32(emc_cs_cfg);
     i &= ~((0x7<<8)|(0x7<<4)|(1<<1)|1);
     i |=((burst_len			<<8) | //write burst length
@@ -463,21 +385,18 @@ PUBLIC void EMC_CSx_Burst_Set(EMC_CS_NUM_E emc_cs_num, SDRAM_CFG_INFO_T_PTR mem_
 LOCAL void EMC_AXI_CHL_Set(EMC_CHL_NUM_E emc_axi_num)
 {
     uint32 i = 0;
-    uint32 emc_axi_cfg0 = EXT_MEM_CFG0_ACH0+ emc_axi_num*8;
-    uint32 emc_axi_cfg1 = EXT_MEM_CFG1_ACH1+ emc_axi_num*8;
-
-	
+    uint32 emc_axi_cfg0 = EXT_MEM_CFG0_CH0_BASE+ emc_axi_num*8;
+    uint32 emc_axi_cfg1 = EXT_MEM_CFG1_CH0_BASE+ emc_axi_num*8;
+    
     i = REG32(emc_axi_cfg0);
-    i &= ~0xf0;
-    i |= (TRUE<<7) | //channel auto sleep en
-         (TRUE<<6) | //channel en
-         (EMC_ENDIAN_SWITCH_NONE<<4);
+    i &= ~ACH_RF_ENDIAN_SWT_CHX;
+    i |= ACH_RF_AUTO_SLEEP_EN_CHX | ACH_RF_CH_EN_CHX | (EMC_ENDIAN_SWITCH_NONE<<4);
     REG32(emc_axi_cfg0) = i;
 
     i = REG32(emc_axi_cfg1);
-    i &= ~BIT_4; //clear bit4
+    i &= ~ACH_RF_SYNC_SEL_CHX; //clear bit4
     i |= (EMC_CLK_ASYNC<<4); //emc clk async with axi clk
-    i |= (1<<6); //axi channel response mode  0:at once  1:delay several clk
+    i |= (ACH_RF_BRESP_MODE_CH); //axi channel response mode  0:at once  1:delay several clk
     REG32(emc_axi_cfg1) = i;
 }
 /*****************************************************************************/
@@ -490,12 +409,13 @@ LOCAL void EMC_AXI_CHL_Set(EMC_CHL_NUM_E emc_axi_num)
 /*****************************************************************************/
 LOCAL void EMC_AHB_CHL_Set(EMC_CHL_NUM_E emc_ahb_num,uint32 addr_offset)
 {
-    uint32 emc_ahb_cfg0 = EXT_MEM_CFG0_ACH0 + emc_ahb_num*8;
-    uint32 emc_ahb_cfg1 = EXT_MEM_CFG1_ACH0 + emc_ahb_num*8;
+    uint32 emc_ahb_cfg0 = EXT_MEM_CFG0_CH0_BASE + emc_ahb_num*8;
+    uint32 emc_ahb_cfg1 = EXT_MEM_CFG1_CH0_BASE + emc_ahb_num*8;
 
+    REG32(emc_ahb_cfg0) |= HCH_RF_AUTO_SLEEP_EN_CHX;
+    
     REG32(emc_ahb_cfg1) &= ~0x03ff0000;	//clear bit16~25
-    REG32(emc_ahb_cfg1) |= addr_offset<<16;
-
+    REG32(emc_ahb_cfg1) |= (addr_offset & 0x03ff) << 16;
 }
 
 /*****************************************************************************/
@@ -634,443 +554,6 @@ void EMC_SCMD_Issue(SDRAM_CFG_INFO_T_PTR mem_info)
 
 }
 
-#ifdef SDRAM_AUTODETECT_SUPPORT
-
-
-LOCAL BOOLEAN __is_rw_ok(uint32 addr,uint32 val)
-{
-    volatile uint32 i;
-    BOOLEAN ret = SCI_TRUE;
-
-    REG32(addr) = 0;
-    REG32(addr) 	= val;
-
-    REG32(addr + 4) = 0;
-    REG32(addr + 4) = (~val);
-
-    delay(100);
-
-    if ((REG32(addr) == val) && (REG32(addr + 4) == (~val)))
-    {
-        ret = SCI_TRUE;
-    }
-    else
-    {
-        ret = SCI_FALSE;
-    }
-
-    return ret;
-}
-
-#if 0
-BOOLEAN dram_detect_cap(uint32 dram_total_cap)
-{
-    BOOLEAN ret = TRUE;
-    uint32 i = 0;
-    uint32 detect_block_size = CAP_2G_BIT;
-    uint32 start_detect_addr_len = 0;
-    uint32 start_detect_addr[] = {
-        0x00000000,
-        0x10000000,
-        0x30000000,
-        INVALIDE_VAL
-    };
-
-    switch (dram_total_cap)
-    {
-        case CAP_6G_BIT:
-            break;
-        case CAP_4G_BIT:
-            start_detect_addr[2] = INVALIDE_VAL;
-            break;
-        case CAP_2G_BIT:
-        default:
-            start_detect_addr[1] = INVALIDE_VAL;
-            start_detect_addr[2] = INVALIDE_VAL;
-            break;
-    }
-
-    start_detect_addr_len = sizeof(start_detect_addr) / sizeof(start_detect_addr[0]);
-
-    for(i = 0; i < start_detect_addr_len; i++)
-    {
-        if (start_detect_addr[i] != INVALIDE_VAL)
-        {
-            *(volatile uint32 *)start_detect_addr[i] = start_detect_addr[i];
-        }
-    }
-
-    for(i = 0; i < start_detect_addr_len; i++)
-    {
-        if (start_detect_addr[i] != INVALIDE_VAL)
-        {
-            if (*(volatile uint32 *)start_detect_addr[i] != start_detect_addr[i])
-            {
-                ret = FALSE;
-                break;
-            }
-        }  
-    }
-    
-    return ret;
-}
-
-
-CONST SDRAM_MODE_INFO_T sdram_info[] =
-{
-    {CAP_6G_BIT, EMC_TWO_CS_MAP_4GBIT, ROW_MODE_14, ROW_MODE_15_6G,   DATA_WIDTH_32},
-    {CAP_6G_BIT, EMC_TWO_CS_MAP_4GBIT, ROW_MODE_14, COL_MODE_11_6G,   DATA_WIDTH_32},
-    {CAP_4G_BIT, EMC_TWO_CS_MAP_4GBIT, ROW_MODE_14, COL_MODE_10,      DATA_WIDTH_32},
-    {CAP_2G_BIT, EMC_ONE_CS_MAP_2GBIT, ROW_MODE_14, COL_MODE_10,      DATA_WIDTH_32},
-    {CAP_1G_BIT, EMC_ONE_CS_MAP_1GBIT, ROW_MODE_14, COL_MODE_9,       DATA_WIDTH_32},
-    {CAP_1G_BIT, EMC_ONE_CS_MAP_1GBIT, ROW_MODE_13, COL_MODE_10,      DATA_WIDTH_32},
-
-    {CAP_2G_BIT, EMC_ONE_CS_MAP_2GBIT, ROW_MODE_14, COL_MODE_11,      DATA_WIDTH_16},    
-    {CAP_1G_BIT, EMC_ONE_CS_MAP_1GBIT, ROW_MODE_14, COL_MODE_10,      DATA_WIDTH_16},
-};
-#endif
-
-LOCAL BOOLEAN __col_row_detect(SDRAM_CFG_INFO_T_PTR pCfg, uint32 mode, uint32 *num_get)
-{
-    uint32 num,max,min;
-    uint32 offset,addr;
-    uint32 width_offset = (DATA_WIDTH_16 == pCfg->data_width)?(WIDTH16_OFFSET):(WIDTH32_OFFSET);
-    uint32 err_line;
-    uint32 read_val = 0;
-
-    if (mode == STATE_COLUM)
-    {
-        max = SDRAM_MAX_COLUMN;
-        min = SDRAM_MIN_COLUMN;
-
-        if (pCfg->col_mode != max)
-        {
-            pCfg->col_mode = max;
-            EMC_AddrMode_Set(pCfg);
-        }
-    }
-    else
-    {
-        max = SDRAM_MAX_ROW;
-        min = SDRAM_MIN_ROW;
-
-        if (pCfg->row_mode != max)
-        {
-            pCfg->row_mode = max;
-            EMC_AddrMode_Set(pCfg);
-        }
-    }
-
-    for (num = max; num >= min; num--)
-    {
-        REG32(ZERO_ADDR) = 0;
-        REG32(ZERO_ADDR) = MEM_REF_DATA0;
-
-        if (mode == STATE_COLUM)
-        {
-            offset = num + COLUMN_LINE_MIN + width_offset - BYTE_OFFSET;
-        }
-        else
-        {
-            offset = num + ROW_LINE_MIN + BANK_OFFSET + (uint32)pCfg->col_mode + width_offset - BYTE_OFFSET;
-        }
-
-        addr = (1 << (offset - 1)) + ZERO_ADDR;
-
-        if (__is_rw_ok(addr, MEM_REF_DATA1))
-        {
-            read_val = REG32(ZERO_ADDR);
-
-            if (MEM_REF_DATA0 == read_val)
-            {
-                break;
-            }
-
-            if (MEM_REF_DATA1 != read_val)
-            {
-                err_line = __LINE__;
-                goto err_print;
-            }
-        }
-    }
-
-    if (num < min)
-    {
-        err_line = __LINE__;
-        goto err_print;
-    }
-
-    *num_get = num;
-    return TRUE;
-
-err_print:
-
-    //SCI_TraceLow("\r\nERR! %s %d read_val:0x%x mode:0x%x", __func__, err_line, read_val, mode);
-
-    return FALSE;
-}
-
-//sdram_info
-
-LOCAL BOOLEAN DRAM_Para_SelfAdapt(SDRAM_CFG_INFO_T_PTR pCfg)
-{
-    uint32 state = STATE_SDRAM_TYPE;
-    BOOLEAN update_mode = TRUE;
-
-    pCfg->row_mode     = ROW_MODE_14;
-    pCfg->col_mode     = COL_MODE_12;
-    pCfg->data_width   = DATA_WIDTH_32;
-    pCfg->burst_length = BURST_LEN_2_WORD;
-    pCfg->cas_latency  = CAS_LATENCY_3;
-    pCfg->ext_mode_val = SDRAM_EXT_MODE_REG;
-    pCfg->sdram_type   = DDR_SDRAM;
-
-    EMC_PHY_Mode_Set(pCfg);
-    EMC_Base_Mode_Set();
-    EMC_AddrMode_Set(pCfg);
-    SDRAM_Type_Set(pCfg);
-    
-    while (STATE_END != state)
-    {        
-        switch (state)
-        {
-        case STATE_SDRAM_TYPE:
-            if (__is_rw_ok(ZERO_ADDR, MEM_REF_DATA0))
-            {
-                state = STATE_COLUM;
-            }
-            else
-            {
-                if((pCfg->data_width == DATA_WIDTH_32)
-                        && (pCfg->sdram_type == DDR_SDRAM)
-                    )
-                {
-                    pCfg->data_width = DATA_WIDTH_16;
-                    EMC_DataWidth_Set(pCfg);
-                    EMC_CSx_Burst_Set(EMC_CS0, pCfg);
-                    EMC_CSx_Burst_Set(EMC_CS1, pCfg);
-                }
-                else if((pCfg->data_width == DATA_WIDTH_16)
-                        && (pCfg->sdram_type == DDR_SDRAM)
-                    )
-                {
-                    pCfg->data_width = DATA_WIDTH_32;
-                    pCfg->sdram_type == SDR_SDRAM;
-                    EMC_DataWidth_Set(pCfg);
-                    EMC_PHY_Mode_Set(pCfg);
-                    SDRAM_Type_Set(pCfg);
-                }
-                else if((pCfg->data_width == DATA_WIDTH_32)
-                        && (pCfg->sdram_type == SDR_SDRAM)
-                    )
-                {
-                    pCfg->data_width = DATA_WIDTH_16;
-                    EMC_DataWidth_Set(pCfg);
-                    EMC_CSx_Burst_Set(EMC_CS0, pCfg);
-                    EMC_CSx_Burst_Set(EMC_CS1, pCfg);
-                }
-                else
-                {
-                    SCI_ASSERT(0);
-                    while(1);
-                }
-            }
-            break;
-        case STATE_COLUM:
-            if (__is_rw_ok(ZERO_ADDR, MEM_REF_DATA0))
-            {
-                state = STATE_COLUM;
-            }
-            else
-            {
-            }
-            
-            break;
-        default:
-            break;
-        }    
-    }
-
-    return TRUE;
-}
-
-LOCAL BOOLEAN SDRAM_Mode_SelfAdapt(SDRAM_CFG_INFO_T_PTR	pCfg)
-{
-    uint32 state = STATE_SDRAM_TYPE;
-    uint32 err_line = 0;
-    BOOLEAN update_mode = TRUE;
-    uint32 colum_mode, row_mode;
-
-    pCfg->row_mode     = ROW_MODE_14;
-    pCfg->col_mode     = COL_MODE_12;
-    pCfg->data_width   = DATA_WIDTH_16;
-    pCfg->burst_length = BURST_LEN_2_WORD;
-    pCfg->cas_latency  = CAS_LATENCY_3;
-    pCfg->ext_mode_val = SDRAM_EXT_MODE_REG;
-    pCfg->sdram_type   = SDR_SDRAM;
-
-
-    EMC_PHY_Mode_Set(pCfg);
-
-
-    while (STATE_END != state)
-    {
-        if (update_mode)
-        {
-            EMC_AddrMode_Set(pCfg);
-            //__sdram_set_param(EMC_CLK, pCfg);
-            EMC_CSx_Burst_Set(EMC_CS0, pCfg);
-            EMC_CSx_Burst_Set(EMC_CS1, pCfg);
-        }
-
-        switch (state)
-        {
-        case STATE_SDRAM_TYPE:
-            if (__is_rw_ok(ZERO_ADDR, MEM_REF_DATA0))          // 16bit sdr/ddr detect ok, try 32bit
-            {
-                pCfg->data_width = DATA_WIDTH_32;
-                state = STATE_BIT_WIDTH;
-                update_mode = TRUE;
-            }
-            else                        // 16bit sdr failed, try 16bit ddr
-            {
-                if (DDR_SDRAM == pCfg->sdram_type)
-                {
-                    err_line = __LINE__;
-                    goto err_print;
-                }
-                pCfg->sdram_type = DDR_SDRAM;
-                state = STATE_SDRAM_TYPE;
-                update_mode = TRUE;
-
-                EMC_SoftReset();
-                SDRAM_Type_Set(pCfg);
-            }
-            break;
-        case STATE_BIT_WIDTH:
-            if (__is_rw_ok(ZERO_ADDR, MEM_REF_DATA0))          // 32bit sdr/ddr detect ok, try colum
-            {
-                state = STATE_COLUM;
-                update_mode = FALSE;
-            }
-            else                        // 32bit sdr/ddr detect failed, fix 16bit and try colum
-            {
-                pCfg->data_width = DATA_WIDTH_16;
-                state = STATE_COLUM;
-                update_mode = TRUE;
-            }
-            break;
-        case STATE_COLUM:
-            if (__is_rw_ok(ZERO_ADDR, MEM_REF_DATA0))
-            {
-                __col_row_detect(pCfg, STATE_COLUM, &colum_mode);
-                state = STATE_ROW;
-
-                if (pCfg->col_mode != colum_mode)
-                {
-                    pCfg->col_mode = colum_mode;
-                    update_mode = TRUE;
-                }
-                else
-                {
-                    update_mode = FALSE;
-                }
-            }
-            else
-            {
-                err_line = __LINE__;
-                goto err_print;
-            }
-            break;
-        case STATE_ROW:
-            if (__is_rw_ok(ZERO_ADDR, MEM_REF_DATA0))
-            {
-                __col_row_detect(pCfg, STATE_ROW, &row_mode);
-                state = STATE_REINIT;
-
-                if (pCfg->row_mode != row_mode)
-                {
-                    pCfg->row_mode = row_mode;
-                    update_mode = TRUE;
-                }
-                else
-                {
-                    update_mode = FALSE;
-                }
-            }
-            else
-            {
-                err_line = __LINE__;
-                goto err_print;
-            }
-            break;
-        case STATE_REINIT:
-            if (!__is_rw_ok(ZERO_ADDR, MEM_REF_DATA0))
-            {
-                err_line = __LINE__;
-                goto err_print;
-            }
-
-            state = STATE_END;
-            break;
-        default:
-            err_line = __LINE__;
-            goto err_print;
-            //break;
-        }
-    }
-
-    return TRUE;
-
-err_print:
-#if 0
-    SCI_TraceLow("\r\nERR! row_mode:0x%x col_mode:0x%x data_width:0x%x \
-burst_length:%d cas_latency:0x%x ext_mode_val:0x%x sdram_type:0x%x state:0x%x %s %d",
-                 pCfg->row_mode, pCfg->col_mode,
-                 pCfg->data_width, pCfg->burst_length,
-                 pCfg->cas_latency, pCfg->ext_mode_val,
-                 pCfg->sdram_type, state, __func__, err_line);
-#endif
-    return FALSE;
-}
-#endif
-
-
-#if 1
-/*****************************************************************************/
-//  Description:	EMC Memroy mode set function
-//				set external memory work mode parameter like:
-//				data width
-//				column mode
-//				row mode and so on
-//  Global resource dependence:  NONE
-//  Author:		Johnny.Wang
-//  Related register: EMC_DCFG0
-//
-//  Note:			None
-//
-/*****************************************************************************/
-LOCAL void EMC_MEM_Mode_Set(SDRAM_CFG_INFO_T_PTR mem_info)
-{
-    uint32 i = 0;
-
-    i = REG32(EXT_MEM_DCFG0);
-    i &= ~(0XFF00 | 0X7F);
-    i |= (EMC_CS_AREF_ALL<<15) 		|
-         (TRUE			<< 14) 		|//hardware auto-refresh en
-         (TRUE			<< 13) 		|//mode1 en
-         (TRUE			<< 12) 		|//mode0 en
-         (TRUE			<< 11) 		|//dmem clock output phase
-         (TRUE			<< 10) 		|//dmem clock output en
-         (TRUE			<< 9)   	|//row hit en
-         (mem_info->data_width<< 8) |
-         (mem_info->col_mode << 4)  |
-         (0<< 2)  					|//0:A10 1:A11 2:A12 3:A13
-         (mem_info->row_mode - 11);
-
-    REG32(EXT_MEM_DCFG0) = i;
-}
-
 
 /*****************************************************************************/
 //  Description:	EMC phy latency set function
@@ -1092,53 +575,29 @@ PUBLIC void EMC_PHY_Latency_Set(SDRAM_CFG_INFO_T_PTR mem_info)
 {
     if (SDR_SDRAM == mem_info->sdram_type)
     {
-        if (DATA_WIDTH_16 == mem_info->data_width)
-        {
+
             if (CAS_LATENCY_2 == mem_info->cas_latency)
             {
                 REG32(EXT_MEM_DCFG5) = 0x00400007;
             }
-            else
+            else if (CAS_LATENCY_3 == mem_info->cas_latency)
             {
                 REG32(EXT_MEM_DCFG5) = 0x00600209;
             }
-        }
-        else
-        {
-            if (CAS_LATENCY_2 == mem_info->cas_latency)
-            {
-                REG32(EXT_MEM_DCFG5) = 0x00400007;
-            }
-            else
-            {
-                REG32(EXT_MEM_DCFG5) = 0x00600209;
-            }
-        }
+        
     }
     else
     {
-        if (DATA_WIDTH_16 == mem_info->data_width)
-        {
+
             if (CAS_LATENCY_2 == mem_info->cas_latency)
             {
                 REG32(EXT_MEM_DCFG5) = 0x00622728;
             }
-            else
+            else if (CAS_LATENCY_3 == mem_info->cas_latency)
             {
                 REG32(EXT_MEM_DCFG5) = 0x0062272A;
             }
-        }
-        else
-        {
-            if (CAS_LATENCY_2 == mem_info->cas_latency)
-            {
-                REG32(EXT_MEM_DCFG5) = 0x00622728;
-            }
-            else
-            {
-                REG32(EXT_MEM_DCFG5) = 0x00622728;
-            }
-        }
+        
     }
 }
 /*****************************************************************************/
@@ -1176,7 +635,7 @@ LOCAL void EMC_PHY_Mode_Set(SDRAM_CFG_INFO_T_PTR mem_info)
         (0<<4) |//DMEM DDR DQS PAD IE mode,0:dff 1:dl
         (mem_info->sdram_type<<3) |//DMEM sample clock mode,0:internal 1:out-of-chip
         (0<<2) |//DMEM CK/CK# output mode,0:dff 1:dl
-        (0<<1) |//DMEM READ strobe clock loopback 0:dis 1:en
+        ((~mem_info->sdram_type & 0x1) <<1) |//DMEM READ strobe clock loopback 0:dis 1:en
         mem_info->sdram_type;
 
     REG32(EXT_MEM_CFG1) = i;
@@ -1246,64 +705,25 @@ PUBLIC void EMC_PHY_Timing_Set(SDRAM_CFG_INFO_T_PTR mem_info,
     }
 }
 
-/*****************************************************************************/
-//  Description:	EMC phy  set function
-//				include these subfunction:
-//				EMC_PHY_Latency_set(),
-//				EMC_PHY_Mode_Set(),
-//				EMC_PHY_Timing_Set()
-//  Global resource dependence:  dll on or off, external memory type
-//  Author:		Johnny.Wang
-//  Related register:
-//  Note:			None
-//
-/*****************************************************************************/
-void EMC_PHY_Set(uint32 emc_freq,
-					SDRAM_CFG_INFO_T_PTR mem_info,
-					EMC_PHY_L1_TIMING_T_PTR emc_phy_l1_timing,
-					EMC_PHY_L2_TIMING_T_PTR emc_phy_l2_timing)
+void EMC_CHL_Init(EMC_CHL_NUM_E emc_axi_num)
 {
-	EMC_PHY_Latency_Set(mem_info);
-	EMC_PHY_Mode_Set(mem_info);
-	EMC_PHY_Timing_Set(mem_info, emc_phy_l1_timing, emc_phy_l2_timing);
+    int i;
+
+    if ((emc_axi_num >= EMC_AHB_MIN) && (emc_axi_num <= EMC_AHB_MAX))
+    {
+        for (i = EMC_AHB_MIN; i <= EMC_AHB_MAX; i++)
+        {
+            EMC_AHB_CHL_Set(i, 0);
+        }
+    }
+    else
+    {
+        EMC_AXI_CHL_Set(emc_axi_num);
+    }
 }
 
-void EMC_Init(uint32 emc_freq,
-				EMC_CHL_NUM_E emc_axi_num,
-				SDRAM_CFG_INFO_T_PTR mem_info,
-				SDRAM_TIMING_PARA_T_PTR mem_timing,
-				EMC_PHY_L1_TIMING_T_PTR emc_phy_l1_timing,
-				EMC_PHY_L2_TIMING_T_PTR emc_phy_l2_timing)
-{
-	EMC_CHL_NUM_E i = 0;
-	
-	EMC_Base_Mode_Set();
-	EMC_CSx_Burst_Set(EMC_CS0,mem_info);
-	EMC_CSx_Burst_Set(EMC_CS1,mem_info);	
-	
-	if(emc_axi_num <= EMC_AHB_MAX)
-	{
-		for(i = 0; i <= EMC_AHB_MAX; i++)
-		{
-			EMC_AHB_CHL_Set(i,0);
-		}
-	}
-	else
-	{
-		EMC_AXI_CHL_Set(emc_axi_num);
-	}
-	
-	EMC_MEM_Mode_Set(mem_info);
-	EMC_MEM_Timing_Set(emc_freq,mem_info,mem_timing);
-	EMC_PHY_Set(emc_freq,mem_info,emc_phy_l1_timing,emc_phy_l2_timing);
- 	EMC_SCMD_Issue(mem_info);
- 	delay(100);
-}
 
-#endif
-
-
-
+#if 0
 void set_emc_pad(uint32 dqs_drv,uint32 data_drv,uint32 ctl_drv, uint32 clk_drv)
 {
     uint32 i = 0;
@@ -1446,62 +866,281 @@ void set_sc7702_clk(void)
     return;
 
 }
+#endif
 
-void EMC_CHL_Init(EMC_CHL_NUM_E emc_axi_num)
+
+
+#ifdef SDRAM_AUTODETECT_SUPPORT
+LOCAL BOOLEAN __is_rw_ok(uint32 addr,uint32 val)
 {
-    int i;
+    volatile uint32 i;
+    BOOLEAN ret = SCI_TRUE;
 
-    if ((emc_axi_num >= EMC_AHB_MIN) && (emc_axi_num < EMC_AHB_MAX))
+    REG32(addr) = 0;
+    REG32(addr) 	= val;
+
+    REG32(addr + 4) = 0;
+    REG32(addr + 4) = (~val);
+
+    delay(100);
+
+    if ((REG32(addr) == val) && (REG32(addr + 4) == (~val)))
+//    if (REG32(addr) == val)
     {
-        for (i = EMC_AHB_MIN; i < EMC_AHB_MAX; i++)
-        {
-            EMC_AHB_CHL_Set(i, 0);
-        }
+        ret = SCI_TRUE;
     }
     else
     {
-        EMC_AXI_CHL_Set(emc_axi_num);
+        ret = SCI_FALSE;
     }
+
+    return ret;
 }
 
 
+void dram_detect_write_addr(uint32 start_addr, uint32 detect_size)
+{
+    uint32 addr;
+    uint32 detect_unit = 0x200;
+    uint32 detect_region = (start_addr + detect_size);
+
+    for(addr = start_addr; addr < detect_region; addr = start_addr + detect_unit)
+    {
+        *(volatile uint32 *)addr = addr;
+        detect_unit <<= 1;
+    }
+}
+
+uint32 dram_detect_check_addr(uint32 start_addr, uint32 detect_size)
+{
+    uint32 addr;
+    uint32 detect_unit = 0x200;
+    uint32 detect_region = (start_addr + detect_size);
+
+    for(addr = start_addr; addr < detect_region; addr = start_addr + detect_unit)
+    {
+        if(*(volatile uint32 *)addr != addr)
+        {
+            break;
+        }
+        
+        detect_unit <<= 1;
+    }
+    
+    if (addr < detect_region)
+    {
+        return addr;
+    } 
+
+    return detect_region;
+}
+
+
+BOOLEAN dram_mode_check(uint32 dram_cap)
+{
+    BOOLEAN ret = TRUE;
+    uint32 i = 0;
+    uint32 detect_block_size = CAP_2G_BIT;
+    uint32 start_detect_addr_len = 0;
+    uint32 start_detect_addr[] = {
+        0x00000000,
+        0x10000000,
+        0x30000000,
+        INVALIDE_VAL
+    };
+
+    SCI_ASSERT(dram_cap >= CAP_1G_BIT);
+    
+    switch (dram_cap)
+    {
+        case CAP_6G_BIT:
+            break;
+        case CAP_4G_BIT:
+            start_detect_addr[2] = INVALIDE_VAL;
+            break;
+        case CAP_2G_BIT:
+        default:
+            start_detect_addr[1] = INVALIDE_VAL;
+            start_detect_addr[2] = INVALIDE_VAL;
+            break;
+    }
+
+    start_detect_addr_len = sizeof(start_detect_addr) / sizeof(start_detect_addr[0]);
+
+    for(i = 0; i < start_detect_addr_len; i++)
+    {
+        if (start_detect_addr[i] != INVALIDE_VAL)
+        {
+            dram_detect_write_addr(start_detect_addr[i], detect_block_size);
+        }
+    }
+
+    for(i = 0; i < start_detect_addr_len; i++)
+    {
+        if (start_detect_addr[i] != INVALIDE_VAL)
+        {
+            if (dram_detect_check_addr(start_detect_addr[i], detect_block_size) != (start_detect_addr[i] + detect_block_size))
+            {
+                ret = FALSE;
+                break;
+            }
+        }  
+    }
+    
+    return ret;
+}
+
+
+BOOLEAN dram_mode_set(SDRAM_CFG_INFO_T_PTR pCfg)
+{
+    EMC_Base_Mode_Set(pCfg);
+    EMC_AddrMode_Set(pCfg);
+
+    return SCI_TRUE;
+}
+
+BOOLEAN dram_mode_detect(SDRAM_CFG_INFO_T_PTR pCfg)
+{
+    uint32 i;
+    BOOLEAN ret = TRUE;
+    SDRAM_MODE_PTR modetable_ptr = SDRAM_GetModeTable();
+
+    for(i=0; modetable_ptr[i].capacity != CAP_ZERO; i++)
+    {
+        if(modetable_ptr[i].data_width != pCfg->data_width)
+        {
+            continue;
+        }
+
+        pCfg->cs_position = modetable_ptr[i].cs_position;
+        pCfg->col_mode = modetable_ptr[i].col_mode;
+        pCfg->row_mode = modetable_ptr[i].row_mode;
+        
+        dram_mode_set(pCfg);
+
+        if(dram_mode_check(modetable_ptr[i].capacity))
+        {
+            DRAM_CAP = modetable_ptr[i].capacity;
+            break;
+        }    
+    }
+
+    if (modetable_ptr[i].capacity == CAP_ZERO)
+    {
+        ret = FALSE;
+        //SCI_ASSERT(0);
+    }
+
+    return ret;
+}
+
+LOCAL BOOLEAN DRAM_Para_SelfAdapt(SDRAM_CFG_INFO_T_PTR pCfg)
+{
+    BOOLEAN ret = FALSE;
+
+    for (;;)
+    {
+        EMC_SoftReset();
+        EMC_Base_Mode_Set(pCfg);
+        SDRAM_Type_Set(pCfg);
+        EMC_PHY_Latency_Set(pCfg);
+        EMC_AddrMode_Set(pCfg);
+        EMC_CSx_Burst_Set(EMC_CS0, pCfg);
+        EMC_CSx_Burst_Set(EMC_CS1, pCfg);
+        EMC_PHY_Mode_Set(pCfg);
+        EMC_SCMD_Issue(pCfg);
+
+        if (__is_rw_ok(ZERO_ADDR, MEM_REF_DATA0))
+        {
+            ret = TRUE;
+            break;
+        }
+        
+        if((pCfg->data_width == DATA_WIDTH_32)
+                && (pCfg->sdram_type == DDR_SDRAM)
+            )
+        {
+            pCfg->data_width = DATA_WIDTH_16;
+            
+        }
+        else if((pCfg->data_width == DATA_WIDTH_16)
+                && (pCfg->sdram_type == DDR_SDRAM)
+            )
+        {
+            pCfg->data_width = DATA_WIDTH_32;
+            pCfg->sdram_type == SDR_SDRAM;
+        }
+        else if((pCfg->data_width == DATA_WIDTH_32)
+                && (pCfg->sdram_type == SDR_SDRAM)
+            )
+        {
+            pCfg->data_width = DATA_WIDTH_16;
+        }
+        else
+        {
+            return FALSE;
+        }
+    }
+
+    ret = dram_mode_detect(pCfg);
+
+    return ret;
+}
+
+#endif
+
 void DMC_Init(uint32 clk)
 {
+    int i;
     uint32 emc_freq = clk;
     SDRAM_CFG_INFO_T_PTR    mem_info = SDRAM_GetCfg();
     SDRAM_TIMING_PARA_T_PTR mem_timing = SDRAM_GetTimingPara();
     EMC_PHY_L1_TIMING_T_PTR emc_phy_l1_timing = NULL;
     EMC_PHY_L2_TIMING_T_PTR emc_phy_l2_timing = EMC_GetPHYL2_Timing();
-    BOOLEAN ret = TRUE;
 //    set_emc_pad(1,1,0,2);
 //    set_sc7702_clk();	//open only when chip test
 //    emc_phy_l1_timing = EMC_GetPHYL1_Timing(mem_info->sdram_type, mem_info->cas_latency);
 //    EMC_Init(EMC_CLK, EMC_AHB_ARM0, mem_info, mem_timing, emc_phy_l1_timing, emc_phy_l2_timing);
 //    DRAM_CAP =  SDRAM_GetCap(mem_info); // get size
 
-        EMC_CHL_Init(EMC_AXI_ARM);
+    EMC_CHL_Init(EMC_AXI_ARM);
+    
+    emc_phy_l1_timing = EMC_GetPHYL1_Timing(mem_info->sdram_type, mem_info->cas_latency);
+    EMC_PHY_Timing_Set(mem_info, emc_phy_l1_timing, emc_phy_l2_timing);
+
+    EMC_MEM_Timing_Set(emc_freq, mem_info, mem_timing);
 
 #ifdef SDRAM_AUTODETECT_SUPPORT
-        ret = SDRAM_Mode_SelfAdapt(mem_info);
+    for (i=0; i<3; i++)
+    {
+        if (DRAM_Para_SelfAdapt(mem_info))
+        {
+            break;
+        }
+    }
+
+    SCI_ASSERT(i < 3);
 #else
-        EMC_AddrMode_Set(mem_info);
-        EMC_CSx_Burst_Set(EMC_CS0, mem_info);
-        EMC_CSx_Burst_Set(EMC_CS1, mem_info);
-        SDRAM_Type_Set(mem_info);
+    DRAM_CAP =  SDRAM_GetCap(mem_info); // get size
+
+    EMC_Base_Mode_Set(mem_info);
+    EMC_AddrMode_Set(mem_info);
+    EMC_CSx_Burst_Set(EMC_CS0, mem_info);
+    EMC_CSx_Burst_Set(EMC_CS1, mem_info);
+    SDRAM_Type_Set(mem_info);
+    
+    EMC_PHY_Mode_Set(mem_info);
+    EMC_PHY_Latency_Set(mem_info);
+    
 #endif
 
-        DRAM_CAP =  SDRAM_GetCap(mem_info); // get size
+    emc_phy_l1_timing = EMC_GetPHYL1_Timing(mem_info->sdram_type, mem_info->cas_latency);
+    EMC_PHY_Timing_Set(mem_info, emc_phy_l1_timing, emc_phy_l2_timing);
 
-        EMC_PHY_Latency_Set(mem_info);
-        EMC_PHY_Mode_Set(mem_info);
+    EMC_MEM_Timing_Set(emc_freq, mem_info, mem_timing);
 
-        emc_phy_l1_timing = EMC_GetPHYL1_Timing(mem_info->sdram_type, mem_info->cas_latency);
-        EMC_PHY_Timing_Set(mem_info, emc_phy_l1_timing, emc_phy_l2_timing);
-
-        EMC_MEM_Timing_Set(emc_freq, mem_info, mem_timing);
-
-        EMC_SCMD_Issue(mem_info);
-        delay(100);
+    EMC_SCMD_Issue(mem_info);
+    delay(100);
 
     return;
 }
