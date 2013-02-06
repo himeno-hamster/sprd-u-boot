@@ -69,6 +69,7 @@
 #define NAND_MC_SRDT	(uint16_t)(NFC_MC_SRDT_ID)
 #define NAND_MC_SWDT	(uint16_t)(NFC_MC_SWDT_ID)
 #define NAND_MC_IDST(x)	(uint16_t)((NFC_MC_IDST_ID) | ((x -1) << 8))
+#define NAND_MC_NOP(x)	(uint16_t)(((x & 0xff) << 8) | NFC_MC_NOP_ID)
 
 #define NAND_MC_BUFFER_SIZE (24)
 
@@ -88,6 +89,9 @@ struct sprd_tiger_nand_param {
 	uint8_t info_size; /* oob size per sector*/
 	uint8_t eccbit; /* ecc level per eccsize */
 	uint16_t eccsize; /*bytes per sector for ecc calcuate once time */
+	uint8_t	ace_ns;	/* ALE, CLE end of delay timing, unit: ns */
+	uint8_t	rwl_ns;	/* WE, RE, IO, pulse  timing, unit: ns */
+	uint8_t	rwh_ns;	/* WE, RE, IO, high hold  timing, unit: ns */
 };
 struct sprd_tiger_nand_info {
 	struct mtd_info *mtd;
@@ -185,9 +189,120 @@ unsigned int ecc_mode_convert(uint32_t mode)
  *to simplify the nand_param_tb, the info is align with ecc and ecc at the last postion in one sector
 */
 static struct sprd_tiger_nand_param sprd_tiger_nand_param_tb[] = {
-	{{0xec, 0xbc, 0x00,0x55, 0x54}, 	1, 	5, 	4, 	16, 	12, 	11, 	1, 	2, 	512},
-	{{0xec, 0xbc, 0x00,0x6A, 0x56}, 	1, 	5, 	8, 	16, 	9, 	8, 	1, 	4, 	512},
+	{{0xec, 0xbc, 0x00,0x55, 0x54}, 	1, 	5, 	4, 	16, 	12, 	11, 	1, 	2, 	512, 5, 21, 10},
+	{{0xec, 0xbc, 0x00,0x6A, 0x56}, 	1, 	5, 	8, 	16, 	9, 	8, 	1, 	4, 	512, 5, 21, 10},
+	{{0xad, 0xbc, 0x90,0x55, 0x54}, 	1, 	5, 	4, 	16, 	12, 	11, 	1, 	2, 	512, 10, 25, 15},
 };
+
+#if 0
+static void tiger_set_timing_config(struct sprd_tiger_nand_param * param, uint32_t nfc_clk_MHz) {
+	uint32_t reg_val, temp_val;
+
+	reg_val = 0;
+
+	/* get acs value : 0ns */
+	reg_val |= ((0 & 0x1F) << NFC_ACS_OFFSET);
+
+	/* get ace value */
+	temp_val = param->ace_ns * nfc_clk_MHz / 1000;
+	if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+		temp_val++;
+	}
+	reg_val |= ((temp_val & 0x1F) << NFC_ACE_OFFSET);
+
+	/* get rws value : 20 ns */
+	temp_val = 20 * nfc_clk_MHz / 1000;
+	if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+		temp_val++;
+	}
+	reg_val |= ((temp_val & 0x3F) << NFC_RWS_OFFSET);
+
+	/* get rws value : 0 ns */
+	reg_val |= ((0 & 0x1F) << NFC_RWE_OFFSET);
+
+	/* get rwh value */
+	temp_val = param->rwh_ns * nfc_clk_MHz / 1000;
+	if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+		temp_val++;
+	}
+	reg_val |= ((temp_val & 0x1F) << NFC_RWH_OFFSET);
+
+	/* get rwl value, 6 is read delay time*/
+	temp_val = (param->rwl_ns + 6) * nfc_clk_MHz / 1000;
+	if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+		temp_val++;
+	}
+	reg_val |= (temp_val & 0x3F);
+
+	printf("YPXie timing val: 0x%x\n\r", reg_val);
+
+	sprd_tiger_reg_write(NFC_TIMING_REG, reg_val);
+}
+#else
+static void tiger_set_timing_config(struct sprd_tiger_nand_info * tiger, uint32_t nfc_clk_MHz) {
+	int index, array;
+	uint8_t id_buf[8];
+	uint32_t reg_val, temp_val;
+	struct sprd_tiger_nand_param * param;
+
+	/* read id */
+	sprd_tiger_nand_read_id(tiger, (uint32 *)id_buf);
+
+	/* get timing para */
+	array = ARRAY_SIZE(sprd_tiger_nand_param_tb);
+	for (index = 0; index < array; index ++) {
+		param = sprd_tiger_nand_param_tb + index;
+		if ((param->id[0] == id_buf[0])
+			&& (param->id[1] == id_buf[1])
+			&& (param->id[2] == id_buf[2])
+			&& (param->id[3] == id_buf[3])
+			&& (param->id[4] == id_buf[4]))
+			break;
+	}
+
+	if (index < array) {
+		reg_val = 0;
+
+		/* get acs value : 0ns */
+		reg_val |= ((0 & 0x1F) << NFC_ACS_OFFSET);
+
+		/* get ace value */
+		temp_val = param->ace_ns * nfc_clk_MHz / 1000;
+		if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+			temp_val++;
+		}
+		reg_val |= ((temp_val & 0x1F) << NFC_ACE_OFFSET);
+
+		/* get rws value : 20 ns */
+		temp_val = 20 * nfc_clk_MHz / 1000;
+		if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+			temp_val++;
+		}
+		reg_val |= ((temp_val & 0x3F) << NFC_RWS_OFFSET);
+
+		/* get rws value : 0 ns */
+		reg_val |= ((0 & 0x1F) << NFC_RWE_OFFSET);
+
+		/* get rwh value */
+		temp_val = param->rwh_ns * nfc_clk_MHz / 1000;
+		if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+			temp_val++;
+		}
+		reg_val |= ((temp_val & 0x1F) << NFC_RWH_OFFSET);
+
+		/* get rwl value, 6 is read delay time*/
+		temp_val = (param->rwl_ns + 6) * nfc_clk_MHz / 1000;
+		if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+			temp_val++;
+		}
+		reg_val |= (temp_val & 0x3F);
+
+		printf("nand timing val: 0x%x\n\r", reg_val);
+
+		sprd_tiger_reg_write(NFC_TIMING_REG, reg_val);
+	}
+}
+#endif
 #ifdef CONFIG_NAND_SPL
 struct sprd_tiger_boot_header_info {
 	uint32_t check_sum;
@@ -620,6 +735,7 @@ static void sprd_tiger_nand_read_status(struct sprd_tiger_nand_info *tiger)
 	//printf("sprd_tiger_nand_read_status\r\n");
 	sprd_tiger_nand_ins_init(tiger);
 	sprd_tiger_nand_ins_add(NAND_MC_CMD(NAND_CMD_STATUS), tiger);
+	sprd_tiger_nand_ins_add(NAND_MC_NOP(10), tiger);		// added nop.
 	sprd_tiger_nand_ins_add(NAND_MC_IDST(1), tiger);
 	sprd_tiger_nand_ins_add(NFC_MC_DONE_ID, tiger);
 	sprd_tiger_reg_write(NFC_CFG0_REG, NFC_ONLY_NAND_MODE);
@@ -637,6 +753,7 @@ static void sprd_tiger_nand_read_id(struct sprd_tiger_nand_info *tiger, uint32 *
 	sprd_tiger_nand_ins_init(tiger);
 	sprd_tiger_nand_ins_add(NAND_MC_CMD(NAND_CMD_READID), tiger);
 	sprd_tiger_nand_ins_add(NAND_MC_ADDR(0), tiger);
+	sprd_tiger_nand_ins_add(NAND_MC_NOP(10), tiger);
 	sprd_tiger_nand_ins_add(NAND_MC_IDST(8), tiger);
 	sprd_tiger_nand_ins_add(NFC_MC_DONE_ID, tiger);
 	
@@ -1191,19 +1308,19 @@ int board_nand_init(struct nand_chip *chip)
 	chip->ecc.read_oob = sprd_tiger_read_oob;
 	chip->ecc.write_oob = sprd_tiger_write_oob;
 	chip->erase_cmd = sprd_tiger_erase;
-	
+
 	chip->ecc.bytes = CONFIG_SYS_NAND_ECCBYTES;
 	g_tiger.ecc_mode = CONFIG_SYS_NAND_ECC_MODE;
 	g_tiger.nand = chip;
+
+	tiger_set_timing_config(&g_tiger, 153);
+
 	chip->eccbitmode = g_tiger.ecc_mode;
 	chip->ecc.size = CONFIG_SYS_NAND_ECCSIZE;
 	
 	chip->options |= NAND_BUSWIDTH_16;
 
 	return 0;
-}
-void read_chip_id(void)
-{
 }
 
 #ifndef CONFIG_NAND_SPL
