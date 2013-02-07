@@ -866,7 +866,117 @@ void Calibration_SyncResponse(int ret)
 }
 #endif
 
+#ifdef CONFIG_MODEM_CALI_UART
+#define	TOOL_CH_API
+#define TOOL_CHANNEL	(1)
+static int	calibration_device=0;
+int  tool_channel_open(void)
+{
+	calibration_device = poweron_by_calibration();
+	switch(calibration_device)
+	{
+		case 1: //USB calibration ;
+			printf("USB calibration\n");
+			if(-1 == Calibration_ReinitUsb())
+				return -1;
+			gs_open();
+		break;
+		case 2: //UART calibration;
+			printf("UART calibration:...\n");
+		break;
+		default:
+		break;
+	}
+        return 0;
+}
+int  tool_channel_write(char *buffer,int count)
+{
+	int ret;
+	switch(calibration_device)
+	{
+		case 1: //USB calibration ;
+		{
+			while(count > 0){
+				ret = gs_write(g_uart_buf, count);
+				printf("func: %s waitting %d write done\n", __func__, count);
+				if(usb_trans_status)
+					printf("func: %s line %d usb trans with error %d\n", __func__, __LINE__, usb_trans_status);
+				usb_wait_trans_done(1);
+				if(ret > 0)
+					count -= ret;
+			}
+		}
+		break;
+		case 2: //UART calibration;
+		{
+			struct FDL_ChannelHandler *UartChannel;
+		       UartChannel = Calibration_ChannelGet(TOOL_CHANNEL);
+			UartChannel->Write(UartChannel,buffer,count);
+		}
+		break;
+		default:
+		break;
+	}
+}
 
+int  tool_channel_read_status = 0;
+int  tool_channel_read(char *buffer,int count)
+{
+	int index;
+        int size = count;
+	int	ch;
+
+	index = 0;
+	switch(calibration_device)
+	{
+		case 1: //USB calibration ;
+		{
+			if(usb_is_trans_done(0)){
+				if(usb_trans_status)
+					printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
+				gs_read(g_usb_buf, &size);
+				index = size;
+				if(usb_trans_status)
+					printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
+			}
+		}
+		break;
+		case 2:
+		{
+			struct FDL_ChannelHandler *UartChannel;
+			int fail_count=0;
+			int threshold = 60;
+		        UartChannel = Calibration_ChannelGet(TOOL_CHANNEL);
+
+			do{
+				ch = UartChannel->GetSingleChar(UartChannel);
+				if(ch == -1){
+					break;
+					if(tool_channel_read_status==0){
+						if((index!=0) && (buffer[0] == 0x7e))
+							fail_count = 0;
+					}
+					fail_count++;
+				} else {
+					buffer[index++] = ch;
+					if(index >= 12)
+						break;
+					if((tool_channel_read_status==0) && (index>=10))
+						tool_channel_read_status = 0;
+					if((tool_channel_read_status==1)&&(ch == 0x7e)){
+						tool_channel_read_status = 0;
+						break;
+					}
+					fail_count = 0;
+				}
+			}while(1);
+		}
+		default:
+		break;
+	}
+	return index;
+}
+#endif
 void calibration_mode(const uint8_t *pcmd, int length)
 {
 	int ret;
@@ -881,6 +991,7 @@ void calibration_mode(const uint8_t *pcmd, int length)
 #endif	
 	init_calibration_mode();
 #ifndef __DL_UART0__
+	if(CALIBRATION_CHANNEL==1)
 	__dl_log_share__ = 1;
 #endif	
 
@@ -900,15 +1011,22 @@ void calibration_mode(const uint8_t *pcmd, int length)
 		return ;
 
 	// wait for cp ready
+	i=0;
 	while(gpio_get_value(CP_AP_LIV) == 0);
 	sdio_handle = sdio_open();
 #endif
+#ifndef TOOL_CH_API
 	printf("Calibration_ReinitUsb......\n");
 	if(-1 == Calibration_ReinitUsb())
 		return ;
 	gs_open();
+#else
+	if(tool_channel_open() == -1)
+		return;
+#endif
 
 	while(TRUE){
+#ifndef TOOL_CH_API
 		if(usb_is_trans_done(0)){
 			if(usb_trans_status)
 				printf("func: %s line %d usb trans with error %d\n", __func__, __LINE__, usb_trans_status);
@@ -917,6 +1035,9 @@ void calibration_mode(const uint8_t *pcmd, int length)
 			if(usb_trans_status)
 				printf("func: %s line %d usb trans with error %d\n", __func__, __LINE__, usb_trans_status);
 		}
+#else
+		count = tool_channel_read(g_usb_buf, MAX_USB_BUF_LEN);
+#endif
 		if((index = ap_calibration_proc( g_usb_buf, count,g_uart_buf)) == 0){
 			if(count > 0){
 				if(count != gUsedChannel->Write(gUsedChannel, g_usb_buf, count)) {
@@ -929,7 +1050,9 @@ void calibration_mode(const uint8_t *pcmd, int length)
 				g_uart_buf[index++] = (ret & 0xff);
 			}
 		}
+#ifndef TOOL_CH_API
 		while(index > 0){
+
 			ret = gs_write(g_uart_buf, index);
 			printf("func: %s waitting %d write done\n", __func__, index);
 			if(usb_trans_status)
@@ -937,10 +1060,16 @@ void calibration_mode(const uint8_t *pcmd, int length)
 			usb_wait_trans_done(1);
 			if(ret > 0)
 				index -= ret;			
+
 		}
+#else
+		if(index > 0){
+			tool_channel_write(g_uart_buf, index);
+		}
+#endif
 #ifdef CALI_NV_WRITEBACK_SDIO_MERGE
                 if(Calibration_data_handler() < 0)
-                    break;
+			break;
 #else
 		index = 0;
 		ret = Calibration_SpiReadData();

@@ -158,7 +158,12 @@ void calibration_detect(int key)
 		memset(cmd_buf, 0, 50);
               	if (caliberate_device == CALIBERATE_DEVICE_UART)
                    	sprintf(cmd_buf, "calibration=%d,%d,0", caliberate_mode&0xff, (caliberate_mode&(~0xff)) >> 8);
-        	vlx_nand_boot(BOOT_PART, cmd_buf, BACKLIGHT_OFF);
+                s_is_calibration_mode = 2;
+#if defined(CONFIG_SC7710G2)
+		vlx_nand_boot(BOOT_PART, buf, BACKLIGHT_OFF);
+#else
+		vlx_nand_boot(BOOT_PART, cmd_buf, BACKLIGHT_OFF);
+#endif
 	}	
     
     	/* nerver come to here */

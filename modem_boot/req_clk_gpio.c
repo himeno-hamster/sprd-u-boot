@@ -22,14 +22,6 @@
 #include <asm/arch/bits.h>
 //#define __DEBUG__
 //#define __SPI_MODE__
-#define REG32(x)                        (*(volatile unsigned long *)(x))
-#define GPIO_PRINT(x)	printf x
-
-#define CHIP_REG_OR(reg_addr, value)    (*(volatile unsigned long *)(reg_addr) |= (unsigned long)(value))
-#define CHIP_REG_AND(reg_addr, value)   (*(volatile unsigned long *)(reg_addr) &= (unsigned long)(value))
-#define CHIP_REG_GET(reg_addr)          (*(volatile unsigned long *)(reg_addr))
-#define CHIP_REG_SET(reg_addr, value)   (*(volatile unsigned long *)(reg_addr)  = (unsigned long)(value))
-
 #define mdelay(n)	udelay((n) * 1000)
 
 extern int modem_status(void);
@@ -55,7 +47,7 @@ int	req_clk_status(void)
 *********************************************************************************************************/
 void req_clk_init(void)
 {
-	gpio_direction_output(CP_AP_LIV, 0); 
+	//gpio_direction_output(CP_AP_LIV, 0); 
 }
 
 void dump_gpio_register(void)

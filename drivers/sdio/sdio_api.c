@@ -24,7 +24,11 @@
 #define MAX_BLOCK_COUNT     511   
 #define MAX_BLOCK_SIZE      512
 #define MAX_BUF_SIZE        (MAX_BLOCK_COUNT*MAX_BLOCK_SIZE)
-#define SPRD_SDIO_CLK	    (16000000)
+#if defined(CONFIG_SC7710G2)
+	#define SPRD_SDIO_CLK	    (3000000)
+#else
+	#define SPRD_SDIO_CLK	    (16000000)
+#endif
 #define SDIO_PRINTF(x) printf x
 
 #define mdelay(x)	udelay(1000*x)

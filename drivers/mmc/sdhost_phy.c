@@ -900,9 +900,9 @@ LOCAL  void SDHOST_Reset_Controller(SDHOST_SLOT_NO slot_NO)
 	REG32 (AHB_SOFT_RST) |= BIT_21;
 	REG32 (AHB_SOFT_RST) &= ~BIT_21;
 #elif defined(CONFIG_SC7710G2)
-	REG32 (AHB_CTL6)	  |= BIT_1;
-	REG32 (AHB_SOFT2_RST) |= BIT_1;
-	REG32 (AHB_SOFT2_RST) &= ~BIT_1;
+	REG32 (AHB_CTL6)	  |= BIT_2;
+	REG32 (AHB_SOFT2_RST) |= BIT_0;
+	REG32 (AHB_SOFT2_RST) &= ~BIT_0;
 #else
 #define AHB_CTL0_SDIO0_EN	(BIT_4)
 #define AHB_CTL0_SDIO1_EN	(BIT_19)
@@ -2145,8 +2145,15 @@ LOCAL SDHOST_SLOT_NO _GetIntSDHOSTSlotNum (uint32 port)
 {
     uint32 tmpReg;
     SDHOST_SLOT_NO ret;
-#if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
-    tmpReg = REG32 (EMMC_SLOT_INT_STS);
+#if defined(CONFIG_TIGER)|| defined (CONFIG_SC7710G2)
+    if(port == 2){
+	tmpReg = REG32 (SDIO2_NML_INT_SIG_EN);
+	if(tmpReg == 0)
+		REG32 (SDIO2_NML_INT_SIG_EN) = BIT_1;
+	tmpReg = REG32 (SDIO2_SLOT_INT_STS);
+    }
+    else	
+    	tmpReg = REG32 (EMMC_SLOT_INT_STS);
 #else
     if(port == 0){
         tmpReg = REG32 (SDIO0_SLOT_INT_STS);
@@ -2160,7 +2167,10 @@ LOCAL SDHOST_SLOT_NO _GetIntSDHOSTSlotNum (uint32 port)
     if ( (tmpReg& (0x01<<0)))
     {
 #if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
-        ret = SDHOST_SLOT_7;
+	if(SDHOST_SLOT_2 == port)
+		ret = SDHOST_SLOT_2;
+	else
+        	ret = SDHOST_SLOT_7;
 #else
 		if(port == 0){
 			ret = SDHOST_SLOT_0;  
@@ -2331,7 +2341,7 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
 #elif defined(CONFIG_SC7710G2)
 //    SDHOST_Slot_select(slot_NO); if necessary
 	sdio_port_ctl[slot_NO].open_flag = TRUE;
-	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_384M);
+	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_96M);
 #else
 	_SDHOST_Pin_select(slot_NO);
 	sdio_port_ctl[slot_NO].open_flag = TRUE;
@@ -2359,7 +2369,7 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
         case SDHOST_SLOT_2:
 #if defined(CONFIG_TIGER)	|| defined(CONFIG_SC7710G2)		
             {
-                sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) (SDIO0_BASE_ADDR+0x200) );
+                sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) (SDIO2_BASE_ADDR) );
             }
             break;
 #endif			

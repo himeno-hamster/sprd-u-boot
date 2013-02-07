@@ -221,7 +221,8 @@ int SPRD_SDSlave_Pal_Pwr(SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_E onOrOff
             SDHOST_Cfg_Voltage(handle->sdio_port,VOL_3_0);
 
             SDHOST_SD_POWER(handle->sdio_port,POWR_ON);
-            SDHOST_SD_Clk_Freq_Set(handle->sdio_port,SDIO_CLK_24M);
+            //SDHOST_SD_Clk_Freq_Set(handle->sdio_port,SDIO_CLK_24M);
+            SDHOST_SD_Clk_Freq_Set(handle->sdio_port,200*1000);
             SDHOST_internalClk_OnOff(handle->sdio_port,CLK_ON);
             SDHOST_SD_clk_OnOff(handle->sdio_port,CLK_ON);
 

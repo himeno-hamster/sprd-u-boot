@@ -165,7 +165,7 @@ extern   "C"
 #define EPT_BASE                        0x8D000000
 #define PCM_CTL_BASE                    0x8E001000
 #define SPI_BASE                        0x8E002000
-#define ARM_UART3_BASE                  0x8E000500
+#define ARM_UART3_BASE                  0x8E005000
 
 
 #define INT_REG_BASE                    INTC_BASE

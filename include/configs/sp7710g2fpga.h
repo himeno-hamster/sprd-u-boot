@@ -111,7 +111,7 @@
 #define CP_AP_RDY 209
 #define CP_AP_RTS 210
 #define AP_CP_RDY 211
-#define CP_AP_LIV 215
+#define CP_AP_LIV 213
 
 //#define	CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* 256 kB for U-Boot */
 
@@ -300,7 +300,7 @@
 #define CONFIG_CALIBRATION_MODE_NEW
 #define CONFIG_AP_ADC_CALIBRATION
 #define CONFIG_MODEM_CALIBERATE
-//#define CONFIG_MODEM_CALI_UART  /* uart calibration only */
+#define CONFIG_MODEM_CALI_UART  /* uart calibration only */
 #define CALIBRATION_CHANNEL 3 // 0 : UART0 1: UART1, 3 uart3
 
 /*
@@ -310,7 +310,7 @@
 #define CONFIG_SYS_MAX_FLASH_BANKS 1
 #define CONFIG_SYS_MAX_FLASH_SECT 128
 */
-#define CONFIG_LCD
+//#define CONFIG_LCD
 #ifdef CONFIG_LCD
 //#define CONFIG_SPLASH_SCREEN
 #define LCD_BPP LCD_COLOR16

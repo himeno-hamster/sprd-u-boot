@@ -567,16 +567,22 @@ int hs_channel_send_start_message(unsigned long img_address,unsigned long img_si
 int hs_channel_send_data_message(char *buffer,int data_size)
 {
 	unsigned char read_buffer[16]={0};
-	unsigned long *data = (unsigned long *)send_buffer;
 	struct pkt_header_tag *head;
 	unsigned long data_offset=8;
+	unsigned long *data;
 	int status;
+	int address = (int)send_buffer;
+ 
+	address += 64;
 
-	memcpy((char *)send_buffer+data_offset,buffer,data_size);
-	setup_packet(BSL_CMD_MIDST_DATA,send_buffer,data_offset,data_size,BSL_SPI_PACKET);
-
-	hs_channel_write(send_buffer,8);
-	hs_channel_write((char *)send_buffer+data_offset,data_size);
+	address = address/32*32;
+	address -= 8;
+	data = (unsigned long *)address;
+	memcpy((char *)data+data_offset,buffer,data_size);
+	setup_packet(BSL_CMD_MIDST_DATA,data,data_offset,data_size,BSL_SPI_PACKET);
+ 
+	hs_channel_write(data,8);
+	hs_channel_write((char *)data+data_offset,data_size);
 	hs_channel_read(read_buffer,SPI_ACK_SIZE);
 
 	head = (struct pkt_header_tag *)read_buffer;

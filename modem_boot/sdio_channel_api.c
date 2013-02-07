@@ -9,7 +9,6 @@ extern void req_clk_init(void);
 void sdio_channel_open(void)
 {
 	int status;
-	req_clk_init();
         status = req_clk_status();
         printf("Clock_Req(W) = %d \n",status);
  //       do{status = req_clk_status();}while(status==0);
