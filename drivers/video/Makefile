@@ -44,7 +44,9 @@ COBJS-$(CONFIG_VIDEO_VCXK) += bus_vcxk.o
 
 #ifdef CONFIG_LCD
 COBJS-$(CONFIG_SC8800G) += sc8800g_fb.o
+ifndef CONFIG_SC7710G2
 COBJS-$(CONFIG_SC8810)  += sc8810_fb.o
+endif
 COBJS-$(CONFIG_LCD_HX8357_1)  += lcd_hx8357_1.o
 COBJS-$(CONFIG_LCD_ILI9341S)  += lcd_ili9341s.o
 COBJS-$(CONFIG_LCD_ILI9341_BOE)  += lcd_ili9341_boe.o

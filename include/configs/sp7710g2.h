@@ -165,6 +165,8 @@
 #define CONFIG_CONS_INDEX	1	/* use UART0 for console */
 #define CONFIG_BAUDRATE		115200	/* Default baud rate */
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
+#define CONFIG_SC8825_SPI
+#define CONFIG_SC8825_I2C
 
 /*
  * Flash & Environment
@@ -298,12 +300,14 @@
 #define CONFIG_SPLASH_SCREEN
 #define LCD_BPP LCD_COLOR16
 //#define CONFIG_LCD_HVGA   1
-#define CONFIG_LCD_WVGA   1
+//#define CONFIG_LCD_WVGA   1
+#define CONFIG_LCD_QHD 1
 //#define CONFIG_LCD_INFO
 //#define LCD_TEST_PATTERN
 //#define CONFIG_LCD_LOGO
+//#define CONFIG_FB_LCDC_CS1
+#define CONFIG_FB_LCD_NT35516_MCU
 #define CONFIG_SYS_WHITE_ON_BLACK
-#define CONFIG_FB_LCDC_CS1
 #ifdef LCD_TEST_PATTERN
 #define CONSOLE_COLOR_RED 0xf800 
 #define CONSOLE_COLOR_GREEN 0x07e0

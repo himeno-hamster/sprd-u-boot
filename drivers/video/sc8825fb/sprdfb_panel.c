@@ -121,6 +121,15 @@ static struct panel_cfg lcd_panel[] = {
         },
 };
 
+#elif defined CONFIG_SC7710G2
+extern struct panel_spec lcd_nt35516_mcu_spec;
+static struct panel_cfg lcd_panel[] = {
+    [0]={
+        .lcd_id = 0x16,
+        .panel = &lcd_nt35516_mcu_spec ,
+        },
+};
+
 #else
 #ifdef CONFIG_LCD_QVGA
 /*
@@ -237,9 +246,11 @@ static int panel_mount(struct sprdfb_device *dev, struct panel_spec *panel)
 	case SPRDFB_PANEL_TYPE_RGB:
 		dev->if_ctrl = &sprdfb_rgb_ctrl;
 		break;
+#ifdef CONFIG_SC8825
 	case SPRDFB_PANEL_TYPE_MIPI:
 		dev->if_ctrl = &sprdfb_mipi_ctrl;
 		break;
+#endif
 	default:
 		FB_PRINT("sprdfb: [%s]: erro panel type.(%d)",__FUNCTION__, panel->type);
 		dev->if_ctrl = NULL;

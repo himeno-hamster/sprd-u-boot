@@ -78,6 +78,11 @@ extern   "C"
 #define LCDC_LCM_CTL_BEGIN              0x20700180    //LCDC/LCM Control Registers              
 #define LCDC_LCM_CTL_END                0x207001a4    //length unit:word.
 
+#ifdef CONFIG_SC7710G2
+#define DISPC_CTL_BEGIN          	0x21000000   //DISPC Registers
+#define DISPC_CTL_END             	 0x21000110 //length unit: word.
+#endif
+
 #define INT_CTL_BEGIN                   0x80003000    //Interrupt Control Registers                 
 #define INT_CTL_END                     0x80000040    //the begin address of the last word
 

@@ -89,6 +89,10 @@ extern   "C"
 #define GEN0_EPT_EN                     BIT_15
 #define GEN0_SIM1_EN                    BIT_16
 #define GEN0_SPI_EN                     BIT_17
+#ifdef CONFIG_SC7710G2
+#define GEN0_SPI0_EN                    BIT_17
+#define GEN0_SPI1_EN                    BIT_18
+#endif
 //reserved
 #define GEN0_SYST_EN                    BIT_19
 #define GEN0_UART0_EN                   BIT_20

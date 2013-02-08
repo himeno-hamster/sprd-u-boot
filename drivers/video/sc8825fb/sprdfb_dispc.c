@@ -23,8 +23,12 @@
 
 #include "sprdfb.h"
 
-#define DISPC_SOFT_RST (20)
 
+#ifdef CONFIG_SC7710G2
+#define DISPC_SOFT_RST (20)
+#else
+#define DISPC_SOFT_RST (2)
+#endif
 
 static uint16_t		is_first_frame = 1;
 
@@ -49,10 +53,15 @@ static void __raw_bits_or(unsigned int v, unsigned int a)
 static void dispc_reset(void)
 {
 	FB_PRINT("sprdfb:[%s]\n",__FUNCTION__);
-
+#ifdef CONFIG_SC7710G2
+	__raw_writel(__raw_readl(AHB_SOFT2_RST) | (1<<DISPC_SOFT_RST), AHB_SOFT2_RST);
+	udelay(10);
+	__raw_writel(__raw_readl(AHB_SOFT2_RST) & (~(1<<DISPC_SOFT_RST)), AHB_SOFT2_RST);
+#else
 	__raw_writel(__raw_readl(AHB_SOFT_RST) | (1<<DISPC_SOFT_RST), AHB_SOFT_RST);
 	udelay(10);
 	__raw_writel(__raw_readl(AHB_SOFT_RST) & (~(1<<DISPC_SOFT_RST)), AHB_SOFT_RST);
+#endif
 }
 
 static inline void dispc_set_bg_color(uint32_t bg_color)
@@ -178,7 +187,44 @@ static void dispc_layer_init(struct sprdfb_device *dev)
 static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 {
 	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
+#ifdef CONFIG_SC7710G2
+	//select DISPC clock source
+	__raw_bits_and(~(1<<31), AHB_CTL6);    //pll_src=256M
+	__raw_bits_and(~(1<<30), AHB_CTL6);
 
+	//set DISPC divdior
+	__raw_bits_and(~(1<<29), AHB_CTL6);  //div=0
+	__raw_bits_and(~(1<<28), AHB_CTL6);
+	__raw_bits_and(~(1<<27), AHB_CTL6);
+
+	//select DBI clock source
+	__raw_bits_and(~(1<<26), AHB_CTL6);    //pll_src=256M
+	__raw_bits_and(~(1<<25), AHB_CTL6);
+
+	//set DBI divdior
+	__raw_bits_and(~(1<<24), AHB_CTL6);  //div=0
+	__raw_bits_and(~(1<<23), AHB_CTL6);
+	__raw_bits_and(~(1<<22), AHB_CTL6);
+
+	//select DPI clock source
+	__raw_bits_and(~(1<<21), AHB_CTL6);    //pll_src=384M
+	__raw_bits_and(~(1<<20), AHB_CTL6);
+
+	//set DPI divdior
+	__raw_bits_and(~(1<<19), AHB_CTL6);  //div=10, dpi_clk = pll_src/(10+1)
+	__raw_bits_and(~(1<<18), AHB_CTL6);
+	__raw_bits_and(~(1<<17), AHB_CTL6);
+	__raw_bits_and(~(1<<16), AHB_CTL6);
+	__raw_bits_or((1<<15), AHB_CTL6);
+	__raw_bits_and(~(1<<14), AHB_CTL6);
+	__raw_bits_or((1<<13), AHB_CTL6);
+	__raw_bits_and(~(1<<12), AHB_CTL6);
+
+	//enable DISPC clock
+	__raw_bits_or(1<<0, AHB_CTL6);
+
+	printf("0x2090023c = 0x%x\n", __raw_readl(0x2090023c));
+#else
 	//select DISPC clock source
 	__raw_bits_and(~(1<<1), AHB_DISPC_CLK);    //pll_src=256M
 	__raw_bits_and(~(1<<2), AHB_DISPC_CLK);
@@ -221,6 +267,7 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	printf("0x20900200 = 0x%x\n", __raw_readl(0x20900200));
 	printf("0x20900208 = 0x%x\n", __raw_readl(0x20900208));
 	printf("0x20900220 = 0x%x\n", __raw_readl(0x20900220));
+#endif
 
 	dispc_reset();
 	dispc_module_enable();
@@ -263,9 +310,13 @@ static int32_t sprdfb_dispc_init(struct sprdfb_device *dev)
 static int32_t sprdfb_dispc_uninit(struct sprdfb_device *dev)
 {
 	FB_PRINT("sprdfb:[%s]\n",__FUNCTION__);
-
+#ifdef CONFIG_SC7710G2
+	//disable DISPC clock
+	__raw_bits_and(~(1<<0), AHB_CTL6);
+#else
 	//disable DISPC clock
 	__raw_bits_and(~(1<<22), AHB_CTL0);
+#endif
 	return 0;
 }
 
