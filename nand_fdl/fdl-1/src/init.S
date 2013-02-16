@@ -128,12 +128,14 @@ reset:
 	bl  clear_bss
 #endif
 
-#if 0
+
+#if defined(CONFIG_SC7710G2)
 	MOV R0, #0
 	MOV R1, #0
 	MOV R2, #0
 	MOV R3, #0
-	bl  DMC_Init
+;	bl  DMC_Init
+	bl  Chip_Init 
 #else
 	LDR R0, =400000000
 	bl  DMC_Dev_Init

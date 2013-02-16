@@ -76,6 +76,10 @@ _start: b	reset
 	nop
 	nop
 	nop
+#ifdef CONFIG_NAND_SC7710G2
+	nop
+#endif
+	
 	/*22 end*/
 
 _hang:

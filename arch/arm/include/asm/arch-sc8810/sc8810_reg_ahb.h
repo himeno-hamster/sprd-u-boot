@@ -113,6 +113,7 @@ extern   "C"
 #define CHIP_ID_VER_0       (0x88100000UL)
 #define CHIP_ID_VER_1       (0x88100001UL)	/* SMIC CHIP */
 #define CHIP_ID_VER_MF      (0x88100040UL)
+#define CHIP_ID_7710_VER_0      (0x7710DA00UL)
 
 /**----------------------------------------------------------------------------*
 **                             Data Prototype                                 **
