@@ -1527,6 +1527,23 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 	}
 #endif
 
+	if (strcmp(phy_partition.name, "vmjaluna") == 0) {
+		if (phy_partition.size > g_status.total_size) {
+			size = phy_partition.size - g_status.total_size;
+			memset(g_BigBUF, 0xFF, g_BigSize);
+			printf("vmjaluna filled 0xff in free space of partition, filled size is 0x%x\n\r", size);
+			while (size > 0) {
+				realii = min(size, code_yaffs_onewrite);
+				g_prevstatus = nand_write_fdl((unsigned int)realii, g_BigBUF);
+				if (NAND_SUCCESS != g_prevstatus) {
+					printf("vmjaluna stuffed data write error!\n\r");
+					break;
+				}
+				size -= realii;
+			}
+		}
+	}
+
     	if (NAND_SUCCESS != g_prevstatus) {
 		set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
         	FDL2_SendRep (g_prevstatus);
