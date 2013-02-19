@@ -1488,7 +1488,16 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
         	return 0;
     	}
 
-
+	//step2: check if last file dwonload size exceed partition size limit.
+	if((check_flag==1) && (phy_partition.size <= (get_end_write_pos()-phy_partition.offset)))
+    {
+	    check_flag = 0;
+            printf("[%s][%s]: partition:%s write pos exceed,please increase partition page num\n",\
+                            __func__, __LINE__, phy_partition.name);
+            printf("[%s][%s]: partition size=0x%x, partition offset=0x%x, end_pos=0x%x\n", \
+	              __func__, __LINE__, phy_partition.size,  phy_partition.offset, get_end_write_pos());
+            return 0;
+    }
         fill_partition(&phy_partition, (get_end_write_pos()-phy_partition.offset), 0xffffffff);
         
     	g_prevstatus = nand_end_write();
