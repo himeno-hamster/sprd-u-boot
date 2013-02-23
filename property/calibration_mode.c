@@ -379,7 +379,7 @@ static int Calibration_pre_read_nv(void) {
 			return -1;
 		}
                 cmd_yaffs_umount(fixnvpoint);
-
+#if 0 //temp remove backfixnv operation, shold be fixed later for power protection
         	cmd_yaffs_mount(backupfixnvpoint);
         	if (cmd_yaffs_ls_chk(backupfixnvfilename) == (FIXNV_SIZE + 4)) {
         	}else {
@@ -387,7 +387,9 @@ static int Calibration_pre_read_nv(void) {
         		return -1;
         	}
                 cmd_yaffs_umount(backupfixnvpoint);
+#endif
 	}
+
 	#endif
         read_once = 1;
     }
@@ -415,11 +417,12 @@ static int Calibration_post_write_nv(void) {
 	cmd_yaffs_mwrite_file(fixnvfilename, (char*)g_fixnv_buf, (FIXNV_SIZE + 4));
 	cmd_yaffs_ls_chk(fixnvfilename);
 	cmd_yaffs_umount(fixnvpoint);
-
+#if 0 //temp remove backfixnv operation, shold be fixed later for power protection
 	cmd_yaffs_mount(backupfixnvpoint);
 	cmd_yaffs_mwrite_file(backupfixnvfilename, (char*)g_fixnv_buf, (FIXNV_SIZE + 4));
 	cmd_yaffs_ls_chk(backupfixnvfilename);
 	cmd_yaffs_umount(backupfixnvpoint);
+#endif
 #endif
         dirty = 0;
         return 0;
@@ -559,6 +562,7 @@ static int Calibration_data_handler(void) {
                 status = Calibration_handle_data();
         } while(status == READ_CONTINUE);
         Calibration_read_empty();
+
         if(status == READ_OK || status == READ_DISCARD) {
             gpio_set_value(AP_CP_RDY, 1);
             gpio_set_value(AP_CP_RTS, 0);
@@ -568,6 +572,7 @@ static int Calibration_data_handler(void) {
             gpio_set_value(AP_CP_RTS, 0);
             while(1 == gpio_get_value(CP_AP_RDY));
         }
+
         if(dirty)
             if(Calibration_post_write_nv() < 0)
                 code = -1;
