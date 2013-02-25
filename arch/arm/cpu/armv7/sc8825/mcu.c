@@ -266,6 +266,33 @@ static uint32 EmcClkConfig(uint32 emc_clk)
     return 0;
 }
 #endif
+#define CLK_APB_SHIFT	(14)
+#define CLK_APB_MASK	(0x3<<CLK_APB_SHIFT)
+#define CLK_APB_26M	(26000000)
+#define CLK_APB_51M2	(51200000)
+#define CLK_APB_76M8	(76800000)
+static void ApbClkConfig(uint32 apb_clk)
+{
+	uint32 clkdly_cfg;
+	uint32 clk_apb_sel;
+	switch(apb_clk){
+	case CLK_APB_26M:
+		clk_apb_sel = 0;
+		break;
+	case CLK_APB_51M2:
+		clk_apb_sel = 1;
+		break;
+	case CLK_APB_76M8:
+		clk_apb_sel = 3;
+		break;
+	}
+
+	clkdly_cfg = REG32(GR_CLK_DLY);
+	clkdly_cfg &= ~(CLK_APB_MASK);
+	clkdly_cfg |= (clk_apb_sel<<CLK_APB_SHIFT);
+	REG32(GR_CLK_DLY) = clkdly_cfg;
+}
+
 static uint32 AhbClkConfig(uint32 ahb_clk)
 {
     uint32 ahb_arm_clk, div, mcu_clk;
@@ -340,6 +367,7 @@ static uint32 ClkConfig()
     AxiClkConfig();
     McuClkConfig(1000000000);
     AhbClkConfig(200000000);
+    ApbClkConfig(CLK_APB_76M8);
     //EmcClkConfig(emc_clk);
 
     return 0;
