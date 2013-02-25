@@ -97,7 +97,12 @@ void LCD_SetBackLightBrightness( unsigned long  value)
 void set_backlight(uint32_t value)
 {
 #if defined (CONFIG_SP8825) || defined (CONFIG_SP8825EA) || defined (CONFIG_SP8825EB) ||defined(CONFIG_GARDA)
+	#if defined (CONFIG_SP6825GA) || defined (CONFIG_SP6825GB)
+	__raw_writel(0x121, 0x4C000138);
+	#else
 	__raw_writel(0x101, 0x4C000138);
+	#endif  /*#if defined (CONFIG_SP6825GA) || defined (CONFIG_SP6825GB)*/
+
 	__raw_bits_or((1<<5), 0x4B000008);
 	__raw_bits_or((1<<8), 0x4A000384);
 	__raw_bits_or((1<<8), 0x4A000388);
