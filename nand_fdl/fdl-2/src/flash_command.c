@@ -1130,7 +1130,7 @@ int FDL2_DataStart (PACKET_T *packet, void *arg)
 	if (strcmp(phy_partition.name, "fixnv") == 0)
 		ret = get_nand_pageoob(&nand_page_oob_info);
 	else
-        	ret = nand_start_write(&phy_partition, size, &nand_page_oob_info, file_in_productinfo_partition);
+		ret = nand_start_write(&phy_partition, phy_partition.size, &nand_page_oob_info, file_in_productinfo_partition);
 
 
         if (NAND_SUCCESS != ret)
@@ -1275,6 +1275,77 @@ int NandChangeBootloaderHeader(unsigned int *bl_start_addr)
 
     return 1;
 
+}
+
+static void fill_partition(struct real_mtd_partition *mtd_part,
+							unsigned int fill_from,
+							unsigned int filler)
+{
+	int	ret;
+	unsigned long  offset, size, start, end;
+	unsigned int   write_size, erase_size, oob_size;
+	struct mtd_info *nand;
+	struct nand_chip *chip = NULL;
+
+	write_size = nand_page_oob_info.writesize;
+	erase_size = nand_page_oob_info.erasesize;
+	oob_size = nand_page_oob_info.oobsize;
+
+	if ((nand_curr_device < 0) || (nand_curr_device >= CONFIG_SYS_MAX_NAND_DEVICE))
+		return NAND_SYSTEM_ERROR;
+
+	nand = &nand_info[nand_curr_device];
+
+	printf("fill_partition information!\n\r");
+	printf("yaffs flag = 0x%x\n\r", mtd_part->yaffs);
+	printf("fill_from = 0x%x\n\r", fill_from);
+	printf("write_size =0x%x\n\r", write_size);
+	printf("erase_size =0x%x\n\r", erase_size);
+	printf("oob_size =0x%x\n\r", oob_size);
+
+	if (mtd_part->yaffs == 1)
+		return;//if the data format is not raw,then just return
+
+	if ((strcmp(mtd_part->name, "vmjaluna") == 0x00)
+			|| (strcmp(mtd_part->name, "modem") == 0x00)
+			|| (strcmp(mtd_part->name, "dsp") == 0x00)
+			|| (strcmp(mtd_part->name, "2ndbl") == 0x00)
+			|| (strcmp(mtd_part->name, "boot_logo") == 0x00)
+			|| (strcmp(mtd_part->name, "fastboot_logo") == 0x00)) {
+
+		offset = mtd_part->offset;								//the begin of the partition
+		size = mtd_part->size;									//the total size of the partition
+		start = (offset + fill_from + write_size - 1)&(~(write_size - 1));//fill partition begin
+		end = (offset + size + write_size - 1)&(~(write_size - 1));	//fill partition end
+		memset(temBuf, filler, write_size);						//generate a filler
+		printf("fill_partition: offset=0x%x, size=0x%x, start=0x%x, end=0x%x\n",
+			offset, size, start, end);
+
+		chip = nand->priv;
+		chip->ops.mode = MTD_OOB_AUTO;
+		chip->ops.len = write_size;
+		chip->ops.datbuf = (uint8_t *)temBuf;
+		chip->ops.oobbuf = NULL;
+		chip->ops.ooblen = oob_size;
+		chip->ops.ooboffs = 0;
+		while (start < end) {
+			while (!(start & (erase_size - 1))) {
+				if (nand_block_isbad(nand, start & (~(erase_size - 1)))) {
+					start = (start + erase_size) & (~(erase_size-1));
+					if(start >= end) {
+						printf("fill_partition: exit start=0x%x, end=0x%x\n", start, end);
+						return;
+					}
+				}
+				else
+					break;
+			}
+			ret = nand_do_write_ops(nand, (unsigned long long)start, &(chip->ops));
+			if(ret < 0)
+				printf("fill_partition: write error\n");
+			start += write_size;
+		}
+	}
 }
 
 int FDL2_DataEnd (PACKET_T *packet, void *arg)
@@ -1526,29 +1597,13 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 		g_BigSize = 0;
 	}
 #endif
-
-	if (strcmp(phy_partition.name, "vmjaluna") == 0) {
-		if (phy_partition.size > g_status.total_size) {
-			size = phy_partition.size - g_status.total_size;
-			memset(g_BigBUF, 0xFF, g_BigSize);
-			printf("vmjaluna filled 0xff in free space of partition, filled size is 0x%x\n\r", size);
-			while (size > 0) {
-				realii = min(size, code_yaffs_onewrite);
-				g_prevstatus = nand_write_fdl((unsigned int)realii, g_BigBUF);
-				if (NAND_SUCCESS != g_prevstatus) {
-					printf("vmjaluna stuffed data write error!\n\r");
-					break;
-				}
-				size -= realii;
-			}
-		}
-	}
-
     	if (NAND_SUCCESS != g_prevstatus) {
 		set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
         	FDL2_SendRep (g_prevstatus);
         	return 0;
     	}
+
+	fill_partition(&phy_partition, (get_end_write_pos() - phy_partition.offset), 0xFFFFFFFF);
 
     	g_prevstatus = nand_end_write();
 	set_dl_op_val(0, 0, ENDDATA, SUCCESS, 1);
@@ -2209,18 +2264,8 @@ int FDL2_EraseFlash (PACKET_T *packet, void *arg)
 			ret = log2phy_table(&phy_partition);
 			phy_partition_info(phy_partition, __LINE__);
 
-			if (NAND_SUCCESS == ret) {
+			if (NAND_SUCCESS == ret)
 				ret = nand_erase_partition(phy_partition.offset, phy_partition.size, 1);
-				if ((strcmp(phy_partition.name, "vmjaluna") == 0) ||
-					(strcmp(phy_partition.name, "modem") == 0) ||
-					(strcmp(phy_partition.name, "dsp") == 0) ||
-					(strcmp(phy_partition.name, "2ndbl") == 0) ||
-					(strcmp(phy_partition.name, "boot_logo") == 0) ||
-					(strcmp(phy_partition.name, "fastboot_logo") == 0)) {
-					//fill the area with specific data
-					local_nand_format_partion(phy_partition,0xffffffff);
-				}
-			}
 
 			if (NAND_SUCCESS == ret)
 				set_dl_op_val(addr, size, ERASEFLASH, SUCCESS, 1);
