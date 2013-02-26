@@ -29,15 +29,13 @@ extern   "C"
 **                               Micro Define                                 **
 **----------------------------------------------------------------------------*/
 
-///#define  ADI_BASE            0x82000000
-#define  ADI_BASE_ADDR          ADI_BASE
 #define  ADI_CLK_DIV            (ADI_BASE + 0x0 )
 #define  ADI_CTL_REG            (ADI_BASE + 0x4 )
 #define  ADI_CHANNEL_PRI        (ADI_BASE + 0x8 )
 #define  ADI_INT_EN             (ADI_BASE + 0xC )
 #define  ADI_INT_RAW_STS        (ADI_BASE + 0x10)
 #define  ADI_INT_MASK_STS       (ADI_BASE + 0x14)
-#define  ADI_INT_CLR            (ADI_BASE_ADDR + 0x18)
+#define  ADI_INT_CLR            (ADI_BASE + 0x18)
 //#define  RESERVED             (ADI_BASE_ADDR + 0x1C)
 //#define  RESERVED             (ADI_BASE_ADDR + 0x20)
 #define  ADI_ARM_RD_CMD         (ADI_BASE + 0x24)
@@ -47,8 +45,8 @@ extern   "C"
 #define  ADI_REQ_STS            (ADI_BASE + 0x34)
 
 //ADI_EIC
-#define ADI_EIC_DATA	(ADI_BASE + 0x700)
-#define ADI_EIC_MASK	(ADI_BASE + 0x704)
+#define ADI_EIC_DATA            (ANA_EIC_BASE + 0x000)
+#define ADI_EIC_MASK            (ANA_EIC_BASE + 0x004)
 
 //ADI_CTL_REG
 #define ANA_INT_STEAL_EN        BIT_0
@@ -60,7 +58,6 @@ extern   "C"
 #define   ADI_FIFO_FULL         BIT_11
 
 
-
 //ADI_CHANNEL_PRI bit define
 #define    INT_STEAL_PRI        0
 #define    STC_WR_PRI           2
@@ -70,9 +67,6 @@ extern   "C"
 #define    DSP_RD_PRI           10
 #define    RFT_WR_PRI           12
 #define    PD_WR_PRI            14
-
-#define ANA_REG_ADDR_START      0x82000040
-#define ANA_REG_ADDR_END        0x82000780
 
 /**----------------------------------------------------------------------------*
 **                             Data Prototype                                 **

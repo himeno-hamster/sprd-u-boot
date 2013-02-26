@@ -121,7 +121,7 @@ static struct panel_cfg lcd_panel[] = {
         },
 };
 
-#elif defined CONFIG_SC7710G2
+#elif defined CONFIG_MACH_SP7720G2
 extern struct panel_spec lcd_hx8363_mcu_spec;
 static struct panel_cfg lcd_panel[] = {
     [0]={

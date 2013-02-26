@@ -103,6 +103,12 @@ void set_backlight(uint32_t value)
 	__raw_bits_or((1<<8), 0x4A000388);
 	__raw_bits_or((1<<8), 0x4A000380);
 #endif
+#if defined (CONFIG_MACH_SP7720G2)
+	//gpio8, default gpio func, 2nd pwm function   
+	__raw_bits_or((1<<8), 0x8A000004);
+	__raw_bits_or((1<<8), 0x8A000008);
+	__raw_bits_or((1<<8), 0x8A000000);
+#endif
 
 
 #ifdef CONFIG_SC8810_OPENPHONE
@@ -184,6 +190,9 @@ static int tiger_probe(void * lcdbase)
 #ifdef CONFIG_GARDA
 	LDO_SetVoltLevel(LDO_LDO_SIM1, LDO_VOLT_LEVEL2);
 	LDO_TurnOnLDO(LDO_LDO_SIM1);
+#endif
+#ifdef CONFIG_MACH_SP7720G2
+
 #endif
 /*
 	__raw_writel((__raw_readl(0x20900208) | 0xAFE), 0x20900208);

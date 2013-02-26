@@ -585,7 +585,6 @@ static int Calibration_data_handler(void) {
 }
 #endif
 
-#if defined(CONFIG_MACH_KYLEW) || defined (CONFIG_SP7702) || defined (CONFIG_SC7710G2)
 /*static*/ int Calibration_SpiReadData(void)
 {
 	int i;
@@ -644,8 +643,6 @@ fail:
         while(1 == gpio_get_value(CP_AP_RDY)) ;
 	return ret;
 }
-
-#endif
 
 static int Calibration_ProcessSyncData(nv_sync_type *p_syncdata)
 {
@@ -809,7 +806,6 @@ static int Calibration_ProcessFixNv(nv_sync_type *p_syncdata)
 		return Calibration_ProcessFixNv(p_syncdata);
 }
 
-#if defined(CONFIG_MACH_KYLEW) || defined (CONFIG_SP7702) || defined(CONFIG_SC7710G2)
 int Calibration_SpiWritePacket(unsigned char *buf, uint32 size)
 {
 	int ret;
@@ -871,7 +867,6 @@ void Calibration_SyncResponse(int ret)
 	Calibration_SpiWritePacket((unsigned char*)&t_resp, sizeof(t_resp));
 		
 }
-#endif
 
 static int	calibration_device=0;
 int  tool_channel_open(void)

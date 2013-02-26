@@ -12,6 +12,7 @@ static void __raw_bits_or(unsigned int v, unsigned int a)
 {
         __raw_writel((__raw_readl(a) | v), a);
 }
+#if 0
 void set_backlight(uint32_t value)
 {
 #ifndef CONFIG_SP8810EA
@@ -28,3 +29,5 @@ void FB_LDO_TurnOnLDO()
 {
 
 }
+#endif
+

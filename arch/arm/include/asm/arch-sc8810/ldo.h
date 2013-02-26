@@ -129,7 +129,9 @@ typedef enum
     LDO_LDO_SDIO3,
     LDO_LDO_VDD30,
     //end sc8810
-
+    //sc7710g2
+    LDO_LDO_AP_AMP,
+    //end
     LDO_LDO_MAX     //id for calculate LDO number only!
 }LDO_ID_E;
 
@@ -138,7 +140,7 @@ typedef enum
 
 typedef enum 
 {
-    //SC8810
+    //SC8810 
     SLP_LDO_SDIO1,
     SLP_LDO_VDD25,
     SLP_LDO_VDD18,
@@ -155,6 +157,10 @@ typedef enum
     SLP_LDO_RF1,
     SLP_LDO_RF0,
    //end sc8810
+    //sc7710g2
+    SLP_LDO_AP_AMP,
+    SLP_LDO_SIM2,
+    //end
     SLP_LDO_MAX
 }SLP_LDO_E;
 

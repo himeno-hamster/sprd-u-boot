@@ -143,6 +143,25 @@ extern   "C"
 #define INTC_BASE                       0x80003000
 #define TIMER_CTL_BASE                  0x81000000  //Timer0 (RTC)
 #define ADI_BASE                        0x82000000  //ADI master
+#ifdef CONFIG_SC7710G2
+#define WDG_BASE                        0x82000040  //Analog die register   
+#define RTC_BASE                        0x82000080
+#define ANA_EIC_BASE                    0x82000100
+#define ANA_PWM_BASE                    0x82000200
+#define ADC_BASE                        0x82000300
+#define ANA_INTC_BASE                   0x82000380
+//0x820003c0 //wdg for large current charge protect
+//0x82000400 //for cp 
+//0x82000440 //audio die-die interface controlller
+//0x82000480 //reserved
+//0x82000500 //cp dsp global register
+//0x82000600 //cp arm golbal register
+//0x82000700 //audio analog control register
+#define ANA_REG_BASE                    0x82000800
+#define TPC_BASE                        0x82000a00
+#define ANA_GPIO_BASE                   0x82000b00
+#define ANA_PIN_CTL_BASE                0x82000c00
+#else
 #define WDG_BASE                        0x82000040  //Analog die register   
 #define RTC_BASE                        0x82000080
 #define ANA_DOLPHIN_BASE                0x82000100  //Analog die register   
@@ -150,8 +169,11 @@ extern   "C"
 #define TPC_BASE                        0x82000280
 #define ADC_BASE                        0x82000300
 #define ANA_INTC_BASE                   0x82000380
+#define ANA_EIC_BASE                    0x82000700
 #define ANA_REG_BASE                    0x82000600
 #define ANA_GPIO_BASE                   0x82000600
+#define ANA_PIN_CTL_BASE                0x82000180
+#endif
 #define ARM_VBC_BASE                    0x82003000
 #define ARM_UART0_BASE                  0x83000000
 #define ARM_UART1_BASE                  0x84000000
@@ -166,7 +188,6 @@ extern   "C"
 #define GPIO_BASE                       0x8A000000
 #define GREG_BASE                       0x8B000000  //Global Registers
 #define PIN_CTL_BASE                    0x8C000000
-#define ANA_PIN_CTL_BASE                0x82000180
 #define EPT_BASE                        0x8D000000
 #define PCM_CTL_BASE                    0x8E001000
 #define SPI_BASE                        0x8E002000
