@@ -803,6 +803,16 @@ void normal_mode(void)
 #endif
 
 }
+void special_mode(void)
+{
+    printf("special_mode\n");
+#if BOOT_NATIVE_LINUX
+    vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=special", BACKLIGHT_OFF);
+#else
+    vlx_nand_boot(BOOT_PART, "androidboot.mode=special", BACKLIGHT_OFF);
+#endif
+
+}
 #ifdef CONFIG_GENERIC_MMC
 #define MODEM_MEMORY_NAME "modem_memory.log"
 #define MODEM_MEMORY_SIZE  (22 * 1024 * 1024)
@@ -859,8 +869,8 @@ void watchdog_mode(void)
 	write_modem_memory();
 #endif
 #if BOOT_NATIVE_LINUX
-	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " wdgreboot", BACKLIGHT_ON);
+	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=wdgreboot", BACKLIGHT_OFF);
 #else
-	vlx_nand_boot(BOOT_PART, "wdgreboot", BACKLIGHT_ON);
+	vlx_nand_boot(BOOT_PART, "androidboot.mode=wdgreboot", BACKLIGHT_OFF);
 #endif
 }

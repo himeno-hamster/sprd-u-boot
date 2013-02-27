@@ -115,6 +115,8 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 			normal_mode();
     }else if(rst_mode == SLEEP_MODE){
 		sleep_mode();
+    }else if(rst_mode == SPECIAL_MODE){
+		special_mode();
 	}
 #ifdef CONFIG_SC8810
 //    normal_mode();
