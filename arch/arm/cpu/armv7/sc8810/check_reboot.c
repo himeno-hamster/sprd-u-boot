@@ -59,52 +59,34 @@ void power_down_devices(unsigned pd_cmd)
     power_down_cpu(0);
 }
 
-#define POWER_BUTTON_GPIO_NUM 163
-extern int sprd_gpio_get( struct gpio_chip * chip, unsigned offset);
-extern int sprd_gpio_request(struct gpio_chip *chip, unsigned offset);
-extern void sprd_gpio_init(void);
-static unsigned long pwr_gpio_cfg =
-    MFP_ANA_CFG_X(PBINT, AF0, DS1, F_PULL_UP,S_PULL_UP, IO_IE);
 int power_button_pressed(void)
 {
-#if 0
-    struct gpio_chip power_button_chip;
-    sprd_gpio_init();
-    sprd_mfp_config(&pwr_gpio_cfg, 1);
-    sprd_gpio_request(&power_button_chip, POWER_BUTTON_GPIO_NUM);
-    sprd_gpio_direction_input(&power_button_chip,POWER_BUTTON_GPIO_NUM); 
-    return sprd_gpio_get(&power_button_chip, POWER_BUTTON_GPIO_NUM);
+#ifdef CONFIG_SC7710G2
+	ANA_REG_OR(ANA_APB_CLK_EN, BIT_3);
+	ANA_REG_OR(ANA_RTC_CLK_EN, BIT_3);
 #else
 	ANA_REG_OR(ANA_APB_CLK_EN, BIT_3|BIT_11);
+#endif
 	ANA_REG_SET(ADI_EIC_MASK, 0xff);
 	udelay(3000);
 	int status = ANA_REG_GET(ADI_EIC_DATA);
 	//printf("eica status %x\n", status);
 	return !!(status & (1 << 3)/*PBINT*/);//low level if pb hold
-#endif
 }
 
-#define CHG_GPIO_NUM 162
-static unsigned long chg_gpio_cfg =
-    MFP_ANA_CFG_X(CHIP_RSTN, AF0, DS1, F_PULL_UP,S_PULL_UP, IO_IE);
-    //MFP_ANA_CFG_X(CHIP_RSTN, AF0, DS1, F_PULL_DOWN,S_PULL_UP, IO_IE);
 int charger_connected(void)
 {
- #if  0	//mingwei
-    struct gpio_chip chg_chip;
-    sprd_mfp_config(&chg_gpio_cfg, 1);
-    sprd_gpio_request(&chg_chip, CHG_GPIO_NUM);
-    sprd_gpio_direction_input(&chg_chip,CHG_GPIO_NUM); 
-    return sprd_gpio_get(&chg_chip, CHG_GPIO_NUM);
+#ifdef CONFIG_SC7710G2
+	ANA_REG_OR(ANA_APB_CLK_EN, BIT_3);
+	ANA_REG_OR(ANA_RTC_CLK_EN, BIT_3);
 #else
 	ANA_REG_OR(ANA_APB_CLK_EN, BIT_3|BIT_11);
+#endif
 	ANA_REG_SET(ADI_EIC_MASK, 0xff);
 	udelay(3000);
 	int status = ANA_REG_GET(ADI_EIC_DATA);
 	//printf("charger_connected eica status %x\n", status);
 	return !!(status & (1 << 2));
-#endif
-    
 }
 
 int alarm_triggered(void)
@@ -113,3 +95,4 @@ int alarm_triggered(void)
     printf("value of it 0x%x\n", ANA_REG_GET(ANA_RTC_INT_RSTS));
     return ANA_REG_GET(ANA_RTC_INT_RSTS) & BIT_4;
 }
+
