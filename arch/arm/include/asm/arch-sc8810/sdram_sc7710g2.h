@@ -66,7 +66,7 @@
                                                                          
 #define SDRAM_EXT_MODE_INVALID       0xffffffff  
 
-#define	SDRAM_EXT_MODE_REG           ((EXT_MODE_FLAG<<15) | (EXT_MODE_DS_HALF<<5) | EXT_MODE_PASR_ALL)  
+#define	SDRAM_EXT_MODE_REG           ((EXT_MODE_FLAG<<15) | (EXT_MODE_DS_FULL<<5) | EXT_MODE_PASR_ALL)  
 
 
 #define WAIT_EMC_IDLE           do{    \

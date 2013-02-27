@@ -12,13 +12,14 @@
 #define DLL_OFF FALSE
 #define DLL_ON TRUE
 
-#define FPGA_TEST	
+//#define FPGA_TEST	
+
 #ifdef FPGA_TEST
 #define EMC_CLK             CLK_48MHZ //CLK_333MHZ
 #define EMC_T_REF_CLK       6500000 //t_ref reference clk, freqency = 6.5mhz
 #define EMC_DLL_ON_OFF  	DLL_OFF
 #else
-#define EMC_CLK             CLK_333MHZ
+#define EMC_CLK             CLK_192MHZ
 #define EMC_T_REF_CLK       6500000 //t_ref reference clk, freqency = 6.5mhz
 #define EMC_DLL_ON_OFF  	DLL_ON
 #endif
@@ -41,7 +42,7 @@
 //#define CHIP14_HYNIX_DDR_H9DA4GH2GJAMCR  	
 //#define CHIP15_SAMSUNG_DDR_K522H1HACF    	
 
-#define SDRAM_AUTODETECT_SUPPORT
+//#define SDRAM_AUTODETECT_SUPPORT
 
 /*******************************************************************************
                           Parameter declare
