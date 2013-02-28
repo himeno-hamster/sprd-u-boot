@@ -778,7 +778,6 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 	/* DSP_PART */
 	printf("Reading dsp to 0x%08x\n", DSP_ADR);
-
 	if (!get_partition_info(p_block_dev, PARTITION_DSP, &info)) {
 		 if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, DSP_SIZE/512+1, (uint8*)DSP_ADR)){
 			printf("dsp nand read error \n");
@@ -823,7 +822,6 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 		/* MODEM_IMG_PART */
 		printf("Reading modem to 0x%08x\n", FIRMWARE_ADR);
-		
 		size = (FIRMWARE_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
 		if(size <= 0) {
 			printf("modem image should not be zero\n");
@@ -916,7 +914,6 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	////////////////////////////////////////////////////////////////
 	/* MODEM_PART */
 	printf("Reading modem to 0x%08x\n", MODEM_ADR);
-
 	size = (MODEM_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
 	if(size <= 0) {
 		printf("modem image should not be zero\n");
@@ -940,7 +937,6 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	////////////////////////////////////////////////////////////////
 	/* VMJALUNA_PART */
 	printf("Reading vmjaluna to 0x%08x\n", VMJALUNA_ADR);
-
 	size = (VMJALUNA_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
 	if(size <= 0) {
 		printf("vmjuluna image should not be zero\n");
@@ -956,6 +952,27 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		return;
 	}
 	secure_check(VMJALUNA_ADR, 0, VMJALUNA_ADR + VMJALUNA_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
+#endif
+
+#if((!BOOT_NATIVE_LINUX)||(BOOT_NATIVE_LINUX_MODEM))
+	////////////////////////////////////////////////////////////////
+	/* SIMLOCK_PART */
+	printf("Reading simlock to 0x%08x\n", SIMLOCK_ADR);
+	size = (SIMLOCK_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
+	if(size <= 0) {
+		printf("simlock should not be zero\n");
+		return;
+	}
+	if (!get_partition_info(p_block_dev, PARTITION_SIMLOCK, &info)) {
+		 if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, size/EMMC_SECTOR_SIZE, (uint8*)SIMLOCK_ADR)){
+			printf("simlock read error \n");
+			return;
+		}
+	}
+	else{
+		return;
+	}
+	secure_check(SIMLOCK_ADR, 0, SIMLOCK_ADR + SIMLOCK_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
 #endif
 
 	creat_cmdline(cmdline,hdr);
