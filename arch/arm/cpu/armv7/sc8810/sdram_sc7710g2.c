@@ -703,6 +703,12 @@ PUBLIC void EMC_PHY_Timing_Set(SDRAM_CFG_INFO_T_PTR mem_info,
 #endif
 
     }
+    else
+    {
+        REG32(EXT_MEM_DCFG6) = 0X400020;
+        REG32(EXT_MEM_DCFG7) = 0XF0000E;
+        REG32(EXT_MEM_DCFG8) = 0X400001;
+    }
 }
 
 void EMC_CHL_Init(EMC_CHL_NUM_E emc_axi_num)
@@ -723,105 +729,97 @@ void EMC_CHL_Init(EMC_CHL_NUM_E emc_axi_num)
 }
 
 
-#if 0
+#if 1
 void set_emc_pad(uint32 dqs_drv,uint32 data_drv,uint32 ctl_drv, uint32 clk_drv)
 {
-    uint32 i = 0;
-    //ckdp
-    REG32(PINMAP_REG_BASE + 0X2e8) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X2e8) |= clk_drv<<8;
+    unsigned int i = 0;
 
     //ckdm
-    REG32(PINMAP_REG_BASE + 0X2ec) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X2ec) |= clk_drv<<8;
+    REG32(PINMAP_REG_BASE + 0x204) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x204) |= clk_drv<<8;
+
+    //ckdp
+    REG32(PINMAP_REG_BASE + 0x208) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x208) |= clk_drv<<8;
 
     //addr
-    for (i = 0; i<14; i++)
+    for(i = 0; i < 14; i++)
     {
         REG32(PINMAP_REG_BASE + 0x20c + i*4) &= ~0x300;
         REG32(PINMAP_REG_BASE + 0x20c + i*4) |= ctl_drv<<8;
     }
 
-    //cke1
-    REG32(PINMAP_REG_BASE + 0x29c) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X29c) |= ctl_drv<<8;
-
-    //rasn
-    REG32(PINMAP_REG_BASE + 0x2f0) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X2f0) |= ctl_drv<<8;
-    //casn
-    REG32(PINMAP_REG_BASE + 0x2f4) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X2f4) |= ctl_drv<<8;
-    //wen
-    REG32(PINMAP_REG_BASE + 0x2f8) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X2f8) |= ctl_drv<<8;
-    //csn0
-    REG32(PINMAP_REG_BASE + 0x2fc) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X2fc) |= ctl_drv<<8;
-    //csn1
-    REG32(PINMAP_REG_BASE + 0x300) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X300) |= ctl_drv<<8;
-    //gpre_loop
-    REG32(PINMAP_REG_BASE + 0x304) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X304) |= ctl_drv<<8;
-    //gpst_loop
-    REG32(PINMAP_REG_BASE + 0x308) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X308) |= ctl_drv<<8;
     //bank0
-    REG32(PINMAP_REG_BASE + 0x30c) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X30c) |= ctl_drv<<8;
+    REG32(PINMAP_REG_BASE + 0x248) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x248) |= ctl_drv<<8;
+
     //bank1
-    REG32(PINMAP_REG_BASE + 0x310) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X310) |= ctl_drv<<8;
+    REG32(PINMAP_REG_BASE + 0x24c) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x24c) |= ctl_drv<<8;
+
+    //casn
+    REG32(PINMAP_REG_BASE + 0x250) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x250) |= ctl_drv<<8;
     //cke0
-    REG32(PINMAP_REG_BASE + 0x314) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X314) |= ctl_drv<<8;
+    REG32(PINMAP_REG_BASE + 0x254) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x254) |= ctl_drv<<8;
 
-    //data
-    for (i = 0; i<8; i++)
-    {
-        REG32(PINMAP_REG_BASE + 0x244 + i*4) &= ~0x300;
-        REG32(PINMAP_REG_BASE + 0x26c + i*4) &= ~0x300;
-        REG32(PINMAP_REG_BASE + 0x2c0 + i*4) &= ~0x300;
+    //cke1
+    REG32(PINMAP_REG_BASE + 0x258) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x258) |= ctl_drv<<8;
 
-        REG32(PINMAP_REG_BASE + 0x244 + i*4) |= data_drv<<8;
-        REG32(PINMAP_REG_BASE + 0x26c + i*4) |= data_drv<<8;
-        REG32(PINMAP_REG_BASE + 0x2c0 + i*4) |= data_drv<<8;
-    }
-    for (i = 0; i<2; i++)
-    {
-        REG32(PINMAP_REG_BASE + 0x294 + i*4) &= ~0x300;
-    }
-    for (i = 0; i<6; i++)
-    {
-        REG32(PINMAP_REG_BASE + 0x2a0 + i*4) &= ~0x300;
-    }
-
-
-    //dqs
-    REG32(PINMAP_REG_BASE + 0X268) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X290) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X2bc) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X2e4) &= ~0x300;
-
-    REG32(PINMAP_REG_BASE + 0X268) |= dqs_drv<<8;
-    REG32(PINMAP_REG_BASE + 0X290) |= dqs_drv<<8;
-    REG32(PINMAP_REG_BASE + 0X2bc) |= dqs_drv<<8;
-    REG32(PINMAP_REG_BASE + 0X2e4) |= dqs_drv<<8;
+    //csn0
+    REG32(PINMAP_REG_BASE + 0x25c) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x25c) |= ctl_drv<<8;
+    //csn1
+    REG32(PINMAP_REG_BASE + 0x260) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x260) |= ctl_drv<<8;
 
     //dqm
-    REG32(PINMAP_REG_BASE + 0X264) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X28c) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X2b8) &= ~0x300;
-    REG32(PINMAP_REG_BASE + 0X2e0) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x264) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x264) |= data_drv<<8;
+    REG32(PINMAP_REG_BASE + 0x268) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x268) |= data_drv<<8;
+    REG32(PINMAP_REG_BASE + 0x26c) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x26c) |= data_drv<<8;
+    REG32(PINMAP_REG_BASE + 0x270) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x270) |= data_drv<<8;
 
-    REG32(PINMAP_REG_BASE + 0X264) |= data_drv<<8;
-    REG32(PINMAP_REG_BASE + 0X28c) |= data_drv<<8;
-    REG32(PINMAP_REG_BASE + 0X2b8) |= data_drv<<8;
-    REG32(PINMAP_REG_BASE + 0X2e0) |= data_drv<<8;
+    //dqs
+    REG32(PINMAP_REG_BASE + 0x274) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x274) |= dqs_drv<<8;
+    REG32(PINMAP_REG_BASE + 0x278) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x278) |= dqs_drv<<8;
+    REG32(PINMAP_REG_BASE + 0x27c) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x27c) |= dqs_drv<<8;
+    REG32(PINMAP_REG_BASE + 0x280) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x280) |= dqs_drv<<8;
 
+    //data
+    for(i = 0; i < 32; i++)
+    {
+        REG32(PINMAP_REG_BASE + 0x284 + i*4) &= ~0x300;
+        REG32(PINMAP_REG_BASE + 0x284 + i*4) |= data_drv<<8;
+    }
+
+    //gpre_loop
+    REG32(PINMAP_REG_BASE + 0x304) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x304) |= ctl_drv<<8;
+
+    //gpst_loop
+    REG32(PINMAP_REG_BASE + 0x308) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x308) |= ctl_drv<<8;
+
+    //rasn
+    REG32(PINMAP_REG_BASE + 0x338) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x338) |= ctl_drv<<8;
+
+    //wen
+    REG32(PINMAP_REG_BASE + 0x33c) &= ~0x300;
+    REG32(PINMAP_REG_BASE + 0x33c) |= ctl_drv<<8;
 
 }
+
 
 
 void set_sc7702_clk(void)
@@ -1068,7 +1066,7 @@ LOCAL BOOLEAN DRAM_Para_SelfAdapt(SDRAM_CFG_INFO_T_PTR pCfg)
             )
         {
             pCfg->data_width = DATA_WIDTH_32;
-            pCfg->sdram_type == SDR_SDRAM;
+            pCfg->sdram_type = SDR_SDRAM;
         }
         else if((pCfg->data_width == DATA_WIDTH_32)
                 && (pCfg->sdram_type == SDR_SDRAM)
@@ -1089,6 +1087,7 @@ LOCAL BOOLEAN DRAM_Para_SelfAdapt(SDRAM_CFG_INFO_T_PTR pCfg)
 
 #endif
 
+
 void DMC_Init(uint32 clk)
 {
     int i;
@@ -1097,20 +1096,19 @@ void DMC_Init(uint32 clk)
     SDRAM_TIMING_PARA_T_PTR mem_timing = SDRAM_GetTimingPara();
     EMC_PHY_L1_TIMING_T_PTR emc_phy_l1_timing = NULL;
     EMC_PHY_L2_TIMING_T_PTR emc_phy_l2_timing = EMC_GetPHYL2_Timing();
-//    set_emc_pad(1,1,0,2);
+
+#ifdef CONFIG_SC7710G2
+    set_emc_pad(2,0,2,3);
+#endif
 //    set_sc7702_clk();	//open only when chip test
 //    emc_phy_l1_timing = EMC_GetPHYL1_Timing(mem_info->sdram_type, mem_info->cas_latency);
 //    EMC_Init(EMC_CLK, EMC_AHB_ARM0, mem_info, mem_timing, emc_phy_l1_timing, emc_phy_l2_timing);
 //    DRAM_CAP =  SDRAM_GetCap(mem_info); // get size
+    EMC_SoftReset();
 
     EMC_CHL_Init(EMC_AXI_ARM);
-    
-    emc_phy_l1_timing = EMC_GetPHYL1_Timing(mem_info->sdram_type, mem_info->cas_latency);
-    EMC_PHY_Timing_Set(mem_info, emc_phy_l1_timing, emc_phy_l2_timing);
 
-    EMC_MEM_Timing_Set(emc_freq, mem_info, mem_timing);
-
-#ifdef SDRAM_AUTODETECT_SUPPORT
+#if 0 //def SDRAM_AUTODETECT_SUPPORT
     for (i=0; i<3; i++)
     {
         if (DRAM_Para_SelfAdapt(mem_info))
@@ -1127,13 +1125,10 @@ void DMC_Init(uint32 clk)
     EMC_AddrMode_Set(mem_info);
     EMC_CSx_Burst_Set(EMC_CS0, mem_info);
     EMC_CSx_Burst_Set(EMC_CS1, mem_info);
-    SDRAM_Type_Set(mem_info);
+//    SDRAM_Type_Set(mem_info);
     
     EMC_PHY_Mode_Set(mem_info);
     EMC_PHY_Latency_Set(mem_info);
-    
-#endif
-
     emc_phy_l1_timing = EMC_GetPHYL1_Timing(mem_info->sdram_type, mem_info->cas_latency);
     EMC_PHY_Timing_Set(mem_info, emc_phy_l1_timing, emc_phy_l2_timing);
 
@@ -1141,12 +1136,24 @@ void DMC_Init(uint32 clk)
 
     EMC_SCMD_Issue(mem_info);
     delay(100);
+#endif
+
+    
 
     return;
 }
 
 PUBLIC void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 {
+#ifdef CONFIG_SC7710G2
+    *(volatile uint32 *)0x20900224 = 0x19001130;
+//    *(volatile uint32 *)0x20900224 = 0x19803000;  // clk
+
+    *(volatile uint32 *)0x8200092C |= 0x6; // dcdc mem 1.8V
+    delay(200);
+    *(volatile uint32 *)0x8200092C &= (~0x1F);
+#endif
+
 	DMC_Init(EMC_CLK);
 }
 
