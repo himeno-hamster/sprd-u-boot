@@ -25,5 +25,6 @@ PARTITION_CFG const g_sprd_emmc_partition_cfg[MAX_PARTITION_INFO] = {
 #else
 	{PARTITION_SD, 1000 * 1024, PARTITION_RAW},
 #endif
+	{PARTITION_SIMLOCK, 512, PARTITION_RAW},
         {0, 0, 0}
 };

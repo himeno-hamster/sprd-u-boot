@@ -34,6 +34,7 @@ extern unsigned char raw_header[8192];
 #define SPL_PART "spl"
 #define FIRMWARE_PART "firmware"
 #define SIMLOCK_PART "simlock"
+#define SIMLOCK_SIZE	1024
 
 #ifdef CONFIG_TIGER
 #define DSP_ADR          0x80020000
@@ -42,6 +43,8 @@ extern unsigned char raw_header[8192];
 #define RUNTIMENV_ADR    0x804a0000
 #define MODEM_ADR        0x80500000
 #define RAMDISK_ADR      0x85500000
+#define SIMLOCK_ADR      0x804fe000
+
 #if BOOT_NATIVE_LINUX
 //pls make sure uboot running area
 #define VLX_TAG_ADDR     (0x82000100)
@@ -70,6 +73,7 @@ extern unsigned char raw_header[8192];
 #define RUNTIMENV_ADR    0x004a0000
 #define MODEM_ADR        0x00500000
 #define RAMDISK_ADR      0x05500000
+#define SIMLOCK_ADR      0x004fe000
 
 #if BOOT_NATIVE_LINUX
 //pls make sure uboot running area
