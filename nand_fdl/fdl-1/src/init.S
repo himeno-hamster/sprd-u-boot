@@ -134,7 +134,6 @@ reset:
 	MOV R1, #0
 	MOV R2, #0
 	MOV R3, #0
-;	bl  DMC_Init
 	bl  Chip_Init 
 #else
 	LDR R0, =400000000
