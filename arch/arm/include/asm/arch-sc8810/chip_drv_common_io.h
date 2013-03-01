@@ -27,6 +27,9 @@ extern   "C"
 /**---------------------------------------------------------------------------*
 **                               Micro Define                                **
 **---------------------------------------------------------------------------*/
+
+#include "sci_types.h"
+
 typedef uint32  DRV_WORD;
 typedef uint8   DRV_BYTE;
 typedef uint16  DRV_WORD16;

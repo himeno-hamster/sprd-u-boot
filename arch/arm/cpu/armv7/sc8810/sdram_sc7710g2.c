@@ -23,6 +23,7 @@
 
 #include <asm/arch/sdram_sc7710g2.h>
 #include <asm/arch/emc_config.h>
+#include "asm/arch/chip_plf_export.h"
 
 #if defined(EMC_TEST)
 //#include "EMC_test.h"
@@ -58,7 +59,8 @@ uint32  SDRAM_BASE    =    	0x00000000;//(128*1024*1024/2)//0x30000000
 #define WIDTH32_OFFSET      5UL   // 32BIT = 2^5
 #define BANK_OFFSET         2UL   // 4BANK = 2^2
 
-
+LOCAL void set_cp_emc_pad(void);
+LOCAL void set_cp_jtag_pad(void);
 
 /**---------------------------------------------------------------------------*
  **                     Static Function Prototypes                            *
@@ -868,6 +870,105 @@ void set_sc7702_clk(void)
 
 
 
+LOCAL void set_cp_emc_pad(void) {
+    u32 dqs_drv = 0;
+    u32 data_drv = 0;
+    u32 ctl_drv = 1;
+    u32 clk_drv = 0;
+
+    u32 i = 0;
+    //ckdp
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0xE0), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0xE0), clk_drv<<8);
+
+    //ckdm
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0xDC), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0xDC), clk_drv<<8);
+
+    //addr
+    for (i = 0; i<14; i++) {
+        CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0xE4 + i*4), ~0x300);
+        CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0xE4 + i*4), ctl_drv<<8);
+    }
+
+    //bank0
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x11c), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x11c), ctl_drv<<8);
+    //bank1
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x120), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x120), ctl_drv<<8);
+    //casn
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x124), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x124), ctl_drv<<8);
+
+    //cke0
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x128), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x128), ctl_drv<<8);
+
+    //csn0
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x12c), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x12c), ctl_drv<<8);
+
+    //dqm
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x130), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x130), data_drv<<8);
+
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x134), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x134), data_drv<<8);
+
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x138), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x138), data_drv<<8);
+
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x13C), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x13C), data_drv<<8);
+
+    //dqs
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x140), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x140), dqs_drv<<8);
+
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x144), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x144), dqs_drv<<8);
+
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x148), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x148), dqs_drv<<8);
+
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x14C), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x14C), dqs_drv<<8);
+
+    //data
+    for (i = 0; i<32; i++) {
+        CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x150 + i*4), ~0x300);
+        CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x150 + i*4), data_drv<<8);
+    }
+
+    //gpre_loop
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x1D0), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x1D0), ctl_drv<<8);
+    //gpst_loop
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x1D4), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x1D4), ctl_drv<<8);
+
+    //rasn
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x1D8), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x1D8), ctl_drv<<8);
+
+    //wen
+    CHIP_REG_AND((CHIPPIN_CTL_BEGIN + 0x1DC), ~0x300);
+    CHIP_REG_OR((CHIPPIN_CTL_BEGIN + 0x1DC), ctl_drv<<8);
+
+}
+
+LOCAL void set_cp_jtag_pad(void) {
+    /*CP Jtag pin config*/
+    CHIP_REG_OR(0x8B000008, BIT_13);//pin eb
+
+    CHIP_REG_SET(0x8C000588, 0x10108);
+    CHIP_REG_SET(0x8C00058C, 0x10188);
+    CHIP_REG_SET(0x8C000590, 0x10188);
+    CHIP_REG_SET(0x8C000594, 0x10188);
+    CHIP_REG_SET(0x8C000598, 0x10188);
+}
+
 #ifdef SDRAM_AUTODETECT_SUPPORT
 LOCAL BOOLEAN __is_rw_ok(uint32 addr,uint32 val)
 {
@@ -1143,18 +1244,85 @@ void DMC_Init(uint32 clk)
     return;
 }
 
-PUBLIC void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
-{
+void set_dll_clock(void) {
+    uint32 i;
+
+    // GPU AXI 256M
+    REG32(0x8b00002c) &= ~(0x3);
+
+    // A5 AXI DIV
+    REG32(0x20900238) |= (1 << 11);
+    REG32(0x20900238) &= ~(1 <<12);
+
+    //APB_GEN1_PCLK M_PLL_CTRL_WE
+    REG32(0x8b000018) |= (1 << 9);
+
+    //set MPLL to 900MHz
+    i = REG32(0x8b000024);
+    i &= ~ 0x7ff;
+#if ARMCLK_CONFIG_EN
+    i |= s_emc_config.arm_clk;
+#else
+    //i |= 0xFA;     //1000M
+    //i |= 0xe1;     //900M
+    i |= 0xC8;   //800M
+#endif
+    REG32(0x8b000024) = i;
+
+    //set DPLL of EMC to 400MHz
+    i = REG32(0x8b000040);
+    i &= ~ 0x7ff;
+
+#if ARMCLK_CONFIG_EN
+    i |= s_emc_config.emc_clk;
+#else
+    //i |= 0x80;     //512M
+    //i |= 0x69;   //420M
+    i |= 0x64;   //400M
+#endif
+
+    REG32(0x8b000040) = i;
+    REG32(0x8b000018) &= ~(1 << 9);
+
+    // AHB_ARM_CLK SET
+#if 1	// emc from DPLL
+    //                    CLK_MCU_SEL | CLK_EMC_SEL
+    REG32(0x20900224) = (3 << 23) | (3 << 12);  // 26MHz
+    //                   CLK_AHB_DIV | CLK_EMC_DIV | CLK_DBG_DIV
+    REG32(0x20900224) |= (3 << 4) | (1 << 8) | (4 << 14);
+
+    REG32(0x20900224) = (3 << 4) | (1 << 8) | (4 << 14) | (1 << 12/*select dpll*/);
+
+    for(i = 0; i < 50; i++);
+#else   // EMC from MPLL
+    REG32(0x20900224) = (3 << 23) | (3 << 12);
+    REG32(0x20900224) |= (3 << 4) | (1 << 8) | (7 << 14);
+    REG32(0x20900224) |= (1 << 23) | (3 << 4) | (1 << 8) | (7 << 14);
+    for (i = 0; i < 1000; i++);
+
+    REG32(0x20900224) = (3 << 4) | (1 << 8) | (7 << 14) | (0 << 12/*select mpll*/);
+#endif
+
+
+}
+
+
+PUBLIC void Chip_Init(void) { /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 #ifdef CONFIG_SC7710G2
-    *(volatile uint32 *)0x20900224 = 0x19001130;
+    set_dll_clock();
+
+//    *(volatile uint32 *)0x20900224 = 0x19001130;
 //    *(volatile uint32 *)0x20900224 = 0x19803000;  // clk
 
     *(volatile uint32 *)0x8200092C |= 0x6; // dcdc mem 1.8V
     delay(200);
     *(volatile uint32 *)0x8200092C &= (~0x1F);
+
+    set_cp_emc_pad();
+    set_cp_jtag_pad();
 #endif
 
-	DMC_Init(EMC_CLK);
+    DMC_Init(EMC_CLK);
 }
 
 #ifdef   __cplusplus
