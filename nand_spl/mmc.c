@@ -1,9 +1,10 @@
 #include <config.h>
 #include "asm/arch/sci_types.h"
-#if defined (CONFIG_TIGER)
-#include "asm/arch/sc8810_reg_global.h" 
-#include "asm/arch/sc8810_reg_ahb.h"
-#include "asm/arch/sc8810_module_config.h" 
+#if defined (CONFIG_SC8830) 
+#include "asm/arch/sprd_reg_global.h" 
+#include "asm/arch/sprd_reg_ahb.h"
+#include "asm/arch/sprd_module_config.h" 
+#include "asm/arch/regs_ahb.h"
 #else
 #include "asm/arch/sc8810_reg_global.h" 
 #include "asm/arch/sc8810_reg_ahb.h"
@@ -349,7 +350,9 @@ typedef enum
 }SDIO_CARD_PAL_PWR_E;
 
 
-#if defined (CONFIG_SC8825) 
+#if defined (CONFIG_SC8830)
+
+#elif defined (CONFIG_SC8825) 
 LDO_CTL_T ldo_ctl_data_sdio3 =
     {
         LDO_LDO_SDIO3,  ANA_LDO_PD_CTL1, BIT_4,  BIT_5,  ANA_LDO_VCTL4,  BIT_4, BIT_5,
@@ -568,7 +571,7 @@ PUBLIC ISR_EXE_T _SDHOST_IrqHandle (uint32 isrnum)
     SDHOST_HANDLE sdhost_handler;
 
     //buffer.slotNum = _GetIntSDHOSTSlotNum();
-#if defined (CONFIG_TIGER) || defined (CONFIG_SC7710G2)
+#if defined (CONFIG_TIGER) || defined (CONFIG_SC7710G2) || defined (CONFIG_SC8830)
     buffer.slotNum =  SDHOST_SLOT_7;
 #else
     buffer.slotNum =  SDHOST_SLOT_1;
@@ -633,48 +636,54 @@ LOCAL void  _irqCardProc (uint32 msg, uint32 errCode, SDHOST_SLOT_NO slotNum)
 
 PUBLIC void SDHOST_SD_clk_On (SDHOST_HANDLE sdhost_handler)
 {
-                sdhost_handler->host_cfg->HOST_CTL1 |= BIT_0;
-                while (0 == (sdhost_handler->host_cfg->HOST_CTL1 & BIT_1)) {}
-                sdhost_handler->host_cfg->HOST_CTL1 |= BIT_2;
-                while (0 == (sdhost_handler->host_cfg->HOST_CTL1 & BIT_1)) {} //maybe it is not nessarry
+    sdhost_handler->host_cfg->HOST_CTL1 |= BIT_0;
+    while (0 == (sdhost_handler->host_cfg->HOST_CTL1 & BIT_1)) {}
+    sdhost_handler->host_cfg->HOST_CTL1 |= BIT_2;
+    while (0 == (sdhost_handler->host_cfg->HOST_CTL1 & BIT_1)) {} //maybe it is not nessarry
 }
 
 PUBLIC uint32 SDHOST_BaseClk_Set (uint32 sdio_base_clk)
 {
     uint32 clk = 0;
     //Select the clk source of SDIO
-#if defined (CONFIG_TIGER)
+#if   defined (CONFIG_SC8830)
+	 clk = SDIO_BASE_CLK_26M;
+#elif defined (CONFIG_TIGER)
      REG32 (GR_CLK_GEN5) &= ~ (BIT_23|BIT_24);
      clk = SDIO_BASE_CLK_384M;
 #elif defined (CONFIG_SC7710G2)
-    REG32 (GR_CLK_GEN7) = (REG32 (GR_CLK_GEN7) & (~ (BIT_23|BIT_24))) | BIT_23;
-    clk = SDIO_BASE_CLK_384M;
+     REG32 (GR_CLK_GEN7) = (REG32 (GR_CLK_GEN7) & (~ (BIT_23|BIT_24))) | BIT_23;
+     clk = SDIO_BASE_CLK_384M;
 #else
-    REG32 (GR_CLK_GEN5) &= ~ (BIT_17|BIT_18);
+     REG32 (GR_CLK_GEN5) &= ~ (BIT_17|BIT_18);
      clk = SDIO_BASE_CLK_48M;
      REG32 (GR_CLK_GEN5) |= (2<<19);
 #endif
     //REG32 (GR_CLK_GEN5) |= (2<<17);
-        
     return clk;
 }
 
 PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
 {
     uint32 status = 0, i = 0;
-
-#if defined (CONFIG_TIGER)
+#if   defined (CONFIG_SC8830)
+     REG32 (AHB_CTL0)     |= BIT_11;
+     REG32 (AHB_SOFT_RST) |= BIT_14;
+     REG32 (AHB_SOFT_RST) &=~BIT_14;
+     sdio_port_ctl[slot_NO].open_flag = TRUE;
+     sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (SDIO_BASE_CLK_26M);
+#elif defined (CONFIG_TIGER)
      REG32 (AHB_CTL0)     |= BIT_23;
      REG32 (AHB_SOFT_RST) |= BIT_21;
      REG32 (AHB_SOFT_RST) &= ~BIT_21;
      sdio_port_ctl[slot_NO].open_flag = TRUE;
      sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (SDIO_BASE_CLK_384M);
 #elif defined(CONFIG_SC7710G2)
-    REG32 (AHB_CTL6)     |= BIT_1;
-    REG32 (AHB_SOFT2_RST) |= BIT_1;
-    REG32 (AHB_SOFT2_RST) &= ~BIT_1;
-    sdio_port_ctl[slot_NO].open_flag = TRUE;
-    sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (SDIO_BASE_CLK_384M);
+     REG32 (AHB_CTL6)     |= BIT_1;
+     REG32 (AHB_SOFT2_RST) |= BIT_1;
+     REG32 (AHB_SOFT2_RST) &= ~BIT_1;
+     sdio_port_ctl[slot_NO].open_flag = TRUE;
+     sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (SDIO_BASE_CLK_384M);
 #else
      REG32 (AHB_CTL0)     |= BIT_19;
      REG32 (AHB_SOFT_RST) |= BIT_16;
@@ -683,8 +692,8 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
      sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (SDIO_BASE_CLK_48M);
 #endif
 
-    switch (slot_NO)
-    {
+     switch (slot_NO)
+     {
         case SDHOST_SLOT_0:
             {
                 sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) SDIO0_BASE_ADDR);
@@ -700,7 +709,7 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
 #endif				
             }
             break;
-#if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
+#if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2) || defined (CONFIG_SC8830)
         case SDHOST_SLOT_2:
             {
                 sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) (SDIO0_BASE_ADDR+0x200) );
@@ -751,7 +760,9 @@ PUBLIC SDIO_CARD_PAL_HANDLE SDIO_Card_Pal_Open (SDIO_CARD_PAL_SLOT_E slotNo)
 {
     s_sdioCardPalHd[slotNo].sdio_port = (SDHOST_HANDLE) SDHOST_Register ( (SDHOST_SLOT_NO) slotNo,_irqCardProc);
     s_sdioCardPalHd[slotNo].sdio_No = slotNo;
+#ifndef CONFIG_SC8830
    * (volatile uint32 *) AHB_SDIO_CTL = (AHB_SDIO_CTRL_SLOT0); //select master1
+#endif
     SDHOST_SD_clk_On(s_sdioCardPalHd[slotNo].sdio_port);
     return &s_sdioCardPalHd[slotNo];
 }
@@ -807,9 +818,9 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 
     SDHOST_NML_IntStatus_En (handle->sdio_port, tmpIntFilter);
     SDHOST_NML_IntSig_En (handle->sdio_port, tmpIntFilter);
-
+#ifndef CONFIG_SC8830
     *(volatile uint32 *)(INT_IRQ_EN) |= (0x1<<TB_SDIO1_INT);
-
+#endif
     //_InitCardEvent (handle);
     s_CardErrCode = 0;
     s_CardEvent = 0;
@@ -822,7 +833,7 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
     }
 
     //SDHOST_SetCmdArg (handle->sdio_port,argument);
-        handle->sdio_port->host_cfg->CMD_ARGUMENT = argument;
+    handle->sdio_port->host_cfg->CMD_ARGUMENT = argument;
     SDHOST_SetCmd (handle->sdio_port,s_cmdDetail[cmd].cmdIndex,s_cmdDetail[cmd].transmode,CMD_TYPE_NORMAL, s_cmdDetail[cmd].Response);
 
 //---
@@ -1447,10 +1458,13 @@ LOCAL void _Reset_ALL (SDHOST_HANDLE sdhost_handler)
 LOCAL void _Reset_MODULE (SDHOST_HANDLE sdhost_handler)
 {
     SCI_ASSERT (TRUE == _RegisterVerifyHOST (sdhost_handler));/*assert verified*/
-
+#ifdef CONFIG_SC8830
+    CHIP_REG_OR(AHB_SOFT_RST, AHB_EMMC_RST);
+    CHIP_REG_AND(AHB_SOFT_RST, ~AHB_EMMC_RST);
+#else
     CHIP_REG_OR(AHB_SOFT_RST, AHB_SDIO_SOFT_RST);
     CHIP_REG_AND(AHB_SOFT_RST, ~AHB_SDIO_SOFT_RST);
-
+#endif
 }
 
 LOCAL void _Reset_DAT_CMD (SDHOST_HANDLE sdhost_handler)
@@ -1621,26 +1635,40 @@ PUBLIC void SDHOST_SetDataParam (SDHOST_HANDLE sdhost_handler,uint32 block_size,
 
 #define SECTOR_MODE 0x40000000 
 #define BYTE_MODE   0x00000000 
-
 PUBLIC uint32 SDHOST_SD_Clk_Freq_Set (SDHOST_HANDLE sdhost_handler,uint32 sdio_clk)
 {
     volatile uint32 tmpReg;
     uint32 clkDiv;
 
-    sdhost_handler->host_cfg->HOST_CTL1 &= (~BIT_2);
+    SCI_ASSERT (TRUE == _RegisterVerifyHOST (sdhost_handler));/*assert verified*/
+    SCI_ASSERT (0 != sdio_clk);/*assert verified*/
+
+    sdio_clk = (sdio_clk > SDIO_SD_MAX_CLK) ? (SDIO_SD_MAX_CLK) : (sdio_clk);
 
     //SDCLK Frequency Select ,Configure SDCLK select
     clkDiv = sdhost_handler->baseClock/sdio_clk;
-
+#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined (CONFIG_SC8830)
+    clkDiv /= 2;
+#endif
     if (0 != sdhost_handler->baseClock%sdio_clk)
     {
         clkDiv++;
     }
 
     tmpReg = sdhost_handler->host_cfg->HOST_CTL1;
+#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined (CONFIG_SC8830)
+    clkDiv--;
+    tmpReg &= (~ (0x3ff<<6));
+    tmpReg |= clkDiv&(0x3<<6);
+    tmpReg |= (clkDiv&0xff)<<8;
+    sdhost_handler->sdClock = sdhost_handler->baseClock/(2*(clkDiv+1));
+#else    
     tmpReg &= (~ (0xff<<8));
-
-    if (128 < clkDiv)
+    if (256 < clkDiv)
+    {
+        SCI_ASSERT (0);/*assert to do*/
+    }
+    else if (128 < clkDiv)
     {
         clkDiv = 256;
         tmpReg |= (0x80 << 8);
@@ -1689,16 +1717,19 @@ PUBLIC uint32 SDHOST_SD_Clk_Freq_Set (SDHOST_HANDLE sdhost_handler,uint32 sdio_c
     {
         SCI_ASSERT (0);/*assert to do*/
     }
+    sdhost_handler->sdClock = sdhost_handler->baseClock/clkDiv;
+#endif
 
     sdhost_handler->host_cfg->HOST_CTL1 = tmpReg;
-    sdhost_handler->sdClock = sdhost_handler->baseClock/clkDiv;
+
     return sdhost_handler->sdClock;
 }
 
 PUBLIC BOOLEAN SDIO_Card_Pal_SetClk (SDIO_CARD_PAL_HANDLE handle)
 {
-
+#ifndef CONFIG_SC8830
 	* (volatile uint32 *) AHB_SDIO_CTL = (AHB_SDIO_CTRL_SLOT0); //select master1
+#endif
 	SDHOST_SD_Clk_Freq_Set (handle->sdio_port,25000000);
 	SDHOST_SD_clk_On (handle->sdio_port);
 
@@ -1930,6 +1961,8 @@ LDO_ERR_E LDO_SetVoltLevel(LDO_ID_E ldo_id, LDO_VOLT_LEVEL_E volt_level)
 		ctl = &ldo_ctl_data_sdio3;
 	else
  		ctl = &ldo_ctl_data_vdd30;  
+#elif defined (CONFIG_SC8830)
+
 #else
 if( LDO_LDO_SDIO1 == ldo_id )
 	ctl = &ldo_ctl_data_sdio1;
@@ -1957,34 +1990,41 @@ else
 
  LDO_ERR_E LDO_TurnOnLDO(LDO_ID_E ldo_id)
 {
+#if defined (CONFIG_SC8830)
+
+#else
 	LDO_CTL_PTR ctl = NULL;
-                   uint32 reg_val;
+    uint32 reg_val;
+
 #if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
 	if( LDO_LDO_SDIO3 == ldo_id )
 		ctl = &ldo_ctl_data_sdio3;
 	else
- 		ctl = &ldo_ctl_data_vdd30;  
+ 		ctl = &ldo_ctl_data_vdd30;
 #else
-if( LDO_LDO_SDIO1 == ldo_id )
-	ctl = &ldo_ctl_data_sdio1;
-else
- 	ctl = &ldo_ctl_data_sim2;  
+	if( LDO_LDO_SDIO1 == ldo_id )
+		ctl = &ldo_ctl_data_sdio1;
+	else
+ 		ctl = &ldo_ctl_data_sim2;
 #endif
 
 	if(ctl->ref == 0)
-        #ifdef CONFIG_SC7710G2
-		ANA_REG_SET(ctl->bp_rst_reg,ctl->bp_rst);   
-        #else
+#ifdef CONFIG_SC7710G2
+		ANA_REG_SET(ctl->bp_rst_reg,ctl->bp_rst);
+#else
 		REG_SETCLRBIT(ctl->bp_reg, ctl->bp_rst, ctl->bp);
-        #endif
+#endif
 
 	ctl->ref++;
-
+#endif
 	return 0;
 }
 
  LDO_ERR_E LDO_TurnOffLDO(LDO_ID_E ldo_id)
 {
+#if defined (CONFIG_SC8830)
+
+#else
 	LDO_CTL_PTR ctl = NULL;
                    uint32 reg_val;
 #if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
@@ -2007,7 +2047,7 @@ else
         #else
 		REG_SETCLRBIT(ctl->bp_reg, ctl->bp, ctl->bp_rst);
         #endif
-        
+#endif
 	return 0;
 }
 
@@ -2026,6 +2066,8 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
             LDO_SetVoltLevel (LDO_LDO_VDD30, LDO_VOLT_LEVEL1); 
             LDO_TurnOnLDO(LDO_LDO_SDIO3);
             LDO_TurnOnLDO(LDO_LDO_VDD30);
+#elif defined (CONFIG_SC8830)
+
 #else
             LDO_SetVoltLevel (LDO_LDO_SDIO1, LDO_VOLT_LEVEL3);
             LDO_SetVoltLevel (LDO_LDO_SIM2, LDO_VOLT_LEVEL1); 
@@ -2148,7 +2190,7 @@ PUBLIC BOOLEAN Emmc_Init()
 	
 	//emmc_handle = CARD_SDIO_Open(CARD_SDIO_SLOT_1);
 	emmc_handle = &cadport;
-#if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
+#if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2) || defined (CONFIG_SC8830)
 	emmc_handle->sdioPalHd = SDIO_Card_Pal_Open(SDIO_CARD_PAL_SLOT_7);
 #else	
 	emmc_handle->sdioPalHd = SDIO_Card_Pal_Open(SDIO_CARD_PAL_SLOT_1);

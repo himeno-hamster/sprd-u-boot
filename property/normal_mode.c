@@ -652,14 +652,14 @@ void lcd_display_logo(int backlight_set,ulong bmp_img,size_t size)
 	extern void set_backlight(uint32_t value);
 	if(backlight_set == BACKLIGHT_ON){
 		lcd_display_bitmap((ulong)bmp_img, 0, 0);
-#if defined(CONFIG_SC8810) || defined(CONFIG_SC8825)
+#if defined(CONFIG_SC8810) || defined(CONFIG_SC8825) || defined(CONFIG_SC8830)
 		Dcache_CleanRegion((unsigned int)(lcd_base), size);//Size is to large.
 #endif
 		lcd_display();
 		set_backlight(255);
 	}else{
 		memset((unsigned int)lcd_base, 0, size);
-#if defined(CONFIG_SC8810) || defined(CONFIG_SC8825)
+#if defined(CONFIG_SC8810) || defined(CONFIG_SC8825) || defined(CONFIG_SC8830)
 		Dcache_CleanRegion((unsigned int)(lcd_base), size);//Size is to large.
 #endif
 		lcd_display();
@@ -770,12 +770,11 @@ void creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 void vlx_entry()
 {
 	void (*entry)(void) = (void*) VMJALUNA_ADR;
-#ifndef CONFIG_SC8810
-#ifndef CONFIG_TIGER
+#if !(defined CONFIG_SC8810 || defined CONFIG_TIGER || defined CONFIG_SC8830)
 	MMU_InvalideICACHEALL();
 #endif
-#endif
-#if (defined CONFIG_SC8810) || (defined CONFIG_SC8825)
+
+#if (defined CONFIG_SC8810) || (defined CONFIG_SC8825) || (defined CONFIG_SC8830)
 	MMU_DisableIDCM();
 #endif
 
@@ -791,7 +790,7 @@ void vlx_entry()
 }
 void normal_mode(void)
 {
-#if defined (CONFIG_SC8810) || defined (CONFIG_SC8825)
+#if defined (CONFIG_SC8810) || defined (CONFIG_SC8825) || defined (CONFIG_SC8830)
     //MMU_Init(CONFIG_MMU_TABLE_ADDR);
 	vibrator_hw_init();
 #endif
@@ -809,7 +808,7 @@ void normal_mode(void)
 #define MODEM_MEMORY_SIZE  (22 * 1024 * 1024)
 #ifdef CONFIG_SC8810
 #define MODEM_MEMORY_ADDR 0
-#elif defined (CONFIG_SC8825) || defined (CONFIG_TIGER)
+#elif defined (CONFIG_SC8825) || defined (CONFIG_TIGER) || defined(CONFIG_SC8830)
 #define MODEM_MEMORY_ADDR 0x80000000
 #endif
 void write_modem_memory()

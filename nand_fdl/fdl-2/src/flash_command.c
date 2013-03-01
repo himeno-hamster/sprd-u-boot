@@ -1449,7 +1449,7 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 			}
 		}
     	} else if (is_nbl_write == 1) {
-#if (defined(CONFIG_NAND_SC8810) || defined(CONFIG_NAND_TIGER))//only for sc8810 to write spl
+#if (defined(CONFIG_NAND_SC8810) || defined(CONFIG_NAND_TIGER) || defined(CONFIG_NAND_SC8830))//only for sc8810 to write spl
 		g_prevstatus = nand_write_fdl(0x0, g_FixNBLBuf);
 #else
 
@@ -1622,7 +1622,7 @@ int NandWriteAndCheck(unsigned int size, unsigned char *buf)
     {
         return NAND_SUCCESS;
     }
-#if !(defined(CONFIG_NAND_SC8810) || defined(CONFIG_NAND_TIGER))
+#if !(defined(CONFIG_NAND_SC8810) || defined(CONFIG_NAND_TIGER) || defined(CONFIG_NAND_SC8830))
     NandChangeBootloaderHeader((unsigned int *) g_FixNBLBuf);
 #endif	
     return NAND_SUCCESS;
@@ -2009,7 +2009,7 @@ int FDL2_DramEnd ()
 		}
 		//////////////////////////////
     	} else if (is_nbl_write == 1) {
-#if (defined(CONFIG_NAND_SC8810) || defined(CONFIG_NAND_TIGER))	//only for write spl
+#if (defined(CONFIG_NAND_SC8810) || defined(CONFIG_NAND_TIGER) || defined (CONFIG_NAND_SC8830))	//only for write spl
 		g_prevstatus = nand_write_fdl(0x0, g_FixNBLBuf);
 #else
 	   	/* write the spl loader image to the nand*/

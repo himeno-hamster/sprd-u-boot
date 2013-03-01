@@ -33,15 +33,27 @@
 #include <div64.h>
 #include <asm/errno.h>
 #include <asm/io.h>
+#ifdef CONFIG_SC8830
+#include <asm/arch/sprd_reg_base.h>
+#else
 #include <asm/arch/sc8810_reg_base.h>
+#endif
 #include <asm/arch/mfp.h>
+#ifdef CONFIG_SC8830
+#include <asm/arch/sprd_reg_ahb.h>
+#else
 #include <asm/arch/sc8810_reg_ahb.h>
-
+#endif
 #include <asm/arch/ldo.h>
 #include <asm/arch/sdio_reg_v3.h>
 #include <asm/arch/chip_drv_common_io.h>
+#ifdef CONFIG_SC8830
+#include <asm/arch/sprd_reg_global.h>
+#include <asm/arch/sprd_module_config.h>
+#else
 #include <asm/arch/sc8810_reg_global.h>
 #include <asm/arch/sc8810_module_config.h>
+#endif
 
 static struct list_head mmc_devices;
 static int cur_dev_num = -1;

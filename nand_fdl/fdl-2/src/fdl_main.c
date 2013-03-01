@@ -91,16 +91,16 @@ int main(void)
 	int err;
 	uint32 sigture_address;
 	unsigned int i, j;
-
+#ifndef CONFIG_SC8830
   	MMU_Init(0);
-
+#endif
  	sigture_address = (uint32)FDL2_signature;
 
 #if defined(CHIP_ENDIAN_DEFAULT_LITTLE) && defined(CHIP_ENDIAN_BIG)    
 	usb_boot(1);  
 #endif
 
-       FDL_PacketInit();
+	FDL_PacketInit();
 
 #ifdef CONFIG_SC8810	
 	bss_start_start = _bss_start;
@@ -109,11 +109,10 @@ int main(void)
 #else
 	mem_malloc_init (_bss_end, CONFIG_SYS_MALLOC_LEN);	   
 #endif	   
-	   timer_init();
-#if defined (CONFIG_TIGER) || defined(CONFIG_SC7710G2)
+	timer_init();
+#if defined (CONFIG_TIGER) || defined(CONFIG_SC7710G2) || defined (CONFIG_SC8830)
 #else
-       sprd_clean_rtc();
-
+	sprd_clean_rtc();
 #endif
 //        FDL_SendAckPacket (BSL_REP_ACK);
 	do {
@@ -124,7 +123,7 @@ int main(void)
 			extern int mmc_legacy_init(int dev);
 			mmc_legacy_init(1);
 			if (!FDL_Check_Partition_Table()) {
-  				#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) // JUST FOR TEST , DELETE IT LATER
+  				#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)// JUST FOR TEST , DELETE IT LATER
 				write_uefi_parition_table(g_sprd_emmc_partition_cfg);
 				#else				
 				FDL_SendAckPacket (convert_err (EMMC_INCOMPATIBLE_PART));

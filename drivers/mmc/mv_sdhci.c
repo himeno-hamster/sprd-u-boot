@@ -140,7 +140,9 @@ int mv_sdh_init(u32 regbase, u32 max_clk, u32 min_clk, u32 quirks)
 		host->version = sdhci_readl(host, SDHCI_HOST_VERSION - 2) >> 16;
 	else
 		host->version = sdhci_readw(host, SDHCI_HOST_VERSION);
+#ifndef CONFIG_SC8830
 	sdhci_sprd_set_base_clock(375000);
+#endif
 	add_sdhci(host, max_clk, min_clk);
 	return 0;
 }

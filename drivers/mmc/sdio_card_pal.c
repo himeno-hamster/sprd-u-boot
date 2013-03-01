@@ -797,11 +797,11 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 
     SDHOST_NML_IntStatus_En (handle->sdio_port, tmpIntFilter);
     SDHOST_NML_IntSig_En (handle->sdio_port, tmpIntFilter);
-
+#ifndef CONFIG_SC8830
 #ifdef OS_NONE
 	*(volatile uint32 *)(INT_IRQ_EN) |= (0x1<<TB_SDIO1_INT);
 #endif
-
+#endif
     _InitCardEvent (handle);
 
     if (NULL != dataParam)

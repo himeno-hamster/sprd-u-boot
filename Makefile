@@ -224,6 +224,7 @@ LIBS += drivers/pci/libpci.o
 LIBS += drivers/pcmcia/libpcmcia.o
 LIBS += drivers/power/libpower.o
 LIBS += drivers/spi/libspi.o
+LIBS += drivers/clk/libclk.o
 ifeq ($(CPU),mpc83xx)
 LIBS += drivers/qe/libqe.o
 LIBS += arch/powerpc/cpu/mpc8xxx/lib8xxx.o
@@ -257,7 +258,7 @@ ifeq ($(BOARD),sp7702)
 LIBS += drivers/sdio/libsdio.o
 LIBS += modem_boot/bootup.o
 endif
-LIBS += drivers/video/sc8825fb/libsc8825fb.o
+LIBS += drivers/video/sprdfb/libsprdfb.o
 LIBS += property/libproperty.o
 LIBS += drivers/watchdog/libwatchdog.o
 LIBS += common/libcommon.o
@@ -434,11 +435,11 @@ $(NAND_SPL):	$(TIMESTAMP_FILE) $(VERSION_FILE) depend
 $(U_BOOT_NAND):	$(NAND_SPL) $(obj)u-boot.bin
 		cat $(obj)nand_spl/u-boot-spl-16k.bin $(obj)u-boot.bin > $(obj)u-boot-nand.bin
 
-ifeq ($(SOC),sc8825)
-fdl2:fdl1
+ifeq ($(SOC),sc8810)
+fdl2:
 	$(MAKE) -C nand_fdl/fdl-2 $@
 else
-fdl2:
+fdl2:fdl1
 	$(MAKE) -C nand_fdl/fdl-2 $@
 endif
 
@@ -1329,6 +1330,11 @@ kylew_native_config	: unconfig
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 	@$(MKCONFIG) $@ arm armv7 kylew spreadtrum sc8810
 
+sp8830_config	: unconfig
+	@mkdir -p $(obj)include
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@$(MKCONFIG) $@ arm armv7 sp8830 spreadtrum sc8830
+
 sp8825_config	: unconfig
 	@mkdir -p $(obj)include
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
@@ -1434,7 +1440,7 @@ clean:
 	@find $(OBJTREE) -type f \
 		\( -name 'core' -o -name '.depend' -o -name '*.bak' -o -name '*~' \
 		-o -name '*.o'	-o -name '*.a' -o -name '*.exe'	\) -print \
-		| grep -v property | grep -v sc8800g | grep -v sc8800x | grep -v sc8810 | grep -v tiger | grep -v sc8825 \
+		| grep -v property | grep -v sc8800g | grep -v sc8800x | grep -v sc8810 | grep -v tiger | grep -v sc8825 | grep -v sc8830\
 		| grep -v nand_fdl | grep -v nand_spl |  xargs rm -f
 else
 clean:
@@ -1478,7 +1484,7 @@ endif
 
 ifdef CONFIG_IDH_BUILD
 clobber:	clean
-	@find $(OBJTREE) \( -path ".*/property" -o -path ".*/sc8800g" -o -path ".*/sc8810" -o -path ".*/sc8825" \
+	@find $(OBJTREE) \( -path ".*/property" -o -path ".*/sc8800g" -o -path ".*/sc8810" -o -path ".*/sc8825" -o -path ".*/sc8830" \
 			   -o -path ".*/sc8800x" -o -path ".*/nand_fdl" -o -path "nand_spl" -o -path ".*/tiger" \) \
 			   -prune -o -type f \( -name '*.depend' \
 		-o -name '*.srec' -o -name '*.bin' -o -name u-boot.img \) \

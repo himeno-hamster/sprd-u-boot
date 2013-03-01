@@ -36,7 +36,7 @@ extern unsigned char raw_header[8192];
 #define SIMLOCK_PART "simlock"
 #define SIMLOCK_SIZE	1024
 
-#ifdef CONFIG_TIGER
+#if defined(CONFIG_TIGER) || defined(CONFIG_SC8830)
 #define DSP_ADR          0x80020000
 #define VMJALUNA_ADR     0x80400000
 #define FIXNV_ADR        0x80480000

@@ -6,7 +6,7 @@
 #include <asm/arch/sc8810_reg_ahb.h>
 #include <asm/arch/sc8810_reg_global.h>
 
-#include <asm/arch/sc8825_spi.h>
+#include <asm/arch/sprd_spi.h>
 
 #define SPI2_BASE 0x4e006000
 #define SPI_USED_BASE SPI2_BASE

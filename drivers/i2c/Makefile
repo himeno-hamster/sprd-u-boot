@@ -41,6 +41,7 @@ COBJS-$(CONFIG_SOFT_I2C) += soft_i2c.o
 COBJS-$(CONFIG_SPEAR_I2C) += spr_i2c.o
 COBJS-$(CONFIG_TSI108_I2C) += tsi108_i2c.o
 COBJS-$(CONFIG_SC8825_I2C) += sc8825_i2c.o
+COBJS-$(CONFIG_SPRD_I2C) += sprd_i2c.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

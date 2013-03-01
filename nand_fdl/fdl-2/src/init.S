@@ -35,25 +35,17 @@
 #include <common.h>
 #include <version.h>
 
-#if defined(CONFIG_OMAP1610)
-#include <./configs/omap1510.h>
-#elif defined(CONFIG_OMAP730)
-#include <./configs/omap730.h>
-#endif
-
-#ifdef CONFIG_SC8825
-#define BIGEND_PROT_REG 0x20900290
-#define AHB_CTRL5_REG  	0x20900230
+#if defined CONFIG_SC8825 || defined CONFIG_SC8830
 #define FDL2_STACK 	0x81000000
 #endif
 #ifdef PLATFORM_SC8800G
 #define BIGEND_PROT_REG 0x20900290
-#define AHB_CTRL5_REG  0x20900230
+#define AHB_CTRL5_REG   0x20900230
 #define FDL2_STACK 	0x31000000
 #endif
 #ifdef CONFIG_SC8810
 #define BIGEND_PROT_REG 0x20900290
-#define AHB_CTRL5_REG  0x20900230
+#define AHB_CTRL5_REG   0x20900230
 #define FDL2_STACK 	0x1000000
 #endif
 

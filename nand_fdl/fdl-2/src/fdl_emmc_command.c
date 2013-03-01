@@ -46,7 +46,7 @@ static unsigned long point_sd = 0xffff;
 static unsigned long done_format_sd = 0;
 disk_partition_t sd_info;
 
-#if defined (CONFIG_SC8825) || defined (CONFIG_TIGER)
+#if defined (CONFIG_SC8825) || defined (CONFIG_TIGER) || defined (CONFIG_SC8830)
 unsigned char *g_eMMCBuf = (unsigned char*)0x82000000;
 #else
 unsigned char *g_eMMCBuf = (unsigned char*)0x2000000;
@@ -658,7 +658,7 @@ unsigned short eMMCCheckSum(const unsigned int *src, int len)
     return (unsigned short) (~sum);
 }
 
-#if defined(CONFIG_TIGER) || defined(CONFIG_SC7710G2)
+#if defined(CONFIG_TIGER) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
 #define BOOTLOADER_HEADER_OFFSET 0x20
 typedef struct{
 	uint32 version;
@@ -669,7 +669,7 @@ typedef struct{
 #endif
 void splFillCheckData(unsigned int * splBuf,  int len)
 {
-#if defined(CONFIG_TIGER) || defined(CONFIG_SC7710G2)
+#if defined(CONFIG_TIGER) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
 	EMMC_BootHeader *header;
 	header = (EMMC_BootHeader *)((unsigned char*)splBuf+BOOTLOADER_HEADER_OFFSET);
 	header->version  = 0;
@@ -677,7 +677,7 @@ void splFillCheckData(unsigned int * splBuf,  int len)
 	header->checkSum = (unsigned int)eMMCCheckSum((unsigned char*)splBuf+BOOTLOADER_HEADER_OFFSET+sizeof(*header), SPL_CHECKSUM_LEN-(BOOTLOADER_HEADER_OFFSET+sizeof(*header)));
 	header->hashLen  = 0;
 #else
-        *(splBuf + MAGIC_DATA_SAVE_OFFSET) = MAGIC_DATA;
+	*(splBuf + MAGIC_DATA_SAVE_OFFSET) = MAGIC_DATA;
 	*(splBuf + CHECKSUM_SAVE_OFFSET) = (unsigned int)eMMCCheckSum((unsigned int *)&splBuf[CHECKSUM_START_OFFSET/4], SPL_CHECKSUM_LEN - CHECKSUM_START_OFFSET);
 //	*(splBuf + CHECKSUM_SAVE_OFFSET) = splCheckSum(splBuf);
 #endif
@@ -881,6 +881,12 @@ int FDL2_eMMC_DataStart (PACKET_T *packet, void *arg)
 	g_prevstatus = EMMC_SUCCESS;
 	//set_dl_op_val(start_addr, size, STARTDATA, SUCCESS, 1);
 	FDL_SendAckPacket (BSL_REP_ACK);
+#ifdef CONFIG_SC8830
+	printf("total_recv_size:%d, total_size:%d\r\n", g_status.total_recv_size, g_status.total_size);
+	g_status.total_recv_size   = 0;
+	g_status.unsave_recv_size   = 0;
+	printf("total_recv_size:%d, total_size:%d\r\n", g_status.total_recv_size, g_status.total_size);
+#endif
 	return 1;
 }
 

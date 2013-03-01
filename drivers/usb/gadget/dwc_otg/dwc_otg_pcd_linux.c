@@ -552,13 +552,21 @@ void    usb_ldo_switch(int flag)
 static void usb_enable_module(int en)
 {
         if (en){
+#ifdef CONFIG_SC8830
+                __raw_bits_or(BIT_4, AHB_CTL0);
+#else
                 __raw_bits_or(BIT_6, AHB_CTL3);
                 __raw_bits_and(~BIT_9, GR_CLK_GEN5);
+#endif
 		//__raw_bits_or(BIT_5, AHB_CTL0);
         }else {
+#ifdef CONFIG_SC8830
+                __raw_bits_and(~BIT_4, AHB_CTL0);
+#else
                 __raw_bits_and(~BIT_6, AHB_CTL3);
                 __raw_bits_or(BIT_9, GR_CLK_GEN5);
                 __raw_bits_and(~BIT_5, AHB_CTL0);
+#endif
         }
 }
 static void usb_startup(void)
@@ -566,12 +574,18 @@ static void usb_startup(void)
         usb_enable_module(1);
         dwc_mdelay(10);
         usb_ldo_switch(0);
+#ifdef CONFIG_SC8830
+#else
         __raw_bits_and(~BIT_1, AHB_CTL3);
         __raw_bits_and(~BIT_2, AHB_CTL3);
+#endif
         usb_ldo_switch(1);
         usb_ldo_switch(1);
+#ifdef CONFIG_SC8830
+        __raw_bits_or(BIT_4, AHB_CTL0);
+#else
         __raw_bits_or(BIT_6, AHB_CTL3);
-
+#endif
 
 	__raw_bits_or(BIT_6|BIT_7, AHB_SOFT_RST);
 	dwc_mdelay(5);
@@ -605,10 +619,11 @@ void udc_power_on(void)
 		__raw_bits_and(~(BIT_13 | BIT_12), USB_PHY_CTRL);
 		__raw_bits_or(BIT_15 | BIT_14, USB_PHY_CTRL);
 	}
-
+#ifdef CONFIG_SC8830
+#else
 	__raw_bits_and(~BIT_1, AHB_CTL3);
 	__raw_bits_and(~BIT_2, AHB_CTL3);
-
+#endif
 	usb_startup();
 }
 

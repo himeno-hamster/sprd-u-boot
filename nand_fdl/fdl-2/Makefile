@@ -39,15 +39,7 @@ EMMC_PATH = $(TOPDIR)/drivers/mmc
 
 ifdef CONFIG_EMMC_BOOT
 UEFI_LIB = $(OBJTREE)/disk/libdisk.o
-ifdef CONFIG_SC8825
-EMMC_LIB = $(OBJTREE)/drivers/mmc/libmmc.o $(OBJTREE)/arch/arm/cpu/armv7/sc8825/ldo.o
-else
-ifdef CONFIG_TIGER
-EMMC_LIB = $(OBJTREE)/drivers/mmc/libmmc.o $(OBJTREE)/arch/arm/cpu/armv7/tiger/ldo.o
-else
-EMMC_LIB = $(OBJTREE)/drivers/mmc/libmmc.o $(OBJTREE)/arch/arm/cpu/armv7/sc8810/ldo.o
-endif
-endif
+EMMC_LIB = $(OBJTREE)/drivers/mmc/libmmc.o $(OBJTREE)/$(CPUDIR)/$(SOC)/ldo.o
 endif
 
 FDL2_SOBJS_LIST = init.o
@@ -67,21 +59,15 @@ FDL2_SOBJS = $(addprefix $(obj),$(FDL2_SOBJS_LIST))
 FDL2_OBJS = $(FDL2_COBJS) $(FDL2_SOBJS)
 
 MTD_LIB = $(OBJTREE)/drivers/mtd/libmtd.o 
-#ARM_LIB = $(OBJTREE)/arch/arm/lib/libarm.a
 NAND_LIB = $(OBJTREE)/drivers/mtd/nand/libnand.o
 YAFFS2_LIB = $(OBJTREE)/fs/yaffs2/libyaffs2.o
 COMMON_OBJ = dlmalloc.o idh_layout.o dload_op.o
 COMMON_LIB = $(addprefix $(OBJTREE)/common/,$(COMMON_OBJ))
 DRIVERS_LIB = $(OBJTREE)/drivers/serial/serial_sc8800x.o
 ARCH_LIB =
-ifndef CONFIG_SC8810
-CPU_OBJ = timer.o chip_cfg.o chip_phy_v3.o boot_mode.o watchdog_hal.o watchdog_phy_v3.o adi_drv.o mmu.o mmu_asm.o rtc-sprd.o sec_boot.o
-CPU_LIB = $(addprefix $(obj),$(CPU_OBJ))
-else
 
 CPU_OBJ = timer.o chip_cfg.o chip_phy_v3.o boot_mode.o watchdog_hal.o watchdog_phy_v3.o adi_drv.o mmu.o mmu_asm.o rtc-sprd.o sec_boot.o
 CPU_LIB = $(addprefix $(obj),$(CPU_OBJ))
-endif
 
 GENERIC_LIB = $(OBJTREE)/lib/libgeneric.o
 ifdef CONFIG_EMMC_BOOT
@@ -89,9 +75,6 @@ UBOOT_LIBS = $(MTD_LIB) $(ARM_LIB) $(NAND_LIB) $(YAFFS2_LIB) $(COMMON_LIB) $(CPU
 else
 UBOOT_LIBS = $(MTD_LIB) $(ARM_LIB) $(NAND_LIB) $(YAFFS2_LIB) $(COMMON_LIB) $(CPU_LIB) $(GENERIC_LIB) $(DRIVERS_LIB) $(ARCH_LIB)
 endif
-
-#ALL_UBOOT_LIBS = $(addprefix $(OBJTREE),$(__LIBS))
-#UBOOT_LIBS = $(ALL_UBOOT_LIBS)
 
 FDL2_LNDIR	:= $(OBJTREE)/nand_fdl/fdl-2
 
@@ -114,7 +97,6 @@ $(fdlobj)fdl2: $(FDL2_OBJS) $(COM_OBJS) $(UBOOT_LIBS)
 			$(UBOOT_LIBS) --end-group \
 		-Map $(fdlobj)fdl2.map \
 		-o $@ $(PLATFORM_LIBS)
-#-L$(gcclibdir) -lgcc 
 
 #########################################################################
 
@@ -125,9 +107,9 @@ $(obj)%.o:$(SRCTREE)/nand_fdl/fdl-2/src/%.c
 	$(CC) $(CFLAGS) -I $(FDL2_PATH)/inc -I $(COM_PATH)/inc -I $(EMMC_PATH) -c -o $@ $<
 $(obj)%.o:$(SRCTREE)/nand_fdl/fdl-2/src/%.S
 	$(CC) $(AFLAGS) -I $(FDL2_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
-$(obj)%.o:$(SRCTREE)/arch/$(ARCH)/cpu/$(CPU)/$(SOC)/%.S
+$(obj)%.o:$(SRCTREE)/$(CPUDIR)/$(SOC)/%.S
 	$(CC) $(AFLAGS) -I $(FDL2_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
-$(obj)%.o:$(SRCTREE)/arch/$(ARCH)/cpu/$(CPU)/$(SOC)/%.c
+$(obj)%.o:$(SRCTREE)/$(CPUDIR)/$(SOC)/%.c
 	$(CC) $(AFLAGS) -I $(FDL2_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
 endif
 # defines $(obj).depend target

@@ -53,6 +53,7 @@ COBJS-$(CONFIG_NAND_PLAT) += nand_plat.o
 COBJS-$(CONFIG_NAND_SC8810) += sc8810_nand.o
 COBJS-$(CONFIG_NAND_TIGER) += tiger_nand.o
 COBJS-$(CONFIG_NAND_SPRD) += sprd_nand.o
+COBJS-$(CONFIG_NAND_SC8830) += sc8830_nand.o
 endif
 
 COBJS	:= $(COBJS-y)

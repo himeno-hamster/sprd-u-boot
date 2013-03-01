@@ -4,7 +4,7 @@
 
 extern void JumpToTarget(unsigned long addr);
 
-#if defined CONFIG_SC8825
+#if defined CONFIG_SC8825 || defined CONFIG_SC8830
 #define MEMORY_START		0x80000000
 #elif defined CONFIG_SC7710G2
 #define MEMORY_START		0x00000000

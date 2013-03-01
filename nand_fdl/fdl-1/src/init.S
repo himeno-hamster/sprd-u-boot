@@ -36,8 +36,10 @@
 #include <version.h>
 
 
-#if defined CONFIG_SC8825
+#if   defined CONFIG_SC8825
 #define FDL1_STACK 0x00028000
+#elif defined CONFIG_SC8830
+#define FDL1_STACK 0x5000CFF0
 #elif defined CONFIG_SC7710G2
 #define FDL1_STACK 0x40008000
 #else
@@ -72,7 +74,7 @@ _start:
  * These are defined in the board-specific linker script.
  */
 
-#if defined (CONFIG_SC8825) || defined (CONFIG_SC7710G2)
+#if defined (CONFIG_SC8825) || defined (CONFIG_SC7710G2) || defined (CONFIG_SC8830)
 .local _bss0_start
 _bss0_start:
 	.word __bss0_start
@@ -122,25 +124,28 @@ reset:
 	/*set stack limit to 0*/
 	MOV R10, #0
 	ldr sp, =FDL1_STACK
-#if defined (CONFIG_SC8825) || defined (CONFIG_SC7710G2)
+#if defined (CONFIG_SC8825) || defined (CONFIG_SC7710G2) || defined (CONFIG_SC8830)
 	ldr r0, _bss0_start
 	ldr r1, _bss0_end
 	bl  clear_bss
 #endif
 
 
-#if defined(CONFIG_SC7710G2)
+#if defined(CONFIG_SC7710G2)		//7710G
 	MOV R0, #0
 	MOV R1, #0
 	MOV R2, #0
 	MOV R3, #0
-	bl  Chip_Init 
-#else
+	bl  Chip_Init
+#elif defined(CONFIG_SC8830)		//Shark
+	bl  SDRAM_GetCfg
+	bl  sdram_init
+#else					//Tiger
 	LDR R0, =400000000
 	bl  DMC_Dev_Init
 #endif
 
-#if defined (CONFIG_SC8825) || defined (CONFIG_SC7710G2)
+#if defined (CONFIG_SC8825) || defined (CONFIG_SC7710G2) || defined (CONFIG_SC8830)
 	ldr r0, _bss1_start
 	ldr r1, _bss1_end
 	bl  clear_bss

@@ -21,6 +21,9 @@
 /* GEN0_UART0_EN    (0x1 << 1) */
 /* GEN0_UART1_EN    (0x1 << 2) */
 #define GR_UART_CTRL_EN    (0x3<<1)
+#elif defined(CONFIG_SC8830)
+#define GR_CTRL_REG        CTL_BASE_APB
+#define GR_UART_CTRL_EN    (0x3 << 13 )
 #elif defined(CONFIG_TIGER)
 #define GR_CTRL_REG        0x4b000004
 #define GR_UART_CTRL_EN    (0x3 << 20 )
@@ -34,10 +37,14 @@
 #define GR_UART_CTRL_EN    0x00400000
 #endif
 
+#ifdef CONFIG_SC8830
+#define ARM_APB_CLK    26000000UL
+#else
 #ifdef FPGA_VERIFICATION 
 #define ARM_APB_CLK    48000000UL
 #else
 #define ARM_APB_CLK    26000000UL
+#endif
 #endif
 
 typedef struct UartPort

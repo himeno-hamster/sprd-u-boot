@@ -30,8 +30,13 @@ extern   "C"
 **                            Mcaro Definitions                               *
 **---------------------------------------------------------------------------*/
 //AHB Register
+#ifdef CONFIG_SC8830
+#define AHB_CTRL0                           (0x20D00000)
+#define USBD_EN                             BIT_5
+#else
 #define AHB_CTRL0                           (0x20900200)
-#define USBD_EN                                     BIT_5
+#define USBD_EN                             BIT_4
+#endif
 #define AHB_CONTROL_REG3                    (0x2090020c)
 #define CLK_USB_REF_SEL                     BIT_1
 #define USB_S_HBIGENDIAN                    BIT_2
@@ -56,6 +61,7 @@ LOCAL __align(32) uint8 s_usb_snd_buff[USB_BUFF_SIZE];
 void usb_write (unsigned char *write_buf,  unsigned int write_len);
 void usb_init (unsigned long ext_clk26M);
 
+#ifndef CONFIG_SC8830
 static void SetPllClock (void)
 {
     uint32 clk;
@@ -65,7 +71,7 @@ static void SetPllClock (void)
 
     * (volatile uint32 *) (AHB_ARM_CLK) = clk;
 }
-
+#endif
 /*****************************************************************************/
 //  Description:
 //    Global resource dependence:
@@ -74,16 +80,16 @@ static void SetPllClock (void)
 /*****************************************************************************/
 void usb_init (unsigned long ext_clk26M)
 {
+#ifndef CONFIG_SC8830
 #if (!defined(_LITTLE_ENDIAN) && !defined(CHIP_ENDIAN_LITTLE))
     *(volatile uint32 *)AHB_CONTROL_REG3 |= USB_S_HBIGENDIAN;    //master AHB interface: Big Endian
 #else
     *(volatile uint32 *)AHB_CONTROL_REG3 &= ~USB_S_HBIGENDIAN;    //master AHB interface: Little Endian
 #endif
+#endif
     
     *(volatile uint32 *)AHB_CTRL0 |= USBD_EN;  // usbd enable
-	
     usb_core_init();
-    
 }
 /*****************************************************************************/
 //  Description:

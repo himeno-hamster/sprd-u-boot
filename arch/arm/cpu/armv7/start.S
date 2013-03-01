@@ -34,12 +34,15 @@
 #include <common.h>
 #include <version.h>
 
-#ifdef CONFIG_SC8825
-#define SVC_STACK_TEMP 0x0027F60 //for tiger
-#define SPL_STACK 0x808f0000
+#if   defined CONFIG_SC8830
+#define SVC_STACK_TEMP 0x5000CFF0 //for shark
+#define SPL_STACK      0x808f0000
+#elif defined CONFIG_SC8825
+#define SVC_STACK_TEMP 0x00027F60 //for tiger
+#define SPL_STACK      0x808f0000
 #else
 #define SVC_STACK_TEMP 0x40008000
-#define SPL_STACK 0x008f0000
+#define SPL_STACK      0x008f0000
 #endif
 .globl _start
 _start: b	reset

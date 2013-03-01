@@ -1579,6 +1579,8 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 #if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2)
 	SDIO_Card_Pal_SetSpeedMode(cardHandle->sdioPalHd, EMMC_SPEED_SDR25);
 	SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd, SDIO_CARD_PAL_50MHz);
+#elif defined (CONFIG_SC8830)
+	SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd,SDIO_CARD_PAL_4MHz);
 #else
 	SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd,SDIO_CARD_PAL_25MHz);
 #endif
@@ -2427,7 +2429,7 @@ PUBLIC BOOLEAN Emmc_Init()
 {
 	uint32 ret = 0;
 	LDO_Init();
-#if defined (CONFIG_TIGER) || defined (CONFIG_SC7710G2)
+#if defined (CONFIG_TIGER) || defined (CONFIG_SC7710G2) || defined (CONFIG_SC8830)
 	emmc_handle = CARD_SDIO_Open(CARD_SDIO_SLOT_7);
 #else
 	emmc_handle = CARD_SDIO_Open(CARD_SDIO_SLOT_1);

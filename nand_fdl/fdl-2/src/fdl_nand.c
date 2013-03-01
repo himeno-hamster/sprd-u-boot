@@ -1,8 +1,10 @@
 #include "fdl_nand.h"
 #include "asm/arch/sci_types.h"
-#if   defined CONFIG_NAND_TIGER
+#if     defined CONFIG_NAND_SC8830 
+#include <asm/arch/sprd_nfc_reg_v3.h>
+#elif   defined CONFIG_NAND_TIGER
 #include <asm/arch/sprd_nfc_reg_v2.h>
-#elif defined CONFIG_NAND_SC8810
+#elif   defined CONFIG_NAND_SC8810
 #include <asm/arch/regs_nfc.h>
 #else
 #include "asm/arch/nand_controller.h"
@@ -642,7 +644,27 @@ int nand_write_spl(u8 *buf, struct mtd_info *mtd)
 	return ret;	
 }
 #endif
-#ifdef CONFIG_NAND_TIGER
+
+#if defined CONFIG_NAND_SC8830 || defined CONFIG_NAND_TIGER
+#ifdef CONFIG_NAND_SC8830
+struct bootloader_header
+{
+	uint32_t version; //version, fot tiger this member must be 0
+	uint32_t magic_num; //0xaa55a5a5	
+	uint32_t check_sum;
+	uint32_t hash_len; //word length, only used when secure boot enable
+	uint32_t sct_size; //
+	uint32_t acycle; // 3, 4, 5
+	uint32_t bus_width; //0 ,1
+	uint32_t spare_size; //spare part sise for one sector
+	uint32_t ecc_mode; //0--1bit, 1--2bit,2--4bit,3--8bit,4--12bit, 5--16bit, 6--24bit
+	uint32_t ecc_pos; // ecc postion at spare part
+	uint32_t sct_per_page; //sector per page
+	uint32_t info_pos;
+	uint32_t info_size;
+	uint32_t ecc_value[27];
+}
+#elif defined CONFIG_NAND_TIGER
 struct bootloader_header
 {
 	uint32_t version; //version, fot tiger this member must be 0
@@ -660,6 +682,7 @@ struct bootloader_header
 	uint32_t magic_num; //0xaa55a5a5	
 	uint32_t ecc_value[11];
 };
+#endif
 extern unsigned short CheckSum(const unsigned int *src, int len);
 /*
  * spare info data is don't used at the romcode, so the fdl only set the s_info size to 1, and the data value 0xff
@@ -669,12 +692,19 @@ void set_header_info(u8 *bl_data, struct mtd_info *nand, int ecc_pos)
 	struct bootloader_header *header;
 	struct nand_chip *chip = nand->priv;
 	struct sprd_ecc_param param;
+#ifdef CONFIG_NAND_SC8830
+	u8 ecc[108];
+#else
 	u8 ecc[44];
+#endif
 	header = (struct bootloader_header *)(bl_data + BOOTLOADER_HEADER_OFFSET);
 	memset(header, 0, sizeof(struct bootloader_header));
 	memset(ecc, 0xff, sizeof(ecc));
-#if 1
+#ifdef CONFIG_NAND_SC8830
+	header->version = 1;
+#else
 	header->version = 0;
+#endif
 	header->sct_size = chip->ecc.size;
 	if (chip->options & NAND_BUSWIDTH_16)	{
 		header->bus_width = 1;
@@ -707,20 +737,24 @@ void set_header_info(u8 *bl_data, struct mtd_info *nand, int ecc_pos)
 	header->info_pos = header->ecc_pos - 1;
 	header->info_size = 1;
 	
+#ifdef CONFIG_NAND_SC8830
+	param.mode = 60;
+	param.ecc_pos = 0;
+	param.sinfo_size = 0;
+#else
 	header->check_sum = CheckSum((unsigned int *)(bl_data + BOOTLOADER_HEADER_OFFSET + 4), (NAND_PAGE_LEN - BOOTLOADER_HEADER_OFFSET - 4));
-
 	param.mode = 24;
+	param.ecc_pos = 1;
+	param.sinfo_size = 1;
+#endif
 	param.ecc_num = 1;
 	param.sp_size = sizeof(ecc);
-	param.ecc_pos = 1;
 	param.m_size = chip->ecc.size;
 	param.p_mbuf = (u8 *)bl_data;
 	param.p_sbuf = ecc;
 	param.sinfo_pos = 0;
-	param.sinfo_size = 1;
 	sprd_ecc_encode(&param);
 	memcpy(header->ecc_value, ecc, sizeof(ecc));
-#endif	
 }
 int nand_write_spl_page(u8 *buf, struct mtd_info *mtd, u32 pg, u32 ecc_pos)
 {
@@ -766,6 +800,7 @@ int nand_write_spl(u8 *buf, struct mtd_info *mtd)
 	return ret;	
 }
 #endif
+
 int nand_write_fdl(unsigned int size, unsigned char *buf)
 {
 #ifdef FDL2_DEBUG
@@ -779,7 +814,7 @@ int nand_write_fdl(unsigned int size, unsigned char *buf)
 	int pos;
 	unsigned char buffer[FDL_NAND_BUF_LEN];
 
-#if (defined(CONFIG_NAND_SC8810) || defined(CONFIG_NAND_TIGER))//only for sc8810 to write spl
+#if (defined(CONFIG_NAND_SC8810) || defined(CONFIG_NAND_TIGER) || defined(CONFIG_NAND_SC8830))//only for sc8810 to write spl
 	if(cur_write_pos < 0xc000) {
 		if(secureboot_enabled()) //if secure boot enabled, don't update spl
 			return NAND_SUCCESS;
