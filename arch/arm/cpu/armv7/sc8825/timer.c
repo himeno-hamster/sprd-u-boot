@@ -85,6 +85,11 @@ int timer_init(void)
 	REG32(GR_GEN0) |= BIT_19; //make sys cnt writable
 	REG32(GR_GEN0) |= BIT_27; //enable rtc clk input
 
+	REG32(GR_GEN0) |= BIT_2; //enable pclk timer
+	REG32 (TM2_CLR) &=~ (BIT_0);//disable pclk timer interrupt
+	REG32 (TM2_CTL) &=~ (BIT_7);//timer stops first
+	REG32 (TM2_CTL) &=~ (BIT_6);//one-time mode
+
 	//clear any hanging interrupts & disable interrupt
 	REG32 (SYS_CTL) &=~ (BIT_0);
 	REG32 (SYS_CTL) |= (BIT_3);
@@ -133,6 +138,7 @@ void set_timer(ulong t)
 	timestamp = time_to_tick(t);
 }
 
+#if 0
 void __udelay (unsigned long usec)
 {
 	unsigned long long tmp;
@@ -143,4 +149,15 @@ void __udelay (unsigned long usec)
 	
 	while(get_ticks() < tmp) //loop till event
 		/*NOP*/;
+}
+#endif
+void __udelay (unsigned long usec)
+{
+	ulong delta_usec = usec * 26;
+	writel(delta_usec, TM2_LOAD);
+	REG32 (TM2_CTL) |= (BIT_7);//timer runs
+	//printf("readl(TM2_VALUE) = 0x%x\n", readl(TM2_VALUE));
+	while(readl(TM2_VALUE) > 0)//loop
+		;
+	REG32 (TM2_CTL) &=~ (BIT_7);//timer stops
 }
