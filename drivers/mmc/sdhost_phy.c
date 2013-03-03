@@ -71,6 +71,8 @@ typedef struct SDHOST_PORT_T_TAG
     SDHOST_CAPBILIT_T capbility;
     uint32 err_filter;
     SDIO_CALLBACK sigCallBack;
+    uint32 IntEnabled;
+    uint32 SigEnabled;
 } SDHOST_PORT_T;
 
 typedef struct
@@ -1597,7 +1599,6 @@ PUBLIC void SDHOST_NML_IntStatus_Clr (SDHOST_HANDLE sdhost_handler,uint32 msg)
 		tmpReg |= BIT_0;
     }
     sdhost_handler->host_cfg->INT_STA = tmpReg;
-
 }
 
 /*****************************************************************************/
@@ -1717,6 +1718,7 @@ PUBLIC void SDHOST_NML_IntStatus_En (SDHOST_HANDLE sdhost_handler,uint32 msg)
 		tmpReg |= BIT_0;
     }
     sdhost_handler->host_cfg->INT_STA_EN |= tmpReg;
+    sdhost_handler->IntEnabled = sdhost_handler->host_cfg->INT_STA_EN;
 
 }
 
@@ -1733,6 +1735,7 @@ PUBLIC void SDHOST_NML_IntStatus_En (SDHOST_HANDLE sdhost_handler,uint32 msg)
 PUBLIC void SDHOST_NML_IntStatus_Dis (SDHOST_HANDLE sdhost_handler,uint32 msg)
 {
     volatile uint32 tmpReg = 0;
+    uint32 reg_value = sdhost_handler->IntEnabled;
     SCI_ASSERT (TRUE == _RegisterVerifyHOST (sdhost_handler));/*assert verified*/
 
     if (0 != (msg&SIG_ERR))
@@ -1787,7 +1790,9 @@ PUBLIC void SDHOST_NML_IntStatus_Dis (SDHOST_HANDLE sdhost_handler,uint32 msg)
     {
 		tmpReg |= BIT_0;
     }
-    sdhost_handler->host_cfg->INT_STA_EN &= ~tmpReg;
+    reg_value &= ~tmpReg;
+    sdhost_handler->host_cfg->INT_STA_EN = reg_value;
+    sdhost_handler->IntEnabled = reg_value;
 
 }
 
@@ -2166,6 +2171,7 @@ LOCAL SDHOST_SLOT_NO _GetIntSDHOSTSlotNum (uint32 port)
 	if(tmpReg == 0)
 		REG32 (SDIO2_NML_INT_SIG_EN) = BIT_1;
 	tmpReg = REG32 (SDIO2_SLOT_INT_STS);
+	tmpReg &= 0x01;
     }
     else	
     	tmpReg = REG32 (EMMC_SLOT_INT_STS);

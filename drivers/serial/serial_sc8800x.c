@@ -47,6 +47,10 @@
 #endif
 #endif
 
+#if defined(CONFIG_SC7710G2)
+#define GR_CTRL_REG1        0x8b0000b4
+#define GR_UART3_CTRL_EN    1
+#endif
 typedef struct UartPort
 {
     unsigned int regBase;
@@ -81,13 +85,24 @@ LOCAL void SIO_HwOpen (struct FDL_ChannelHandler *channel, unsigned int divider)
 {
     UartPort_T *port  = (UartPort_T *) channel->priv;
 
-    /* Disable UART*/
-    * ( (volatile unsigned int *) (GR_CTRL_REG)) &= ~ (GR_UART_CTRL_EN);
-    /*Disable Interrupt */
-    * (volatile unsigned int *) (port->regBase + ARM_UART_IEN) = 0;
-    /* Enable UART*/
-    * (volatile unsigned int *) GR_CTRL_REG |= (GR_UART_CTRL_EN);
-
+#if defined(CONFIG_SC7710G2)
+    if(port->regBase == ARM_UART3_BASE){
+	    /* Disable UART*/
+	    * ( (volatile unsigned int *) (GR_CTRL_REG1)) &= ~ (GR_UART3_CTRL_EN);
+	    /*Disable Interrupt */
+	    * (volatile unsigned int *) (port->regBase + ARM_UART_IEN) = 0;
+	    /* Enable UART*/
+	    * (volatile unsigned int *) GR_CTRL_REG1 |= (GR_UART3_CTRL_EN);
+    } else 
+#endif
+    {
+	    /* Disable UART*/
+	    * ( (volatile unsigned int *) (GR_CTRL_REG)) &= ~ (GR_UART_CTRL_EN);
+	    /*Disable Interrupt */
+	    * (volatile unsigned int *) (port->regBase + ARM_UART_IEN) = 0;
+	    /* Enable UART*/
+	    * (volatile unsigned int *) GR_CTRL_REG |= (GR_UART_CTRL_EN);
+    }
     /* Set baud rate  */
     * (volatile unsigned int *) (port->regBase + ARM_UART_CLKD0) = LWORD (divider);
     * (volatile unsigned int *) (port->regBase + ARM_UART_CLKD1) = HWORD (divider);
