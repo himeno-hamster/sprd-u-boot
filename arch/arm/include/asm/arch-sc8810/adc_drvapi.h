@@ -17,7 +17,42 @@
 #ifndef _ADC_DRVAPI_H_
 #define _ADC_DRVAPI_H_
 
-#define ADC_SCALE_3V       0 
+#ifdef CONFIG_SC7710G2
+
+#define ADC_SCALE_3V       0
+#define ADC_SCALE_1V2   1
+
+typedef enum adc_channel {
+	ADC_CHANNEL_0 = 0,
+	ADC_CHANNEL_1 = 1,
+	ADC_CHANNEL_2 = 2,
+	ADC_CHANNEL_3 = 3,
+	ADC_CHANNEL_PROG = 4,
+	ADC_CHANNEL_VBAT = 5,
+	ADC_CHANNEL_VCHGSEN = 6,
+	ADC_CHANNEL_VCHGBG = 7,
+	ADC_CHANNEL_ISENSE = 8,
+	ADC_CHANNEL_TPYD = 9,
+	ADC_CHANNEL_TPYU = 10,
+	ADC_CHANNEL_TPXR = 11,
+	ADC_CHANNEL_TPXL = 12,
+	ADC_CHANNEL_DCDCCORE = 13,
+	ADC_CHANNEL_DCDCARM = 14,
+	ADC_CHANNEL_DCDCMEM = 15,
+	ADC_CHANNEL_DCDCLDO = 16,
+	ADC_CHANNEL_VBATBK = 17,
+	ADC_CHANNEL_HEADMIC = 18,
+	ADC_CHANNEL_LDO0 = 19,	/* ldo rf/abb/cama */
+	ADC_CHANNEL_LDO1 = 20,	/* ldo v3v/v28/vsim0/vsim1/cammot/sd0/usb/dvdd18/v25 */
+	ADC_CHANNEL_LDO2 = 21,	/* ldo camio/camcore/cmmb1v2/cmmb1v8/v18/sd1/sd3/ */
+    ADC_CHANNEL_4 = 22,
+    ADC_CHANNEL_WHTLED = 23,
+    ADC_MAX,
+}adc_channel;
+typedef enum{false, true} bool;
+
+#else
+#define ADC_SCALE_3V       0
 #define ADC_SCALE_1V2   1
 
 typedef enum
@@ -50,6 +85,8 @@ typedef enum{false, true} bool;
 #define ADC_CHANNEL_VBAT 5
 #define ADC_CHANNEL_PROG 4
 #define ADC_CHANNEL_VCHG 6
+
+#endif
 
 #ifdef __cplusplus
 extern   "C"
