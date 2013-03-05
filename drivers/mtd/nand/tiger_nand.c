@@ -1268,7 +1268,7 @@ int board_nand_init(struct nand_chip *chip)
 	g_tiger.ecc_mode = CONFIG_SYS_NAND_ECC_MODE;
 	g_tiger.nand = chip;
 
-	tiger_set_timing_config(&g_tiger, 153);
+	//tiger_set_timing_config(&g_tiger, 153);
 
 	chip->eccbitmode = g_tiger.ecc_mode;
 	chip->ecc.size = CONFIG_SYS_NAND_ECCSIZE;
