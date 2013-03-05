@@ -29,12 +29,16 @@ LIB	= $(obj)libdisk.o
 
 COBJS-y += part.o
 COBJS-$(CONFIG_MAC_PARTITION)   += part_mac.o
+COBJS-$(CONFIG_DOS_PARTITION)   += stdlib.o
 COBJS-$(CONFIG_DOS_PARTITION)   += part_dos.o
+COBJS-$(CONFIG_DOS_PARTITION)   += diskconfig.o
+COBJS-$(CONFIG_DOS_PARTITION)   += config_mbr.o
+COBJS-$(CONFIG_DOS_PARTITION)   += mbr_config_utils.o
+COBJS-$(CONFIG_DOS_PARTITION)   += write_lst.o
 COBJS-$(CONFIG_ISO_PARTITION)   += part_iso.o
 COBJS-$(CONFIG_AMIGA_PARTITION) += part_amiga.o
 COBJS-$(CONFIG_EFI_PARTITION)   += part_efi.o
 COBJS-$(CONFIG_UEFI_PARTITION)   += part_uefi.o part_cfg.o
-
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))

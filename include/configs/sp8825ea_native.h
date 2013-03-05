@@ -40,7 +40,6 @@
 #define BOOT_DEBUG 1
 
 #define CONFIG_YAFFS2 1
-
 #define BOOT_PART "boot"
 //#define BOOT_PART "kernel"
 #define RECOVERY_PART "recovery"
@@ -401,6 +400,7 @@
 #define CONFIG_MMC_SDMA			1
 #define CONFIG_MV_SDHCI			1
 #define CONFIG_DOS_PARTITION		1
+//#define CONFIG_EBR_PARTITION
 #define CONFIG_SYS_MMC_NUM		2
 #define CONFIG_SYS_MMC_BASE		{0x20510000,0x20530000}
 #endif

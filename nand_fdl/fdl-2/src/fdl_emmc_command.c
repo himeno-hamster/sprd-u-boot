@@ -253,6 +253,7 @@ int uefi_get_part_info(unsigned long part_total)
 	block_dev_desc_t *dev_desc = NULL;
 	disk_partition_t info;
 	int i;
+	int part_num = 1;
 
 	if(uefi_part_info_ok_flag)
 		return 1;
@@ -261,7 +262,26 @@ int uefi_get_part_info(unsigned long part_total)
 	if (dev_desc==NULL) {
 		return 0;
 	}
-	for(i=0; i < MAX_PARTITION_INFO; i++){
+
+	#ifdef CONFIG_EBR_PARTITION
+		for(i=0; i < MAX_PARTITION_INFO; i++) {
+			if(part_num ==PARTITION_EMPTY) {
+				part_num++;
+				continue;
+				}
+			if (get_partition_info(dev_desc, part_num, &info))
+				return 0;
+
+			if(info.size <= 0 )
+				return 0;
+			uefi_part_info[i].partition_index =part_num;
+			uefi_part_info[i].partition_size = info.size;
+			uefi_part_info[i].partition_offset = info.start;
+			//printf("uefi_part_info[i] =%d,partiton num =%d,size=%d,offset=%d\n",i,part_num,info.size,info.offset);
+			part_num++;
+		}
+	#else
+	for(i=0; i < MAX_PARTITION_INFO; i++) {
 		if(g_sprd_emmc_partition_cfg[i].partition_index == 0)
 			break;
 		if (part_total > 0) {
@@ -275,10 +295,11 @@ int uefi_get_part_info(unsigned long part_total)
 			return 0;
 		uefi_part_info[i].partition_index = g_sprd_emmc_partition_cfg[i].partition_index;
 		uefi_part_info[i].partition_size = info.size;
-		uefi_part_info[i].partition_index = info.start;
+		uefi_part_info[i].partition_offset = info.start;
 	}
-
+	#endif
 	uefi_part_info_ok_flag = 1;
+
 	return 1;
 }
 
@@ -286,9 +307,11 @@ unsigned long efi_covert_index(unsigned long npart)
 {
 	uint i;
 
-	for(i=0; i<MAX_PARTITION_INFO; i++){
-		if(g_sprd_emmc_partition_cfg[i].partition_index == npart)
+	for(i=0; i<MAX_PARTITION_INFO; i++) {
+		if(g_sprd_emmc_partition_cfg[i].partition_index == npart){
+				printf("Partition =%d--------g_sprd_emmc_partition_cfg[i]=%d\n",npart,i);
 			return i;
+			}
 	}
 	return MAX_PARTITION_INFO;
 }
@@ -296,13 +319,22 @@ unsigned long efi_covert_index(unsigned long npart)
 unsigned long efi_GetPartBaseSec(unsigned long Partition)
 {
 	uefi_get_part_info(0);
-	return uefi_part_info[efi_covert_index(Partition)].partition_index;
+	#ifdef CONFIG_EBR_PARTITION
+	return uefi_part_info[Partition-1].partition_offset;
+	#else
+	return uefi_part_info[efi_covert_index(Partition)].partition_offset;
+	#endif
 }
 
 unsigned long efi_GetPartSize(unsigned long Partition)
 {
 	uefi_get_part_info(0);
+	#ifdef CONFIG_EBR_PARTITION
+	printf("Partition =%d-----partition_size=%d\n",Partition,uefi_part_info[Partition-1].partition_size);
+	return (EFI_SECTOR_SIZE *uefi_part_info[Partition-1].partition_size);
+	#else
 	return (EFI_SECTOR_SIZE * uefi_part_info[efi_covert_index(Partition)].partition_size);
+	#endif
 }
 
 int format_sd_partition(void)
@@ -326,8 +358,10 @@ int format_sd_partition(void)
 	return 0;
 }
 
+
 int FDL_Check_Partition_Table(void)
 {
+	//printf("FDL_Check_Partition_Table -----\n");
 	int i = 0;
 	unsigned long parttotal = 0;
 
@@ -796,6 +830,7 @@ int FDL2_eMMC_DataStart (PACKET_T *packet, void *arg)
 			}
 
 			g_dl_eMMCStatus.part_total_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartition);
+			//printf("g_dl_eMMCStatus.part_total_size =%d\n",g_dl_eMMCStatus.part_total_size);
 			if ((size > g_dl_eMMCStatus.part_total_size) || (size > FIXNV_SIZE)) {
 				FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
 				return 0;
@@ -1604,6 +1639,7 @@ int FDL2_eMMC_Erase(PACKET_T *packet, void *arg)
 				return 0;
 			}
 		}
+		printf("has_sd=%d\n",has_sd);
 		if ((g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3) && (has_sd == 1) && (done_format_sd == 0)) {
 			has_sd = 0;
 			printf("formating sd partition, waiting for a while!\n");
@@ -1622,11 +1658,17 @@ int FDL2_eMMC_Erase(PACKET_T *packet, void *arg)
 int FDL2_eMMC_Repartition (PACKET_T *pakcet, void *arg)
 {
 	int i, ret = 0;
-	
 	for (i = 0; i < 3; i++) {
-		write_uefi_parition_table(g_sprd_emmc_partition_cfg);
-		if (FDL_Check_Partition_Table())
-		    break;
+		#ifdef CONFIG_EBR_PARTITION
+			if(write_mbr_partition_table()) {
+				FDL2_eMMC_SendRep (EMMC_SUCCESS);
+				return 1;
+				}
+		#else
+			write_uefi_partition_table(g_sprd_emmc_partition_cfg);
+		#endif
+			if (FDL_Check_Partition_Table())
+				break;
 	}
 
 	if (i < 3) {

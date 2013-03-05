@@ -1027,7 +1027,11 @@ int mmc_legacy_init(int dev)
 	{       
 		sprd_mmc_dev.if_type = IF_TYPE_UNKNOWN;
 		sprd_mmc_dev.if_type = IF_TYPE_MMC;
+#ifdef CONFIG_EBR_PARTITION
+		sprd_mmc_dev.part_type = PART_TYPE_DOS;
+#else
 		sprd_mmc_dev.part_type = PART_TYPE_EFI;
+#endif
 		sprd_mmc_dev.dev = 1;
 		sprd_mmc_dev.lun = 0;
 		sprd_mmc_dev.type = 0;

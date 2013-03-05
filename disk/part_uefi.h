@@ -1,7 +1,40 @@
 #ifndef _DISK_PART_UEFI_H
 #define _DISK_PART_UEFI_H
 
+#ifdef CONFIG_EBR_PARTITION
 typedef enum _PARTITION_INDEX_TAG
+{
+	PARTITON_NULL = 0,
+	PARTITION_VM,
+	PARTITION_MODEM,
+	PARTITION_DSP,
+	PARTITION_EMPTY,
+	PARTITION_FIX_NV1,
+	PARTITION_FIX_NV2,
+	PARTITION_RUNTIME_NV1,
+	PARTITION_RUNTIME_NV2,
+	PARTITION_PROD_INFO1,
+	PARTITION_PROD_INFO2,
+	PARTITION_PROD_INFO3,
+	PARTITION_KERNEL,
+	PARTITION_SYSTEM,
+	PARTITION_CACHE,
+	PARTITION_LOGO,
+	PARTITION_FASTBOOT_LOGO,
+	PARTITION_RECOVERY,
+	PARTITION_MISC,
+#if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined (CONFIG_SC7710G2)
+	PARTITION_FIRMWARE,
+#endif
+	PARTITION_SD,
+#ifdef CONFIG_AP_ADC_CALIBRATION
+	PARTITION_PROD_INFO4,
+#endif
+	PARTITION_USER_DAT,
+	PARTITION_TOTAL_COUNT
+}EFI_PARTITION_INDEX;
+#else
+ typedef enum _PARTITION_INDEX_TAG
 {
 	PARTITON_NULL = 0,
 	PARTITION_VM,
@@ -32,6 +65,7 @@ typedef enum _PARTITION_INDEX_TAG
 	PARTITION_SIMLOCK,
 	PARTITION_TOTAL_COUNT
 }EFI_PARTITION_INDEX;
+#endif
 
 typedef enum _PARTITION_ATTR_TAG
 {
@@ -48,9 +82,10 @@ typedef struct _PARTITION_CFG
 	unsigned int partition_index;
 	unsigned int partition_size;  //
 	unsigned int partition_attr;
+	unsigned int partition_offset;
 } __attribute__ ((packed)) PARTITION_CFG,*PPARTITION_CFG;
 
 
-unsigned int write_uefi_parition_table(PARTITION_CFG *p_partition_cfg);
+unsigned int write_uefi_partition_table(PARTITION_CFG *p_partition_cfg);
 
 #endif	/* _DISK_PART_UEFI_H */

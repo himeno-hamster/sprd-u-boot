@@ -5,7 +5,7 @@
 #include "part_efi.h"
 #include "part_uefi.h"
 #include "part_cfg.h"
-
+#include "diskconfig.h"
 
 wchar_t default_name[]={L"NONAME"};
 
@@ -208,6 +208,7 @@ int _gen_pmbr(legacy_mbr *pmbr)
 	return 1;
 }
 
+
 unsigned int _write_pmbr(legacy_mbr *pmbr)
 {
 	//write ro disk
@@ -383,7 +384,23 @@ unsigned int read_uefi_partition_table(PARTITION_TABLE *p_partition_table)
 	return 1;
 }
 
-unsigned int write_uefi_parition_table(PARTITION_CFG *p_partition_cfg)
+int write_mbr_partition_table(void)
+{
+	printf("write mbr partition \n");
+	emmc_part_device_init();
+	//write pmbr
+	struct disk_info *device_disk_info;
+	if (!(device_disk_info = load_diskconfig())) {
+		printf("Errors encountered while loading disk  partation\n");
+		return 1;
+		}
+       /* First, partition the drive */
+	if (apply_disk_config(device_disk_info))
+		printf("write partition list success\n");
+
+	return 1;
+}
+unsigned int write_uefi_partition_table(PARTITION_CFG *p_partition_cfg)
 {
 	//mount devices
 	all_used_size = 0;

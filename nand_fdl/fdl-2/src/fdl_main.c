@@ -122,13 +122,21 @@ int main(void)
 			extern PARTITION_CFG g_sprd_emmc_partition_cfg[];
 			extern int mmc_legacy_init(int dev);
 			mmc_legacy_init(1);
+		#ifdef CONFIG_EBR_PARTITION
+			#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
+				write_mbr_partition_table();
+			#else
+				FDL_SendAckPacket (convert_err (EMMC_INCOMPATIBLE_PART));
+			#endif
+		#else
 			if (!FDL_Check_Partition_Table()) {
   				#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)// JUST FOR TEST , DELETE IT LATER
-				write_uefi_parition_table(g_sprd_emmc_partition_cfg);
+				write_uefi_partition_table(g_sprd_emmc_partition_cfg);
 				#else				
 				FDL_SendAckPacket (convert_err (EMMC_INCOMPATIBLE_PART));
 				#endif
 			}
+		#endif
 			err = EMMC_SUCCESS;
 		}
 #else
