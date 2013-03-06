@@ -384,6 +384,7 @@ unsigned int read_uefi_partition_table(PARTITION_TABLE *p_partition_table)
 	return 1;
 }
 
+#ifdef CONFIG_EBR_PARTITION
 int write_mbr_partition_table(void)
 {
 	printf("write mbr partition \n");
@@ -400,6 +401,8 @@ int write_mbr_partition_table(void)
 
 	return 1;
 }
+#endif
+
 unsigned int write_uefi_partition_table(PARTITION_CFG *p_partition_cfg)
 {
 	//mount devices
