@@ -250,16 +250,15 @@ static uint32_t ili9486_read_id(struct lcd_spec *self)
 
 	Read_data read_data = self->info.mcu->ops->read_data;
 
-	return 0x60b4;
 	
 	send_cmd(0x04);
 
-	read_data(); 
+	read_data();
 	read_value += read_data()<< 16;
 	read_value += read_data()<< 8;
 	read_value += read_data();
-  
-	return read_value; 
+
+	return 0x60b4;
 }
 
 static struct lcd_operations lcd_ili9486_operations = {
@@ -284,20 +283,20 @@ static struct timing_mcu lcd_ili9341s_timing = {
 #ifdef CONFIG_MACH_MINT
 static struct timing_mcu lcd_ili9486_timing[] = {
 [LCD_REGISTER_TIMING] = {        
-	.rcss = 25,  // 25 ns
-	.rlpw = 45,
-	.rhpw = 90,
-	.wcss = 30,
-	.wlpw = 15,
-	.whpw = 15,
+	.rcss = 0,  // 25 ns
+	.rlpw = 60,
+	.rhpw = 101,
+	.wcss = 0,
+	.wlpw = 40,
+	.whpw = 36,
 },
 [LCD_GRAM_TIMING] = {        
-	.rcss = 25,  // 25 ns
-	.rlpw = 45,
-	.rhpw = 90,
-		.wcss = 30,
-	.wlpw = 15,
-	.whpw = 15,
+	.rcss = 0,  // 25 ns
+	.rlpw = 60,
+	.rhpw = 101,
+	.wcss = 0,
+	.wlpw = 40,
+	.whpw = 36,
 }
 
 };
