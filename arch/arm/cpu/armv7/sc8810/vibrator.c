@@ -15,13 +15,21 @@ void set_vibrator(int on)
 {
 	int i = 0;
 	ANA_REG_SET(ANA_VIBR_WR_PROT, VIBRATOR_REG_UNLOCK); //unlock vibrator registor
+#if defined(CONFIG_SC7710G2)
+	if(on == 0){
+		ANA_REG_AND(ANA_VIBRATOR_CTL0, ~(VIBR_PD_SET));
+	}else{
+		ANA_REG_OR(ANA_VIBRATOR_CTL0, VIBR_PD_SET);
+	}
+#else
 	if(on == 0){
 		ANA_REG_AND(ANA_VIBRATOR_CTL0, ~(VIBR_PD_SET | VIBR_PD_RST));
 		ANA_REG_OR(ANA_VIBRATOR_CTL0, VIBR_PD_SET);
 	}else{
 		ANA_REG_AND(ANA_VIBRATOR_CTL0, ~(VIBR_PD_SET | VIBR_PD_RST));
-		ANA_REG_OR(ANA_VIBRATOR_CTL0, VIBR_PD_RST);
+		ANA_REG_OR(ANA_VIBRATOR_CTL0, VIBR_PD_SET);
 	}
+#endif	
 	ANA_REG_SET(ANA_VIBR_WR_PROT, VIBRATOR_REG_LOCK);   //lock vibrator registor
 }
 void vibrator_hw_init(void)
