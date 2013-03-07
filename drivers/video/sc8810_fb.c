@@ -172,7 +172,7 @@ static struct ops_mcu lcm_mcu_ops = {
 
 static int32_t panel_reset()
 {
-#if (CONFIG_MACH_CORI || CONFIG_MACH_MINT || CONFIG_MACH_KYLEW) 
+#if (CONFIG_MACH_CORI || CONFIG_MACH_MINT || CONFIG_MACH_KYLEW || CONFIG_MACH_SS7710G) 
 	//panel reset
 	__raw_writel(0, LCM_RSTN);
 	udelay(10);
