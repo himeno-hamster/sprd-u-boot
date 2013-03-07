@@ -613,11 +613,19 @@ void udc_power_on(void)
 		/*
 		 * config usb phy controller
 		 */
+                /*SMIC chip id == 0x88100001*/
+#ifdef  CONFIG_SC7710G2
+        	__raw_bits_or(BIT_9, USB_PHY_CTRL);
+		__raw_bits_and(~(BIT_15 | BIT_14), USB_PHY_CTRL);
+		__raw_bits_or(BIT_13 | BIT_12, USB_PHY_CTRL);
+                writel(0x28,USB_SPR_REG);
+#else
 		__raw_bits_or(BIT_8, USB_PHY_CTRL);
 		__raw_bits_or(BIT_17, USB_PHY_CTRL);
 		__raw_bits_and(~BIT_16, USB_PHY_CTRL);
 		__raw_bits_and(~(BIT_13 | BIT_12), USB_PHY_CTRL);
 		__raw_bits_or(BIT_15 | BIT_14, USB_PHY_CTRL);
+#endif
 	}
 #ifdef CONFIG_SC8830
 #else

@@ -126,7 +126,8 @@ LOCAL int SIO_Open (struct FDL_ChannelHandler  *channel, unsigned int baudrate)
     	i++;
     	if(i >= UART_SET_BAUDRATE_TIMEOUT)
     	{
-    		return -1;
+    	//	return -1;
+		break;
     	}
     }
 

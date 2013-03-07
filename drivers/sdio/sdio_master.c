@@ -353,6 +353,23 @@ int SDIO_WriteByte(CARD_SDIO_HANDLE cardHandle,unsigned int func,unsigned int Re
 
 	return TRUE;
 }
+int SDIO_ResetSlave(CARD_SDIO_HANDLE cardHandle)
+{
+        unsigned char rspBuf[16];
+        unsigned int argument = 0;
+        unsigned int rw_flag  = 1;        // 1:write, 0:read
+        unsigned int raw_flag = 1;        // 1:read after write
+        unsigned int addr     = CCCR_IO_ABORT;
+        unsigned int data     = BIT_3;
+
+        //CARD_SDIO_ASSERT(TRUE == _IsCardHandleValid(cardHandle));
+
+        argument = ((rw_flag&0x1)<<31)|((0&0x7)<<28)|((raw_flag&0x1)<<27)|((addr&0x1FFFF)<<9)|(data&0xff);
+        if(SDIO_CARD_PAL_ERR_NONE != SPRD_SDSlave_Pal_SendCmd(cardHandle->sdioPalHd,SDIO_CMD52_IO_RW_DIRECT,argument,NULL,rspBuf))
+                return FALSE;
+
+        return TRUE;
+}
 int __FuncEnable(CARD_SDIO_HANDLE cardHandle)
 {
     unsigned char wdata = BIT_1; // IOE1

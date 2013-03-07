@@ -722,7 +722,7 @@ PUBLIC uint32 SDHOST_SD_Clk_Freq_Set (SDHOST_HANDLE sdhost_handler,uint32 sdio_c
 #if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined (CONFIG_SC8830)
     clkDiv--;
     tmpReg &= (~ (0x3ff<<6));
-    tmpReg |= clkDiv&(0x3<<6);
+    tmpReg |= ((clkDiv>>8)&0x3)<<6;
     tmpReg |= (clkDiv&0xff)<<8;
     sdhost_handler->sdClock = sdhost_handler->baseClock/(2*(clkDiv+1));
 #else    
@@ -1330,7 +1330,7 @@ PUBLIC void SDHOST_SetCmd (SDHOST_HANDLE sdhost_handler,uint32 cmdIndex,uint32 t
             break;
 
     }
-
+    tmpReg &= ~(0x7<<8);
     tmpReg |= (cmdIndex<<24);
 
     sdhost_handler->host_cfg->CMD_TRANSMODE = tmpReg;
@@ -2554,26 +2554,35 @@ PUBLIC uint32 SDHOST_BaseClk_Set(SDHOST_SLOT_NO slot_NO,uint32 sdio_base_clk)
         REG32 (GR_CLK_GEN5) |= (3<<23);
     }
 #elif defined(CONFIG_SC7710G2)
-    REG32 (GR_CLK_GEN7) &= ~ (BIT_23|BIT_24);
-    //Select the clk source of SDIO
-    if (sdio_base_clk >= SDIO_BASE_CLK_384M)
-    {
-        clk = SDIO_BASE_CLK_384M;
-         REG32 (GR_CLK_GEN7) |= (1<<23);
-    }
-    else if (sdio_base_clk >= SDIO_BASE_CLK_256M)
-    {
-        clk = SDIO_BASE_CLK_256M;
-        REG32 (GR_CLK_GEN7) |= (1<<24);
-    }
-    else if (sdio_base_clk >= SDIO_BASE_CLK_153M)
-    {
-        clk = SDIO_BASE_CLK_153M;
-        REG32 (GR_CLK_GEN5) |= (3<<23);
-    }
-    else
-    {
-        clk = SDIO_BASE_CLK_26M;
+    if(SDHOST_SLOT_2 == slot_NO){
+	REG32 (GR_CLK_GEN7) &= ~ (BIT_21|BIT_22);
+	//Select the clk source of SDIO
+	if (sdio_base_clk >= SDIO_BASE_CLK_96M) {
+		clk = SDIO_BASE_CLK_96M;
+	} else if (sdio_base_clk >= SDIO_BASE_CLK_64M) {
+		clk = SDIO_BASE_CLK_64M;
+		REG32 (GR_CLK_GEN7) |= (1<<21);
+	} else if (sdio_base_clk >= SDIO_BASE_CLK_48M) { 
+		clk = SDIO_BASE_CLK_48M;
+		REG32 (GR_CLK_GEN7) |= (2<<21);
+	} else {
+		clk = SDIO_BASE_CLK_26M;
+		REG32 (GR_CLK_GEN7) |= (3<<21);
+	}
+    } else {
+	REG32 (GR_CLK_GEN7) &= ~ (BIT_23|BIT_24);
+	//Select the clk source of SDIO
+	if (sdio_base_clk >= SDIO_BASE_CLK_384M){
+		clk = SDIO_BASE_CLK_384M;
+		REG32 (GR_CLK_GEN7) |= (1<<23);
+	} else if (sdio_base_clk >= SDIO_BASE_CLK_256M){
+		clk = SDIO_BASE_CLK_256M;
+		REG32 (GR_CLK_GEN7) |= (2<<23);
+	} else if (sdio_base_clk >= SDIO_BASE_CLK_153M){
+		clk = SDIO_BASE_CLK_153M;
+		REG32 (GR_CLK_GEN7) |= (3<<23);
+	}else
+		clk = SDIO_BASE_CLK_26M;
     }
 #elif defined(PLATFORM_SC8800G)
     //Select the clk source of SDIO1

@@ -23,7 +23,7 @@
 //only used in fdl2 .in uart download, the debug infors  from  serial will break the download process.
 #define CONFIG_FDL2_PRINT  0	
 #define BOOT_NATIVE_LINUX (1)
-
+#define CONFIG_USB_CORE_IP_293A
 #define CONFIG_SILENT_CONSOLE
 #define CONFIG_GPIOLIB 1
 //#define NAND_DEBUG  
@@ -286,7 +286,7 @@
 #define CONFIG_CALIBRATION_MODE_NEW
 #define CONFIG_AP_ADC_CALIBRATION
 #define CONFIG_MODEM_CALIBERATE
-#define CONFIG_MODEM_CALI_UART  /* uart calibration only */
+//#define CONFIG_MODEM_CALI_UART  /* uart calibration only */
 #define CALIBRATION_CHANNEL 3 // 0 : UART0 1: UART1, 3 uart3
 
 /*
