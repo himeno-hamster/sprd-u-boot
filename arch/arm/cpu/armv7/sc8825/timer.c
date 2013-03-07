@@ -50,6 +50,7 @@
 
 static unsigned long long timestamp;
 static ulong lastinc;
+static ulong mul_value = 26;//default 26Mhz
 
 /*
  * "time" is measured in 1 / CONFIG_SYS_HZ seconds,
@@ -76,6 +77,19 @@ static inline unsigned long long us_to_tick(unsigned long long us)
 	return us;
 }
 
+void calibrate_mul(void)
+{
+	ulong apb_clk, clk_div;
+#define CLK_APB_SHIFT	(14)
+	clk_div = readl(GR_CLK_DLY);
+	apb_clk = (clk_div>>CLK_APB_SHIFT) & 0x3;
+	if (apb_clk == 0)
+		mul_value = 26;
+	else if (apb_clk == 1)
+		mul_value = 51;
+	else
+		mul_value = 77;
+}
 
 /* nothing really to do with interrupts, just starts up a counter. */
 /* The 32KHz 23-bit timer overruns in 512 seconds */
@@ -89,6 +103,8 @@ int timer_init(void)
 	REG32 (TM2_CLR) &=~ (BIT_0);//disable pclk timer interrupt
 	REG32 (TM2_CTL) &=~ (BIT_7);//timer stops first
 	REG32 (TM2_CTL) &=~ (BIT_6);//one-time mode
+
+	calibrate_mul();
 
 	//clear any hanging interrupts & disable interrupt
 	REG32 (SYS_CTL) &=~ (BIT_0);
@@ -153,7 +169,7 @@ void __udelay (unsigned long usec)
 #endif
 void __udelay (unsigned long usec)
 {
-	ulong delta_usec = usec * 26;
+	ulong delta_usec = usec * mul_value;
 	writel(delta_usec, TM2_LOAD);
 	REG32 (TM2_CTL) |= (BIT_7);//timer runs
 	//printf("readl(TM2_VALUE) = 0x%x\n", readl(TM2_VALUE));
