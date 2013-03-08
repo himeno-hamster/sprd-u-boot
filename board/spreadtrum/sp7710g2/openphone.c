@@ -86,6 +86,22 @@ static void chip_init(void)
 	/* setup pins configration when LDO shutdown*/
 	//__raw_writel(0x1fff00, PIN_CTL_REG);
 	*(volatile unsigned int *)PIN_CTL_REG = 0x1fff00;
+
+	/*sim ldo constrol swith config*/
+	/*should be changed with different project defination*/
+	ANA_REG_OR(ANA_LDO_SWITCH,0x0f);/*switch sim0,1,2,wpadcdc to cp side*/
+
+	/*adie headset detection config*/
+
+	//ANA_REG_OR(0x82000830,0x02);//7710 usb ldo on
+	/*cp jtag func and pin config*/
+	//CHIP_REG_AND(0x8B0000B0, ~0x780000);//pin eb
+	//CHIP_REG_SET(0x8C00043c, 0x00158);
+	//CHIP_REG_SET(0x8C000440, 0x00198);
+	//CHIP_REG_SET(0x8C000444, 0x00118);
+	//CHIP_REG_SET(0x8C000448, 0x00198);
+	//CHIP_REG_SET(0x8C00044c, 0x00198);
+
 }
 
 int board_init()
