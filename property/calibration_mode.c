@@ -1005,7 +1005,10 @@ void calibration_mode(const uint8_t *pcmd, int length)
 	// wait for cp ready
 	i=0;
 	while(gpio_get_value(CP_AP_LIV) == 0);
-	sdio_handle = sdio_open();
+//	sdio_handle = sdio_open();
+	int nvitem_sync(void);
+	nvitem_sync();
+
 #endif
 	if(tool_channel_open() == -1)
 		return;
@@ -1028,8 +1031,9 @@ void calibration_mode(const uint8_t *pcmd, int length)
 			tool_channel_write(g_uart_buf, index);
 		}
 #ifdef CALI_NV_WRITEBACK_SDIO_MERGE
-                if(Calibration_data_handler() < 0)
-			break;
+//                if(Calibration_data_handler() < 0)
+//			break;
+		nvitem_sync();
 #else
 		index = 0;
 		ret = Calibration_SpiReadData();
