@@ -14,7 +14,6 @@ COBJS-y += nvitem_server.o
 COBJS-y += nvitem_packet.o
 COBJS-y += nvitem_os.o
 COBJS-y += nvitem_fs.o
-COBJS-y += nvitem_config.o
 COBJS-y += nvitem_channel.o
 COBJS-y += nvitem_buf.o
 
