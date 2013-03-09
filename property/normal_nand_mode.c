@@ -91,9 +91,145 @@ int read_spldata()
 	}
 	return 0;
 }
+#define VLX_RAND_TO_U32( _addr ) \
+	if( (_addr) & 0x3 ){_addr += 0x4 -((_addr) & 0x3); }
+static unsigned int Vlx_CalcFixnvLen(unsigned int search_start, unsigned int search_end) {
+	unsigned int start_addr, end_addr;
+	unsigned short id, len;
+	volatile unsigned short *flash_ptr;
 
-static int load_kernel_and_layout(struct mtd_info *nand, unsigned int phystart, char *header, char *kernel, char *ramdisk, unsigned int virtual_page_size, unsigned int real_page_size)
-{
+	start_addr = search_start;
+	end_addr   = search_end;
+	start_addr += sizeof(unsigned int); //skip update flag
+
+	while(start_addr < end_addr)
+	{
+		flash_ptr = (volatile unsigned short *)(start_addr);
+		id  = *flash_ptr++;
+		len = *flash_ptr;
+		if(0xFFFF == id)
+		{
+			return (start_addr-search_start);
+		}
+		else
+		{
+			start_addr += 4 + len +(len & 0x1);
+			VLX_RAND_TO_U32( start_addr );
+		}
+	}
+	return 0xffffffff;
+}
+
+static int check_fixnv_struct(unsigned int addr,unsigned int size) {
+	unsigned int length = 0,keep_length=0;
+	volatile unsigned int *flash_ptr;
+
+	flash_ptr = (volatile unsigned int *)(addr+size-8);
+	keep_length = *flash_ptr;
+	printf("keep_length=%d  line=%d\r\n",keep_length ,__LINE__);
+	if(keep_length != 0xffffffff){
+		length = Vlx_CalcFixnvLen(addr, addr+size);
+		if(keep_length != length){
+			printf("keep_length=%d  length=%d line=%d\r\n",keep_length ,length,__LINE__);
+			return -1;
+		}
+	}
+	return 1;
+}
+static void recovery_sector(const char* dst_sector_path,
+			const char* dst_sector_name,
+			const char* backup_dst_sector_name,
+			unsigned char * mem_addr,
+			unsigned int size) {
+	cmd_yaffs_mount(dst_sector_path);
+	cmd_yaffs_mwrite_file(dst_sector_name, mem_addr, size);
+	if(backup_dst_sector_name)
+		cmd_yaffs_mwrite_file(backup_dst_sector_name, mem_addr, size);
+	cmd_yaffs_umount(dst_sector_path);
+}
+
+static int load_sector_to_memory(const char* sector_path,
+				const char* sector_name,
+				const char* backup_sector_name,
+				unsigned char * mem_addr,
+				unsigned char * bck_addr,
+				unsigned int size) {
+	int ret = -1;
+	int ptr = -1;
+	int try_backup_file = 0;
+	const char * curr_file = sector_name;
+	unsigned short *master , *slave;
+	//clear memory
+	memset(mem_addr, 0xff,size);
+	//mount yaffs
+	cmd_yaffs_mount(sector_path);
+
+TRY_BACKUP_FILE:
+	//is file exist and has a right size?
+	ret = cmd_yaffs_ls_chk(curr_file);
+	if (ret == size) {
+		//read file to mem
+		cmd_yaffs_mread_file(curr_file, mem_addr);
+		ret = fixnv_is_correct_endflag(mem_addr, size-4);
+	}
+	else{
+		ret = -1;
+	}
+
+	//try backup files.
+	if(backup_sector_name&&ret == -1&&!try_backup_file){
+		curr_file = backup_sector_name;
+		try_backup_file = 1;
+		goto TRY_BACKUP_FILE;
+	}else if(backup_sector_name&&ret == 1&&!try_backup_file){
+		
+		ptr = cmd_yaffs_ls_chk(backup_sector_name);
+		if (ptr == size) {
+			//read file to mem
+			cmd_yaffs_mread_file(backup_sector_name, bck_addr);
+			ptr = fixnv_is_correct_endflag(bck_addr, size-4);
+		}
+		else{
+			ptr = -1;
+		}
+
+		if(ptr == -1) {
+			printf("[load_sector_to_memory]backup_sector is error need recovery it......\n");
+			cmd_yaffs_mwrite_file(backup_sector_name, mem_addr, size);
+		} else {
+			master = (unsigned short *)(bck_addr + size - 4);
+			slave  = (unsigned short *)(mem_addr + size - 4);
+			if(*master != *slave){
+				printf("[load_sector_to_memory]slave file is error recovery it......\n");
+				cmd_yaffs_mwrite_file(sector_name, bck_addr, size);
+				cmd_yaffs_mread_file(backup_sector_name, mem_addr);
+			} else {
+				printf("[load_sector_to_memory]both master and slave  is ok don't sysc......\n");
+			}
+		}
+	}
+
+	if(try_backup_file&&ret==1){
+		//recovery_sector(sector_path,sector_name,mem_addr,size);
+		printf("[load_sector_to_memory]recovery the latest file......\n");
+		cmd_yaffs_mwrite_file(sector_name, mem_addr, size);
+	}else if(try_backup_file&&ret==-1){
+		printf("[load_sector_to_memory] don't care this log ........\n");
+	}
+
+	//unmout yaffs
+	cmd_yaffs_umount(sector_path);
+
+	return ret;
+}
+static int load_kernel_and_layout(struct mtd_info *nand,
+						unsigned int phystart,
+						char *header,
+						char *kernel,
+						char *ramdisk,
+						unsigned int virtual_page_size,
+						unsigned int real_page_size
+						) {
 	int ret = -1;
 	boot_img_hdr *hdr = (boot_img_hdr*)header;
 	unsigned int off = phystart;
@@ -182,6 +318,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 	char *fixnvpoint = "/fixnv";
 	char *fixnvfilename = "/fixnv/fixnv.bin";
+	char *fixnvfilename2 = "/fixnv/fixnvchange.bin";
 	char *backupfixnvpoint = "/backupfixnv";
 	char *backupfixnvfilename = "/backupfixnv/fixnv.bin";
 
@@ -242,267 +379,92 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	printf("good is %d  bad is %d\n", good_blknum, bad_blknum);*/
 	///////////////////////////////////////////////////////////////////////
 	/* recovery damaged fixnv or backupfixnv */
-	orginal_right = 0;
-	memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + 4);
-	cmd_yaffs_mount(fixnvpoint);
-	ret = cmd_yaffs_ls_chk(fixnvfilename);
-	if (ret == (FIXNV_SIZE + 4)) {
-		cmd_yaffs_mread_file(fixnvfilename, (unsigned char *)FIXNV_ADR);
-		if (1 == fixnv_is_correct_endflag((unsigned char *)FIXNV_ADR, FIXNV_SIZE))
-			orginal_right = 1;//right
-	}
-
-	cmd_yaffs_umount(fixnvpoint);
-
-	backupfile_right = 0;
-	memset((unsigned char *)RUNTIMENV_ADR, 0xff, FIXNV_SIZE + 4);
-	cmd_yaffs_mount(backupfixnvpoint);
-	ret = cmd_yaffs_ls_chk(backupfixnvfilename);
-	if (ret == (FIXNV_SIZE + 4)) {
-		cmd_yaffs_mread_file(backupfixnvfilename, (unsigned char *)RUNTIMENV_ADR);
-		if (1 == fixnv_is_correct_endflag((unsigned char *)RUNTIMENV_ADR, FIXNV_SIZE))
-			backupfile_right = 1;//right
-	}
-	cmd_yaffs_umount(backupfixnvpoint);
-
-	if ((orginal_right == 1) && (backupfile_right == 1)) {
-		/* check index */
-		orginal_index = get_nv_index((unsigned char *)FIXNV_ADR, FIXNV_SIZE);
-		backupfile_index = get_nv_index((unsigned char *)RUNTIMENV_ADR, FIXNV_SIZE);
-		if (orginal_index != backupfile_index) {
-			orginal_right = 1;
-			backupfile_right = 0;
-		}
-	}
-
-	if ((orginal_right == 1) && (backupfile_right == 0)) {
-		printf("fixnv is right, but backupfixnv is wrong, so erase and recovery backupfixnv\n");
-		////////////////////////////////
-		find_dev_and_part(BACKUPFIXNV_PART, &dev, &pnum, &part);
-		//printf("offset = 0x%08x  size = 0x%08x\n", part->offset, part->size);
-		nand = &nand_info[dev->id->num];
-		memset(&opts, 0, sizeof(opts));
-		opts.offset = part->offset;
-		opts.length = part->size;
-		opts.quiet = 1;
-		nand_erase_opts(nand, &opts);
-		////////////////////////////////
-		cmd_yaffs_mount(backupfixnvpoint);
-		cmd_yaffs_mwrite_file(backupfixnvfilename, (char *)FIXNV_ADR, (FIXNV_SIZE + 4));
-		cmd_yaffs_ls_chk(backupfixnvfilename);
-		cmd_yaffs_umount(backupfixnvpoint);
-	} else if ((orginal_right == 0) && (backupfile_right == 1)) {
-		printf("backupfixnv is right, but fixnv is wrong, so erase and recovery fixnv\n");
-		////////////////////////////////
-		find_dev_and_part(FIXNV_PART, &dev, &pnum, &part);
-		//printf("offset = 0x%08x  size = 0x%08x\n", part->offset, part->size);
-		nand = &nand_info[dev->id->num];
-		memset(&opts, 0, sizeof(opts));
-		opts.offset = part->offset;
-		opts.length = part->size;
-		opts.quiet = 1;
-		nand_erase_opts(nand, &opts);
-		////////////////////////////////
-		cmd_yaffs_mount(fixnvpoint);
-		cmd_yaffs_mwrite_file(fixnvfilename, (char *)RUNTIMENV_ADR, (FIXNV_SIZE + 4));
-		cmd_yaffs_ls_chk(fixnvfilename);
-		cmd_yaffs_umount(fixnvpoint);
-	} else if ((orginal_right == 0) && (backupfile_right == 0)) {
-		printf("\n\nfixnv and backupfixnv are all wrong.\n\n");
-	}
-	///////////////////////////////////////////////////////////////////////
 	/* FIXNV_PART */
 	printf("Reading fixnv to 0x%08x\n", FIXNV_ADR);
-	memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + 4);
-	cmd_yaffs_mount(fixnvpoint);
-	ret = cmd_yaffs_ls_chk(fixnvfilename);
-	if (ret == (FIXNV_SIZE + 4)) {
-		cmd_yaffs_mread_file(fixnvfilename, (unsigned char *)FIXNV_ADR);
-		cmd_yaffs_umount(fixnvpoint);
-		if (-1 == fixnv_is_correct((unsigned char *)FIXNV_ADR, FIXNV_SIZE)) {
-			memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + 4);
-			/* backup nv start */
-			cmd_yaffs_mount(backupfixnvpoint);
-			ret = cmd_yaffs_ls_chk(backupfixnvfilename);
-			if (ret == (FIXNV_SIZE + 4)) {
-				cmd_yaffs_mread_file(backupfixnvfilename, (unsigned char *)FIXNV_ADR);
-				cmd_yaffs_umount(backupfixnvpoint);
-				if (-1 == fixnv_is_correct((unsigned char *)FIXNV_ADR, FIXNV_SIZE)) {
-					memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + 4);
-				}
-			} else
-				cmd_yaffs_umount(backupfixnvpoint);
-			/* backup nv end */
+	//try "/fixnv/fixnvchange.bin" first,if fail,
+	//try /fixnv/fixnv.bin instead
+	ret = load_sector_to_memory(fixnvpoint,
+							fixnvfilename2,
+							fixnvfilename,
+							(unsigned char *)FIXNV_ADR,
+							(unsigned char *)MODEM_ADR,
+							FIXNV_SIZE + 4);
+	if(ret == -1){
+		//fixnvpoint's files are not correct
+		//the "/backupfixnv/fixnv.bin" must be correct!
+		ret = load_sector_to_memory(backupfixnvpoint,
+						backupfixnvfilename,
+						0,
+						(unsigned char *)FIXNV_ADR,
+						(unsigned char *)MODEM_ADR,//we just test if it's correct.
+						FIXNV_SIZE + 4);
+		if(ret ==1){
+			//we got a right file in backupfixnvpoint,
+			//use it to recovery fixnvpoint's files.
+			recovery_sector(fixnvpoint,
+				fixnvfilename,
+				fixnvfilename2,
+				(unsigned char *)FIXNV_ADR,
+				FIXNV_SIZE + 4);
+		}else{
+			//backupfixnvpoint's files are still uncorrect.
+			//then we can do nothing to get it right!!!!
+			//there is an fatal error has occured.
+			printf("\n\nfixnv and backupfixnv are all wrong!\n\n");
+			return -1;
+			//clear memory
+			//memset(FIXNV_ADR, 0xff,FIXNV_SIZE + 4);
 		}
-	} else {
-		cmd_yaffs_umount(fixnvpoint);
-		/* backup nv start */
-		cmd_yaffs_mount(backupfixnvpoint);
-		ret = cmd_yaffs_ls_chk(backupfixnvfilename);
-		if (ret == (FIXNV_SIZE + 4)) {
-			cmd_yaffs_mread_file(backupfixnvfilename, (unsigned char *)FIXNV_ADR);
-			cmd_yaffs_umount(backupfixnvpoint);
-			if (-1 == fixnv_is_correct((unsigned char *)FIXNV_ADR, FIXNV_SIZE)) {
-				memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + 4);
-			}
-		} else
-			cmd_yaffs_umount(backupfixnvpoint);
-		/* backup nv end */
-	}
-	//array_value((unsigned char *)FIXNV_ADR, FIXNV_SIZE);
-
-
-	/* recovery damaged productinfo or productinfobkup */
-	orginal_right = 0;
-	memset((unsigned char *)PRODUCTINFO_ADR, 0xff, PRODUCTINFO_SIZE + 4);
-	cmd_yaffs_mount(productinfopoint);
-	ret = cmd_yaffs_ls_chk(productinfofilename);
-	if (ret == (PRODUCTINFO_SIZE + 4)) {
-		cmd_yaffs_mread_file(productinfofilename, (unsigned char *)PRODUCTINFO_ADR);
-		if (1 == sn_is_correct_endflag((unsigned char *)PRODUCTINFO_ADR, PRODUCTINFO_SIZE))
-			orginal_right = 1;//right
-	}
-	cmd_yaffs_umount(productinfopoint);
-
-	backupfile_right = 0;
-	memset((unsigned char *)RUNTIMENV_ADR, 0xff, PRODUCTINFO_SIZE + 4);
-	cmd_yaffs_mount(productinfopoint);
-	ret = cmd_yaffs_ls_chk(productinfofilename2);
-	if (ret == (PRODUCTINFO_SIZE + 4)) {
-		cmd_yaffs_mread_file(productinfofilename2, (unsigned char *)RUNTIMENV_ADR);
-		if (1 == sn_is_correct_endflag((unsigned char *)RUNTIMENV_ADR, PRODUCTINFO_SIZE))
-			backupfile_right = 1;//right
-	}
-	cmd_yaffs_umount(productinfopoint);
-	if ((orginal_right == 1) && (backupfile_right == 1)) {
-		/* check index */
-		orginal_index = get_productinfo_index((unsigned char *)PRODUCTINFO_ADR);
-		backupfile_index = get_productinfo_index((unsigned char *)RUNTIMENV_ADR);
-		if (orginal_index != backupfile_index) {
-			orginal_right = 1;
-			backupfile_right = 0;
+	}else{
+		//everything is right!!
+		//we can chose to do it or not.
+		ret = load_sector_to_memory(backupfixnvpoint,
+						backupfixnvfilename,
+						0,
+						(unsigned char *)RUNTIMENV_ADR,//we just test if it's correct.
+						(unsigned char *)MODEM_ADR,//we just test if it's correct.
+						FIXNV_SIZE + 4);
+		if(ret == -1){
+			recovery_sector(backupfixnvpoint,
+				backupfixnvfilename,
+				0,
+				(unsigned char *)FIXNV_ADR,
+				FIXNV_SIZE + 4);
 		}
 	}
-	if ((orginal_right == 1) && (backupfile_right == 0)) {
-		printf("productinfo is right, but productinfobkup is wrong, so recovery productinfobkup\n");
-		cmd_yaffs_mount(productinfopoint);
-		cmd_yaffs_mwrite_file(productinfofilename2, (char *)PRODUCTINFO_ADR, (PRODUCTINFO_SIZE + 4));
-		cmd_yaffs_ls_chk(productinfofilename2);
-		cmd_yaffs_umount(productinfopoint);
-	} else if ((orginal_right == 0) && (backupfile_right == 1)) {
-		printf("productinfobkup is right, but productinfo is wrong, so recovery productinfo\n");
-		cmd_yaffs_mount(productinfopoint);
-		cmd_yaffs_mwrite_file(productinfofilename, (char *)RUNTIMENV_ADR, (PRODUCTINFO_SIZE + 4));
-		cmd_yaffs_ls_chk(productinfofilename);
-		cmd_yaffs_umount(productinfopoint);
-	} else if ((orginal_right == 0) && (backupfile_right == 0)) {
-		printf("\n\nproductinfo and productinfobkup are all wrong or no phasecheck.\n\n");
+
+	//finally we check the fixnv structure,if fail,then u-boot will hung up!!!
+	if(check_fixnv_struct(FIXNV_ADR,FIXNV_SIZE) == -1){
+		printf("check fixnv structer error ............\r\n");
+		return -1;
 	}
+
 	///////////////////////////////////////////////////////////////////////
 	/* PRODUCTINFO_PART */
-	printf("Reading productinfo to 0x%08x\n", PRODUCTINFO_ADR);
-	cmd_yaffs_mount(productinfopoint);
-	ret = cmd_yaffs_ls_chk(productinfofilename);
-	if (ret == (PRODUCTINFO_SIZE + 4)) {
-		cmd_yaffs_mread_file(productinfofilename, (unsigned char *)PRODUCTINFO_ADR);
-		if (-1 == sn_is_correct((unsigned char *)PRODUCTINFO_ADR, PRODUCTINFO_SIZE)) {
-			memset((unsigned char *)PRODUCTINFO_ADR, 0xff, PRODUCTINFO_SIZE + 4);
-			ret = cmd_yaffs_ls_chk(productinfofilename2);
-			if (ret == (PRODUCTINFO_SIZE + 4)) {
-				cmd_yaffs_mread_file(productinfofilename2, (unsigned char *)PRODUCTINFO_ADR);
-				if (-1 == sn_is_correct((unsigned char *)PRODUCTINFO_ADR, PRODUCTINFO_SIZE)) {
-					memset((unsigned char *)PRODUCTINFO_ADR, 0xff, PRODUCTINFO_SIZE + 4);
-				}
-			}
-		}
-	} else {
-		memset((unsigned char *)PRODUCTINFO_ADR, 0xff, PRODUCTINFO_SIZE + 4);
-		ret = cmd_yaffs_ls_chk(productinfofilename2);
-		if (ret == (PRODUCTINFO_SIZE + 4)) {
-			cmd_yaffs_mread_file(productinfofilename2, (unsigned char *)PRODUCTINFO_ADR);
-			if (-1 == sn_is_correct((unsigned char *)PRODUCTINFO_ADR, PRODUCTINFO_SIZE)) {
-				memset((unsigned char *)PRODUCTINFO_ADR, 0xff, PRODUCTINFO_SIZE + 4);
-			}
-		}
+	ret = load_sector_to_memory(productinfopoint,
+							productinfofilename2,
+							productinfofilename,
+							(unsigned char *)PRODUCTINFO_ADR,
+							(unsigned char *)MODEM_ADR,//we just test if it's correct.
+							PRODUCTINFO_SIZE + 4);
+	if(ret == -1){
+		printf("don't need read productinfo  to 0x%08x!\n", PRODUCTINFO_ADR);
 	}
-	cmd_yaffs_umount(productinfopoint);
-	//array_value((unsigned char *)PRODUCTINFO_ADR, PRODUCTINFO_SIZE);
 	eng_phasechecktest((unsigned char *)PRODUCTINFO_ADR, SP09_MAX_PHASE_BUFF_SIZE);
 	///////////////////////////////////////////////////////////////////////
 
 	///////////////////////////////////////////////////////////////////////
 	/* RUNTIMEVN_PART */
-	/* recovery damaged runtimenv or runtimenvbkup */
-	orginal_right = 0;
-	memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
-	cmd_yaffs_mount(runtimenvpoint);
-	ret = cmd_yaffs_ls_chk(runtimenvfilename);
-	if (ret == RUNTIMENV_SIZE) {
-		cmd_yaffs_mread_file(runtimenvfilename, (unsigned char *)RUNTIMENV_ADR);
-		if (1 == runtimenv_is_correct((unsigned char *)RUNTIMENV_ADR, RUNTIMENV_SIZE))
-			orginal_right = 1;//right
+	ret = load_sector_to_memory(runtimenvpoint,
+							runtimenvfilename2,
+							runtimenvfilename,
+							(unsigned char *)RUNTIMENV_ADR,
+							(unsigned char *)MODEM_ADR,//we just test if it's correct.
+							RUNTIMENV_SIZE + 4);
+	if(ret == -1){
+		//clear memory
+		memset(RUNTIMENV_ADR, 0xff,RUNTIMENV_SIZE + 4);
 	}
-	cmd_yaffs_umount(runtimenvpoint);
-
-	backupfile_right = 0;
-	memset((unsigned char *)DSP_ADR, 0xff, RUNTIMENV_SIZE);
-	cmd_yaffs_mount(runtimenvpoint);
-	ret = cmd_yaffs_ls_chk(runtimenvfilename2);
-	if (ret == RUNTIMENV_SIZE) {
-		cmd_yaffs_mread_file(runtimenvfilename2, (unsigned char *)DSP_ADR);
-		if (1 == runtimenv_is_correct((unsigned char *)DSP_ADR, RUNTIMENV_SIZE))
-			backupfile_right = 1;//right
-	}
-	cmd_yaffs_umount(runtimenvpoint);
-
-	if ((orginal_right == 1) && (backupfile_right == 0)) {
-		printf("runtimenv is right, but runtimenvbkup is wrong, so recovery runtimenvbkup\n");
-		cmd_yaffs_mount(runtimenvpoint);
-		cmd_yaffs_mwrite_file(runtimenvfilename2, (char *)RUNTIMENV_ADR, RUNTIMENV_SIZE);
-		cmd_yaffs_ls_chk(runtimenvfilename2);
-		cmd_yaffs_umount(runtimenvpoint);
-	} else if ((orginal_right == 0) && (backupfile_right == 1)) {
-		printf("productinfobkup is right, but productinfo is wrong, so recovery productinfo\n");
-		cmd_yaffs_mount(runtimenvpoint);
-		cmd_yaffs_mwrite_file(runtimenvfilename, (char *)DSP_ADR, RUNTIMENV_SIZE);
-		cmd_yaffs_ls_chk(runtimenvfilename);
-		cmd_yaffs_umount(runtimenvpoint);
-	} else if ((orginal_right == 0) && (backupfile_right == 0)) {
-		printf("\n\nruntimenv and runtimenvbkup are all wrong or no runtimenv.\n\n");
-	}
-
-	printf("Reading runtimenv to 0x%08x\n", RUNTIMENV_ADR);
-	/* runtimenv */
-    cmd_yaffs_mount(runtimenvpoint);
-	ret = cmd_yaffs_ls_chk(runtimenvfilename);
-	if (ret == RUNTIMENV_SIZE) {
-		/* file exist */
-		cmd_yaffs_mread_file(runtimenvfilename, (unsigned char *)RUNTIMENV_ADR);
-		if (-1 == runtimenv_is_correct((unsigned char *)RUNTIMENV_ADR, RUNTIMENV_SIZE)) {
-			/* file isn't right and read backup file */
-			memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
-			ret = cmd_yaffs_ls_chk(runtimenvfilename2);
-			if (ret == RUNTIMENV_SIZE) {
-				cmd_yaffs_mread_file(runtimenvfilename2, (unsigned char *)RUNTIMENV_ADR);
-				if (-1 == runtimenv_is_correct((unsigned char *)RUNTIMENV_ADR, RUNTIMENV_SIZE)) {
-					/* file isn't right */
-					memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
-				}
-			}
-		}
-	} else {
-		/* file don't exist and read backup file */
-		memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
-		ret = cmd_yaffs_ls_chk(runtimenvfilename2);
-		if (ret == RUNTIMENV_SIZE) {
-			cmd_yaffs_mread_file(runtimenvfilename2, (unsigned char *)RUNTIMENV_ADR);
-			if (-1 == runtimenv_is_correct((unsigned char *)RUNTIMENV_ADR, RUNTIMENV_SIZE)) {
-				/* file isn't right */
-				memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
-			}
-		}
-	}
-	cmd_yaffs_umount(runtimenvpoint);
 	//array_value((unsigned char *)RUNTIMENV_ADR, RUNTIMENV_SIZE);
 
 	////////////////////////////////////////////////////////////////
@@ -754,7 +716,13 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	}
 #else
 
-	ret = load_kernel_and_layout(nand, (unsigned int)off, (char *)raw_header, (char *) KERNEL_ADR, (char *) RAMDISK_ADR, 2048, nand->writesize);
+	ret = load_kernel_and_layout(nand,
+							(unsigned int)off,
+							(char *)raw_header,
+							(char *) KERNEL_ADR,
+							(char *) RAMDISK_ADR,
+							2048,
+							nand->writesize);
 
 	if (ret != 0) {
 		printf("ramdisk nand read error %d\n", ret);
@@ -809,12 +777,12 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	nand = &nand_info[dev->id->num];
 	size = (VMJALUNA_SIZE +(flash_page_size - 1)) & (~(flash_page_size - 1));
 	if(size <= 0) {
-		printf("modem image should not be zero\n");
+		printf("VMJALUNA image should not be zero\n");
 		return;
 	}
 	ret = nand_read_offset_ret(nand, off, &size, (void*)VMJALUNA_ADR, &off);
 	if(ret != 0) {
-		printf("modem nand read error %d\n", ret);
+		printf("VMJALUNA nand read error %d\n", ret);
 		return;
 	}
 	secure_check(VMJALUNA_ADR, 0, VMJALUNA_ADR + VMJALUNA_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);

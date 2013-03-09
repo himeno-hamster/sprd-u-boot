@@ -361,6 +361,49 @@ static unsigned short calc_checksum(unsigned char *dat, unsigned long len)
 #define NUM_GSM850_ARFCN_BANDS	(6)
 #define MAX_COMPENSATE_POINT	(75)
 
+#define VLX_RAND_TO_U32( _addr ) \
+	if( (_addr) & 0x3 ){_addr += 0x4 -((_addr) & 0x3); }
+static unsigned int Vlx_CalcFixnvLen(unsigned int search_start, unsigned int search_end)
+{
+	unsigned int start_addr, end_addr;
+	unsigned short id, len;
+	volatile unsigned short *flash_ptr;
+
+	start_addr = search_start;
+	end_addr   = search_end;
+	start_addr += sizeof(unsigned int); //skip update flag
+
+	while(start_addr < end_addr)
+	{
+		flash_ptr = (volatile unsigned short *)(start_addr);
+		id  = *flash_ptr++;
+		len = *flash_ptr;
+		if(0xFFFF == id)
+		{
+			return (start_addr-search_start);
+		}
+		else
+		{
+			start_addr += 4 + len +(len & 0x1);
+			VLX_RAND_TO_U32( start_addr );
+		}
+	}
+	return 0xffffffff;
+}
+static int check_fixnv_struct(unsigned char *array,unsigned long size){
+
+	int length = 0,keep_length=0, start_addr=(int)array;
+	printf("keep_length=%d  line=%d\r\n",keep_length ,__LINE__);
+	keep_length = *(unsigned int*)(start_addr+size-8);
+	if(keep_length != 0xffffffff){
+		length = Vlx_CalcFixnvLen(start_addr, start_addr+size);
+		printf("keep_length=%d  length=%d line=%d\r\n",keep_length ,length,__LINE__);
+		if(keep_length != length){
+			return -1;
+		}
+	}
+	return 1;
+}
 static unsigned long XCheckNVStruct(unsigned char *lpPhoBuf, unsigned long dwPhoSize)
 {
 	unsigned long dwOffset = 0, dwLength = 0, bRet;
@@ -606,7 +649,8 @@ int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, un
 			ret = cmd_yaffs_ls_chk(fixnvfilename);
 			if (ret == (FIXNV_SIZE + 4)) {
 				cmd_yaffs_mread_file(fixnvfilename, g_fixnv_buf_yaffs);
-				if (1 == nv_is_correct_endflag(g_fixnv_buf_yaffs, FIXNV_SIZE))
+				if (1 == nv_is_correct_endflag(g_fixnv_buf_yaffs, FIXNV_SIZE)&&
+					1 == check_fixnv_struct(g_fixnv_buf_yaffs, FIXNV_SIZE))
 					read_nv_flag = 2;//right
 			}
 			cmd_yaffs_umount(fixnvpoint);
@@ -617,7 +661,8 @@ int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, un
 			ret = cmd_yaffs_ls_chk(backupfixnvfilename);
 			if (ret == (FIXNV_SIZE + 4)) {
 				cmd_yaffs_mread_file(backupfixnvfilename, g_fixnv_buf);
-				if (1 == nv_is_correct_endflag(g_fixnv_buf, FIXNV_SIZE))
+				if (1 == nv_is_correct_endflag(g_fixnv_buf, FIXNV_SIZE)&&
+					1== check_fixnv_struct(g_fixnv_buf_yaffs, FIXNV_SIZE))
 					read_bkupnv_flag = 2;//right
 			}
 			cmd_yaffs_umount(backupfixnvpoint);
@@ -1027,7 +1072,6 @@ fail:
 
 int yaffs2_is4kImg(void)
 {
-	/* return (((!strcmp(phy_partition.name, "system")) || (!strcmp(phy_partition.name, "userdata"))) && (nand_page_oob_info.writesize == 4096)); */
 	return ((!strcmp(phy_partition.name, "system")) || (!strcmp(phy_partition.name, "userdata")));
 }
 
@@ -1171,9 +1215,9 @@ int FDL2_DataStart (PACKET_T *packet, void *arg)
 	//printf("code_yaffs_onewrite = %d  code_yaffs_buflen = %d  yaffs_buffer_size = %d\n", code_yaffs_onewrite, code_yaffs_buflen, yaffs_buffer_size);
 #endif
 
-        g_status.total_size  = size;
-        g_status.recv_size   = 0;
-        g_prevstatus = NAND_SUCCESS;
+	g_status.total_size  = size;
+	g_status.recv_size   = 0;
+	g_prevstatus = NAND_SUCCESS;
 	g_ReadBufLen = 0;
 	g_BootimgCurAddr = 0;
 	g_BootimgWritesize = 0;
@@ -1351,37 +1395,31 @@ static void fill_partition(struct real_mtd_partition *mtd_part,
 int FDL2_DataEnd (PACKET_T *packet, void *arg)
 {
 	unsigned long pos, size, ret, crc;
-    	unsigned long i, fix_nv_size, fix_nv_checksum, ii, realii;
+	unsigned long i, fix_nv_size, fix_nv_checksum, ii, realii;
 	unsigned short sum = 0, *dataaddr;
 	int imgsize = 0x0;
 	int blksize = 0x0;
 	int first_nv_ok = 0;
-
+	int change_nv_ok = 0;
 	set_dl_op_val(0, 0, ENDDATA, FAIL, 1);
 
-	//step1: check if dwonload size exceed partition size limit.
-	if ((check_flag == 1) && (phy_partition.size < (get_end_write_pos() - phy_partition.offset))) {
-		check_flag = 0;
-		printf("partition : %s write pos exceed,please increase partition page num\n", phy_partition.name);
-		printf("size = 0x%x offset = 0x%x endpos = 0x%x\n", phy_partition.size,  phy_partition.offset, get_end_write_pos());
-		return 0;
-	}
-
-    	if (CHECKSUM_OTHER_DATA != g_checksum) {
-		/* It's fixnv data */
-        	fix_nv_size = g_sram_addr - (unsigned long) g_fixnv_buf;
-        	fix_nv_checksum = Get_CheckSum ( (unsigned char *) g_fixnv_buf, fix_nv_size);
-        	fix_nv_checksum = EndianConv_32 (fix_nv_checksum);
-        	if (fix_nv_checksum != g_checksum)
-            		SEND_ERROR_RSP(BSL_CHECKSUM_DIFF);
+    if (CHECKSUM_OTHER_DATA != g_checksum) {
+	/* It's fixnv data */
+        fix_nv_size = g_sram_addr - (unsigned long) g_fixnv_buf;
+        fix_nv_checksum = Get_CheckSum ( (unsigned char *) g_fixnv_buf, fix_nv_size);
+        fix_nv_checksum = EndianConv_32 (fix_nv_checksum);
+        if (fix_nv_checksum != g_checksum)
+            SEND_ERROR_RSP(BSL_CHECKSUM_DIFF);
 		
 		/* write fixnv to yaffs2 format : orginal */
 		char *fixnvpoint = "/fixnv";
 		char *fixnvfilename = "/fixnv/fixnv.bin";
+		char *fixnvfilename2 = "/fixnv/fixnvchange.bin";
 		char *backupfixnvpoint = "/backupfixnv";
 		char *backupfixnvfilename = "/backupfixnv/fixnv.bin";
 		
 		/* g_fixnv_buf : (FIXNV_SIZE + 4) instead of fix_nv_size */
+		*((unsigned int*)&g_fixnv_buf[FIXNV_SIZE-8])= fix_nv_size;//keep the real  fixnv file size.
 		g_fixnv_buf[FIXNV_SIZE + 0] = g_fixnv_buf[FIXNV_SIZE + 1] = 0x5a;
 		g_fixnv_buf[FIXNV_SIZE + 2] = g_fixnv_buf[FIXNV_SIZE + 3] = 0x5a;
 
@@ -1398,56 +1436,200 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 		phy_partition_info(phy_partition, __LINE__);
 		g_prevstatus = ret;
 		if (ret == NAND_SUCCESS) {
-			printf("erase fixnv start\n");
-			ret = nand_start_write (&phy_partition, fix_nv_size, &nand_page_oob_info, 0);
-			printf("\nerase fixnv end\n");
+			cmd_yaffs_mount(fixnvpoint);
+			cmd_yaffs_mread_file(fixnvfilename, g_fixnv_buf_yaffs);
+			first_nv_ok = nv_is_correct_endflag(g_fixnv_buf_yaffs, FIXNV_SIZE);
+			if(first_nv_ok == 0) {
+				printf("/fixnv/fixnv.bin is error !\r\n");
+				cmd_yaffs_mread_file(fixnvfilename2, g_fixnv_buf_yaffs);
+				change_nv_ok = nv_is_correct_endflag(g_fixnv_buf_yaffs, FIXNV_SIZE);
+
+			}
+			cmd_yaffs_umount(fixnvpoint);
+
+		} else {
+			g_prevstatus = NAND_INCOMPATIBLE_PART ;
+			set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
+			FDL2_SendRep (g_prevstatus);
+			return 0;
+		}
+		if(first_nv_ok == 1 || change_nv_ok == 1) {
+			//write backup fixnv first
+				/* erase backup fixnv partition */
+			memset(&phy_partition, 0, sizeof(struct real_mtd_partition));
+			strcpy(phy_partition.name, "backupfixnv");
+			ret = log2phy_table(&phy_partition);
+			phy_partition_info(phy_partition, __LINE__);
 			g_prevstatus = ret;
 			if (ret == NAND_SUCCESS) {
-				printf("write fixnv start\n");
-				cmd_yaffs_mount(fixnvpoint);
+				{//download size check
+					imgsize = FIXNV_SIZE + 4;
+					blksize = nand_page_oob_info.erasesize;
+					if (((yaffs_get_reserved_block_num() + 2) * blksize+imgsize) > phy_partition.size)
+							printf("partition:%s write pos exceed, please increase partition size\n", phy_partition.name);
+				}
+				if(1 == check_fixnv_struct((char *)g_fixnv_buf, FIXNV_SIZE)){
+					//printf("check_backupfixnv_struct success !\r\n");
+					printf("erase backupfixnv start\n");
+					ret = nand_start_write (&phy_partition, fix_nv_size, &nand_page_oob_info,0);
+					printf("\nerase backupfixnv end\n");
+					g_prevstatus = ret;
+					if (ret == NAND_SUCCESS){
+							printf("write backupfixnv start\n");
+							cmd_yaffs_mount(backupfixnvpoint);
+							cmd_yaffs_mwrite_file(backupfixnvfilename, (char *)g_fixnv_buf, (FIXNV_SIZE + 4));
+							ret = cmd_yaffs_ls_chk(backupfixnvfilename);
+							cmd_yaffs_umount(backupfixnvpoint);
+							printf("write backupfixnv end\n");
+							g_prevstatus = NAND_SUCCESS;
+					} else {
+								set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
+								FDL2_SendRep (g_prevstatus);
+								return 0;
+							}
 
-				/* download size check */
-				imgsize = FIXNV_SIZE + 4;
-				blksize = nand_page_oob_info.erasesize;
-				if (((yaffs_get_reserved_block_num() + 2) * blksize+imgsize) > phy_partition.size)
-					printf("partition:%s write pos exceed, please increase partition size\n", phy_partition.name);
-    				cmd_yaffs_mwrite_file(fixnvfilename, (char *)g_fixnv_buf, (FIXNV_SIZE + 4));
-				ret = cmd_yaffs_ls_chk(fixnvfilename);
-				cmd_yaffs_umount(fixnvpoint);
-				printf("write fixnv end\n");
-				g_prevstatus = NAND_SUCCESS;			
+				} else {
+							g_prevstatus = NAND_INVALID_SIZE;
+							cmd_yaffs_umount(backupfixnvpoint);
+							set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
+							FDL2_SendRep (g_prevstatus);
+							return 0;
+					}
+				}
+				//write change fixnv first
+				/* erase change fixnv partition */
+				memset(&phy_partition, 0, sizeof(struct real_mtd_partition));
+				strcpy(phy_partition.name, "fixnv");
+				ret = log2phy_table(&phy_partition);
+				phy_partition_info(phy_partition, __LINE__);
+				g_prevstatus = ret;
+				if (ret == NAND_SUCCESS) {
+					{//download size check
+						imgsize = FIXNV_SIZE + 4;
+						blksize = nand_page_oob_info.erasesize;
+						if (((yaffs_get_reserved_block_num() + 2) * blksize + imgsize) > phy_partition.size)
+							printf("partition:%s write pos exceed,please increase partition size\n", phy_partition.name);
+					}
+					if(1 == check_fixnv_struct((char *)g_fixnv_buf, FIXNV_SIZE)){
+						//printf("check_fixnv_struct success !\r\n");
+						printf("erase fixnv start\n");
+						ret = nand_start_write (&phy_partition, fix_nv_size, &nand_page_oob_info,0);
+						printf("\nerase fixnv end\n");
+						g_prevstatus = ret;
+
+						if(ret == NAND_SUCCESS){
+							printf("write change fixnv start\n");
+							cmd_yaffs_mount(fixnvpoint);
+							cmd_yaffs_mwrite_file(fixnvfilename2, (char *)g_fixnv_buf, (FIXNV_SIZE + 4));
+							ret = cmd_yaffs_ls_chk(fixnvfilename2);
+
+							cmd_yaffs_mwrite_file(fixnvfilename, (char *)g_fixnv_buf, (FIXNV_SIZE + 4));
+							ret = cmd_yaffs_ls_chk(fixnvfilename);
+
+							cmd_yaffs_umount(fixnvpoint);
+							printf("write changefixnv end\n");
+							g_prevstatus = NAND_SUCCESS;
+						}else{
+							set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
+							FDL2_SendRep (g_prevstatus);
+							return 0;
+						}
+					}else{
+							g_prevstatus = NAND_INVALID_SIZE;
+							cmd_yaffs_umount(fixnvpoint);
+							set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
+							FDL2_SendRep (g_prevstatus);
+							return 0;
+					}
 			}
-		}
-
-		/* write fixnv to yaffs2 format : backup */
-		/* erase backup fixnv partition */
-		memset(&phy_partition, 0, sizeof(struct real_mtd_partition));
-		strcpy(phy_partition.name, "backupfixnv");
-		ret = log2phy_table(&phy_partition);
-		phy_partition_info(phy_partition, __LINE__);
-		g_prevstatus = ret;
-		if (ret == NAND_SUCCESS) {
-			printf("erase backupfixnv start\n");
-			ret = nand_start_write (&phy_partition, fix_nv_size, &nand_page_oob_info, 0);
-			printf("\nerase backupfixnv end\n");
-			g_prevstatus = ret;
+		}else{
+				//write fixnv first
 			if (ret == NAND_SUCCESS) {
-				printf("write backupfixnv start\n");
-				cmd_yaffs_mount(backupfixnvpoint);
+					{//download size check
+						imgsize = FIXNV_SIZE + 4;
+						blksize = nand_page_oob_info.erasesize;
+						if (((yaffs_get_reserved_block_num() + 2) * blksize + imgsize) > phy_partition.size)
+							printf("partition:%s write pos exceed,please increase partition size\n", phy_partition.name);
+					}
+					if(1 == check_fixnv_struct((char *)g_fixnv_buf, FIXNV_SIZE)){
+						//printf("check_fixnv_struct success !\r\n");
 
+						printf("erase fixnv start ; line=%d\n",__LINE__);
+						ret = nand_start_write (&phy_partition, fix_nv_size, &nand_page_oob_info,0);
+						printf("\nerase fixnv end ; line=%d\n",__LINE__);
+						g_prevstatus = ret;
 
-				/* download size check */
-				imgsize = FIXNV_SIZE + 4;
-				blksize = nand_page_oob_info.erasesize;
-				if (((yaffs_get_reserved_block_num() + 2) * blksize + imgsize) > phy_partition.size)
-					printf("partition:%s write pos exceed,please increase partition size\n", phy_partition.name);
-    				cmd_yaffs_mwrite_file(backupfixnvfilename, (char *)g_fixnv_buf, (FIXNV_SIZE + 4));
-				ret = cmd_yaffs_ls_chk(backupfixnvfilename);
-				cmd_yaffs_umount(backupfixnvpoint);
-				printf("write backupfixnv end\n");
-				g_prevstatus = NAND_SUCCESS;
+						if(ret == NAND_SUCCESS){
+							printf("write fixnv start\n");
+							cmd_yaffs_mount(fixnvpoint);
+
+							cmd_yaffs_mwrite_file(fixnvfilename, (char *)g_fixnv_buf, (FIXNV_SIZE + 4));
+							ret = cmd_yaffs_ls_chk(fixnvfilename);
+
+							cmd_yaffs_mwrite_file(fixnvfilename2, (char *)g_fixnv_buf, (FIXNV_SIZE + 4));
+							ret = cmd_yaffs_ls_chk(fixnvfilename2);
+
+							cmd_yaffs_umount(fixnvpoint);
+							printf("write fixnv end\n");
+							g_prevstatus = NAND_SUCCESS;
+						}else{
+							set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
+							FDL2_SendRep (g_prevstatus);
+							return 0;
+						}
+					}else{
+						//fixnv structure check fail.
+						g_prevstatus = NAND_INVALID_SIZE;
+						cmd_yaffs_umount(fixnvpoint);
+						set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
+						FDL2_SendRep (g_prevstatus);
+						return 0;
+					}
 			}
-		}
+				/* erase backup fixnv partition */
+			memset(&phy_partition, 0, sizeof(struct real_mtd_partition));
+			strcpy(phy_partition.name, "backupfixnv");
+			ret = log2phy_table(&phy_partition);
+			phy_partition_info(phy_partition, __LINE__);
+			g_prevstatus = ret;
+
+			if (ret == NAND_SUCCESS) {
+				{//download size check
+					imgsize = FIXNV_SIZE + 4;
+					blksize = nand_page_oob_info.erasesize;
+					if (((yaffs_get_reserved_block_num() + 2) * blksize + imgsize) > phy_partition.size)
+							printf("partition:%s write pos exceed,please increase partition size\n", phy_partition.name);
+				}
+				if(1 == check_fixnv_struct((char *)g_fixnv_buf, FIXNV_SIZE)){
+					//printf("check_backupfixnv_struct success !\r\n");
+					printf("erase backupfixnv start\n");
+					ret = nand_start_write (&phy_partition, fix_nv_size, &nand_page_oob_info,0);
+					printf("\nerase backupfixnv end\n");
+					g_prevstatus = ret;
+
+					if (ret == NAND_SUCCESS) {
+						printf("write backupfixnv start\n");
+						cmd_yaffs_mount(backupfixnvpoint);
+
+						cmd_yaffs_mwrite_file(backupfixnvfilename, (char *)g_fixnv_buf, (FIXNV_SIZE + 4));
+						ret = cmd_yaffs_ls_chk(backupfixnvfilename);
+						cmd_yaffs_umount(backupfixnvpoint);
+						printf("write backupfixnv end\n");
+						g_prevstatus = NAND_SUCCESS;
+					}else{
+							set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
+							FDL2_SendRep (g_prevstatus);
+							return 0;
+						}
+					}else{
+							g_prevstatus = NAND_INVALID_SIZE ;
+							cmd_yaffs_umount(backupfixnvpoint);
+							set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
+							FDL2_SendRep (g_prevstatus);
+							return 0;
+					}
+				}
+			}
     	} else if (is_nbl_write == 1) {
 #if (defined(CONFIG_NAND_SC8810) || defined(CONFIG_NAND_TIGER) || defined(CONFIG_NAND_SC8830))//only for sc8810 to write spl
 		g_prevstatus = nand_write_fdl(0x0, g_FixNBLBuf);
@@ -1598,11 +1780,17 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 	}
 #endif
     	if (NAND_SUCCESS != g_prevstatus) {
-		set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
+			set_dl_op_val(0, 0, ENDDATA, FAIL, 2);
         	FDL2_SendRep (g_prevstatus);
         	return 0;
     	}
-
+		//step1: check if dwonload size exceed partition size limit.
+	if ((check_flag == 1) && (phy_partition.size < (get_end_write_pos() - phy_partition.offset))) {
+			check_flag = 0;
+			printf("partition : %s write pos exceed,please increase partition page num\n", phy_partition.name);
+			printf("size = 0x%x offset = 0x%x endpos = 0x%x\n", phy_partition.size,  phy_partition.offset, get_end_write_pos());
+			return 0;
+	}
 	fill_partition(&phy_partition, (get_end_write_pos() - phy_partition.offset), 0xFFFFFFFF);
 
     	g_prevstatus = nand_end_write();
@@ -2083,47 +2271,87 @@ int FDL2_DramEnd ()
 }
 #endif
 #endif
+
 int FDL2_ReadFlash (PACKET_T *packet, void *arg)
 {
-    	unsigned long *data = (unsigned long *) (packet->packet_body.content);
-    	unsigned long addr = *data;
-    	unsigned long size = * (data + 1);
-    	unsigned long off = 0;
-    	int           ret;
-
+	unsigned long *data = (unsigned long *) (packet->packet_body.content);
+	unsigned long addr = *data;
+	unsigned long size = * (data + 1);
+	unsigned int  readsize ;
+	unsigned char *buffer ;
+	unsigned char *buf ;
+	struct mtd_info *nand;
+	unsigned int off = 0;
+	int           ret;
+	int	      cnt = 0;
+	unsigned long total  ;
+	unsigned long remained;
 #if defined(CHIP_ENDIAN_LITTLE)
-    	addr = EndianConv_32 (addr);
-    	size = EndianConv_32 (size);
+	addr = EndianConv_32 (addr);
+	size = EndianConv_32 (size);
 #endif
 	memset(&phy_partition, 0, sizeof(struct real_mtd_partition));
 	phy_partition.offset = custom2log(addr);
 	ret = log2phy_table(&phy_partition);
-    
+	//phy_partition_info(phy_partition, __LINE__);
+	nand = &nand_info[nand_curr_device];
 	if (size > MAX_PKT_SIZE) {
-        	FDL_SendAckPacket (BSL_REP_DOWN_SIZE_ERROR);
-        	return 0;
-    	}
+		FDL_SendAckPacket (BSL_REP_DOWN_SIZE_ERROR);
+		return 0;
+	}
 
-    	if (packet->packet_body.size > 8)
-        	off = EndianConv_32 (* (data + 2));
-	//printf("addr = 0x%08x  size = 0x%08x  off = 0x%08x  name = %s\n", addr, size, off, phy_partition.name);
+	if (packet->packet_body.size > 8)
+		off = EndianConv_32 (* (data + 2));
+	printf("addr = 0x%08x  size = 0x%08x  off = 0x%08x  name = %s\n", addr, size, off, phy_partition.name);
 
-	if ((strcmp(phy_partition.name, "fixnv") == 0) || (strcmp(phy_partition.name, "productinfo") == 0))
+	if ((strcmp(phy_partition.name, "fixnv") == 0) || (strcmp(phy_partition.name, "productinfo") == 0)){
 		ret = nand_read_fdl_yaffs(&phy_partition, off, size, (unsigned char *)(packet->packet_body.content));
-    	else if ((strcmp(phy_partition.name, "spl") == 0) || (strcmp(phy_partition.name, "2ndbl") == 0))
-    		ret = nand_read_fdl(&phy_partition, off, size, (unsigned char *)(packet->packet_body.content));
-    	else
+	}
+	else if ((strcmp(phy_partition.name, "spl") == 0))
+	{
+		ret = nand_read_fdl(&phy_partition, off, size, (unsigned char *)(packet->packet_body.content));
+	}
+	else if((strcmp(phy_partition.name,"2ndbl") == 0)   || (strcmp(phy_partition.name, "boot") == 0)     ||\
+			(strcmp(phy_partition.name,"recovery") == 0)|| (strcmp(phy_partition.name, "vmjaluna") == 0) ||\
+			(strcmp(phy_partition.name,"modem") == 0)   || (strcmp(phy_partition.name, "dsp") == 0))
+	{
+		printf("enter the orther mode !\r\n");
+		readsize = nand->writesize ;
+		total = size / readsize;
+	        remained = size % readsize ;
+	        buffer = (unsigned char *)(packet->packet_body.content);
+                for (cnt = 0; cnt < total; cnt ++) {
+                      ret = nand_read_fdl(&phy_partition, off + cnt * readsize, readsize, buffer + cnt * readsize);
+                      if (ret != NAND_SUCCESS)
+                               break;
+                }
+        }
+	else if((strcmp(phy_partition.name, "system") == 0) || (strcmp(phy_partition.name, "userdata") == 0))
+	{
+		readsize = nand->writesize + nand->oobsize;
+		total = size / readsize;
+	        remained = size % readsize ;
+	        buffer = (unsigned char *)(packet->packet_body.content);
+                for (cnt = 0; cnt < total; cnt ++) {
+                      ret = nand_read_fdl(&phy_partition, off + cnt * readsize, readsize, buffer + cnt * readsize);
+                      if (ret != NAND_SUCCESS)
+                               break;
+                }
+	}
+	else
+	{
 		ret = NAND_INVALID_ADDR;
+	}
 
-    	if (NAND_SUCCESS == ret) {
-        	packet->packet_body.type = BSL_REP_READ_FLASH;
-        	packet->packet_body.size = size;
-        	FDL_SendPacket (packet);
-        	return 1;
-    	} else {
-        	FDL2_SendRep (ret);
-        	return 0;
-    	}
+	if (NAND_SUCCESS == ret) {
+			packet->packet_body.type = BSL_REP_READ_FLASH;
+			packet->packet_body.size = size;
+			FDL_SendPacket (packet);
+			return 1;
+		} else {
+			FDL2_SendRep (ret);
+			return 0;
+		}
 }
 
 static void local_nand_format_partion(struct real_mtd_partition mtd_part,unsigned int filler)

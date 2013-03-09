@@ -978,6 +978,7 @@ int nand_end_write(void)
 	backupblk_flag = 0;
 	return NAND_SUCCESS;
 }
+
 int nand_read_fdl(struct real_mtd_partition *phypart, unsigned int off, unsigned int size, unsigned char *buf)
 {
 	struct mtd_info *nand;
@@ -985,48 +986,78 @@ int nand_read_fdl(struct real_mtd_partition *phypart, unsigned int off, unsigned
 	int pos;
 	unsigned char buffer[FDL_NAND_BUF_LEN];
 	unsigned long addr = phypart->offset;
+        static unsigned long skip_addr = 0;
+	static unsigned int cur_read_pos = 0;
+        int offset;
 
-	printf("%s: phypart = %s, off = %d,size = %d\n",__FUNCTION__,phypart->name,off,size);
+        if(off == 0){
+		cur_read_pos = phypart->offset;
+		skip_addr = 0x0;
+		}
 
 	if ((nand_curr_device < 0) || (nand_curr_device >= CONFIG_SYS_MAX_NAND_DEVICE))
-	  	return NAND_SYSTEM_ERROR;
+		return NAND_SYSTEM_ERROR;
 	nand = &nand_info[nand_curr_device];
 
-		is_system_write = 0;
-	
-	printf("addr = 0x%08x  size = %d  off = %d\n", addr, size, off);
-	while (!(addr & (nand->erasesize - 1))) {
-		if (nand_block_isbad(nand, addr & (~(nand->erasesize - 1)))) {
-			printf("skip bad block 0x%x\n", addr & (~(nand->erasesize - 1)));
-			addr = (addr + nand->erasesize)&(~(nand->erasesize - 1));
+	printf("addr = 0x%08x  size = %d  off = %d ; cur_read_pos= 0x%x\r\n", addr, size, off,cur_read_pos);
+	while (!(cur_read_pos & (nand->erasesize - 1))) {
+
+		printf("function: %s to check bad block, check address 0x%x\n", __FUNCTION__,cur_read_pos&(~(nand->erasesize - 1)));
+		if (nand_block_isbad(nand, cur_read_pos&(~(nand->erasesize - 1)))) {
+			printf("skip bad block 0x%x\r\n", cur_read_pos&(~(nand->erasesize - 1)));
+
+			cur_read_pos = (cur_read_pos + nand->erasesize)&(~(nand->erasesize - 1));
+
 		} else {
-			//printf("good block 0x%x\n", addr & (~(nand->erasesize - 1)));
+			printf("good block 0x%x\n", addr & (~(nand->erasesize - 1)));
 			break;
 		}
 	}
+	//cur_read_pos += nand->writesize;
+        printf("read flash addr :0x%x, off=0x%x ; cur_read_pos=0x%x \r\n", (addr+off), off,cur_read_pos);
+	if((strcmp(phypart->name, "system") == 0) || (strcmp(phypart->name, "userdata") == 0)){
 
-	if(!is_system_write){
-		/* for fixnv, read total 64KB */
-		if (size != nand->writesize)	
+		if(size != (nand->writesize + nand->oobsize))
 		  	return NAND_INVALID_SIZE;
-	
-		struct mtd_oob_ops ops;
-		ops.mode = MTD_OOB_AUTO;
-		ops.len = nand->writesize;
-		ops.datbuf = (uint8_t *)buf;
-		ops.oobbuf = (uint8_t *)buffer; 
-		ops.ooblen = nand->oobsize;
-		ops.ooboffs = 0;
-		memset(buffer, 0xff, FDL_NAND_BUF_LEN);
+		struct nand_chip *chip = nand->priv;
+
+		chip->ops.mode = MTD_OOB_AUTO;
+		chip->ops.len = nand->writesize;
+		chip->ops.datbuf = (uint8_t *)buf;
+		chip->ops.oobbuf = (uint8_t *)(buf + nand->writesize);
+		chip->ops.ooblen = sizeof(yaffs_PackedTags2);
+		chip->ops.ooboffs = 0;
+		//memset(buffer, 0xff, FDL_NAND_BUF_LEN);
 		memset(buf, 0xff, size);
-		ret = nand_do_read_ops(nand,(unsigned long long)(addr + off), &ops);
-		if (ret < 0) {
+		ret = nand_do_read_ops(nand,(unsigned long long)(addr + off),&chip->ops);
+		if(ret < 0)
+		{
 			printf("\nread error, mark bad block : 0x%08x\n", addr);
 			nand->block_markbad(nand, addr & ~(nand->erasesize - 1));
 			return NAND_SYSTEM_ERROR;
 		}
+	}else{
+		struct mtd_oob_ops ops;
+		ops.mode = MTD_OOB_AUTO;
+		ops.len = nand->writesize;
+		ops.datbuf = (uint8_t *)buf;
+		ops.oobbuf = (uint8_t *)buffer;
+		ops.ooblen = nand->oobsize;
+		//ops.ooboffs = 0;
+		memset(buffer, 0xff, FDL_NAND_BUF_LEN);
+		memset(buf, 0xff, size);
+		//if((strcmp(phypart->name, "spl") == 0))
+			//ret = nand_load_spl(nand, (unsigned int)(addr + off),size, buf);
+		//else
+			ret = nand_do_read_ops(nand,(unsigned long long)(addr + off), &ops);
+		if (ret<0) {
+			printf("\nread error, mark bad block : 0x%08x\n", addr);
+			nand->block_markbad(nand, addr & ~(nand->erasesize - 1));
+			return NAND_SYSTEM_ERROR;
+		}
+
 	}
-	
+	cur_read_pos += nand->writesize;
 	return NAND_SUCCESS;
 }
 

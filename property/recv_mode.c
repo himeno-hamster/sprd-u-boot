@@ -28,6 +28,7 @@ void nv_patch(char * addr, int size)
 	for(i=0; i<4; i++){
 		addr[FIXNV_SIZE + i] = 0x5a;
 	}
+	*((unsigned int*)&addr[FIXNV_SIZE - 8]) = size;//keep the real  fixnv file size.
 	return;
 }
 extern int get_recovery_message(struct recovery_message *out);
