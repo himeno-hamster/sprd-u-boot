@@ -543,7 +543,9 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		memset((unsigned char *)FIXNV_ADR, 0xff, 0x20000);
 		cmd_yaffs_mount(fixnvpoint);
 		ret = cmd_yaffs_ls_chk(fixnvfilename);
-		if ((ret == (FIXNV_SIZE + 4))||(ret == FIXNV_SIZE)) {
+		printf("Reading fixnv 1 ret 0x%08x \n", ret);
+//		if ((ret == (FIXNV_SIZE + 4))||(ret == FIXNV_SIZE)) //first time is 0x1e004, after write, lenth is 0x20004
+		{
 			cmd_yaffs_mread_file(fixnvfilename, (unsigned char *)FIXNV_ADR);
 			//should do something here
 		}

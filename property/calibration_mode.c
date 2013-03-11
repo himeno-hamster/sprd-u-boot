@@ -285,21 +285,29 @@ void calibration_mode(const uint8_t *pcmd, int length)
 		ch = gUsedChannel->GetChar(gUsedChannel);
 		buf[i] = ch;
 	}
-    
+
 	if(-1 == Calibration_ParseRequsetMode(buf, MODE_REQUEST_LENGTH))
 		return ;
 	if(-1 == Calibration_SetMode(pcmd, length))
 		return ;
 
+	printf("calibration_mode step2\n");
+
 	// wait for cp ready
 	i=0;
 	while(gpio_get_value(CP_AP_LIV) == 0);
+	printf("calibration_mode step3\n");
+
 	int nvitem_sync(void);
 	nvitem_sync();
+
+	printf("calibration_mode step4\n");
 
 #endif
 	if(tool_channel_open() == -1)
 		return;
+
+	printf("calibration_mode step5\n");
 
 	while(TRUE){
 		count = tool_channel_read(g_usb_buf, MAX_USB_BUF_LEN);
