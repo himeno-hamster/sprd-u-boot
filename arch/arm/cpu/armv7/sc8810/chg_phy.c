@@ -7,8 +7,13 @@
 
 uint16_t adc_voltage_table[2][2] =
 {
+#ifdef CONFIG_SC7710G2
+    {825, 4200},
+    {700, 3600},
+#else
 	{928,4200},
 	{796,3600},
+#endif
 };
 uint16_t CHGMNG_AdcvalueToVoltage (uint16_t adcvalue)
 {
@@ -17,8 +22,8 @@ uint16_t CHGMNG_AdcvalueToVoltage (uint16_t adcvalue)
 	temp = temp * (adcvalue - adc_voltage_table[0][0]);
 	temp = temp / (adc_voltage_table[0][0] - adc_voltage_table[1][0]);
 
-	printf("mingwei uboot vol:%d,adc4200:%d,adc3600:%d\n",temp + adc_voltage_table[0][1],
-		adc_voltage_table[0][0],adc_voltage_table[1][0]);
+	printf("mingwei uboot adcvalue:%u,vol:%d,adc4200:%d,adc3600:%d\n", (unsigned int)adcvalue, temp + adc_voltage_table[0][1],
+		adc_voltage_table[0][0], adc_voltage_table[1][0]);
 
 	return temp + adc_voltage_table[0][1];
 }
