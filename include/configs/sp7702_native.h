@@ -72,8 +72,8 @@
 #define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 #endif
 
-#define FIXNV_SIZE          (120 * 1024)
-#define PRODUCTINFO_SIZE    (3 * 1024)
+#define FIXNV_SIZE          (128 * 1024)
+#define PRODUCTINFO_SIZE    (16 * 1024)
 #define VMJALUNA_SIZE       (0x4B000) /* 300K */
 #define MODEM_SIZE          (0x800000)
 #define DSP_SIZE            (3968 * 1024)
@@ -81,7 +81,7 @@
 #define FIRMWARE_SIZE       (0x9F8000) 
 #define CONFIG_SPL_LOAD_LEN (0x4000)
 
-#define PRODUCTINFO_ADR		(0x0049e000)
+#define PRODUCTINFO_ADR		(0x004e0000)
 
 #define EMMC_SECTOR_SIZE    512
 

@@ -71,15 +71,15 @@
 #define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 #endif
 
-#define FIXNV_SIZE		(64 * 1024)
-#define PRODUCTINFO_SIZE	(3 * 1024)
+#define FIXNV_SIZE		(128 * 1024)
+#define PRODUCTINFO_SIZE	(16 * 1024)
 #define MODEM_SIZE		(0x800000)
 #define DSP_SIZE        (0x3E0400) /* 3968K */
 #define VMJALUNA_SIZE       (0x64000) /* 400K */
 #define RUNTIMENV_SIZE      (256 * 1024)
 #define CONFIG_SPL_LOAD_LEN (0x4000)
 
-#define PRODUCTINFO_ADR		(0x00490000)
+#define PRODUCTINFO_ADR		(0x004e0000)
 
 /*#define CMDLINE_NEED_CONV */
 

@@ -655,7 +655,7 @@ struct modem_image_info {
         unsigned long address;
 };
 struct modem_image_info download_images_info[]={
-#if 1
+#if 0
         {
                 0x00480000,
                 0x00020000,

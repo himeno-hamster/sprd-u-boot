@@ -248,14 +248,17 @@ LIBS += drivers/video/libvideo.o
 ifdef CONFIG_SP8810W
 LIBS += drivers/sdio/libsdio.o
 LIBS += modem_boot/bootup.o
+LIBS += nvitem/nvitemd.o
 endif
 ifdef CONFIG_SC7710G2
 LIBS += drivers/sdio/libsdio.o
 LIBS += modem_boot/bootup.o
+LIBS += nvitem/nvitemd.o
 endif
 ifeq ($(BOARD),sp7702)
 LIBS += drivers/sdio/libsdio.o
 LIBS += modem_boot/bootup.o
+LIBS += nvitem/nvitemd.o
 endif
 LIBS += drivers/video/sc8825fb/libsc8825fb.o
 LIBS += property/libproperty.o

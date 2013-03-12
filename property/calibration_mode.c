@@ -864,6 +864,7 @@ void Calibration_SyncResponse(int ret)
 #endif
 
 extern void init_calibration_mode(void);
+int nvitem_sync(void);
 void calibration_mode(const uint8_t *pcmd, int length)
 {
 	int ret;
@@ -898,7 +899,8 @@ void calibration_mode(const uint8_t *pcmd, int length)
 
 	// wait for cp ready
 	while(gpio_get_value(CP_AP_LIV) == 0);
-	sdio_handle = sdio_open();
+	//sdio_handle = sdio_open();
+	nvitem_sync();
 #endif
 	printf("Calibration_ReinitUsb......\n");
 	if(-1 == Calibration_ReinitUsb())
@@ -934,8 +936,9 @@ void calibration_mode(const uint8_t *pcmd, int length)
 				index -= ret;			
 		}
 #ifdef CALI_NV_WRITEBACK_SDIO_MERGE
-                if(Calibration_data_handler() < 0)
-                    break;
+//                if(Calibration_data_handler() < 0)
+//                    break;
+		nvitem_sync();
 #else
 		index = 0;
 		ret = Calibration_SpiReadData();
