@@ -143,17 +143,17 @@ static int32_t dsi_dpi_init(struct panel_spec* panel)
 		break;
 	}
 
-	if(SPRDFB_POLARITY_POS == mipi ->h_sync_pol){
+	//if(SPRDFB_POLARITY_POS == mipi ->h_sync_pol){
 		dpi_param.h_polarity = 1;
-	}
+	//}
 
-	if(SPRDFB_POLARITY_POS == mipi ->v_sync_pol){
+	//if(SPRDFB_POLARITY_POS == mipi ->v_sync_pol){
 		dpi_param.v_polarity = 1;
-	}
+	//}
 
-	if(SPRDFB_POLARITY_POS == mipi ->de_pol){
+	//if(SPRDFB_POLARITY_POS == mipi ->de_pol){
 		dpi_param.data_en_polarity = 1;
-	}
+	//}
 
 	dpi_param.h_active_pixels = panel->width;
 	dpi_param.h_sync_pixels = mipi->timing->hsync;
@@ -206,8 +206,8 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 	phy->reference_freq = DSI_PHY_REF_CLOCK;
 
 	dsi_instance->address = DSI_CTL_BEGIN;
-	dsi_instance->color_mode_polarity =mipi->color_mode_pol;
-	dsi_instance->shut_down_polarity = mipi->shut_down_pol;
+	dsi_instance->color_mode_polarity =SPRDFB_POLARITY_NEG; //mipi->color_mode_pol;
+	dsi_instance->shut_down_polarity = SPRDFB_POLARITY_NEG; //mipi->shut_down_pol;
 	dsi_instance->core_read_function = dsi_core_read_function;
 	dsi_instance->core_write_function = dsi_core_write_function;
 	dsi_instance->log_error = dsi_log_error;

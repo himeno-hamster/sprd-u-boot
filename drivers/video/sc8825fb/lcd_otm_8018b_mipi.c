@@ -265,12 +265,12 @@ static struct info_mipi lcd_otm8018b_mipi_info = {
 	.video_bus_width = 24, /*18,16*/
 	.lan_number = 2,
 	.phy_feq = 500*1000,
-	.h_sync_pol = SPRDFB_POLARITY_POS,
-	.v_sync_pol = SPRDFB_POLARITY_POS,
-	.de_pol = SPRDFB_POLARITY_POS,
+	//.h_sync_pol = SPRDFB_POLARITY_POS,
+	//.v_sync_pol = SPRDFB_POLARITY_POS,
+	//.de_pol = SPRDFB_POLARITY_POS,
 	.te_pol = SPRDFB_POLARITY_POS,
-	.color_mode_pol = SPRDFB_POLARITY_POS,
-	.shut_down_pol = SPRDFB_POLARITY_POS,
+	//.color_mode_pol = SPRDFB_POLARITY_POS,
+	//.shut_down_pol = SPRDFB_POLARITY_POS,
 	.timing = &lcd_otm8018b_mipi_timing,
 	.ops = NULL,
 };

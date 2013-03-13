@@ -222,12 +222,12 @@ struct info_mipi {
 	uint16_t video_bus_width;
 	uint32_t lan_number;
 	uint32_t phy_feq;
-	uint16_t h_sync_pol;
-	uint16_t v_sync_pol;
-	uint16_t de_pol;
+	//uint16_t h_sync_pol;
+	//uint16_t v_sync_pol;
+	//uint16_t de_pol;
 	uint16_t te_pol; /*only for command_mode*/
-	uint16_t color_mode_pol;
-	uint16_t shut_down_pol;
+	//uint16_t color_mode_pol;
+	//uint16_t shut_down_pol;
 	struct timing_rgb *timing;
 	struct ops_mipi *ops;
 };

@@ -152,12 +152,12 @@ static struct info_mipi lcd_nt35512_mipi_info = {
 	.video_bus_width = 24, /*18,16*/
 	.lan_number = 2,
 	.phy_feq = 500*1000,
-	.h_sync_pol = SPRDFB_POLARITY_POS,
-	.v_sync_pol = SPRDFB_POLARITY_POS,
-	.de_pol = SPRDFB_POLARITY_POS,
+	//.h_sync_pol = SPRDFB_POLARITY_POS,
+	//.v_sync_pol = SPRDFB_POLARITY_POS,
+	//.de_pol = SPRDFB_POLARITY_POS,
 	.te_pol = SPRDFB_POLARITY_POS,
-	.color_mode_pol = SPRDFB_POLARITY_NEG,
-	.shut_down_pol = SPRDFB_POLARITY_NEG,
+	//.color_mode_pol = SPRDFB_POLARITY_NEG,
+	//.shut_down_pol = SPRDFB_POLARITY_NEG,
 	.timing = &lcd_nt35512_mipi_timing,
 	.ops = NULL,
 };
