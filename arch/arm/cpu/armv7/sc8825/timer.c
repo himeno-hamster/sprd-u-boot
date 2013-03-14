@@ -47,6 +47,102 @@
 
 #define TIMER_MAX_VALUE 0xFFFFFFFF
 
+typedef struct
+{
+	volatile unsigned int tmr_load;
+	volatile unsigned int tmr_val;
+	volatile unsigned int tmr_ctl;
+	volatile unsigned int tmr_int;
+}glb_tmr_phy_t;
+
+typedef struct
+{
+	unsigned int tmr_base;
+	unsigned int tmr_clk;
+	unsigned int tmr_load;
+	double       step;
+}glb_tmr_info_t;
+
+typedef struct
+{
+	glb_tmr_info_t*			tmr_info;
+	volatile glb_tmr_phy_t* tmr_phy;
+}glb_tmr_ctl_t;
+
+static glb_tmr_info_t s_glb_tmr_info[]={
+	{0x41000000, 32768,    0xffffffff},
+	{0x41000020, 32768,    0xffffffff},
+	{0x41000040, 26000000, 0xffffffff}
+};
+
+static void glb_tmr_init(glb_tmr_ctl_t* tmr_ctl, glb_tmr_info_t *tmr_info)
+{
+	REG32(GR_GEN0) |= 1<<2;  /* tmr enable */
+	REG32(GR_GEN0) |= 1<<28; /* tmr rtc enable */
+
+	tmr_ctl->tmr_info           = tmr_info;
+	tmr_ctl->tmr_phy            = tmr_ctl->tmr_info->tmr_base;
+	tmr_ctl->tmr_phy->tmr_ctl  &=~(1<<6); /* one time */
+	tmr_ctl->tmr_phy->tmr_int  &=~(1<<0); /* disable int */
+	tmr_ctl->tmr_phy->tmr_int  |= (3<<0); /* clear int */
+
+	tmr_ctl->tmr_info->step	    =  1000*1000*1000;
+	tmr_ctl->tmr_info->step	   /=  tmr_ctl->tmr_info->tmr_clk;
+
+	printf("tmr_ctl->tmr_info->step :%f\r\n", tmr_ctl->tmr_info->step);
+}
+
+static inline void glb_tmr_load(glb_tmr_ctl_t* tmr_ctl, unsigned int value)
+{
+	while (tmr_ctl->tmr_phy->tmr_int & (1<<4)) /* load busy */
+	{
+		printf("load busy!\r\n");
+	}
+
+	tmr_ctl->tmr_phy->tmr_load = value;
+}
+
+static inline void glb_tmr_run(glb_tmr_ctl_t* tmr_ctl)
+{
+	tmr_ctl->tmr_phy->tmr_ctl |= 1<<7;
+}
+
+static inline void glb_tmr_stop(glb_tmr_ctl_t* tmr_ctl)
+{
+	tmr_ctl->tmr_phy->tmr_ctl &= ~(1<<7);
+}
+
+static inline unsigned int glb_tmr_value(glb_tmr_ctl_t* tmr_ctl)
+{
+	return tmr_ctl->tmr_phy->tmr_val;
+}
+
+static glb_tmr_ctl_t  s_glb_tmr_ctl[3];
+
+int ____udelay(unsigned int __us)
+{
+	glb_tmr_ctl_t* tmr_ctl = &s_glb_tmr_ctl[2];
+
+	glb_tmr_load(tmr_ctl, tmr_ctl->tmr_info->tmr_load);
+	glb_tmr_run(tmr_ctl);
+
+	__us = (unsigned int)(__us * 1000 / tmr_ctl->tmr_info->step + 0.5);
+
+	//printf("tick cnt : %d\r\n", __us);
+
+	__us = tmr_ctl->tmr_info->tmr_load - __us;
+
+	while (__us < glb_tmr_value(tmr_ctl));
+
+	glb_tmr_stop(tmr_ctl);
+}
+
+int global_timer_init()
+{
+	glb_tmr_init(&s_glb_tmr_ctl[0], &s_glb_tmr_info[0]);
+	glb_tmr_init(&s_glb_tmr_ctl[1], &s_glb_tmr_info[1]);
+	glb_tmr_init(&s_glb_tmr_ctl[2], &s_glb_tmr_info[2]);
+}
 
 static unsigned long long timestamp;
 static ulong lastinc;
@@ -109,6 +205,9 @@ int timer_init(void)
 	//clear any hanging interrupts & disable interrupt
 	REG32 (SYS_CTL) &=~ (BIT_0);
 	REG32 (SYS_CTL) |= (BIT_3);
+
+	global_timer_init();
+
 	return 0;
 }
 
@@ -159,7 +258,13 @@ void __udelay (unsigned long usec)
 {
 	unsigned long long tmp;
 	ulong tmo;
-	
+
+	if (usec<10000)
+	{
+		____udelay(usec);
+		return;
+	}
+
 	tmo = us_to_tick(usec);
 	tmp = get_ticks() + tmo; // get current timestamp
 	
