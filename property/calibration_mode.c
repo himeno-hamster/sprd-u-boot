@@ -238,23 +238,16 @@ int  tool_channel_read(char *buffer,int count)
 
 		        UartChannel = Calibration_ChannelGet(TOOL_CHANNEL);
 
-			do{
-				ch = UartChannel->GetSingleChar(UartChannel);
-				if(ch == -1){
-					if(tool_channel_read_status==0){
-						if((index == 0) || (buffer[0] != 0x7e))
-							break;
-					} else break;
-				} else {
+			ch = UartChannel->GetSingleChar(UartChannel);
+			if(0x7E == ch )
+			{
+				do
+				{
 					buffer[index++] = ch;
+				}while(0x7E != (ch = UartChannel->GetChar(UartChannel)));
 
-					if((tool_channel_read_status==0) && (index>=10))
-						tool_channel_read_status = 1;
-					if((tool_channel_read_status==1) && (ch == 0x7e)){
-						tool_channel_read_status = 0;
-					}
-				}
-			}while(1);
+				buffer[index++] = ch;
+			}
 		}
 		default:
 		break;
@@ -297,6 +290,10 @@ void calibration_mode(const uint8_t *pcmd, int length)
 	i=0;
 	while(gpio_get_value(CP_AP_LIV) == 0);
 	printf("calibration_mode step3\n");
+
+#ifdef CONFIG_MODEM_CALI_UART
+	serial3_flowctl_enable();
+#endif
 
 	int nvitem_sync(void);
 	nvitem_sync();

@@ -50,6 +50,12 @@
 #if defined(CONFIG_SC7710G2)
 #define GR_CTRL_REG1        0x8b0000b4
 #define GR_UART3_CTRL_EN    1
+
+#define UART_RX_FLOW_EN   BIT_7
+#define UART_TX_FLOW_EN   BIT_8
+
+#define UART_RX_THRESHOLD   120
+
 #endif
 typedef struct UartPort
 {
@@ -93,6 +99,7 @@ LOCAL void SIO_HwOpen (struct FDL_ChannelHandler *channel, unsigned int divider)
 	    * (volatile unsigned int *) (port->regBase + ARM_UART_IEN) = 0;
 	    /* Enable UART*/
 	    * (volatile unsigned int *) GR_CTRL_REG1 |= (GR_UART3_CTRL_EN);
+
     } else 
 #endif
     {
@@ -112,6 +119,7 @@ LOCAL void SIO_HwOpen (struct FDL_ChannelHandler *channel, unsigned int divider)
     * (volatile unsigned int *) (port->regBase + ARM_UART_CTL0) = UARTCTL_BL8BITS | UARTCTL_SL1BITS;
     * (volatile unsigned int *) (port->regBase+ ARM_UART_CTL1) = 0;
     * (volatile unsigned int *) (port->regBase + ARM_UART_CTL2) = 0;
+
 }
 
 LOCAL int SIO_Open (struct FDL_ChannelHandler  *channel, unsigned int baudrate)
@@ -396,6 +404,14 @@ int serial3_init (void)
 	  serial3_getc();
 	return 0;
 }
+
+int  serial3_flowctl_enable(void)
+{
+	/*enable tx/rx flow control*/	   
+	* (volatile unsigned int *) (ARM_UART3_BASE + ARM_UART_CTL1)   |= UART_TX_FLOW_EN | UART_RX_FLOW_EN  | (UART_RX_THRESHOLD & 0x7F);    
+	return 0;
+}
+
 #endif
 
 
