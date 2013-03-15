@@ -46,6 +46,12 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 #ifdef CONFIG_AUTOBOOT
 	normal_mode();
 #endif
+#ifdef CONFIG_SC7710G2
+    {
+	extern void set_cp_emc_pad(void);
+	set_cp_emc_pad();
+    }
+#endif
 
     boot_pwr_check();
 	
