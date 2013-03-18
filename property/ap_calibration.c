@@ -108,6 +108,7 @@ static int untranslate_packet_header(char *dest,char *src,int size, int unpackSi
 	int i;
 	int translated_size = 0;
 	int status = 0;
+	int flag = 0;
 	for(i=0;i<size;i++){
 		switch(status){
 			case 0:
@@ -129,8 +130,9 @@ static int untranslate_packet_header(char *dest,char *src,int size, int unpackSi
 					return translated_size;
 				}else
 				{
-					if(dest[translated_size-1] == 0x7D)
+					if((dest[translated_size-1] == 0x7D)&&(!flag))
 					{
+						flag = 1;
 						if(src[i] == 0x5E)
 						{
 							dest[translated_size-1] = 0x7E;
@@ -142,6 +144,7 @@ static int untranslate_packet_header(char *dest,char *src,int size, int unpackSi
 					}
 					else
 					{
+						flag = 0;
 						dest[translated_size++] = src[i];
 					}				
 
@@ -354,7 +357,7 @@ uint32 ap_calibration_proc(uint8 *data,uint32 count,uint8 *out_msg)
 	int index = 0;
 
 	if(count > 0){
-		adcFlag = is_adc_calibration(g_usb_buf_dest, sizeof(g_usb_buf_dest), data, count);
+		adcFlag = is_adc_calibration(g_usb_buf_dest, sizeof(g_usb_buf_dest), data, count );
 
                 if (adcFlag != 0)
                 {
