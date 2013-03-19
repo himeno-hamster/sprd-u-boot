@@ -1787,8 +1787,15 @@ PUBLIC void dcdc_calibrate(int chan, int to_vol)
 		goto exit;
 
 	cal_vol = ((ctl_vol - dcdc_ctl_vol[i]) * 32 / 100) % 32;
+	if (chan == 10) {
 	ANA_REG_SET(ANA_DCDCARM_CTL_CAL, cal_vol | (0x1f - cal_vol) << 8);
 	ANA_REG_SET(ANA_DCDCARM_CTL, i | (0x07 - i) << 4);
+	}
+	else if (chan == 11) {
+		ANA_REG_SET(ANA_DCDC_CTL_CAL, cal_vol | (0x1f - cal_vol) << 8);
+		ANA_REG_SET(ANA_DCDC_CTL, i | (0x07 - i) << 4);
+	}
+	for(i = 0; i < 0x1000; ++i){};
 
 exit:
 	return ;
@@ -1797,8 +1804,9 @@ PUBLIC void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*
 {
 	volatile uint32 i = 0;
 
-	if (REG32(0x209003fc) == CHIP_ID_8810S) { /*SMIC CHIP*/
-		dcdc_calibrate(0, 1300);//vddarm 1.30v, vddcore 1.1v
+	if (REG32(0x209003fc) == CHIP_ID_8810S) { 
+		dcdc_calibrate(10, 1300);//vddarm 1.30v
+		dcdc_calibrate(11, 1200);//vddcore 1.20v
 	}
 
 	EMC_PARAM_T_PTR emc_ptr = EMC_GetPara();

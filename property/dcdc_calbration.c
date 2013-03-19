@@ -122,6 +122,7 @@ void do_dcdc_work()
 //	int cpu_freq = 1000;	/* Mega */
 //	int dcdc_to_vol = 1100;	/* vddcore */
 	u32 val = 0;
+	int i ;
 
 	printf("%s %d\n", __func__, cnt);
 
@@ -132,6 +133,7 @@ void do_dcdc_work()
 	ret = dcdc_calibrate(ADC_CHANNEL_DCDCARM, 0, dcdcarm_to_vol);
 	if (ret > 0)
 		dcdc_calibrate(ADC_CHANNEL_DCDCARM, ret, dcdcarm_to_vol);
+	for(i = 0; i < 0x1000; ++i);
 
 /*
 	ret = dcdc_calibrate(ADC_CHANNEL_DCDC, 0, dcdc_to_vol);

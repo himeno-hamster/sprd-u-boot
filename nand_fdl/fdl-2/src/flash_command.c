@@ -809,18 +809,17 @@ int nand_bbt_init(void)
         if(nand_2bitconfig_4bitecc_layout_check()<0)
         {
             if ((nand_curr_device < 0) || (nand_curr_device >= CONFIG_SYS_MAX_NAND_DEVICE))
-	  	return -1;
+	  			return -1;
             nand = &nand_info[nand_curr_device];
             chip = nand->priv;
             addr=nand->size-max_search_blocks*nand->erasesize;
-				startblock = (nand->size) / (nand->erasesize) - 1;
+			startblock = (nand->size) / (nand->erasesize) - 1;
            for(i=0x0; i<max_search_blocks; i++)
             {
                 printf("%s: erase address=0x%x\n", __FUNCTION__, addr+i*nand->erasesize);
-                //nand_erase_fdl(addr+i*nand->erasesize, nand->erasesize);
-		startblock -= 1;
-		printf("%s: blocnum=0x%x\n", __FUNCTION__, startblock );
-		nand_scan_block(startblock, nand->erasesize, nand->writesize);
+				printf("%s: blocnum=0x%x\n", __FUNCTION__, startblock );
+				nand_scan_block(startblock, nand->erasesize, nand->writesize);
+				startblock -= 1;
             }
             chip->options = chip->options & ~NAND_BBT_SCANNED;
             printf("%s: ret=0x%x\n", __FUNCTION__, ret);

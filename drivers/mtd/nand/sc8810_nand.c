@@ -532,7 +532,7 @@ static void set_nfc_param(unsigned long nfc_clk)
 //	local_irq_restore(flags);
 }
 #endif
-
+#ifndef CONFIG_NAND_SPL
 static struct nand_spec_str *get_nand_spec(u8 *nand_id)
 {
     int i = 0;
@@ -581,7 +581,7 @@ static void set_nfc_timing(struct sc8810_nand_timing_param *nand_timing, u32 nfc
 
     debug("set_nfc_timing NFC_TIMING: %x ", nfc_reg_read(NFC_TIMING));
 }
-
+#endif
 static void sc8810_nand_hw_init(void)
 {
 	int ik_cnt = 0;
@@ -1013,7 +1013,7 @@ void nand_spl_hardware_config(struct nand_chip *this, u8 id[5])
                 }
 	}
 }
-
+#ifndef CONFIG_NAND_SPL
 void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, unsigned char id[8])
 {
 	int index;
@@ -1081,7 +1081,7 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, unsigned
 	} else
 		printk("The type of nand flash is 2KB page, so use default configuration!\n");
 }
-
+#endif
 int board_nand_init(struct nand_chip *this)
 {
 	int extid;
@@ -1104,6 +1104,7 @@ int board_nand_init(struct nand_chip *this)
 	this->read_word	= sc8810_nand_read_word;
 
 	read_chip_id();
+#ifndef CONFIG_NAND_SPL
 	/* The 4th id byte is the important one */
 	ptr_nand_spec = get_nand_spec(io_wr_port);
 
@@ -1111,7 +1112,7 @@ int board_nand_init(struct nand_chip *this)
 		set_nfc_timing(&ptr_nand_spec->timing_cfg, 153);
 	else
 		printf("ERROR! %s %d", __func__, __LINE__);
-
+#endif
 	extid = io_wr_port[3];
 	/* Calc pagesize */
 	mtdwritesize = 1024 << (extid & 0x3);
