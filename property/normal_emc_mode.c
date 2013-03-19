@@ -277,11 +277,6 @@ void addbuf(char *buf)
 
 void addcmdline(char *buf)
 {
-#if BOOT_NATIVE_LINUX_MODEM
-	char* nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG)+1);
-	buf = nv_infor;
-	*nv_infor = 0;
-#endif
 #if (!BOOT_NATIVE_LINUX) || BOOT_NATIVE_LINUX_MODEM
 	/* fixnv=0x????????,0x????????*/
 	int str_len = strlen(buf);
@@ -316,6 +311,9 @@ void addcmdline(char *buf)
 #if BOOT_NATIVE_LINUX_MODEM
 	str_len = strlen(buf);
 	buf[str_len] = '\0';
+	char* nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG));
+	sprintf(nv_infor, buf);
+	nv_infor[str_len] = '\0';
 	printf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
 #endif
 }

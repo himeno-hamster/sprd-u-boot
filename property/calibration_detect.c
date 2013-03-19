@@ -13,7 +13,6 @@
 #include <boot_mode.h>
 
 static int s_is_calibration_mode = 0;
-
 /* calibration support uart only */
 #ifdef CONFIG_MODEM_CALI_UART
 
@@ -120,7 +119,7 @@ void calibration_detect(int key)
 	int ret;
 	int i ;
 	unsigned int caliberate_mode;
-	char cmd_buf[50];
+	char cmd_buf[1024];
 	uint8_t buf[20];
 	int got = 0;
 
@@ -155,14 +154,23 @@ void calibration_detect(int key)
         	printf("func: %s line: %d caliberate failed\n", __func__, __LINE__);
 		return;
         } else {
-		memset(cmd_buf, 0, 50);
+		memset(cmd_buf, 0, 1024);
               	if (caliberate_device == CALIBERATE_DEVICE_UART)
                    	sprintf(cmd_buf, "calibration=%d,%d,0", caliberate_mode&0xff, (caliberate_mode&(~0xff)) >> 8);
                 s_is_calibration_mode = 2;
 #if defined(CONFIG_SC7710G2)
 		vlx_nand_boot(BOOT_PART, buf, BACKLIGHT_OFF);
 #else
+	#if defined(BOOT_NATIVE_LINUX_MODEM)
+		int str_len;
+              	if (caliberate_device == CALIBERATE_DEVICE_UART)
+                   	sprintf(cmd_buf, "calibration=%d,%d,130", caliberate_mode&0xff, (caliberate_mode&(~0xff)) >> 8);
+		str_len = strlen(cmd_buf);
+		sprintf(&cmd_buf[str_len], " %s",  "mem=480M init=/init " MTDPARTS_DEFAULT);
+		vlx_nand_boot(RECOVERY_PART,cmd_buf, BACKLIGHT_OFF);        
+	#else
 		vlx_nand_boot(BOOT_PART, cmd_buf, BACKLIGHT_OFF);
+	#endif
 #endif
 	}	
     
@@ -418,17 +426,25 @@ void calibration_detect(int key)
 			printf("func: %s line %d usb trans with error %d\n", __func__, __LINE__, usb_trans_status);
 		usb_wait_trans_done(1);
 		udc_power_off();
-        cmd_buf=malloc(50);
+        cmd_buf=malloc(1024);
         if(cmd_buf==NULL){
             printf("%s: out of memory\n", __func__);
             return;
         }
-        sprintf(cmd_buf, "calibration=%d,%d", caliberate_mode&0xff, (caliberate_mode&(~0xff))>>8);
+	sprintf(cmd_buf, "calibration=%d,%d", caliberate_mode&0xff, (caliberate_mode&(~0xff))>>8);
         s_is_calibration_mode=1;
 #if defined( CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined(CONFIG_SC7710G2)
 		vlx_nand_boot(BOOT_PART, buf, BACKLIGHT_OFF);
 #else
-        vlx_nand_boot(BOOT_PART, cmd_buf, BACKLIGHT_OFF);
+	#if defined(BOOT_NATIVE_LINUX_MODEM)
+		int str_len;
+		sprintf(cmd_buf, "calibration=%d,%d,146", caliberate_mode&0xff, (caliberate_mode&(~0xff))>>8);
+		str_len = strlen(cmd_buf);
+		sprintf(&cmd_buf[str_len], " %s", CONFIG_BOOTARGS);
+		vlx_nand_boot(RECOVERY_PART,cmd_buf, BACKLIGHT_OFF);        
+	#else
+		vlx_nand_boot(BOOT_PART, cmd_buf, BACKLIGHT_OFF);
+	#endif
 #endif
 	}	
     
