@@ -1,3 +1,17 @@
+/******************************************************************************
+ ** File Name:        sdram_sc7710g2.c
+ ** Author:           henry.he
+ ** DATE:             11/03/2013
+ ** Copyright:        2013 Spreatrum, Incoporated. All Rights Reserved.
+ ** Description:
+ ******************************************************************************/
+/******************************************************************************
+ **                   Edit    History
+ **-------------------------------------------------------------------------
+ ** DATE          NAME            DESCRIPTION
+ ** 11/03/2013                    Create.
+ ******************************************************************************/
+
 #include <common.h>
 #include <asm/arch/sci_types.h>
 #include <asm/arch/arm_reg.h>
@@ -15,11 +29,34 @@ extern   "C"
 
 
 #define SDRAM_CLK   (EMC_CLK/2)              // 96MHz
-#define SDRAM_T     (1000000000/SDRAM_CLK)   // ns
+//#define SDRAM_T     (1000000000/SDRAM_CLK)   // ns
+#define SDRAM_T (1000000000/EMC_CLK_192MHZ)  // ns
 
 /*******************************************************************************
                            Variable and Array definiation
 *******************************************************************************/
+
+
+LOCAL CONST EMC_PARAM_T s_emc_parm = 
+{
+    // clock
+    CHIP_CLK_1000MHZ,		// arm_clk
+    EMC_CLK_400MHZ,		// emc_clk
+
+    // driver strength
+    EXT_MODE_DS_THREE_QUARTERS,   // ddr-sdram drv
+    
+    2,						// dqs_drv
+    2,						// dat_drv
+    0,						// ctl_drv
+    2,						// clk_drv
+
+    // clk wr
+    15						// clk_wr 
+};
+
+
+
 LOCAL CONST SDRAM_TIMING_PARA_T s_sdram_timing_param =
 //  ms    ns   ns    		ns      ns    	ns     	  ns   	ns  	clk   clk
 // tREF,tRP,tRCD, tWR/tRDL/tDPL,tRFC,	tXSR,     tRAS,	tRRD,	tMRD, tWTR(wtr is only for ddr)
@@ -158,16 +195,16 @@ CONST EMC_PHY_L2_TIMING_T EMC_PHY_TIMING_L2_INFO[EMC_PHYL2_TIMING_MATRIX_MAX] =
 
 CONST SDRAM_MODE_T sdram_mode_table[] =
 {
-    {CAP_6G_BIT, EMC_ONE_CS_MAP_4GBIT, ROW_MODE_14, ROW_MODE_15_6G,   DATA_WIDTH_32, NULL},
-    {CAP_6G_BIT, EMC_ONE_CS_MAP_4GBIT, ROW_MODE_14, COL_MODE_11_6G,   DATA_WIDTH_32, NULL},
-    {CAP_4G_BIT, EMC_ONE_CS_MAP_2GBIT, ROW_MODE_14, COL_MODE_10,      DATA_WIDTH_32, NULL},
-    {CAP_2G_BIT, EMC_ONE_CS_MAP_2GBIT, ROW_MODE_14, COL_MODE_10,      DATA_WIDTH_32, NULL},
-    {CAP_1G_BIT, EMC_ONE_CS_MAP_1GBIT, ROW_MODE_14, COL_MODE_9,       DATA_WIDTH_32, NULL},
-    {CAP_1G_BIT, EMC_ONE_CS_MAP_1GBIT, ROW_MODE_13, COL_MODE_10,      DATA_WIDTH_32, NULL},
+    {CAP_6G_BIT, EMC_ONE_CS_MAP_4GBIT, ROW_MODE_14, ROW_MODE_15_6G,   DATA_WIDTH_32},
+    {CAP_6G_BIT, EMC_ONE_CS_MAP_4GBIT, ROW_MODE_14, COL_MODE_11_6G,   DATA_WIDTH_32},
+    {CAP_4G_BIT, EMC_ONE_CS_MAP_2GBIT, ROW_MODE_14, COL_MODE_10,      DATA_WIDTH_32},
+    {CAP_2G_BIT, EMC_ONE_CS_MAP_2GBIT, ROW_MODE_14, COL_MODE_10,      DATA_WIDTH_32},
+    {CAP_1G_BIT, EMC_ONE_CS_MAP_1GBIT, ROW_MODE_14, COL_MODE_9,       DATA_WIDTH_32},
+    {CAP_1G_BIT, EMC_ONE_CS_MAP_1GBIT, ROW_MODE_13, COL_MODE_10,      DATA_WIDTH_32},
 
-    {CAP_2G_BIT, EMC_ONE_CS_MAP_2GBIT, ROW_MODE_14, COL_MODE_11,      DATA_WIDTH_16, NULL},    
-    {CAP_1G_BIT, EMC_ONE_CS_MAP_1GBIT, ROW_MODE_14, COL_MODE_10,      DATA_WIDTH_16, NULL},
-    {CAP_ZERO, EMC_ONE_CS_MAP_DEFAULT, SDRAM_MIN_ROW, SDRAM_MIN_COLUMN, DATA_WIDTH_16, NULL}
+    {CAP_2G_BIT, EMC_ONE_CS_MAP_2GBIT, ROW_MODE_14, COL_MODE_11,      DATA_WIDTH_16},    
+    {CAP_1G_BIT, EMC_ONE_CS_MAP_1GBIT, ROW_MODE_14, COL_MODE_10,      DATA_WIDTH_16},
+    {CAP_ZERO, EMC_ONE_CS_MAP_DEFAULT, SDRAM_MIN_ROW, SDRAM_MIN_COLUMN, DATA_WIDTH_16}
 };
 
 PUBLIC SDRAM_MODE_PTR SDRAM_GetModeTable(void)
@@ -188,6 +225,26 @@ SDRAM_CFG_INFO_T s_sdram_config_info = {
 
 #endif
 
+
+LOCAL EMC_CHL_INFO_T s_emc_chl_info[] =
+{// emc_chl_num       axi_chl_wr_pri  axi_req_wr_pri  axi_chl_rd_pri  axi_req_rd_pri      ahb_chl_pri
+    {EMC_AXI_ARM,       EMC_CHL_PRI_3,  EMC_CHL_PRI_3,  EMC_CHL_PRI_2,  EMC_CHL_PRI_2,  EMC_CHL_NONE},
+    {EMC_AXI_GPU,       EMC_CHL_PRI_1,  EMC_CHL_PRI_1,  EMC_CHL_PRI_1,  EMC_CHL_PRI_1,  EMC_CHL_NONE},
+    {EMC_AXI_DISPC,     EMC_CHL_PRI_0,  EMC_CHL_PRI_0,  EMC_CHL_PRI_3,  EMC_CHL_PRI_3,  EMC_CHL_NONE},
+    {EMC_AHB_CP_MTX,    EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_2},
+    {EMC_AHB_MST_MTX,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_3},
+    {EMC_AHB_LCDC,      EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_0},
+    {EMC_AHB_DCAM,      EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_3},
+    {EMC_AHB_VSP,       EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_1},
+    {EMC_CHL_MAX,       EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE}
+};
+
+
+PUBLIC EMC_PARAM_PTR EMC_GetPara(void)
+{
+    return (EMC_PARAM_PTR)&s_emc_parm;
+}
+
 PUBLIC SDRAM_CFG_INFO_T_PTR SDRAM_GetCfg(void)
 {
     return (SDRAM_CFG_INFO_T_PTR)&s_sdram_config_info;
@@ -204,6 +261,10 @@ PUBLIC SDRAM_CHIP_FEATURE_T_PTR SDRAM_GetFeature(void)
     return (SDRAM_CHIP_FEATURE_T_PTR)&s_sdram_feature;
 }
 
+PUBLIC EMC_CHL_INFO_PTR EMC_GetChlInfo(void)
+{
+    return (EMC_CHL_INFO_PTR)&s_emc_chl_info;
+}
 
 #ifdef   __cplusplus
 }
