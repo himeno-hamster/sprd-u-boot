@@ -51,6 +51,7 @@ SECTIONS
 	.u_boot_cmd : { *(.u_boot_cmd) }
 	__u_boot_cmd_end = .;
 
+        . = (0x4000)+ 0x40000000;
 	. = ALIGN(4);
 
 	.rel.dyn : {
@@ -64,7 +65,7 @@ SECTIONS
 		*(.dynsym)
 	}
 
-	.bss __rel_dyn_start (OVERLAY) : {
+	.bss : {
 		__bss_start = .;
 		*(.bss)
 		 . = ALIGN(4);
