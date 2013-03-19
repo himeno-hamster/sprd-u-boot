@@ -9,21 +9,6 @@
 ******************************************************************************/
     
 
-#define DLL_OFF FALSE
-#define DLL_ON TRUE
-
-//#define FPGA_TEST	
-
-#ifdef FPGA_TEST
-#define EMC_CLK             CLK_48MHZ //CLK_333MHZ
-#define EMC_T_REF_CLK       6500000 //t_ref reference clk, freqency = 6.5mhz
-#define EMC_DLL_ON_OFF  	DLL_OFF
-#else
-#define EMC_CLK             CLK_192MHZ
-#define EMC_T_REF_CLK       6500000 //t_ref reference clk, freqency = 6.5mhz
-#define EMC_DLL_ON_OFF  	DLL_ON
-#endif
-
 //only one chip maro definition can equal to 1, others should equal to 0
 //#define CHIP0_HYNIX_DDR_H8BCS0RJ0MCP      	
 //#define CHIP1_TOSHIBA_SDR_TY9000A800JFGP40	
@@ -42,7 +27,7 @@
 //#define CHIP14_HYNIX_DDR_H9DA4GH2GJAMCR  	
 //#define CHIP15_SAMSUNG_DDR_K522H1HACF    	
 
-//#define SDRAM_AUTODETECT_SUPPORT
+#define SDRAM_AUTODETECT_SUPPORT
 
 /*******************************************************************************
                           Parameter declare
@@ -61,7 +46,7 @@ extern CONST EMC_PHY_L2_TIMING_T EMC_PHY_TIMING_L2_INFO[EMC_PHYL2_TIMING_MATRIX_
 extern SDRAM_CFG_INFO_T_PTR SDRAM_GetCfg(void);
 extern SDRAM_TIMING_PARA_T_PTR SDRAM_GetTimingPara(void);
 extern SDRAM_CHIP_FEATURE_T_PTR SDRAM_GetFeature(void);
-extern uint32 SDRAM_GetCap(SDRAM_CFG_INFO_T_PTR mem_info);
+
 extern EMC_PHY_L1_TIMING_T_PTR EMC_GetPHYL1_Timing(DMEM_TYPE_E mem_type, uint32 cas_latency);
 extern void EMC_PHY_Latency_Set(SDRAM_CFG_INFO_T_PTR mem_info);
 extern void EMC_PHY_Timing_Set(SDRAM_CFG_INFO_T_PTR mem_info,
@@ -69,6 +54,8 @@ extern void EMC_PHY_Timing_Set(SDRAM_CFG_INFO_T_PTR mem_info,
                         EMC_PHY_L2_TIMING_T_PTR emc_phy_l2_timing);
 extern EMC_PHY_L2_TIMING_T_PTR EMC_GetPHYL2_Timing(void);
 extern SDRAM_MODE_PTR SDRAM_GetModeTable(void);
+extern EMC_PARAM_PTR EMC_GetPara(void);
+extern EMC_CHL_INFO_PTR EMC_GetChlInfo(void);
 
 #endif
 

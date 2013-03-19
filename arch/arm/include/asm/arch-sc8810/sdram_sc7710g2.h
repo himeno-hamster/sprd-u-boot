@@ -54,12 +54,14 @@
     
 #define MODE_REG_OPMODE              0
 
-
-#define EXT_MODE_DS_FULL             0  
-#define EXT_MODE_DS_HALF             1
-#define EXT_MODE_DS_QUARTER          2 
-#define EXT_MODE_DS_OCTANT           3
-#define EXT_MODE_DS_THREE_QUARTERS  4
+typedef enum
+{
+    EXT_MODE_DS_FULL = 0,
+    EXT_MODE_DS_HALF = 1,
+    EXT_MODE_DS_QUARTER = 2, 
+    EXT_MODE_DS_OCTANT = 3,
+    EXT_MODE_DS_THREE_QUARTERS = 4
+}EXT_MODE_DS_T;
 
 #define EXT_MODE_FLAG                1                 
 #define EXT_MODE_PASR_ALL            0                                                                          
@@ -178,27 +180,35 @@ typedef enum
 }DMEM_TYPE_E;
 
 typedef enum{
-    CLK_24MHZ    = 24000000,
-    CLK_26MHZ    = 26000000,
-    CLK_32MHZ    = 32000000,
-    CLK_38_4MHZ  = 38400000,
-    CLK_48MHZ    = 48000000,
-    CLK_64MHZ    = 64000000,
-    CLK_76_8MHZ  = 76800000,
-    CLK_96MHZ    = 96000000,
-    CLK_150MHZ   = 150000000,
-    CLK_153_6MHZ = 153600000,
-    CLK_192MHZ   = 192000000,
-    CLK_333MHZ   = 333000000,
-    CLK_400MHZ   = 400000000,
-    CLK_427MHZ   = 427000000,
-    CLK_450MHZ   = 450000000,
-    CLK_500MHZ   = 500000000,
-    CLK_525MHZ   = 525000000,
-    CLK_537MHZ   = 537000000,
-    CLK_540MHZ   = 540000000,
-    CLK_550MHZ   = 550000000
-}SYS_CLK_TYPE_E;
+    EMC_CLK_26MHZ    = 26000000,
+    EMC_CLK_48MHZ    = 48000000,
+    EMC_CLK_67MHZ    = 67000000,
+    EMC_CLK_133MHZ    = 133000000,
+    EMC_CLK_192MHZ   = 192000000,
+    EMC_CLK_200MHZ   = 200000000,
+    EMC_CLK_266MHZ   = 266000000,
+    EMC_CLK_333MHZ   = 333000000,
+    EMC_CLK_400MHZ   = 400000000,
+    EMC_CLK_MAX = EMC_CLK_400MHZ
+}EMC_CLK_TYPE_E;
+
+typedef enum{
+    CHIP_CLK_26MHZ    = 26000000,
+    CHIP_CLK_800MHZ   = 800000000,
+    CHIP_CLK_850MHZ   = 850000000,
+    CHIP_CLK_1000MHZ   = 1000000000,
+    CHIP_CLK_1200MHZ   = 1200000000,
+    CHIP_CLK_1300MHZ   = 1300000000,
+    CHIP_CLK_1400MHZ   = 1400000000,
+    CHIP_CLK_1500MHZ   = 1500000000,
+    CHIP_CLK_1600MHZ   = 1600000000,
+    CHIP_CLK_1700MHZ   = 1700000000,
+    CHIP_CLK_1800MHZ   = 1800000000,
+    CHIP_CLK_1900MHZ   = 1900000000,
+    CHIP_CLK_2000MHZ   = 2000000000,
+    CHIP_CLK_MAX = CHIP_CLK_2000MHZ
+}CHIP_CLK_TYPE_E;
+
 
 typedef enum{
     MEM_1K_BYTE  = 1024,
@@ -316,16 +326,20 @@ EMC_BURST_INVERT_E;
 
 typedef enum EMC_CHL_NUM_TAG
 {
-    EMC_AXI_ARM    = 0,
+    EMC_CHL_MIN = 0,
+    EMC_AXI_MIN = EMC_CHL_MIN,
+    EMC_AXI_ARM    = EMC_AXI_MIN,
     EMC_AXI_GPU,
     EMC_AXI_DISPC,
-    EMC_AHB_MIN = 3,
+	EMC_AXI_MAX     = EMC_AXI_DISPC,
+    EMC_AHB_MIN,
     EMC_AHB_CP_MTX = EMC_AHB_MIN,
     EMC_AHB_MST_MTX,
     EMC_AHB_LCDC,
     EMC_AHB_DCAM,
     EMC_AHB_VSP,
-    EMC_AHB_MAX = EMC_AHB_VSP
+	EMC_AHB_MAX     = EMC_AHB_VSP,
+    EMC_CHL_MAX = EMC_AHB_MAX
 }
 EMC_CHL_NUM_E;
 
@@ -413,21 +427,51 @@ typedef enum
 	LITTER
 }BURST_DATA_TYPE_E;
 
+typedef enum
+{
+    MCU_CLK_MPLL_SOURCE,
+    MCU_CLK_TDPLL_DIV2_SOURCE,
+    MCU_CLK_TDPLL_DIV3_SOURCE,
+    MCU_CLK_XTL_SOURCE,
+    MCU_CLK_NONE
+}MCU_CLK_SOURCE_E;
+
+typedef enum
+{
+    EMC_CLK_MPLL_DIV2_SOURCE,
+    EMC_CLK_DPLL_SOURCE,
+    EMC_CLK_TDPLL_DIV3_SOURCE,
+    EMC_CLK_XTL_SOURCE,
+    EMC_CLK_NONE
+}EMC_CLK_SOURCE_E;
+
+typedef enum EMC_CHANNEL_PRIORITY_TAG
+{
+    EMC_CHL_LOWEST_PRI = 0,
+    EMC_CHL_PRI_0 = 0,
+    EMC_CHL_PRI_1,
+    EMC_CHL_PRI_2,
+    EMC_CHL_PRI_3,
+    EMC_CHL_HIGHEST_PRI = EMC_CHL_PRI_3,
+    EMC_CHL_NONE
+}EMC_CHL_PRI_E;
+
+
 /******************************************************************************
                             Structure define
 ******************************************************************************/
 typedef struct
 {
-	uint32 row_ref_max;		//ROW_REFRESH_TIME,Refresh interval time , ns, tREF-max = 7800 ns
-	uint32 row_pre_min;		//ROW_PRECHARGE_TIME , ns, tRP-min = 27 ns.
-	uint32 rcd_min;     	// T_RCD,ACTIVE to READ or WRITE delay  , ns, tRCD-min = 27 ns
+	uint8 row_ref_max;		//ROW_REFRESH_TIME,Refresh interval time , ns, tREF-max = 7800 ns
+	uint8 row_pre_min;		//ROW_PRECHARGE_TIME , ns, tRP-min = 27 ns.
+	uint8 rcd_min;     	// T_RCD,ACTIVE to READ or WRITE delay  , ns, tRCD-min = 27 ns
 	uint32 wr_min;      	// T_WR  ,WRITE recovery time  , ns, tWR-min = 15 ns.
-	uint32 rfc_min;     	//T_RFC, AUTO REFRESH command period , ns, tRFC-min = 80 ns.
+	uint8 rfc_min;     	//T_RFC, AUTO REFRESH command period , ns, tRFC-min = 80 ns.
 	uint32 xsr_min;     	//T_XSR  , ns, tXSR-min = 120 ns.
-	uint32 ras_min;     	//T_RAS_MIN , row active time, ns, tRAS-min = 50ns
+	uint8 ras_min;     	//T_RAS_MIN , row active time, ns, tRAS-min = 50ns
     uint32 rrd_min;
-	uint32 mrd_min;     	//T_MRD , 2 cycles, tMRD-min = 2 cycles.
-	uint32 wtr_min;
+	uint8 mrd_min;     	//T_MRD , 2 cycles, tMRD-min = 2 cycles.
+	uint8 wtr_min;
 }SDRAM_TIMING_PARA_T, *SDRAM_TIMING_PARA_T_PTR;
 
 typedef struct SDRAM_CFG_INFO_TAG 
@@ -450,18 +494,18 @@ typedef struct SDRAM_MODE_TAG
     SDRAM_ROW_MODE_E        row_mode;
     SDRAM_COLUMN_MODE_E     col_mode;
     DMEM_DATA_WIDTH_E       data_width;
-    void *                  reserved;
+//    void *                  reserved;
 } SDRAM_MODE_T, * SDRAM_MODE_PTR;
 
 
 typedef struct EMC_PHY_L1_TIMING_TAG
 {
-	uint32 data_pad_ie_delay;
-	uint32 data_pad_oe_delay;
-	uint32 dqs_gate_pst_delay;
-	uint32 dqs_gate_pre_delay;
-	uint32 dqs_ie_delay;
-	uint32 dqs_oe_delay;
+	uint8 data_pad_ie_delay;
+	uint8 data_pad_oe_delay;
+	uint8 dqs_gate_pst_delay;
+	uint8 dqs_gate_pre_delay;
+	uint8 dqs_ie_delay;
+	uint8 dqs_oe_delay;
 }EMC_PHY_L1_TIMING_T,*EMC_PHY_L1_TIMING_T_PTR;
 
 typedef struct EMC_PHY_L2_TIMING_TAG
@@ -500,11 +544,39 @@ EMC_DRM_PARAM_T, *EMC_DRM_PARAM_T_PTR;
 
 typedef struct SDRAM_CHIP_FEATURE_TAG
 {
-    uint32 cas;     // cas latency supported
-    uint32 bl;      // burst length supported
+    uint8 cas;     // cas latency supported
+    uint8 bl;      // burst length supported
     SDRAM_CAP_TYPE_E cap;
 }
 SDRAM_CHIP_FEATURE_T, *SDRAM_CHIP_FEATURE_T_PTR;
+
+
+typedef struct
+{
+    CHIP_CLK_TYPE_E arm_clk;
+    EMC_CLK_TYPE_E emc_clk;
+    
+    EXT_MODE_DS_T ddr_drv;
+
+    uint8 dqs_drv;
+    uint8 dat_drv;
+    uint8 ctl_drv;
+    uint8 clk_drv;
+
+    uint8 clk_wr;
+}EMC_PARAM_T, *EMC_PARAM_PTR;
+
+
+typedef struct
+{
+    EMC_CHL_NUM_E emc_chl_num;
+    EMC_CHL_PRI_E axi_chl_wr_pri;
+    EMC_CHL_PRI_E axi_req_wr_pri;
+    EMC_CHL_PRI_E axi_chl_rd_pri;
+    EMC_CHL_PRI_E axi_req_rd_pri;
+    EMC_CHL_PRI_E ahb_chl_pri;
+}EMC_CHL_INFO_T, *EMC_CHL_INFO_PTR;
+
 
 
 /*******************************************************************************
@@ -512,7 +584,7 @@ SDRAM_CHIP_FEATURE_T, *SDRAM_CHIP_FEATURE_T_PTR;
 *******************************************************************************/
     
 extern uint32 DRAM_CAP;
-extern uint32  SDRAM_BASE;
+//extern uint32  SDRAM_BASE;
 
 
 /*******************************************************************************
