@@ -17,6 +17,9 @@ SC6800     -gtp -cpu ARM926EJ-S -D_REF_SC6800_ -D_BL_NF_SC6800_
 #include <asm/arch/sdram.h>
 #include <asm/arch/chip.h>
 
+#include <asm/arch/adi_hal_internal.h>
+#include <asm/arch/regs_ana.h>
+#include <asm/arch/regs_ahb.h>
 EMC_PARAM_T s_emc_config = {0};
 
 /*lint -e760 -e547 ,because pclint error e63 e26 with REG32()*/
@@ -1674,13 +1677,13 @@ void 	set_emc_pad(uint32 clk_drv, uint32 ctl_drv, uint32 dat_drv, uint32 dqs_drv
 
 }
 
+#ifdef SPL_USB_DOWNLOAD
 void uart_trace(uint32 ch)
 {
 	volatile uint32 i;
 	REG32(0x84000000) = ch;
 	for(i = 0; i < 0x4000; i++);
 }
-#ifdef SPL_USB_DOWNLOAD
 typedef void (*JUMPTOHANDLER) (void);
 #ifdef CONFIG_SP8810
 #define KEY_DOWNLOAD_MODE_MAP 0x10 //keyout0-keyin7
@@ -1935,9 +1938,43 @@ void sc8810_emc_Init()
 	ddr_init();
 }
 
+static const int dcdc_ctl_vol[] = {
+	650, 700, 800, 900, 1000, 1100, 1200, 1300, 1400,
+};
+
+PUBLIC void dcdc_calibrate(int chan, int to_vol)
+{
+	int i;
+	uint32 ctl_vol = to_vol;
+	uint32 dcdc_ctl;
+	for (i = 0; i < ARRAY_SIZE(dcdc_ctl_vol) - 1; i++) {
+		if (ctl_vol < dcdc_ctl_vol[i + 1])
+			break;
+	}
+	if (i >= ARRAY_SIZE(dcdc_ctl_vol) - 1)
+		goto exit;
+
+	if (chan == 10) {
+		dcdc_ctl = ANA_DCDCARM_CTL;
+	}
+	else if (chan == 11) {
+		dcdc_ctl = ANA_DCDC_CTL;
+	}
+	else
+		goto exit;
+
+	ANA_REG_SET(dcdc_ctl, i | (0x07 - i) << 4);
+
+exit:
+	return ;
+}
 PUBLIC void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 {
 	volatile uint32 i = 0;
+	if (REG32(0x209003fc) == CHIP_ID_8810S) {
+		dcdc_calibrate(10, 1300);//vddarm 1.30v
+		dcdc_calibrate(11, 1200);//vddcore 1.20v
+	}
 	EMC_PARAM_T_PTR emc_ptr = EMC_GetPara();
 	
 	s_emc_config.arm_clk = emc_ptr->arm_clk/1000000/4;

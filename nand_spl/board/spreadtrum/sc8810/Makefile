@@ -36,7 +36,7 @@ COBJS	= emmc_boot.o mmc.o lowlevel_init.o div0.o adi_drv.o chip_cfg.o sec_boot.o
 else
 COBJS	= nand_boot.o nand_ecc.o sc8810_nand.o lowlevel_init.o div0.o string.o serial_sc8800x.o timer.o
 COBJS	+= sec_boot.o 
-#COBJS	+= adi_drv.o 
+COBJS	+= adi_drv.o
 #COBJS	+= chip_cfg.o 
 endif
 
