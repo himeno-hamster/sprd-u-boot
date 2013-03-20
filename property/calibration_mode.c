@@ -223,10 +223,14 @@ int  tool_channel_read(char *buffer,int count)
 		case 1: //USB calibration ;
 		{
 			if(usb_is_trans_done(0)){
+				int ret;
 				if(usb_trans_status)
 					printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
-				gs_read(g_usb_buf, &size);
-				index = size;
+
+				ret = gs_read(buffer, &size);
+				if(ret)
+					index = size;
+
 				if(usb_trans_status)
 					printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
 			}
@@ -313,7 +317,7 @@ void calibration_mode(const uint8_t *pcmd, int length)
 				if(count != gUsedChannel->Write(gUsedChannel, g_usb_buf, count)) {
 					return ;
 				}
-        	                mdelay(3);
+				mdelay(3);
 			}
 			count = 0;		
 			while(-1 != (ret = gUsedChannel->GetSingleChar(gUsedChannel))){
