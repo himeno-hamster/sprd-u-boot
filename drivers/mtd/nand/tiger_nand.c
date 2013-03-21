@@ -258,6 +258,7 @@ static void tiger_set_timing_config(struct sprd_tiger_nand_info * tiger, uint32_
 	}
 }
 
+
 #ifdef CONFIG_NAND_SPL
 struct sprd_tiger_boot_header_info {
 	uint32_t check_sum;
@@ -800,11 +801,13 @@ static int sprd_tiger_nand_read_lp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t *
 	if(mbuf && sbuf)
 	{
 		sprd_tiger_nand_ins_add(NAND_MC_SRDT, tiger);
+		sprd_tiger_nand_ins_add(NAND_MC_NOP(10), tiger);
 		//switch to main part
 		sprd_tiger_nand_ins_add(NAND_MC_CMD(NAND_CMD_RNDOUT), tiger);
 		sprd_tiger_nand_ins_add(NAND_MC_ADDR(0), tiger);
 		sprd_tiger_nand_ins_add(NAND_MC_ADDR(0), tiger);
 		sprd_tiger_nand_ins_add(NAND_MC_CMD(NAND_CMD_RNDOUTSTART), tiger);
+		sprd_tiger_nand_ins_add(NAND_MC_NOP(10), tiger);
 		sprd_tiger_nand_ins_add(NAND_MC_MRDT, tiger);
 	}
 	else
@@ -917,7 +920,8 @@ static int sprd_tiger_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, ui
 		page_addr >>= 8;
 		sprd_tiger_nand_ins_add(NAND_MC_ADDR(page_addr & 0xff), tiger);
 	}
-	
+	sprd_tiger_nand_ins_add(NAND_MC_NOP(10), tiger);
+
 	sprd_tiger_nand_ins_add(NAND_MC_MWDT, tiger);
 	if(mbuf && sbuf)
 	{
@@ -1228,7 +1232,7 @@ static void sprd_tiger_nand_hw_init(struct sprd_tiger_nand_info *tiger)
 	sprd_tiger_reg_or(0x20900210, BIT_5);
 	for(i = 0; i < 0xffff; i++);
 	sprd_tiger_reg_and(0x20900210, ~BIT_5);
-	val |= (3)  | (4 << NFC_RWH_OFFSET) | (3 << NFC_RWE_OFFSET) | (3 << NFC_RWS_OFFSET) | (3 << NFC_ACE_OFFSET) | (3 << NFC_ACS_OFFSET);
+	val |= (4)  | (4 << NFC_RWH_OFFSET) | (3 << NFC_RWE_OFFSET) | (3 << NFC_RWS_OFFSET) | (3 << NFC_ACE_OFFSET) | (3 << NFC_ACS_OFFSET);
 	
 	sprd_tiger_reg_write(NFC_TIMING_REG, val);
 	sprd_tiger_reg_write(NFC_TIMEOUT_REG, 0x80400000);
@@ -1267,9 +1271,9 @@ int board_nand_init(struct nand_chip *chip)
 	chip->ecc.bytes = CONFIG_SYS_NAND_ECCBYTES;
 	g_tiger.ecc_mode = CONFIG_SYS_NAND_ECC_MODE;
 	g_tiger.nand = chip;
-
-	//tiger_set_timing_config(&g_tiger, 153);
-
+#ifndef CONFIG_NAND_SPL
+	tiger_set_timing_config(&g_tiger, 153);
+#endif
 	chip->eccbitmode = g_tiger.ecc_mode;
 	chip->ecc.size = CONFIG_SYS_NAND_ECCSIZE;
 	
