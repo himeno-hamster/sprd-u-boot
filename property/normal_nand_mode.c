@@ -197,8 +197,8 @@ TRY_BACKUP_FILE:
 			printf("[load_sector_to_memory]backup_sector is error need recovery it......\n");
 			cmd_yaffs_mwrite_file(backup_sector_name, mem_addr, size);
 		} else {
-			master = (unsigned short *)(bck_addr + size - 4);
-			slave  = (unsigned short *)(mem_addr + size - 4);
+			master = (unsigned short *)(bck_addr + size - 8);
+			slave  = (unsigned short *)(mem_addr + size - 8);
 			if(*master != *slave){
 				printf("[load_sector_to_memory]slave file is error recovery it......\n");
 				cmd_yaffs_mwrite_file(sector_name, bck_addr, size);
