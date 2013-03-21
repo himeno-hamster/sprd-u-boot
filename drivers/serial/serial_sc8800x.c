@@ -408,7 +408,7 @@ int serial3_init (void)
 int  serial3_flowctl_enable(void)
 {
 	/*enable tx/rx flow control*/	   
-	* (volatile unsigned int *) (ARM_UART3_BASE + ARM_UART_CTL1)   |= UART_TX_FLOW_EN | UART_RX_FLOW_EN  | (UART_RX_THRESHOLD & 0x7F);    
+	* (volatile unsigned int *) (ARM_UART3_BASE + ARM_UART_CTL1)   |= UART_RX_FLOW_EN  | (UART_RX_THRESHOLD & 0x7F);    
 	return 0;
 }
 
