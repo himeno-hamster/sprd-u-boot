@@ -212,7 +212,6 @@ static void sprdfb_rgb_panel_init(struct sprdfb_device *dev)
 	}else if(SPRDFB_RGB_BUS_TYPE_SPI == dev->panel->info.rgb->cmd_bus_mode) {
 		sprdfb_spi_init(dev);
 	}
-		
 	rgb_dispc_init_config(dev->panel);
 	rgb_dispc_set_timing(dev);
 

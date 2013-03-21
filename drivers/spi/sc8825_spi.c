@@ -8,7 +8,11 @@
 
 #include <asm/arch/sprd_spi.h>
 
+#ifdef CONFIG_FB_SC7710
+#define SPI2_BASE 0x8e008000
+#else
 #define SPI2_BASE 0x4e006000
+#endif
 #define SPI_USED_BASE SPI2_BASE
 
 
@@ -70,7 +74,11 @@ PUBLIC void SPI_Enable( uint32 spi_id, BOOLEAN is_en)
 				*(volatile uint32 *)GR_GEN0 |= ( 1 << GEN0_SPI1_EN);
 				break;
 			case 2: 
+#ifdef CONFIG_FB_SC7710
+				*(volatile uint32 *)0x8b0000a4 |= ( 1 << 19);
+#else
 				*(volatile uint32 *)GR_GEN0 |= ( 1 << GEN0_SPI2_EN);
+#endif
 				break;
 			default:
 				break;
@@ -351,8 +359,6 @@ PUBLIC void SPI_Init(SPI_INIT_PARM *spi_parm)
 	spi_ctr_ptr->ctl7 &= ~(0x7 << 3);
 	spi_ctr_ptr->ctl7 |= SPIMODE_3WIRE_9BIT_SDIO << 3;
 	
-	
-
 #if 0
 	// set water mark of reveive FIFO
 	spi_ctr_ptr->ctl3  = (ctl3 & ~0xFFFF) | 

@@ -121,6 +121,7 @@ static struct panel_cfg lcd_panel[] = {
 };
 
 #elif defined CONFIG_SC7710G2
+#if 1
 extern struct panel_spec lcd_hx8363_mcu_spec;
 static struct panel_cfg lcd_panel[] = {
     [0]={
@@ -128,6 +129,17 @@ static struct panel_cfg lcd_panel[] = {
         .panel = &lcd_hx8363_mcu_spec ,
         },
 };
+#else
+
+extern struct panel_spec lcd_panel_hx8363_rgb_spi_spec;
+static struct panel_cfg lcd_panel[] = {
+	[0]={
+		.lcd_id = 0x84,
+		.panel = &lcd_panel_hx8363_rgb_spi_spec ,
+		},
+};
+
+#endif
 
 #else
 #ifdef CONFIG_LCD_QVGA
