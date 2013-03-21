@@ -445,6 +445,10 @@ else
 fdl2:fdl1
 	$(MAKE) -C nand_fdl/fdl-2 $@
 endif
+ifdef CONFIG_SC7710G2
+fdl2:fdl1
+	$(MAKE) -C nand_fdl/fdl-2 $@
+endif
 
 fdl1:
 	$(MAKE) -C nand_fdl/fdl-1 $@
