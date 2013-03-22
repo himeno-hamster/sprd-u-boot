@@ -59,6 +59,57 @@ extern   "C"
 //  Author:         Jie.Dai
 //  Note:
 /*****************************************************************************/
+#ifdef CONFIG_SC7710G2
+PUBLIC int32 WDG_PHY_CONFIG (WDG_CONFIG_T *cfg)
+{
+    uint32 ctrl = 0;
+    uint32 val  = 0;
+
+    ///WDG_TRACE("Watch Dog Trace: Watch Dog Value 0x%8.8x", CHIP_REG_GET(WDG_VALUE));
+
+    ANA_REG_SET (WDG_LOCK, WDG_UNLOCK_KEY);
+
+    switch (cfg->mode)
+    {
+        case WDG_TIMEOUT_MODE_RESET:
+            ANA_REG_OR (WDG_CTRL, WDG_RST_EN);
+            break;
+
+        case WDG_TIMEOUT_MODE_INT:
+            ANA_REG_OR (WDG_CTRL, WDG_INT_EN_BIT);
+            break;
+
+        default:
+            break;  //No need to change
+    }
+
+    if (WDG_TIMER_STATE_STOP != cfg->state)
+    {
+        WDG_LOAD_TIMER_VALUE (cfg->val);
+    }
+
+    switch (cfg->state)
+    {
+        case WDG_TIMER_STATE_STOP:
+            ANA_REG_AND (WDG_CTRL, (~WDG_CNT_EN_BIT));
+            break;
+
+        case WDG_TIMER_STATE_START:
+            ANA_REG_OR (WDG_CTRL, WDG_CNT_EN_BIT);
+            break;
+
+        default:
+            break;  //No need to change
+    }
+
+    WDG_TRACE ("Watch Dog Trace: Watch Dog Control 0x%8.8x", ANA_REG_GET (WDG_CTRL));
+    ///    WDG_TRACE ("Watch Dog Trace: Watch Dog LOAD    0x%8.8x", CHIP_REG_GET (WDG_LOAD));
+
+    ANA_REG_SET (WDG_LOCK, (~WDG_UNLOCK_KEY));
+
+    return 0;
+}
+#else
 PUBLIC int32 WDG_PHY_CONFIG (WDG_CONFIG_T *cfg)
 {
     uint32 ctrl = 0;
@@ -108,7 +159,7 @@ PUBLIC int32 WDG_PHY_CONFIG (WDG_CONFIG_T *cfg)
 
     return 0;
 }
-
+#endif
 /*****************************************************************************/
 //  Description:    This function clear the watch dog interrupt
 //  Dependency:     No
@@ -124,7 +175,12 @@ PUBLIC int32 WDG_PHY_INT_CLR (void)
 }
 PUBLIC void WDG_ClockOn(void)
 {
+#ifdef CONFIG_SC7710G2
+    ANA_REG_OR(ANA_APB_CLK_EN, WDG_EB);
+    ANA_REG_OR(ANA_RTC_CLK_EN, APB_ARCH_EB|RTC_WDG_EB);
+#else
     ANA_REG_OR(ANA_APB_CLK_EN, WDG_EB | APB_ARCH_EB | RTC_WDG_EB);
+#endif
 }
 
 

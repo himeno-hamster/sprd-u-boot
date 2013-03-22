@@ -187,9 +187,17 @@ extern   "C"
 #define CLK_AUXADC_EN		BIT_13
 #define RTC_TPC_EB			BIT_12
 #define RTC_EIC_EB			BIT_11
+#ifdef CONFIG_SC7710G2
+#define RTC_WDG_EB			BIT_2
+#else
 #define RTC_WDG_EB			BIT_10
+#endif
 #define RTC_RTC_EB			BIT_9
+#ifdef CONFIG_SC7710G2
+#define RTC_ARCH_EB			BIT_0
+#else
 #define RTC_ARCH_EB			BIT_8
+#endif
 #define PINREG_EB			BIT_7
 #define AGEN_RTC_EN              	BIT_1
 #define AGEN_RTC_RTC_EN       	BIT_9
