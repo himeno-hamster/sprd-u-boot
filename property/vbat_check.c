@@ -33,7 +33,9 @@ int is_bat_low(void)
     int adc_value = 0;
     unsigned int comp_vbat = 0;
     int i;
-
+#ifdef CONFIG_MACH_SP8830FPGA
+	return 0;
+#endif
     if(charger_connected()){
         comp_vbat = get_bat_low_level_chg();
     }else{

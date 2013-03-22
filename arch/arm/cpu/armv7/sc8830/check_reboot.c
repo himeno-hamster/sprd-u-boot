@@ -50,6 +50,9 @@ int power_button_pressed(void)
 	udelay(3000);
 	int status = ANA_REG_GET(ADI_EIC_DATA);
 	printf("eica status %x\n", status);
+#ifdef CONFIG_MACH_SP8830FPGA
+	return 0;
+#endif
 	return !!(status & (1 << 3)/*PBINT*/);//low level if pb hold
 }
 

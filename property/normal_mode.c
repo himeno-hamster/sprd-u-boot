@@ -631,12 +631,15 @@ static int start_linux()
 	u32 machine_type;
 
 	machine_type = machine_arch_type;         /* get machine type */
-
+#ifdef CONFIG_MACH_SP8830FPGA
+	machine_type = 0x7de;
+#endif
 	theKernel = (void (*)(int, int, u32))KERNEL_ADR; /* set the kernel address */
-
+#ifndef CONFIG_MACH_SP8830FPGA
 	*(volatile u32*)0x84001000 = 'j';
 	*(volatile u32*)0x84001000 = 'm';
 	*(volatile u32*)0x84001000 = 'p';
+#endif
 
 	theKernel(0, machine_type, VLX_TAG_ADDR);    /* jump to kernel with register set */
 	while(1);
