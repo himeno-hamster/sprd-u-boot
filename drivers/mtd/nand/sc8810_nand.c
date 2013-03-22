@@ -208,7 +208,7 @@ static unsigned char nand_id_replace_table[][10] =
     {0xad, 0xbc, 0x90, 0x11, 0x00, /*replace with*/ 0xec, 0xbc, 0x00, 0x66, 0x56}
 };
 
-
+#if !defined(CONFIG_NAND_SPL)
 static const struct nand_spec_str nand_spec_table[] = {
     {0x2c, 0xb3, 0xd1, 0x55, 0x5a, {10, 10, 12, 10, 20, 50}},// MT29C8G96MAAFBACKD-5, MT29C4G96MAAHBACKD-5
     {0x2c, 0xba, 0x80, 0x55, 0x50, {10, 10, 12, 10, 20, 50}},// MT29C2G48MAKLCJA-5 IT
@@ -226,6 +226,7 @@ static const struct nand_spec_str nand_spec_table[] = {
 
     {0, 0, 0, 0, 0, {0, 0, 0, 0, 0, 0}}
 };
+#endif
 
 void read_chip_id(void);
 static void nfc_reg_write(unsigned int addr, unsigned int value)
@@ -486,6 +487,7 @@ static void set_nfc_param(unsigned long nfc_clk)
 }
 #endif
 
+#if !defined(CONFIG_NAND_SPL)
 static struct nand_spec_str *get_nand_spec(u8 *nand_id)
 {
     int i = 0;
@@ -534,6 +536,7 @@ static void set_nfc_timing(struct sc8810_nand_timing_param *nand_timing, u32 nfc
 
     debug("set_nfc_timing NFC_TIMING: %x ", nfc_reg_read(NFC_TIMING));
 }
+#endif
 
 static void sc8810_nand_hw_init(void)
 {
@@ -896,12 +899,15 @@ int board_nand_init(struct nand_chip *this)
 
 	read_chip_id();
 	/* The 4th id byte is the important one */
+
+#if !defined(CONFIG_NAND_SPL)
 	ptr_nand_spec = get_nand_spec(io_wr_port);
 
 	if (ptr_nand_spec != NULL)
 		set_nfc_timing(&ptr_nand_spec->timing_cfg, 153);
 	else
 		nfc_reg_write(NFC_TIMING, ((6 << 0) | (6 << 5) | (10 << 10) | (6 << 16) | (5 << 21) | (5 << 26)));
+#endif
 
 	extid = io_wr_port[3];
 	/* Calc pagesize */

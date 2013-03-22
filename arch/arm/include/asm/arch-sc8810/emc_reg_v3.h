@@ -114,17 +114,11 @@ extern   "C"
 #define HCH_CHL_PRI_MASK     (0x3)
 #define HCH_CHL_PRI(level)     ((level) & 0x3)
 
-#define ACH_REQ_LEVEL_WR_MASK     (0x3 << 2)
-#define ACH_REQ_LEVEL_WR(level)     (((level) & 0x3) << 2)
 #define ACH_CHL_PRI_WR_MASK     (0x3)
 #define ACH_CHL_PRI_WR(level)     ((level) & 0x3)
 
-#define ACH_REQ_LEVEL_RD_MASK     (0x3 << 2)
-#define ACH_REQ_LEVEL_RD(level)     (((level) & 0x3) << 2)
 #define ACH_CHL_PRI_RD_MASK     (0x3)
 #define ACH_CHL_PRI_RD(level)     ((level) & 0x3)
-
-
 
 
 /**----------------------------------------------------------------------------*

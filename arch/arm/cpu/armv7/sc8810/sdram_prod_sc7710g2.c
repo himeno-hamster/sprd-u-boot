@@ -28,7 +28,7 @@ extern   "C"
 
 
 
-#define SDRAM_CLK   (EMC_CLK/2)              // 96MHz
+//#define SDRAM_CLK   (EMC_CLK/2)              // 96MHz
 //#define SDRAM_T     (1000000000/SDRAM_CLK)   // ns
 #define SDRAM_T (1000000000/EMC_CLK_192MHZ)  // ns
 
@@ -227,16 +227,16 @@ SDRAM_CFG_INFO_T s_sdram_config_info = {
 
 
 LOCAL EMC_CHL_INFO_T s_emc_chl_info[] =
-{// emc_chl_num       axi_chl_wr_pri  axi_req_wr_pri  axi_chl_rd_pri  axi_req_rd_pri      ahb_chl_pri
-    {EMC_AXI_ARM,       EMC_CHL_PRI_3,  EMC_CHL_PRI_3,  EMC_CHL_PRI_2,  EMC_CHL_PRI_2,  EMC_CHL_NONE},
-    {EMC_AXI_GPU,       EMC_CHL_PRI_1,  EMC_CHL_PRI_1,  EMC_CHL_PRI_1,  EMC_CHL_PRI_1,  EMC_CHL_NONE},
-    {EMC_AXI_DISPC,     EMC_CHL_PRI_0,  EMC_CHL_PRI_0,  EMC_CHL_PRI_3,  EMC_CHL_PRI_3,  EMC_CHL_NONE},
-    {EMC_AHB_CP_MTX,    EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_2},
-    {EMC_AHB_MST_MTX,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_3},
-    {EMC_AHB_LCDC,      EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_0},
-    {EMC_AHB_DCAM,      EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_3},
-    {EMC_AHB_VSP,       EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_1},
-    {EMC_CHL_MAX,       EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE}
+{// emc_chl_num       axi_chl_wr_pri  axi_chl_rd_pri      ahb_chl_pri
+    {EMC_AXI_ARM,       EMC_CHL_PRI_2,  EMC_CHL_PRI_2,  EMC_CHL_NONE},
+    {EMC_AXI_GPU,       EMC_CHL_PRI_0,  EMC_CHL_PRI_0,  EMC_CHL_NONE},
+    {EMC_AXI_DISPC,     EMC_CHL_PRI_0,  EMC_CHL_PRI_3,  EMC_CHL_NONE},
+    {EMC_AHB_CP_MTX,    EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_1},
+    {EMC_AHB_MST_MTX,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_3},
+    {EMC_AHB_LCDC,      EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_0},
+    {EMC_AHB_DCAM,      EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_2},
+    {EMC_AHB_VSP,       EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_1},
+    {EMC_CHL_MAX,       EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE}
 };
 
 
