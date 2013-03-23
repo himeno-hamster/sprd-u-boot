@@ -3218,7 +3218,7 @@ extern unsigned int __machine_arch_type;
 # define machine_is_clps7500()	(0)
 #endif
 
-#ifdef CONFIG_ARCH_SHARK
+#ifdef CONFIG_ARCH_SC8830
 # ifdef machine_arch_type
 #  undef machine_arch_type
 #  define machine_arch_type	__machine_arch_type

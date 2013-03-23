@@ -48,7 +48,11 @@ extern unsigned char raw_header[8192];
 #if BOOT_NATIVE_LINUX
 //pls make sure uboot running area
 #define VLX_TAG_ADDR     (0x82000100)
+#ifdef CONFIG_MACH_SP8830FPGA
+#define KERNEL_ADR       (0x80008000)
+#else
 #define KERNEL_ADR       (0x82008000)
+#endif
 #else
 #define KERNEL_ADR       0x84508000
 #define VLX_TAG_ADDR     0x85100000 //after initrd
