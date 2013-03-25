@@ -231,12 +231,19 @@ static void dispc_update_clock(struct sprdfb_device *dev)
 		}
 
 		dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC / dividor;
+#ifdef CONFIG_SC7710G2
+		reg_val = __raw_readl(AHB_CTL6);
+		reg_val  &= 0xFFF00FFF; /*ckear bit 12~bit 19 */
+		reg_val |= (dividor-1) << 12;
+		__raw_writel(reg_val, AHB_CTL6);
+#elif defined CONFIG_SC8830
 
+#else
 		reg_val = __raw_readl(AHB_DISPC_CLK);
 		reg_val  &= 0xF807FFFF; /*ckear bit 19~bit 26 */
 		reg_val |= (dividor-1) << 19;
-
 		__raw_writel(reg_val, AHB_DISPC_CLK);
+#endif
 
 		printf("sprdfb:[%s] need_clock = %d, dividor = %d, reg_val = 0x%x, dpi_clock = %d\n", __FUNCTION__, need_clock, dividor, reg_val, dev->dpi_clock);
 		printf("0x20900220 = 0x%x\n", __raw_readl(0x20900220));
