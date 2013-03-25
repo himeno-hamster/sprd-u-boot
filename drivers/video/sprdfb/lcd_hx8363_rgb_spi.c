@@ -366,7 +366,6 @@ static int32_t hx8363_invalidate_rect(struct panel_spec *self,
 static int32_t hx8363_read_id(struct panel_spec *self)
 {
 	int32_t id  = 0x62;
-	int32_t data  = 0;
 	spi_send_cmd_t spi_send_cmd = self->info.rgb->bus_info.spi->ops->spi_send_cmd;
 	spi_send_data_t spi_send_data = self->info.rgb->bus_info.spi->ops->spi_send_data;
 	spi_read_t spi_read = self->info.rgb->bus_info.spi->ops->spi_read;
@@ -382,8 +381,7 @@ static int32_t hx8363_read_id(struct panel_spec *self)
 
 	spi_read(&id);
 	id &= 0xff;
-	LCD_PRINT(" hx8363_read_id u-boot id = %d\n",id);
-
+	LCD_PRINT(" hx8363_read_id u-boot id = %x\n",id);
 	return id;
 }
 
