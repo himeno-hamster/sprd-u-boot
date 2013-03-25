@@ -133,15 +133,16 @@ static int32_t dsi_edpi_init(void)
 	return 0;
 }
 
-static int32_t dsi_dpi_init(struct panel_spec* panel)
+static int32_t dsi_dpi_init(struct sprdfb_device *dev)
 {
 	dsih_dpi_video_t dpi_param;
 	dsih_error_t result;
+	struct panel_spec* panel = dev->panel;
 	struct info_mipi * mipi = panel->info.mipi;
 
 	dpi_param.no_of_lanes = mipi->lan_number;
 	dpi_param.byte_clock = mipi->phy_feq / 8;
-	dpi_param.pixel_clock = 384*1000/11;//DSI_PHY_REF_CLOCK / 4;
+	dpi_param.pixel_clock = dev->dpi_clock/1000;//384*1000/11;//DSI_PHY_REF_CLOCK / 4;
 
 	switch(mipi->video_bus_width){
 	case 16:
@@ -300,7 +301,7 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 	}
 
 	if(SPRDFB_MIPI_MODE_VIDEO == mipi->work_mode){
-		dsi_dpi_init(dev->panel);
+		dsi_dpi_init(dev);
 	}
 
 	return 0;

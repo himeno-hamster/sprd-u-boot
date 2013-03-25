@@ -75,6 +75,7 @@ struct sprdfb_device {
 	struct panel_spec	*panel;
 	struct panel_if_ctrl *if_ctrl;
 	struct display_ctrl	*ctrl;
+	uint32_t dpi_clock;
 };
 
 struct display_ctrl {

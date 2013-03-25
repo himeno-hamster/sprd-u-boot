@@ -284,6 +284,7 @@ struct panel_spec lcd_nt35516_mipi_spec = {
 	//.cap = PANEL_CAP_NOT_TEAR_SYNC,
 	.width = 540,
 	.height = 960,
+	//.fps = 60,
 	.type = LCD_MODE_DSI,
 	.direction = LCD_DIRECT_NORMAL,
 	.info = {
