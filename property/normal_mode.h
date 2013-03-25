@@ -252,6 +252,7 @@ int eng_getphasecheck(SP09_PHASE_CHECK_T* phase_check);
 int eng_phasechecktest(unsigned char *array, int len);
 int fixnv_is_correct(unsigned char *array, unsigned long size);
 int fixnv_is_correct_endflag(unsigned char *array, unsigned long size);
+int fixnv_chkEcc(unsigned char* buf, int size);
 unsigned long get_nv_index(unsigned char *array, unsigned long size);
 int runtimenv_is_correct(unsigned char *array, unsigned long size);
 int sn_is_correct(unsigned char *array, unsigned long size);

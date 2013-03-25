@@ -798,14 +798,78 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 	if(poweron_by_calibration())
 	{
-		/* recovery damaged fixnv*//*to do later*/
-		memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
-		if(0 == nv_read_partition(p_block_dev, PARTITION_FIX_NV1, (char *)FIXNV_ADR, FIXNV_SIZE + 4)){
-			//should do something here!!!!
+		// ---------------------fix nv--------------------------------
+		// 1 read orighin fixNv
+		memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE);
+		do{
+			orginal_right = 1;	// means pass
+			memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE);
+			if(nv_read_partition(p_block_dev, PARTITION_FIX_NV1, (char *)FIXNV_ADR, FIXNV_SIZE)){
+				orginal_right = 0;
+				printf("Read origin fixnv IO fail\n");
+				break;
+			}
+			if(!fixnv_chkEcc(FIXNV_ADR, FIXNV_SIZE)){
+				orginal_right = 0;
+				printf("Read origin fixnv ECC fail\n");
+				break;
+			}
+			printf("Read origin fixnv pass\n");
+			break;
+		}while(0)
+		if(!orginal_right)
+		{
+			do{
+				memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE);
+				if(nv_read_partition(p_block_dev, PARTITION_FIX_NV2, (char *)FIXNV_ADR, FIXNV_SIZE)){
+					printf("Read backup fixnv IO fail\n");
+					break;
+				}
+				if(!fixnv_chkEcc(FIXNV_ADR, FIXNV_SIZE)){
+					printf("Read backup fixnv ECC fail\n");
+					break;
+				}
+				printf("Read backup fixnv pass\n");
+				break;
+			}while(0);
 		}
 
+		// ---------------------runtime nv----------------------------
+		// 1 read orighin fixNv
+		do{
+			orginal_right = 1;	// means pass
+			memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
+			if(nv_read_partition(p_block_dev, PARTITION_RUNTIME_NV1, (char *)RUNTIMENV_ADR, RUNTIMENV_SIZE)){
+				orginal_right = 0;
+				printf("Read origin runtimeNv  IO fail\n");
+				break;
+			}
+			if(!fixnv_chkEcc(RUNTIMENV_ADR, RUNTIMENV_SIZE)){
+				orginal_right = 0;
+				printf("Read origin runtimeNv  ECC fail\n");
+				break;
+			}
+			printf("Read origin runtimeNv pass\n");
+			break;
+		}while(0)
+		if(!orginal_right)
+		{
+			do{
+				memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
+				if(nv_read_partition(p_block_dev, PARTITION_RUNTIME_NV2, (char *)RUNTIMENV_ADR, RUNTIMENV_SIZE)){
+					printf("Read backup runtimeNv  IO fail\n");
+					break;
+				}
+				if(!fixnv_chkEcc(RUNTIMENV_ADR, RUNTIMENV_SIZE)){
+					printf("Read backup runtimeNv  ECC fail\n");
+					break;
+				}
+				break;
+				printf("Read backup runtimeNv pass\n");
+			}while(0);
+		}
 
-		/* DSP_PART */
+		// ---------------------DSP ----------------------------
         printf("Reading dsp to 0x%08x\n", DSP_ADR);
 
 		if (!get_partition_info(p_block_dev, PARTITION_DSP, &info)) {

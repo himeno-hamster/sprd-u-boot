@@ -84,6 +84,18 @@ unsigned short calc_checksum(unsigned char *dat, unsigned long len)
 	return (~checksum);
 }
 
+int fixnv_chkEcc(unsigned char* buf, int size)
+{
+	unsigned short crc,crcOri;
+//	crc = __crc_16_l_calc(buf, size-2);
+//	crcOri = (uint16)((((uint16)buf[size-2])<<8) | ((uint16)buf[size-1]) );
+
+	crc = calc_checksum(buf,size-4);
+	crcOri = (unsigned short)((((unsigned short)buf[size-3])<<8) | ((unsigned short)buf[size-4]) );
+
+	return (crc == crcOri);
+}
+
 #define NV_MULTI_LANG_ID   (405)
 #define GSM_CALI_ITEM_ID   (0x2)
 #define GSM_IMEI_ITEM_ID   (0x5)
