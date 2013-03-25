@@ -36,25 +36,11 @@ extern   "C"
 uint32 DRAM_CAP;
 //uint32  SDRAM_BASE    =    	0x00000000;//(128*1024*1024/2)//0x30000000
 
-
-#define ROW_MODE_MASK           0x3
-#define COL_MODE_MASK           0x7
-#define DATA_WIDTH_MASK         0x1
-#define AUTO_PRECHARGE_MASK     0x3
-#define CS_POSITION_MASK        0x3
-
 #define MEM_REF_DATA0       0x12345678
-#define MEM_REF_DATA1       0x55AA9889
-#define ZERO_ADDR           0x00000000UL
+#define SDRAM_BASE_ADDR     0x00000000UL
 
-#define BYTE_OFFSET         3UL   // 1BYTE = 8BIT = 2^3
-#define WIDTH16_OFFSET      4UL   // 16BIT = 2^4
-#define WIDTH32_OFFSET      5UL   // 32BIT = 2^5
-#define BANK_OFFSET         2UL   // 4BANK = 2^2
 
 LOCAL BOOLEAN s_emc_dll_open = FALSE;
-
-
 LOCAL EMC_PARAM_T s_emc_config = {0};
 
 /**---------------------------------------------------------------------------*
@@ -213,7 +199,7 @@ PUBLIC void EMC_CSx_Burst_Set(EMC_CS_NUM_E emc_cs_num, SDRAM_CFG_INFO_T_PTR mem_
     {
         burst_len = 0;
     }
-    
+
     i = REG32(emc_cs_cfg);
     i &= ~((0x7<<8)|(0x7<<4)|(1<<1)|1);
     i |=((burst_len			<<8) | //write burst length
@@ -240,30 +226,29 @@ PUBLIC void EMC_CSx_Burst_Set(EMC_CS_NUM_E emc_cs_num, SDRAM_CFG_INFO_T_PTR mem_
 /*****************************************************************************/
 LOCAL void EMC_AXI_CHL_Set(EMC_CHL_NUM_E emc_axi_num,
                                     EMC_CHL_PRI_E chl_wr_pri,
-                                    EMC_CHL_PRI_E req_wr_pri,
-                                    EMC_CHL_PRI_E chl_rd_pri,
-                                    EMC_CHL_PRI_E req_rd_pri
+                                    EMC_CHL_PRI_E chl_rd_pri
                                     )
 {
     uint32 i = 0;
     uint32 emc_axi_cfg0 = EXT_MEM_CFG0_CH0_BASE+ emc_axi_num*8;
     uint32 emc_axi_cfg1 = EXT_MEM_CFG1_CH0_BASE+ emc_axi_num*8;
-    
+
     i = REG32(emc_axi_cfg0);
-    i &= (~(ACH_RF_ENDIAN_SWT_CHX | ACH_REQ_LEVEL_WR_MASK | ACH_CHL_PRI_WR_MASK));
+    i &= (~(ACH_RF_ENDIAN_SWT_CHX | ACH_CHL_PRI_WR_MASK));
     i |= ACH_RF_AUTO_SLEEP_EN_CHX | ACH_RF_CH_EN_CHX | (EMC_ENDIAN_SWITCH_NONE<<4);
-    i |= (ACH_CHL_PRI_WR(chl_wr_pri)) | (ACH_REQ_LEVEL_WR(req_wr_pri));
+    i |= (ACH_CHL_PRI_WR(chl_wr_pri));
     
     REG32(emc_axi_cfg0) = i;
 
     i = REG32(emc_axi_cfg1);
-    i &= (~(ACH_RF_SYNC_SEL_CHX | ACH_REQ_LEVEL_RD_MASK | ACH_CHL_PRI_RD_MASK)); // async
+    i &= (~(ACH_RF_SYNC_SEL_CHX | ACH_CHL_PRI_RD_MASK)); // async
     i |= (EMC_CLK_ASYNC<<4); //emc clk async with axi clk
     i |= (ACH_RF_BRESP_MODE_CH); //axi channel response mode  0:at once  1:delay several clk
-    i |= (ACH_REQ_LEVEL_RD(req_rd_pri) | ACH_CHL_PRI_RD(chl_rd_pri));
+    i |= ACH_CHL_PRI_RD(chl_rd_pri);
     
     REG32(emc_axi_cfg1) = i;
 }
+
 /*****************************************************************************/
 //  Description:	EMC AHB channel set function
 //  Global resource dependence:  NONE
@@ -279,7 +264,7 @@ LOCAL void EMC_AHB_CHL_Set(EMC_CHL_NUM_E emc_ahb_num,uint32 addr_offset, EMC_CHL
 
     REG32(emc_ahb_cfg1) &= (~HCH_CHL_PRI_MASK);
     REG32(emc_ahb_cfg0) |= (HCH_RF_AUTO_SLEEP_EN_CHX | HCH_CHL_PRI(chl_pri));
-    
+
     REG32(emc_ahb_cfg1) &= ~0x03ff0000;	//clear bit16~25
     REG32(emc_ahb_cfg1) |= (addr_offset & 0x03ff) << 16;
 }
@@ -604,9 +589,8 @@ void EMC_CHL_Init(EMC_CHL_INFO_PTR emc_chl_info)
         {
             EMC_AXI_CHL_Set(emc_channel_num,
                         emc_chl_info[i].axi_chl_wr_pri,
-                        emc_chl_info[i].axi_req_wr_pri,
-                        emc_chl_info[i].axi_chl_rd_pri,
-                        emc_chl_info[i].axi_req_rd_pri);
+                        emc_chl_info[i].axi_chl_rd_pri
+                        );
         }
         else if ((emc_channel_num >= EMC_AHB_MIN) && (emc_channel_num <= EMC_AHB_MAX))
         {
@@ -742,7 +726,7 @@ uint32 dram_detect_check_addr(uint32 start_addr, uint32 detect_size)
         
         detect_unit <<= 1;
     }
-    
+
     if (addr < detect_region)
     {
         return addr;
@@ -759,7 +743,7 @@ BOOLEAN dram_mode_check(uint32 dram_cap)
     uint32 detect_block_size = CAP_2G_BIT;
     uint32 start_detect_addr_len = 0;
     uint32 start_detect_addr[] = {
-        0x00000000,
+        SDRAM_BASE_ADDR,
         0x10000000,
         0x30000000,
         INVALIDE_VAL
@@ -802,7 +786,7 @@ BOOLEAN dram_mode_check(uint32 dram_cap)
             }
         }  
     }
-    
+
     return ret;
 }
 
@@ -859,12 +843,12 @@ LOCAL BOOLEAN DRAM_Para_SelfAdapt(void)
     {
         DMC_Init();
         
-        if (__is_rw_ok(ZERO_ADDR, MEM_REF_DATA0))
+        if (__is_rw_ok(SDRAM_BASE_ADDR, MEM_REF_DATA0))
         {
             ret = TRUE;
             break;
         }
-        
+
         if((pCfg->data_width == DATA_WIDTH_32)
                 && (pCfg->sdram_type == DDR_SDRAM)
             )
@@ -918,7 +902,7 @@ void DMC_Init(void)
     EMC_CSx_Burst_Set(EMC_CS1, mem_info);
     EMC_PHY_Mode_Set(mem_info);
     EMC_PHY_Latency_Set(mem_info);
-    
+
     emc_phy_l1_timing = EMC_GetPHYL1_Timing(mem_info->sdram_type, mem_info->cas_latency);
     EMC_PHY_Timing_Set(mem_info, emc_phy_l1_timing, emc_phy_l2_timing);
     EMC_MEM_Timing_Set(emc_freq, mem_info, mem_timing);
@@ -930,9 +914,9 @@ void DMC_Init(void)
 void mcu_clock_select(MCU_CLK_SOURCE_E mcu_clk_sel)
 {
     uint32 i;
-    
-	SCI_ASSERT(mcu_clk_sel < MCU_CLK_NONE);
-	
+
+    SCI_ASSERT(mcu_clk_sel < MCU_CLK_NONE);
+
     i = REG32(AHB_ARM_CLK);
     i &= ~(0x3 << 23);
     i |= ((mcu_clk_sel & 0x3) << 23);
@@ -954,8 +938,8 @@ void set_arm_bus_clk_div(uint32 arm_drv, uint32 axi_div, uint32 ahb_div, uint32 
     i |= ((axi_div & 0x3) << 11);
     REG32(CA5_CFG) = i;
 
-    i = REG32(AHB_ARM_CLK);    	
-	i &= (~(0x7 | (0x7 << 4) | (0x7 << 14)));
+    i = REG32(AHB_ARM_CLK);
+    i &= (~(0x7 | (0x7 << 4) | (0x7 << 14)));
     i |= (arm_drv & 0x7) | ((ahb_div & 0x7) << 4) | ((dbg_div & 0x7) << 14);
 
     REG32(AHB_ARM_CLK) = i;
@@ -1009,7 +993,7 @@ void set_emc_clock_div(uint32 emc_div)
 {
     uint32 i;
 
-    i = REG32(AHB_ARM_CLK);    
+    i = REG32(AHB_ARM_CLK);
     i &= ~(0xF << 8);
     i |= ((emc_div & 0xF) << 8); // emc div = n + 1
 
@@ -1084,45 +1068,39 @@ void set_emc_clock_freq(void)
 
 void set_chip_clock_freq(void)
 {
-    uint32 arm_drv;
+    uint32 arm_drv = 0;
     uint32 axi_div;
     uint32 ahb_div;
     uint32 dbg_div;
 
-    uint32 mpll_clk_freq;
-    
-    arm_drv = 0;
-    axi_div = 1;
-    ahb_div = 3; // 1/4
-    dbg_div = 4;
+    uint32 mpll_clk_freq = s_emc_config.arm_clk;
 
-    mpll_clk_freq = s_emc_config.arm_clk;
-
-    if (mpll_clk_freq < CHIP_CLK_1200MHZ)
+    if (mpll_clk_freq == CHIP_CLK_26MHZ)
+    {
+        mcu_clock_select(MCU_CLK_XTL_SOURCE);
+        return;
+    }
+    else if ((mpll_clk_freq >= CHIP_CLK_800MHZ) && (mpll_clk_freq <= CHIP_CLK_1200MHZ))
     {
         axi_div = 1;
         ahb_div = 3; // 1/4
         dbg_div = 7; // 1/8
     }
-    else if ((mpll_clk_freq > CHIP_CLK_1200MHZ) && (mpll_clk_freq < CHIP_CLK_1700MHZ))
+    else if ((mpll_clk_freq > CHIP_CLK_1200MHZ) && (mpll_clk_freq <= CHIP_CLK_1500MHZ))
     {
         axi_div = 3; // 1/4
         ahb_div = 7; // 1/8
         dbg_div = 7; // 1/8
     }
-    else if ((mpll_clk_freq > CHIP_CLK_1700MHZ) && (mpll_clk_freq < CHIP_CLK_2000MHZ))
-    {
-    }
     else
     {
         SCI_ASSERT(0);
     }
-    
+
     mcu_clock_select(MCU_CLK_XTL_SOURCE);
-    
+
     set_gpu_clock_freq();
     set_arm_bus_clk_div(arm_drv, axi_div, ahb_div, dbg_div);
-
     set_mpll_clock_freq(mpll_clk_freq);
 
     mcu_clock_select(MCU_CLK_MPLL_SOURCE);
@@ -1185,9 +1163,9 @@ PUBLIC void Chip_Init(void) { /*lint !e765 "Chip_Init" is used by init.s entry.s
     set_chip_clock_freq();
     set_mem_volt();
 
-
     sdram_init();
-    
+
+    return;
 }
 
 

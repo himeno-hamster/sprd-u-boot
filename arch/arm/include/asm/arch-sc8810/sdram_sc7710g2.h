@@ -54,6 +54,12 @@
     
 #define MODE_REG_OPMODE              0
 
+#define ROW_MODE_MASK           0x3
+#define COL_MODE_MASK           0x7
+#define DATA_WIDTH_MASK         0x1
+#define AUTO_PRECHARGE_MASK     0x3
+#define CS_POSITION_MASK        0x3
+
 typedef enum
 {
     EXT_MODE_DS_FULL = 0,
@@ -201,12 +207,7 @@ typedef enum{
     CHIP_CLK_1300MHZ   = 1300000000,
     CHIP_CLK_1400MHZ   = 1400000000,
     CHIP_CLK_1500MHZ   = 1500000000,
-    CHIP_CLK_1600MHZ   = 1600000000,
-    CHIP_CLK_1700MHZ   = 1700000000,
-    CHIP_CLK_1800MHZ   = 1800000000,
-    CHIP_CLK_1900MHZ   = 1900000000,
-    CHIP_CLK_2000MHZ   = 2000000000,
-    CHIP_CLK_MAX = CHIP_CLK_2000MHZ
+    CHIP_CLK_MAX = CHIP_CLK_1500MHZ
 }CHIP_CLK_TYPE_E;
 
 
@@ -571,9 +572,7 @@ typedef struct
 {
     EMC_CHL_NUM_E emc_chl_num;
     EMC_CHL_PRI_E axi_chl_wr_pri;
-    EMC_CHL_PRI_E axi_req_wr_pri;
     EMC_CHL_PRI_E axi_chl_rd_pri;
-    EMC_CHL_PRI_E axi_req_rd_pri;
     EMC_CHL_PRI_E ahb_chl_pri;
 }EMC_CHL_INFO_T, *EMC_CHL_INFO_PTR;
 
