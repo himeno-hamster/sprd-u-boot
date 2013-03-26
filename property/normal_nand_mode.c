@@ -568,9 +568,8 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		else{
 			printf("Read origin fixnv pass\n");
 		}
-
 		// ---------------------runtime nv----------------------------
-		// 1 read orighin runtime nv
+		// 2 read orighin runtime nv
 		memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
 		cmd_yaffs_mount(runtimenvpoint);
 		cmd_yaffs_ls_chk(runtimenvfilename);
@@ -594,6 +593,32 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		else{
 			printf("Read origin  runtime nv pass\n");
 		}
+                // 3 read orighin product information
+                memset((unsigned char *)(PRODUCTINFO_ADR), 0xff, PRODUCTINFO_SIZE);
+                cmd_yaffs_mount(productinfopoint);
+                cmd_yaffs_ls_chk(productinfofilename);
+                cmd_yaffs_mread_file(productinfofilename, (unsigned char *)(PRODUCTINFO_ADR));
+                cmd_yaffs_umount(productinfopoint);
+                if(!fixnv_chkEcc((PRODUCTINFO_ADR), PRODUCTINFO_SIZE)){
+                        // 2 read backup productinfo
+                        printf("Read origin productinfo fail\n");
+                        memset((unsigned char *)(PRODUCTINFO_ADR), 0xff, PRODUCTINFO_SIZE);
+                        cmd_yaffs_mount(productinfopoint);
+                        cmd_yaffs_ls_chk(productinfofilename2);
+                        cmd_yaffs_mread_file(productinfofilename2, (unsigned char *)(PRODUCTINFO_ADR));
+                        cmd_yaffs_umount(productinfopoint);
+                        if(!fixnv_chkEcc((PRODUCTINFO_ADR), PRODUCTINFO_SIZE)){
+                                printf("Read backup productinfo fail\n");
+                        }
+                        else{
+                                printf("Read backup productinfo pass\n");
+                        }
+                }
+                else{
+			char *product_data = (char *)PRODUCTINFO_ADR;
+			printf("productinfo: %c %c %c %c\n",product_data[0],product_data[1],product_data[2],product_data[3]);
+                        printf("Read origin productinfo pass\n");
+                }
 
 		// ---------------------DSP ----------------------------
 		printf("Reading dsp to 0x%08x\n", DSP_ADR);
