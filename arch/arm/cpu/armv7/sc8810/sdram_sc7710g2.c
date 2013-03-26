@@ -235,9 +235,12 @@ LOCAL void EMC_AXI_CHL_Set(EMC_CHL_NUM_E emc_axi_num,
 
     i = REG32(emc_axi_cfg0);
     i &= (~(ACH_RF_ENDIAN_SWT_CHX | ACH_CHL_PRI_WR_MASK));
-    i |= ACH_RF_AUTO_SLEEP_EN_CHX | ACH_RF_CH_EN_CHX | (EMC_ENDIAN_SWITCH_NONE<<4);
+
+//    i |= ACH_RF_AUTO_SLEEP_EN_CHX | ACH_RF_CH_EN_CHX | (EMC_ENDIAN_SWITCH_NONE<<4);
+    i |= ACH_RF_CH_EN_CHX | (EMC_ENDIAN_SWITCH_NONE<<4);
+
     i |= (ACH_CHL_PRI_WR(chl_wr_pri));
-    
+
     REG32(emc_axi_cfg0) = i;
 
     i = REG32(emc_axi_cfg1);
@@ -263,7 +266,9 @@ LOCAL void EMC_AHB_CHL_Set(EMC_CHL_NUM_E emc_ahb_num,uint32 addr_offset, EMC_CHL
     uint32 emc_ahb_cfg1 = EXT_MEM_CFG1_CH0_BASE + emc_ahb_num*8;
 
     REG32(emc_ahb_cfg1) &= (~HCH_CHL_PRI_MASK);
-    REG32(emc_ahb_cfg0) |= (HCH_RF_AUTO_SLEEP_EN_CHX | HCH_CHL_PRI(chl_pri));
+
+//    REG32(emc_ahb_cfg0) |= (HCH_RF_AUTO_SLEEP_EN_CHX | HCH_CHL_PRI(chl_pri));
+    REG32(emc_ahb_cfg0) |= HCH_CHL_PRI(chl_pri);
 
     REG32(emc_ahb_cfg1) &= ~0x03ff0000;	//clear bit16~25
     REG32(emc_ahb_cfg1) |= (addr_offset & 0x03ff) << 16;
