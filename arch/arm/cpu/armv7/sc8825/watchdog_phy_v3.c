@@ -47,7 +47,6 @@ extern   "C"
         while((ANA_REG_GET(WDG_INT_RAW) & (msk))&&(cnt < ANA_WDG_CLR_INT_TIMEOUT_NUM)) cnt++; \
     }while(0)
 
-
 /**---------------------------------------------------------------------------*
  **                            Macro Define
  **---------------------------------------------------------------------------*/
@@ -118,13 +117,18 @@ PUBLIC int32 WDG_PHY_CONFIG (WDG_CONFIG_T *cfg)
 PUBLIC int32 WDG_PHY_INT_CLR (void)
 {
     ANA_REG_SET (WDG_LOCK, WDG_UNLOCK_KEY);
-    CLEAR_WDG_INT (WDG_INT_CLEAR_BIT);
+    CLEAR_WDG_INT (WDG_INT_CLEAR_BIT | WDG_INT_RST_BIT);
     ANA_REG_SET (WDG_LOCK, (~WDG_UNLOCK_KEY));
     return 0;
 }
 PUBLIC void WDG_ClockOn(void)
 {
     ANA_REG_OR(ANA_APB_CLK_EN, WDG_EB | APB_ARCH_EB | RTC_WDG_EB);
+}
+
+PUBLIC uint32 WDG_PHY_RST_RAW_INT(void)
+{
+	return ANA_REG_GET(WDG_INT_RAW);
 }
 
 

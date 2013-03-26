@@ -9,6 +9,7 @@
 #include <asm/arch/mfp.h>
 #include <linux/gpio.h>
 
+extern int hw_watchdog_rst_pending(void);
 unsigned check_reboot_mode(void)
 {
 	unsigned rst_mode= 0;
@@ -16,22 +17,34 @@ unsigned check_reboot_mode(void)
 	rst_mode = ANA_REG_GET(ANA_HWRST_STATUS);
 	rst_mode &= HWRST_STATUS_POWERON_MASK;
 	ANA_REG_SET(ANA_HWRST_STATUS, 0); //clear flag
-	if(rst_mode == HWRST_STATUS_RECOVERY)
-		return RECOVERY_MODE;
-	else if(rst_mode == HWRST_STATUS_FASTBOOT)
-		return FASTBOOT_MODE;
-	else if(rst_mode == HWRST_STATUS_NORMAL)
-		return NORMAL_MODE;
-	else if(rst_mode == HWRST_STATUS_NORMAL2)
-		return WATCHDOG_REBOOT;
-	else if(rst_mode == HWRST_STATUS_ALARM)
-		return ALARM_MODE;
-	else if(rst_mode == HWRST_STATUS_SLEEP)
-		return SLEEP_MODE;
-	else if(rst_mode == HWRST_STATUS_SPECIAL)
-		return SPECIAL_MODE;
-	else
-		return 0;
+
+	if(hw_watchdog_rst_pending()){
+		printf("hw watchdog rst int pending\n");
+		if(rst_mode == HWRST_STATUS_RECOVERY)
+			return RECOVERY_MODE;
+		else if(rst_mode == HWRST_STATUS_FASTBOOT)
+			return FASTBOOT_MODE;
+		else if(rst_mode == HWRST_STATUS_NORMAL)
+			return NORMAL_MODE;
+		else if(rst_mode == HWRST_STATUS_NORMAL2)
+			return WATCHDOG_REBOOT;
+		else if(rst_mode == HWRST_STATUS_ALARM)
+			return ALARM_MODE;
+		else if(rst_mode == HWRST_STATUS_SLEEP)
+			return SLEEP_MODE;
+		else if(rst_mode == HWRST_STATUS_SPECIAL)
+			return SPECIAL_MODE;
+		else{
+			printf(" a boot mode not supported\n");
+			return 0;
+		}
+	}else{
+		printf("no hw watchdog rst int pending\n");
+		if(rst_mode == HWRST_STATUS_NORMAL2)
+			return UNKNOW_REBOOT_MODE;
+		else
+			return 0;
+	}
 }
 
 void reboot_devices(unsigned reboot_mode)

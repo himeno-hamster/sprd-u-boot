@@ -114,6 +114,8 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
         normal_mode();
     }else if(rst_mode == WATCHDOG_REBOOT){
         watchdog_mode();
+    }else if(rst_mode == UNKNOW_REBOOT_MODE){
+        unknow_reboot_mode();
     }else if(rst_mode == ALARM_MODE){
               int flag =alarm_flag_check();
               if(flag == 1)

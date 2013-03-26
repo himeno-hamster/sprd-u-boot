@@ -153,3 +153,14 @@ PUBLIC void WDG_TimerLoad (uint32 time_ms)
 
     ret = WDG_PHY_CONFIG (&config);
 }
+
+PUBLIC uint32 WDG_PHY_RST_INT_ON(void)
+{
+	uint32 ret = 0;
+	uint32 val = 0;
+	val = WDG_PHY_RST_RAW_INT();
+	printf("hw watchdog int raw status 0x%x\n", val);
+	ret = val & WDG_INT_RST_BIT;
+	WDG_PHY_INT_CLR();
+	return ret;
+}

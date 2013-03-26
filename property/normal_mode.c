@@ -889,3 +889,16 @@ void watchdog_mode(void)
 	vlx_nand_boot(BOOT_PART, "androidboot.mode=wdgreboot", BACKLIGHT_OFF);
 #endif
 }
+
+void unknow_reboot_mode(void)
+{
+	printf("unknow_reboot_mode\n");
+#ifdef CONFIG_GENERIC_MMC
+	write_modem_memory();
+#endif
+#if BOOT_NATIVE_LINUX
+	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=unknowreboot", BACKLIGHT_OFF);
+#else
+	vlx_nand_boot(BOOT_PART, "androidboot.mode=unknowreboot", BACKLIGHT_OFF);
+#endif
+}

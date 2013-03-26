@@ -35,3 +35,9 @@ void hw_watchdog_reset(void)
    // WDG_ResetMCU();
    //load_watchdog(CONFIG_WDG_INIT_VALUE);
 }
+
+int hw_watchdog_rst_pending(void)
+{
+    WDG_ClockOn();
+	return WDG_PHY_RST_INT_ON();
+}

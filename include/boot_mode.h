@@ -11,6 +11,7 @@ void calibration_detect(int key);
 void engtest_mode(void);
 void sleep_mode(void);
 void watchdog_mode(void);
+void unknow_reboot_mode(void);
 void special_mode(void);
 int is_bat_low(void);
 int alarm_flag_check(void);
@@ -22,6 +23,7 @@ int alarm_flag_check(void);
 #define SLEEP_MODE   0x77665505
 #define WATCHDOG_REBOOT 0x77665506
 #define SPECIAL_MODE 0x77665507
+#define UNKNOW_REBOOT_MODE 0x77665508
 
 #define BOOT_NORAML 0xf1
 #define BOOT_FASTBOOT 0xf2
