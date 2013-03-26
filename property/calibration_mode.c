@@ -295,7 +295,9 @@ void calibration_mode(const uint8_t *pcmd, int length)
 	while(gpio_get_value(CP_AP_LIV) == 0);
 	printf("calibration_mode step3\n");
 
+#if defined(CONFIG_SC7710G2)
 	serial3_flowctl_enable();
+#endif
 
 	int nvitem_sync(void);
 	nvitem_sync();
