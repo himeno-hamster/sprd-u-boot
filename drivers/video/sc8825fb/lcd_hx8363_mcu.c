@@ -390,7 +390,7 @@ static struct info_mcu lcd_hx8363_mcu_info = {
 
 struct panel_spec lcd_hx8363_mcu_spec = {
 	.width = 480,
-	.height = 864,
+	.height = 854,
 	.type = LCD_MODE_MCU,
 	.direction = LCD_DIRECT_NORMAL,
 	.info = {.mcu = &lcd_hx8363_mcu_info},
