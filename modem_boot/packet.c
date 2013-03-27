@@ -37,7 +37,7 @@ typedef enum _DL_PACKET_TYPE{
 #define hs_channel_write	SPI_channel_write
 #define hs_channel_read		SPI_channel_read
 #endif
-#define TEST_LENGTH  (1024*32)
+#define TEST_LENGTH  (1024*60)
 char    test_buffer[TEST_LENGTH]={0};
 
 extern int hs_channel_write(unsigned char *buffer,int len);
@@ -701,16 +701,25 @@ void hs_download_image(struct modem_image_info *info)
         extern unsigned long get_timer_masked(void);
         unsigned long *img_data=NULL;
         int ret,i;
+	int packet_count = 0;
+	int left=0;
+	int send_len = 0;
 
         printf("\nDload MODEM image: size = 0x%08x, address = 0x%08x\n",info->image_size,info->address);
 	hs_channel_send_start_message(info->address,info->image_size);
 	img_data = info->buffer;
         printf("\nstart_time = %dms\n",(unsigned int)get_timer_masked());
-	for(i=0;i<(info->image_size/TEST_LENGTH);){
-                ret = hs_channel_send_data_message(img_data,(int)TEST_LENGTH);
-        	//printf("\nret = %d address = 0x%08x :0x%08x 0x%08x \n",ret,(int)img_data ,img_data[0],img_data[1]);
+	left = info->image_size;
+	packet_count = (info->image_size+TEST_LENGTH-1)/TEST_LENGTH;
+	for(i=0;i<packet_count;){
+		if(left > TEST_LENGTH)
+			send_len = TEST_LENGTH;
+		else
+			send_len = left;
+		left -= send_len;
+                ret = hs_channel_send_data_message(img_data,(int)send_len);
 		if(ret == 0){
-			img_data += (TEST_LENGTH/4);
+			img_data += (send_len/4);
 			i++;
 		} else {
 			while(1);
