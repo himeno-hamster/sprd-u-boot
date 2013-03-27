@@ -247,7 +247,8 @@ static RAM_NV_CONFIG _ramdiskCfg[RAMNV_NUM+1] =
 {
 	{1,	 "/fixnv/fixnv.bin",			 "/backupfixnv/fixnv.bin",		0x20000	},
 	{2,	"/runtimenv/runtimenv.bin",	"/runtimenv/runtimenv_bak.bin",	0x40000	},
-        {0,	"",						"",							0		},
+	{3,     "/productinfo/productinfo.bin", "/productinfo/productinfobkup.bin",     0x4000  },
+        {0,	"",	"",						0		},
 };
 
 static void _getPath(/*IN*/char *totalPath, /*OUT*/char *path)

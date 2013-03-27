@@ -588,7 +588,7 @@ int hs_channel_send_data_message(char *buffer,int data_size)
 	head = (struct pkt_header_tag *)read_buffer;
 
 	if(cpu2be16(head->type) == BSL_REP_ACK){
-		printf(".");
+	//	printf(".");
 		return 0;
 	}
 	printf("E");
@@ -680,6 +680,16 @@ struct modem_image_info download_images_info[]={
                 0x00200000,     //image size, dsp
                 0x00020000,     //dest address in CP memory
         },
+	{
+		0x004a0000,
+		0x00040000,
+		0x02120000,
+	},
+	{
+		0x004E0000,
+		0x00004000,
+		0x02160000,
+	},
         {
                 0x01600000,
                 0x009F8000,    //cp image
