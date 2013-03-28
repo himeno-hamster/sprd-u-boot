@@ -84,6 +84,25 @@ typedef struct
 	char *partition_str;
 } eMMC_Parttion;
 
+#ifdef CONFIG_SHARK
+eMMC_Parttion const _sprd_emmc_partition[]={
+	{PARTITION_TDMODEM, PARTITION_USER, "tdmodem"},
+	{PARTITION_WMODEM, PARTITION_USER, "wmodem"},
+	{PARTITION_TDDSP, PARTITION_USER, "tddsp"},
+	{PARTITION_WDSP, PARTITION_USER, "wdsp"},
+	{PARTITION_TDFIX_NV1, PARTITION_USER, "tdfixnv"},
+	{PARTITION_WFIX_NV1, PARTITION_USER, "wfixnv"},
+	{PARTITION_KERNEL, PARTITION_USER, "boot"},
+	{PARTITION_RECOVERY, PARTITION_USER, "recovery"},
+	{PARTITION_SYSTEM, PARTITION_USER, "system"},
+	{PARTITION_LOGO, PARTITION_USER, "boot_logo"},
+	{PARTITION_USER_DAT, PARTITION_USER, "userdata"},
+	{PARTITION_CACHE, PARTITION_USER, "cache"},
+	{0, PARTITION_BOOT1, "params"},
+	{0, PARTITION_BOOT2, "2ndbl"},
+	{0,0,0}
+};
+#else
 eMMC_Parttion const _sprd_emmc_partition[]={
 	{PARTITION_VM, PARTITION_USER, "vmjaluna"},
 	{PARTITION_MODEM, PARTITION_USER, "modem"},
@@ -99,7 +118,7 @@ eMMC_Parttion const _sprd_emmc_partition[]={
 	{0, PARTITION_BOOT2, "2ndbl"},
 	{0,0,0}
 };
-
+#endif
 #endif
 
 typedef struct {
