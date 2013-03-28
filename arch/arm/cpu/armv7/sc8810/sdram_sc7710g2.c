@@ -821,7 +821,8 @@ BOOLEAN dram_mode_detect(SDRAM_CFG_INFO_T_PTR pCfg)
         pCfg->col_mode = modetable_ptr[i].col_mode;
         pCfg->row_mode = modetable_ptr[i].row_mode;
         
-        dram_mode_set(pCfg);
+        //dram_mode_set(pCfg);
+        DMC_Init();
 
         if(dram_mode_check(modetable_ptr[i].capacity))
         {

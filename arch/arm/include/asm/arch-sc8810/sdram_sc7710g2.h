@@ -60,14 +60,24 @@
 #define AUTO_PRECHARGE_MASK     0x3
 #define CS_POSITION_MASK        0x3
 
+
+#define EXT_MODE_DS_FULL                0
+#define EXT_MODE_DS_HALF                1
+#define EXT_MODE_DS_QUARTER             2
+#define EXT_MODE_DS_OCTANT              3
+#define EXT_MODE_DS_THREE_QUARTERS      4
+
+
+
 typedef enum
 {
-    EXT_MODE_DS_FULL = 0,
-    EXT_MODE_DS_HALF = 1,
-    EXT_MODE_DS_QUARTER = 2, 
-    EXT_MODE_DS_OCTANT = 3,
-    EXT_MODE_DS_THREE_QUARTERS = 4
-}EXT_MODE_DS_T;
+    DDR_DRV_STR_FULL = 0,   // 1/1
+    DDR_DRV_STR_HALF = 1,   // 1/2
+    DDR_DRV_STR_QUAR = 2,   // 1/4
+    DDR_DRV_STR_OCTA = 3,   // 1/8
+    DDR_DRV_STR_TR_Q = 4    // 3/4
+}DDR_DRIVER_STRENGTH_T;
+
 
 #define EXT_MODE_FLAG                1                 
 #define EXT_MODE_PASR_ALL            0                                                                          
@@ -557,14 +567,14 @@ typedef struct
     CHIP_CLK_TYPE_E arm_clk;
     EMC_CLK_TYPE_E emc_clk;
     
-    EXT_MODE_DS_T ddr_drv;
+    DDR_DRIVER_STRENGTH_T ddr_drv;  // DDR SDRAM driver strength in mode register
 
-    uint8 dqs_drv;
-    uint8 dat_drv;
-    uint8 ctl_drv;
-    uint8 clk_drv;
+    uint8 dqs_drv;  // data qs pin driver
+    uint8 dat_drv;  // data pin driver
+    uint8 ctl_drv;  // ctrl pin driver
+    uint8 clk_drv;  // clock pin driver
 
-    uint8 clk_wr;
+    uint8 clk_wr;   // dll clk wr balance
 }EMC_PARAM_T, *EMC_PARAM_PTR;
 
 
