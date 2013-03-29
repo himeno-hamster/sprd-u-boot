@@ -30,7 +30,7 @@ extern   "C"
 
 //#define SDRAM_CLK   (EMC_CLK/2)              // 96MHz
 //#define SDRAM_T     (1000000000/SDRAM_CLK)   // ns
-#define SDRAM_T (1000000000/EMC_CLK_192MHZ)  // ns
+#define SDRAM_T (1000000000/EMC_CLK_400MHZ)  // ns
 
 /*******************************************************************************
                            Variable and Array definiation
@@ -38,23 +38,8 @@ extern   "C"
 
 
 LOCAL CONST EMC_PARAM_T s_emc_parm = 
-{
-    // clock
-    CHIP_CLK_1000MHZ,		// arm_clk
-    EMC_CLK_400MHZ,		// emc_clk
-
-    // driver strength
-    EXT_MODE_DS_THREE_QUARTERS,   // ddr-sdram drv
-    
-    2,						// dqs_drv
-    2,						// dat_drv
-    0,						// ctl_drv
-    2,						// clk_drv
-
-    // clk wr
-    15						// clk_wr 
-};
-
+// arm_clk          emc_clk        ddr driver strength   dqs_drv / dat_drv / ctl_drv / clk_drv / clk_wr
+{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_HALF,        2,		2,          0,      2,          15};
 
 
 LOCAL CONST SDRAM_TIMING_PARA_T s_sdram_timing_param =
@@ -124,7 +109,7 @@ LOCAL CONST SDRAM_CFG_INFO_T s_sdram_config_info =
 #elif defined(CHIP11_MICRON_SDR_MT48H)
 {ROW_MODE_13, COL_MODE_9,  DATA_WIDTH_32, BURST_LEN_2_WORD, CAS_LATENCY_3, SDRAM_EXT_MODE_REG,     SDR_SDRAM,   EMC_ONE_CS_MAP_256MBIT};
 #elif defined(CHIP12_HYNIX_DDR_H9DA4GH4JJAMCR4EM)
-{ROW_MODE_14, COL_MODE_10, DATA_WIDTH_32, BURST_LEN_2_WORD, CAS_LATENCY_3, SDRAM_EXT_MODE_REG,     DDR_SDRAM,   EMC_ONE_CS_MAP_4GBIT};
+{ROW_MODE_14, COL_MODE_10, DATA_WIDTH_32, BURST_LEN_4_WORD, CAS_LATENCY_3, SDRAM_EXT_MODE_REG,     DDR_SDRAM,   EMC_ONE_CS_MAP_4GBIT};
 #elif defined(CHIP13_HYNIX_SDR_H8ACS0PH0MCP)
 {ROW_MODE_13, COL_MODE_9,  DATA_WIDTH_32, BURST_LEN_2_WORD, CAS_LATENCY_3, SDRAM_EXT_MODE_INVALID, SDR_SDRAM,   EMC_ONE_CS_MAP_512MBIT};
 #elif defined(CHIP14_HYNIX_DDR_H9DA4GH2GJAMCR)
