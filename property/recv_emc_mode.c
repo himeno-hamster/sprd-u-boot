@@ -19,6 +19,9 @@
 #include <asm/byteorder.h>
 #include <part.h>
 #include <mmc.h>
+
+#include "normal_mode.h"
+
 #define msleep(a) udelay(a * 1000)
 extern int prodinfo_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, int offset, char *buf, int len);
 
@@ -86,6 +89,101 @@ int set_recovery_message(const struct recovery_message *in)
 #define VM_PART "vmjaluna"
 #define SD_VM_NAME "vmjaluna.bin"
 
+//the following fixnv parameters's ids may need to be customized,please pay attention to this!!!
+//calibration   0x2
+#define FIXNV_CALIBRATION_ID        0x2
+//IMEI 0x5,0x179,0x186,0x1e4,
+#define FIXNV_IMEI1_ID        0x5
+#define FIXNV_IMEI2_ID        0x179
+#define FIXNV_IMEI3_ID        0x186
+#define FIXNV_IMEI4_ID        0x1e4
+//TD_calibration 0x516
+#define FIXNV_TD_CALIBRATION_ID        0x516
+//blue tooth 0x191
+#define FIXNV_BT_ID        0x191
+//band select 0xd
+#define FIXNV_BAND_SELECT_ID        0xd
+//WIFI 0x199
+#define FIXNV_WIFI_ID        0x199
+//MMITEST 0x19a
+#define FIXNV_MMITEST_ID        0x19a
+
+#define VLX_ADC_ID   2
+#define VLX_RAND_TO_U32( _addr ) \
+	if( (_addr) & 0x3 ){_addr += 0x4 -((_addr) & 0x3); }
+
+
+extern unsigned short calc_checksum(unsigned char *dat, unsigned long len);
+u32 Vlx_GetFixedBvitemAddr(u16 identifier, u32 search_start, u32 search_end)
+{
+	u32 start_addr, end_addr;
+	u16 id, len;
+	volatile u16 *flash_ptr;
+
+	start_addr = search_start;
+	end_addr   = search_end;
+	start_addr += sizeof(u32); //skip update flag
+
+	while(start_addr < end_addr)
+	{
+		flash_ptr = (volatile u16 *)(start_addr);
+		id  = *flash_ptr++;
+		len = *flash_ptr;
+		if(0xFFFF == id)
+		{
+			return 0xffffffff;
+		}
+		if(identifier == id)
+		{
+			return (start_addr + 4);
+		}
+		else
+		{
+			start_addr += 4 + len +(len & 0x1);
+			VLX_RAND_TO_U32( start_addr )
+		}
+	}
+	return 0xffffffff;
+}
+void update_fixnv(unsigned char *old_addr,unsigned char*new_addr){
+	unsigned short item_id = 0,i = 0,item_array[] = {FIXNV_CALIBRATION_ID,
+		FIXNV_IMEI1_ID,
+		FIXNV_IMEI2_ID,
+		FIXNV_IMEI3_ID,
+		FIXNV_IMEI4_ID,
+		FIXNV_TD_CALIBRATION_ID,
+		FIXNV_BT_ID,
+		FIXNV_BAND_SELECT_ID,
+		FIXNV_WIFI_ID,
+		FIXNV_MMITEST_ID,
+		0x0};
+	unsigned int old_item_base = 0,new_item_base = 0,length = 0;
+	unsigned short old_item_len=0, new_item_len=0;
+
+	while(item_id = item_array[i++]){
+		old_item_base = Vlx_GetFixedBvitemAddr(item_id, old_addr, (old_addr+FIXNV_SIZE));
+		new_item_base = Vlx_GetFixedBvitemAddr(item_id, new_addr, (new_addr+FIXNV_SIZE));
+		if(old_item_base == 0xffffffff || new_item_base == 0xffffffff){
+			continue;
+		}
+		old_item_len =*(unsigned short*)(old_item_base-2);
+		new_item_len =*(unsigned short*)(new_item_base-2);
+		printf("item_id = 0x%x,old_item_len = %d,new_item_len = %d\n",item_id,new_item_len,old_item_len);
+		if(old_item_len == new_item_len&&old_item_len != 0xffffffff){
+			printf("copy from 0x%x to 0x%x and size = %d\n",old_item_base,new_item_base,old_item_len);
+			memcpy(new_item_base,old_item_base,old_item_len);
+		}
+	}
+
+	//length = Vlx_CalcFixnvLen(new_addr, new_addr+FIXNV_SIZE);
+	//*((unsigned int*)&new_addr[FIXNV_SIZE-8])= length;//keep the real  fixnv file size.     
+	//*(unsigned short*)&new_addr[FIXNV_SIZE-2] = crc16(0,(unsigned const char*)new_addr,FIXNV_SIZE-2);
+	*(unsigned int*)&new_addr[FIXNV_SIZE] = 0x5a5a5a5a;
+	memcpy(old_addr,new_addr,FIXNV_SIZE+4);
+	*(unsigned short *)&new_addr[FIXNV_SIZE-4] = calc_checksum(new_addr, FIXNV_SIZE - 4);
+	*(unsigned short *)&new_addr[FIXNV_SIZE-2] = 0;
+}
+
 void try_update_modem(void)
 {
 	struct mmc *mmc;
@@ -138,6 +236,35 @@ void try_update_modem(void)
 		}
 		size = FIXNV_SIZE + 4;
 		nv_patch(BUF_ADDR, ret);
+
+		memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+		if(0 == nv_read_partition(p_block_dev, PARTITION_FIX_NV1, (char *)FIXNV_ADR, FIXNV_SIZE + 4)){
+			if (1 == fixnv_is_correct_endflag((unsigned char *)FIXNV_ADR, FIXNV_SIZE)){
+				update_fixnv(FIXNV_ADR,BUF_ADDR);	
+				goto SKIP;
+			}else{
+				goto NEXT;
+			}
+		}else{
+			goto NEXT;
+		}
+
+NEXT:
+		memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+		if(0 == nv_read_partition(p_block_dev, PARTITION_FIX_NV2, (char *)FIXNV_ADR, FIXNV_SIZE + 4)){
+			if (1 == fixnv_is_correct_endflag((unsigned char *)FIXNV_ADR, FIXNV_SIZE)){
+				update_fixnv(FIXNV_ADR,BUF_ADDR);	
+			}else{
+				printf("both of the fixnv files are not correct,skip parameter backup process!\n");
+				break;
+			}
+		}else{
+			printf("both of the fixnv files are not correct,skip parameter backup process!\n");
+			break;
+		}
+
+
+SKIP:
 		nv_write_partition(p_block_dev, PARTITION_FIX_NV1, (char *)BUF_ADDR, size);
 		nv_write_partition(p_block_dev, PARTITION_FIX_NV2, (char *)BUF_ADDR, size);
 
