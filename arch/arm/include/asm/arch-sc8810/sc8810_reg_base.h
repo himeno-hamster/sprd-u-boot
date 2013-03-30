@@ -84,7 +84,15 @@ extern   "C"
 #endif
 
 #define INT_CTL_BEGIN                   0x80003000    //Interrupt Control Registers                 
-#define INT_CTL_END                     0x80000040    //the begin address of the last word
+#define INT_CTL_END                     0x80003040    //the begin address of the last word
+
+#ifdef CONFIG_SC7710G2
+#define INT0_CTL_BEGIN                   INT_CTL_BEGIN  + 0x0
+#define INT0_CTL_END                       INT_CTL_END + 0x0
+
+#define INT1_CTL_BEGIN                   INT_CTL_BEGIN + 0x3000
+#define INT1_CTL_END                       INT_CTL_END + 0x3000
+#endif
 
 #define TIMER_CNT_BEGIN                 0x81000000    //tiemr counter Registers
 #define TIMER_CNT_END                   0x8100004C    //the begin address of the last word
@@ -101,15 +109,35 @@ extern   "C"
 #define UART2_CTL_BEGIN                 0x8E000000    //UART2,SPI2 Control Registers
 #define UART2_CTL_END                   0x8E00002C    //the begin address of the last word
 
+#ifdef CONFIG_SC7710G2
+#define UART3_CTL_BEGIN                 0x8E005000    //UART3Control Registers
+#define UART3_CTL_END                   0x8E00502C    //the begin address of the last word
+#endif
+
 #define SIM0_CTL_BEGIN                  0x85000000    //SIMCARD Control Registers
 #define SIM0_CTL_END                    0x85000038    //the begin address of the last word
 
+#ifndef CONFIG_SC7710G2
 #define SIM1_CTL_BEGIN                  0x85003000    //SIMCARD Control Registers
 #define SIM1_CTL_END                    0x85003038    //the begin address of the last word
-
+#endif
 
 #define I2C_CTL_BEGIN                   0x86000000    //I2C Control Registers
 #define I2C_CTL_END                     0x86000014    //the begin address of the last word
+
+#ifdef CONFIG_SC7710G2
+#define I2C1_CTL_BEGIN                   0x86001000    //I2C1 Control Registers
+#define I2C1_CTL_END                     0x86001014    //the begin address of the last word
+
+#define I2C2_CTL_BEGIN                   0x86002000    //I2C2 Control Registers
+#define I2C2_CTL_END                     0x86002014    //the begin address of the last word
+
+#define I2C3_CTL_BEGIN                   0x86003000    //I2C3 Control Registers
+#define I2C3_CTL_END                     0x86003014    //the begin address of the last word
+
+#define I2C4_CTL_BEGIN                   0x86004000    //I2C4 Control Registers
+#define I2C4_CTL_END                     0x86004014    //the begin address of the last word
+#endif
 
 #define KEYPAD_CTL_BEGIN                0x87000000    //Keypad Control Registers        
 #define KEYPAD_CTL_END                  0x87000038    //the begin address of the last word
@@ -120,6 +148,11 @@ extern   "C"
 #define PWM_CTL_BEGIN                   0x88000000    //Keypad Control Registers
 #define PWM_CTL_END                     0x88000070    //the begin address of the last word
 
+#ifdef CONFIG_SC7710G2
+#define EFUSE_CTL_BEGIN                   0x89000000    //Efuse Control Registers
+#define EFUSE_CTL_END                     0x89000fff    //the begin address of the last word
+#endif
+
 #define RTC_CTL_BEGIN                   0x82000080    //RTC Control Registers
 #define RTC_CTL_END                     0x820000BC    //the begin address of the last word
 
@@ -129,15 +162,27 @@ extern   "C"
 #define GPIO_CTL_BEGIN                  0x8A000000    //GPIO Control Registers              ///digital die
 #define GPIO_CTL_END                    0x8A0004A4
 
+#ifdef CONFIG_SC7710G2
+#define EIC_CTL_BEGIN                   0x8A001000    //EICControl Registers
+#define EIC_CTL_END                     0x8A001fff    //the begin address of the last word
+
+#define EIC2_CTL_BEGIN                  0x8A002000    //EIC2 Control Registers
+#define EIC2_CTL_END                     0x8A002fff    //the begin address of the last word
+#endif
+
 #define GLOBAL_CTL_BEGIN                0x8B000000    //GLOBAL Control Registers
 #define GLOBAL_CTL_END                  0x8B000080    //the begin address of the last word
 
 #define CHIPPIN_CTL_BEGIN               0x8C000000    //ChipPin Control Registers
 #define CHIPPIN_CTL_END                 0x8C0003EC
 
+#ifdef CONFIG_SC7710G2
+#define VOICE_BAND_CODEC_BEGIN          0x82000700    //Voice Band Codec register       ///digital die
+#define VOICE_BAND_CODEC_END            0x820007ff
+#else
 #define VOICE_BAND_CODEC_BEGIN          0x82000100    //Voice Band Codec register       ///digital die
 #define VOICE_BAND_CODEC_END            0x82000154
-
+#endif
 
 /*----------Peripheral Address Space------------*/
 #define INTC_BASE                       0x80003000
@@ -147,7 +192,6 @@ extern   "C"
 #define WDG_BASE                        0x82000040  //Analog die register   
 #define RTC_BASE                        0x82000080
 #define ANA_EIC_BASE                    0x82000100
-#define ANA_PWM_BASE                    0x82000200
 #define ADC_BASE                        0x82000300
 #define ANA_INTC_BASE                   0x82000380
 //0x820003c0 //wdg for large current charge protect
@@ -161,6 +205,7 @@ extern   "C"
 #define TPC_BASE                        0x82000a00
 #define ANA_GPIO_BASE                   0x82000b00
 #define ANA_PIN_CTL_BASE                0x82000c00
+#define ANA_PWM_BASE                    0x82000d00
 #else
 #define WDG_BASE                        0x82000040  //Analog die register   
 #define RTC_BASE                        0x82000080
@@ -179,7 +224,9 @@ extern   "C"
 #define ARM_UART1_BASE                  0x84000000
 #define ARM_UART2_BASE                  0x8E000000
 #define SIM0_BASE                       0x85000000  //SIM0
+#ifndef CONFIG_SC7710G2
 #define SIM1_BASE                       0x85003000  //SIM1
+#endif
 #define I2C_BASE                        0x86000000
 #define KPD_BASE                        0x87000000
 #define SYSTIMER_BASE                   0x87003000  //System timer
