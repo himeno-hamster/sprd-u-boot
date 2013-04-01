@@ -972,8 +972,16 @@ void LDO_DeepSleepInit(void)
 
 	for ( i = 0; i < ARRAY_SIZE(slp_ldo_ctl_data); ++i) {
 		aux = ANA_REG_GET(slp_ldo_ctl_data[i].ldo_sleep_reg);
-		aux &= ~slp_ldo_ctl_data[i].mask;
-		aux |= slp_ldo_ctl_data[i].value;
+
+		if(slp_ldo_ctl_data[i].value)
+		{
+			aux |= slp_ldo_ctl_data[i].mask;
+		}
+		else
+		{
+			aux &= ~slp_ldo_ctl_data[i].mask;
+		}
+
 		ANA_REG_SET(slp_ldo_ctl_data[i].ldo_sleep_reg, aux);
 	}
 
