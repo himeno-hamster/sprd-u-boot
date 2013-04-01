@@ -1658,9 +1658,15 @@ PUBLIC uint32 SDHOST_SD_Clk_Freq_Set (SDHOST_HANDLE sdhost_handler,uint32 sdio_c
     tmpReg = sdhost_handler->host_cfg->HOST_CTL1;
 #if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined (CONFIG_SC8830)
     clkDiv--;
+#if defined(CONFIG_SC7710G2)
+    tmpReg &= (~(0x3ff << 6));
+    tmpReg |= ((clkDiv >> 8) & 0x3) << 6;
+    tmpReg |= (clkDiv & 0xff) << 8;
+#else
     tmpReg &= (~ (0x3ff<<6));
     tmpReg |= clkDiv&(0x3<<6);
     tmpReg |= (clkDiv&0xff)<<8;
+#endif
     sdhost_handler->sdClock = sdhost_handler->baseClock/(2*(clkDiv+1));
 #else    
     tmpReg &= (~ (0xff<<8));
@@ -1862,38 +1868,53 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 	cardHandle->bus_width = CARD_WIDTH_1_BIT;
 	cardHandle->BlockLen = 0;
 
-	if(0 != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD0_GO_IDLE_STATE,0,NULL,rspBuf))
+	if (0 != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,
+									CARD_CMD0_GO_IDLE_STATE,
+									0,
+									NULL,
+									rspBuf))
 	{
 		return FALSE;
 	}
 	pre_tick = SCI_GetTickCount(); /*set start tick value*/       
-    	do
-    	{
-    		if(0 != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD1_SEND_OP_COND,0x00FF8000 | SECTOR_MODE,NULL,rspBuf))
-    		{
-    			continue;
-    		}
-    		if(0 != (rspBuf[0]&BIT_7))
-    		{
-    			break;
-    		}
-
-    		cur_tick = SCI_GetTickCount();
-    		if( 5000 <  (cur_tick - pre_tick))
-    		{
-    			/*cmd time out, return false*/
-    			return FALSE;
-    		} 
-            
-    	}
-    	while(1); /*lint !e506*/
-
-	if(0 != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD2_ALL_SEND_CID,0,NULL,rspBuf))
+	do
 	{
+		if (0 != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,
+									CARD_CMD1_SEND_OP_COND,
+									0x00FF8000 | SECTOR_MODE,
+									NULL,
+									rspBuf))
+		{
+			continue;
+		}
+		if(0 != (rspBuf[0]&BIT_7))
+		{
+			break;
+		}
+
+		cur_tick = SCI_GetTickCount();
+		if( 5000 <  (cur_tick - pre_tick))
+		{
+			/*cmd time out, return false*/
+			return FALSE;
+		} 
+
+	}while(1); /*lint !e506*/
+
+	if (0 != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,
+									CARD_CMD2_ALL_SEND_CID,
+									0,
+									NULL,
+									rspBuf))
+	{	
 		return FALSE;
 	}
 
-	if(0 != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD3_SET_RELATIVE_ADDR,1<<16,NULL,rspBuf))
+	if (0 != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,
+									CARD_CMD3_SET_RELATIVE_ADDR,
+									1 << 16,
+									NULL,
+									rspBuf))
 	{
 		return FALSE;
 	}
@@ -2063,6 +2084,11 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
              SDHOST_RST(handle->sdio_port, RST_MODULE);
 #if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
             LDO_SetVoltLevel (LDO_LDO_SDIO3, LDO_VOLT_LEVEL3);
+            LDO_SetVoltLevel (LDO_LDO_VDD30, LDO_VOLT_LEVEL1); 
+            LDO_TurnOnLDO(LDO_LDO_SDIO3);
+            LDO_TurnOnLDO(LDO_LDO_VDD30);
+#elif defined(CONFIG_SC7710G2)
+            LDO_SetVoltLevel (LDO_LDO_SDIO3, LDO_VOLT_LEVEL1);
             LDO_SetVoltLevel (LDO_LDO_VDD30, LDO_VOLT_LEVEL1); 
             LDO_TurnOnLDO(LDO_LDO_SDIO3);
             LDO_TurnOnLDO(LDO_LDO_VDD30);
