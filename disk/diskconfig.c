@@ -112,7 +112,7 @@ load_partitions(cnode *root, struct disk_info *dinfo)
             uint64_t len;
             if (parse_len(tmp, &len))
                 return 1;
-            pinfo->len_kb = (uint32_t) len;
+            pinfo->len_kb = (uint32_t) len/2;
 	    pinfo->start_lba = plba;
 	    plba = pinfo->len_kb /dinfo->sect_size + plba;
         } else 
