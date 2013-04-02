@@ -327,10 +327,10 @@ static struct ldo_ctl_info ldo_ctl_data[] =
 		.bp_bits = BIT_0,
 		.bp_rst_reg = ANA_LDO_PD_CTL0,
 		.bp_rst = BIT_1,
-		.level_reg_b0 = ANA_LDO_VCTL3,
+		.level_reg_b0 = ANA_LDO_VCTL2,
 		.b0 = BIT_12,
 		.b0_rst = BIT_13,
-		.level_reg_b1 = ANA_LDO_VCTL3,
+		.level_reg_b1 = ANA_LDO_VCTL2,
 		.b1 = BIT_14,
 		.b1_rst = BIT_15,
 		.init_level = LDO_VOLT_LEVEL_FAULT_MAX,
@@ -414,28 +414,14 @@ static struct ldo_ctl_info ldo_ctl_data[] =
 		.level_reg_b0 = ANA_LDO_VCTL4,
 		.b0 = BIT_8,
 		.b0_rst = BIT_9,
-		.level_reg_b1 = LDO_INVALID_REG_ADDR,
+		.level_reg_b1 = ANA_LDO_VCTL4,
 		.b1 = BIT_10,
 		.b1_rst = BIT_11,
 		.init_level = LDO_VOLT_LEVEL_FAULT_MAX,
 	},
 };
 static struct ldo_sleep_ctl_info slp_ldo_ctl_data[] = {
-	{SLP_LDO_AP_AMP,    ANA_LDO_SLP_CTL0,    BIT_14, 1},
-	{SLP_LDO_VDD25,     ANA_LDO_SLP_CTL0,    BIT_13, 1},
-    {SLP_LDO_VDD18,     ANA_LDO_SLP_CTL0,    BIT_12, 0},
-    {SLP_LDO_VDD28,     ANA_LDO_SLP_CTL0,    BIT_11, 0},
-    {SLP_LDO_AVDDBB,    ANA_LDO_SLP_CTL0,    BIT_10, 1},
-    {SLP_LDO_SDIO0,     ANA_LDO_SLP_CTL0,    BIT_9,  1},
-	{SLP_LDO_SIM2, 	    ANA_LDO_SLP_CTL0,	 BIT_8,  1},
-    {SLP_LDO_CAMA,      ANA_LDO_SLP_CTL0,    BIT_7,  1},
-    {SLP_LDO_CAMD1,     ANA_LDO_SLP_CTL0,    BIT_6,  1},
-    {SLP_LDO_CAMD0,     ANA_LDO_SLP_CTL0,    BIT_5,  1},
-    {SLP_LDO_USBH,      ANA_LDO_SLP_CTL0,    BIT_4,  1},
-    {SLP_LDO_SIM1,      ANA_LDO_SLP_CTL0,    BIT_3,  1},
-    {SLP_LDO_SIM0,      ANA_LDO_SLP_CTL0,    BIT_2,  0},
-    {SLP_LDO_RF1,       ANA_LDO_SLP_CTL0,    BIT_1,  1},
-    {SLP_LDO_RF0,       ANA_LDO_SLP_CTL0,    BIT_0,  1},
+
 };
 #else
 
