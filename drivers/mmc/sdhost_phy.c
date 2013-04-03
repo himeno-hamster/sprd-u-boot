@@ -240,11 +240,7 @@ PUBLIC void SDHOST_Cfg_SpeedMode (SDHOST_HANDLE sdhost_handler,SDHOST_SPEED_E sp
 		tmpReg |= 1<<16;
 		break;
 	case EMMC_SDR50:
-#if defined(CONFIG_SC7710G2)
-		REG32(EMMC_CLK_WR_DL)     = 0x20;
-#else
 		REG32(EMMC_CLK_WR_DL)     = 0x33;
-#endif
 		REG32(EMMC_CLK_RD_POS_DL) = 0x08;
 		REG32(EMMC_CLK_RD_NEG_DL) = 0x08;
 		tmpReg |= 2<<16;
@@ -361,11 +357,8 @@ PUBLIC void SDHOST_Cfg_Voltage (SDHOST_HANDLE sdhost_handler,SDHOST_VOL_RANGE_E 
             break;
     }
 
-#if defined(CONFIG_TIGER)
+#if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
     LDO_SetVoltLevel (LDO_LDO_SDIO3, LDO_VOLT_LEVEL3);
-    LDO_SetVoltLevel (LDO_LDO_VDD30, LDO_VOLT_LEVEL1);
-#elif defined (CONFIG_SC7710G2)
-    LDO_SetVoltLevel (LDO_LDO_SDIO3, LDO_VOLT_LEVEL1);
     LDO_SetVoltLevel (LDO_LDO_VDD30, LDO_VOLT_LEVEL1); 
 #else
     if(&sdio_port_ctl[SDHOST_SLOT_0] == sdhost_handler){
@@ -921,9 +914,9 @@ LOCAL  void SDHOST_Reset_Controller(SDHOST_SLOT_NO slot_NO)
 	REG32 (AHB_SOFT_RST) |= BIT_21;
 	REG32 (AHB_SOFT_RST) &= ~BIT_21;
 #elif defined(CONFIG_SC7710G2)
-	REG32 (AHB_CTL6)	  |= BIT_1;
-	REG32 (AHB_SOFT2_RST) |= BIT_1;
-	REG32 (AHB_SOFT2_RST) &= ~BIT_1;
+	REG32 (AHB_CTL6)	  |= BIT_2;
+	REG32 (AHB_SOFT2_RST) |= BIT_0;
+	REG32 (AHB_SOFT2_RST) &= ~BIT_0;
 #else
 #define AHB_CTL0_SDIO0_EN	(BIT_4)
 #define AHB_CTL0_SDIO1_EN	(BIT_19)
@@ -2372,7 +2365,7 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
 #elif defined(CONFIG_SC7710G2)
 //    SDHOST_Slot_select(slot_NO); if necessary
 	sdio_port_ctl[slot_NO].open_flag = TRUE;
-	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_384M);
+	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_96M);
 #else
 	_SDHOST_Pin_select(slot_NO);
 	sdio_port_ctl[slot_NO].open_flag = TRUE;
