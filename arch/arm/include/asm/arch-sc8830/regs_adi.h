@@ -16,8 +16,8 @@
 #define _ADI_REG_V3_H_
 
 #include <asm/arch/bits.h>
-
-#define  SPRD_ADI_BASE			CTL_BASE_ADI
+#include <asm/arch/sprd_reg.h>
+#define  SPRD_ADI_BASE	        SPRD_MISC_PHYS	
 
 #define  ADI_CTL_REG            (SPRD_ADI_BASE + 0x4 )
 #define  ADI_CHANNEL_PRI        (SPRD_ADI_BASE + 0x8 )
@@ -32,6 +32,10 @@
 #define  ADI_FIFO_STS           (SPRD_ADI_BASE + 0x2C)
 #define  ADI_STS                (SPRD_ADI_BASE + 0x30)
 #define  ADI_REQ_STS            (SPRD_ADI_BASE + 0x34)
+
+//ADI_EIC
+#define ADI_EIC_DATA		(SPRD_ANA_EIC_PHYS + 0x00)
+#define ADI_EIC_MASK		(SPRD_ANA_EIC_PHYS + 0x04)
 
 //ADI_CTL_REG
 #define ANA_INT_STEAL_EN        BIT_0

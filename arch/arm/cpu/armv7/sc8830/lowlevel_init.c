@@ -1,10 +1,9 @@
 #include <linux/types.h>
 #include <asm/arch/migrate.h>
-#include <asm/arch/sdram_init.h>
+//#include <asm/arch/sdram_init.h>
 
 void lowlevel_init(void)
 {
-	
 	Chip_Init();
 }
 /*

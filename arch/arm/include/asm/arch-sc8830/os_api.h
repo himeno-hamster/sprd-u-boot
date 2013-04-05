@@ -26,26 +26,11 @@
  **                         Dependencies                                      *
  **---------------------------------------------------------------------------*/
 // c standard head file.
-#ifndef KAL_ON_RTT
 #include <linux/string.h>
 #include <malloc.h>
-//#include <stdlib.h>
-//#include <stdio.h>
-#endif
 
 // Basic data types.
 #include "sci_types.h"
-#include "rtos_cfg.h"
-#include "sci_service.h"
-
-
-
-#ifdef WIN32    
-    // Include this file to replace windows.h to avoid compile error
-#ifndef KAL_ON_THREADX
-    #include "windows_sci_os.h"
-#endif
-#endif
 
 
 /**---------------------------------------------------------------------------*

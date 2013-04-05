@@ -19,6 +19,7 @@
 #include <asm/arch/virtual_com.h>
 #include <asm/arch/fdl_crc.h>
 #include <asm/arch/fdl_channel.h>
+#include <asm/arch/usb20_reg_v3.h>
 /**---------------------------------------------------------------------------*
 **                        Compiler Flag                                       *
 **---------------------------------------------------------------------------*/

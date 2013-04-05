@@ -164,12 +164,13 @@ typedef struct SDIO_CARD_PAL_Struct
 #endif
 
     SDIO_CARD_PAL_SLOT_E sdio_No;
+	SDIO_CARD_PAL_TYPE_E sdio_type;
 } SDIO_CARD_PAL_Struct_T;
 
-#define SDIO_CARD_PAL_SUPPORT_NUM 4
+#define SDIO_CARD_PAL_SUPPORT_NUM 8
 #if defined (UCOS_BSD_EVENT)
 #elif defined (CARD_SDIO_EVENT)
-LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0}};
+LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},,{FALSE,0,0,0,0}};
 #else
 LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0},{FALSE,0,0},{FALSE,0,0},{FALSE,0,0}};
 #endif
@@ -400,8 +401,8 @@ PUBLIC SDIO_CARD_PAL_HANDLE SDIO_Card_Pal_Open (SDIO_CARD_PAL_SLOT_E slotNo)
         SDIO_CARD_PAL_ASSERT (0);	/*assert verified*/
     }
 	
-#ifdef DUAL_TCARD_SUPPORT
     s_sdioCardPalHd[slotNo].sdio_No = slotNo;
+#ifdef DUAL_TCARD_SUPPORT
     s_activeslot = slotNo;
     _SlotSelect(slotNo);
 #endif
@@ -725,6 +726,12 @@ PUBLIC BOOLEAN SDIO_Card_Pal_SetSpeedMode (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD
 #ifdef DEBUG_SDIO
 LOCAL CARD_DATA_PARAM_T s_dataParam;
 #endif
+
+PUBLIC void  SDIO_Card_Pal_SetType(SDIO_CARD_PAL_HANDLE handle, SDIO_CARD_PAL_TYPE_E sdio_type)
+{
+	handle->sdio_type = sdio_type;
+}
+
 PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
     /*IN*/SDIO_CARD_PAL_HANDLE handle,
     /*IN*/SDIO_CARD_PAL_CMD_E cmd,
@@ -846,9 +853,9 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 //---
 	while (0 != _WaitCardEvent(handle,s_cmdDetail[cmd].intFilter))
 	{
-		if(0 != (TB_SDIO1_INT&0x0000FFFF))
+		//if(0 != (TB_SDIO1_INT&0x0000FFFF))
 		{
-			_SDHOST_IrqHandle(TB_SDIO1_INT);
+			_SDHOST_IrqHandle(handle->sdio_No);
 		}
 	}
 //---
@@ -943,7 +950,7 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Close (SDIO_CARD_PAL_HANDLE handle)
 
     return TRUE;
 }
-
+#ifndef CONFIG_SC8830
 #ifdef CONFIG_EMMC_BOOT
 uint32 SCI_GetTickCount(void)
 {
@@ -961,5 +968,6 @@ uint32 SCI_GetTickCount(void)
 
 	return tmp_tick1;
 }
+#endif
 #endif
 

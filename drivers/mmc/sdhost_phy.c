@@ -33,6 +33,7 @@
 #elif defined(CONFIG_SC8830)
 #include <asm/arch/sprd_module_config.h>
 #include <asm/arch/regs_ahb.h>
+#include <asm/arch/isr_drvapi.h>
 #endif
 
 #include "asm/arch/ldo.h"
@@ -66,6 +67,7 @@ typedef struct SDHOST_PORT_T_TAG
 {
     volatile SDIO_REG_CFG *host_cfg;
     BOOLEAN open_flag;
+	uint32 slotNo;
     uint32 baseClock;
     uint32 sdClock;
     SDHOST_CAPBILIT_T capbility;
@@ -84,7 +86,7 @@ typedef struct
 
 } ISR_Buffer_T;
 
-INPUT_BUFFER_INIT (ISR_Buffer_T, SDHOST_SLOT_MAX_NUM)
+//INPUT_BUFFER_INIT (ISR_Buffer_T, SDHOST_SLOT_MAX_NUM)
 
 LOCAL SDHOST_PORT_T sdio_port_ctl[SDHOST_SLOT_MAX_NUM];
 #ifndef OS_NONE
@@ -477,12 +479,13 @@ PUBLIC void SDHOST_SD_POWER (SDHOST_HANDLE sdhost_handler,SDHOST_PWR_ONOFF_E on_
 		LDO_TurnOnLDO(LDO_LDO_SDIO3);
 		LDO_TurnOnLDO(LDO_LDO_VDD30);
 #else
-		if(&sdio_port_ctl[SDHOST_SLOT_0] == sdhost_handler){
+		if(&sdio_port_ctl[SDHOST_SLOT_0] == sdhost_handler)
+		{
 			LDO_TurnOnLDO(LDO_LDO_SDIO0);
 		}else
 		{
-	        LDO_TurnOnLDO(LDO_LDO_SDIO1);
-	        LDO_TurnOnLDO(LDO_LDO_SIM2);
+			LDO_TurnOnLDO(LDO_LDO_SDIO1);
+			LDO_TurnOnLDO(LDO_LDO_SIM2);
 		}
 #endif
     }
@@ -725,7 +728,7 @@ PUBLIC uint32 SDHOST_SD_Clk_Freq_Set (SDHOST_HANDLE sdhost_handler,uint32 sdio_c
     tmpReg |= ((clkDiv>>8)&0x3)<<6;
     tmpReg |= (clkDiv&0xff)<<8;
     sdhost_handler->sdClock = sdhost_handler->baseClock/(2*(clkDiv+1));
-#else    
+#else
     tmpReg &= (~ (0xff<<8));
     if (256 < clkDiv)
     {
@@ -906,13 +909,31 @@ LOCAL void _Reset_ALL (SDHOST_HANDLE sdhost_handler)
 LOCAL  void SDHOST_Reset_Controller(SDHOST_SLOT_NO slot_NO)
 {
 #if   defined (CONFIG_SC8830)
-	REG32 (AHB_CTL0)     |= BIT_11;
-	REG32 (AHB_SOFT_RST) |= BIT_14;
-	REG32 (AHB_SOFT_RST) &=~BIT_14;
-#elif defined (CONFIG_TIGER)
-	REG32 (AHB_CTL0)     |= BIT_23;
-	REG32 (AHB_SOFT_RST) |= BIT_21;
-	REG32 (AHB_SOFT_RST) &= ~BIT_21;
+	if (slot_NO == SDHOST_SLOT_6)
+	{
+		REG32 (AHB_CTL0)     |= BIT_8;
+		REG32 (AHB_SOFT_RST) |= BIT_11;
+		REG32 (AHB_SOFT_RST) &=~BIT_11;
+	}
+	else if (slot_NO == SDHOST_SLOT_7)
+	{
+		REG32 (AHB_CTL0)     |= BIT_11;
+		REG32 (AHB_SOFT_RST) |= BIT_14;
+		REG32 (AHB_SOFT_RST) &=~BIT_14;
+	}
+#elif defined (CONFIG_SC8825)
+	if (slot_NO == SDHOST_SLOT_6)
+	{
+		REG32 (AHB_CTL0)     |= BIT_4;
+		REG32 (AHB_SOFT_RST) |= BIT_12;
+		REG32 (AHB_SOFT_RST) &= ~BIT_12;
+	}
+	else if (slot_NO == SDHOST_SLOT_7)
+	{
+		REG32 (AHB_CTL0)     |= BIT_23;
+		REG32 (AHB_SOFT_RST) |= BIT_21;
+		REG32 (AHB_SOFT_RST) &= ~BIT_21;
+	}
 #elif defined(CONFIG_SC7710G2)
 	REG32 (AHB_CTL6)	  |= BIT_2;
 	REG32 (AHB_SOFT2_RST) |= BIT_0;
@@ -2252,7 +2273,7 @@ PUBLIC ISR_EXE_T _SDHOST_IrqHandle (uint32 isrnum)
     ISR_Buffer_T buffer;
     SDHOST_HANDLE sdhost_handler;
 
-    buffer.slotNum = _GetIntSDHOSTSlotNum(isrnum);
+    buffer.slotNum = isrnum;
     if(buffer.slotNum == SDHOST_SLOT_MAX_NUM){
 	return ISR_DONE;
     }
@@ -2344,22 +2365,12 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
     }
 
 	SDHOST_Reset_Controller(slot_NO);
-
+	sdio_port_ctl[slot_NO].slotNo = slot_NO;
     // select slot 0
 #if   defined (CONFIG_SC8830)
 	sdio_port_ctl[slot_NO].open_flag = TRUE;
-	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_26M);
+	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_192M);
 #elif defined (CONFIG_SC8825)
-	REG32(PIN_CTL3_REG)  |= (0x1ff<<8);//  set emmc data line, cmd line pull up resistor 4.7k
-	REG32(PIN_SD3CMD_REG)= 0x280;
-	REG32(PIN_SD3D0_REG) = 0x280;
-	REG32(PIN_SD3D1_REG) = 0x280;
-	REG32(PIN_SD3D2_REG) = 0x280;
-	REG32(PIN_SD3D3_REG) = 0x280;
-	REG32(PIN_SD3D4_REG) = 0x280;
-	REG32(PIN_SD3D5_REG) = 0x280;
-	REG32(PIN_SD3D6_REG) = 0x280;
-	REG32(PIN_SD3D7_REG) = 0x280;
 	sdio_port_ctl[slot_NO].open_flag = TRUE;
 	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_384M);
 #elif defined(CONFIG_SC7710G2)
@@ -2419,14 +2430,37 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
             break;
 #endif			
         case SDHOST_SLOT_6:
-#if defined(CONFIG_TIGER)	|| defined(CONFIG_SC7710G2)			
-            {
-                sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) SDIO2_BASE_ADDR );
-            }
+#if   defined CONFIG_SC8825 || defined CONFIG_SC8830 || defined CONFIG_SC7710G2
+#if   defined CONFIG_SC8825
+			REG32(PIN_SD0_CLK_REG)= 0x300;
+			REG32(PIN_SD0_CMD_REG)= 0x180;
+			REG32(PIN_SD0_D0_REG) = 0x180;
+			REG32(PIN_SD0_D1_REG) = 0x180;
+			REG32(PIN_SD0_D2_REG) = 0x180;
+			REG32(PIN_SD0_D3_REG) = 0x180;
+			sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) SDIO0_BASE_ADDR );
+#elif defined CONFIG_SC8830
+			sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) SDIO0_BASE_ADDR );
+#elif defined CONFIG_SC7710G2
+            sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) SDIO2_BASE_ADDR );
+#endif
             break;
-#endif			
+#endif
         case SDHOST_SLOT_7:
-#if defined(CONFIG_TIGER)	|| defined(CONFIG_SC7710G2) || defined (CONFIG_SC8830)		
+#if defined(CONFIG_TIGER)	|| defined(CONFIG_SC7710G2) || defined (CONFIG_SC8830)
+#ifdef CONFIG_SC8825
+			REG32(PIN_CTL3_REG)  |= (0x1ff<<8);//  set emmc data line, cmd line pull up resistor 4.7k
+			REG32(PIN_SD3CLK_REG) = 0x200;
+			REG32(PIN_SD3CMD_REG)= 0x280;
+			REG32(PIN_SD3D0_REG) = 0x280;
+			REG32(PIN_SD3D1_REG) = 0x280;
+			REG32(PIN_SD3D2_REG) = 0x280;
+			REG32(PIN_SD3D3_REG) = 0x280;
+			REG32(PIN_SD3D4_REG) = 0x280;
+			REG32(PIN_SD3D5_REG) = 0x280;
+			REG32(PIN_SD3D6_REG) = 0x280;
+			REG32(PIN_SD3D7_REG) = 0x280;
+#endif
             {
                 sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) EMMC_BASE_ADDR);
             }
@@ -2530,7 +2564,28 @@ PUBLIC uint32 SDHOST_BaseClk_Set(SDHOST_SLOT_NO slot_NO,uint32 sdio_base_clk)
     uint32 clk = 0;
 
 #if   defined(CONFIG_SC8830)
-    clk = SDIO_BASE_CLK_26M;
+	if (sdio_base_clk >= SDIO_BASE_CLK_312M)
+	{
+		REG32(REG_AP_CLK_EMMC_CFG) |=  3;
+    	clk = SDIO_BASE_CLK_312M;
+	}
+	else if (sdio_base_clk >= SDIO_BASE_CLK_256M)
+	{
+		REG32(REG_AP_CLK_EMMC_CFG) &= ~3;
+		REG32(REG_AP_CLK_EMMC_CFG) |=  2;
+    	clk = SDIO_BASE_CLK_256M;
+	}
+	if (sdio_base_clk >= SDIO_BASE_CLK_192M)
+	{
+		REG32(REG_AP_CLK_EMMC_CFG) &= ~3;
+		REG32(REG_AP_CLK_EMMC_CFG) |=  1;
+    	clk = SDIO_BASE_CLK_192M;
+	}
+	else
+	{
+		REG32(REG_AP_CLK_EMMC_CFG) &= ~3;
+    	clk = SDIO_BASE_CLK_26M;
+	}
 #elif defined(CONFIG_TIGER)
     REG32 (GR_CLK_GEN5) &= ~ (BIT_23|BIT_24);
     //Select the clk source of SDIO

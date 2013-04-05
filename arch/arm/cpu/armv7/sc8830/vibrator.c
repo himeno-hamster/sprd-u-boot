@@ -5,6 +5,8 @@
 #include <linux/types.h>
 #include <asm/arch/regs_adi.h>
 #include <asm/arch/adi_hal_internal.h>
+#include <asm/arch/sprd_reg.h>
+//#include <asm/arch/analog_reg_v3.h>
 
 #define VIBRATOR_REG_UNLOCK (0xA1B2)
 #define VIBRATOR_REG_LOCK   (~VIBRATOR_REG_UNLOCK)
@@ -17,29 +19,35 @@
 void set_vibrator(int on)
 {
 	int i = 0;
-	ANA_REG_SET(ANA_APB_VIBR_PROT_VAL, VIBRATOR_REG_UNLOCK); //unlock vibrator registor
-	if(on == 0){
+	ANA_REG_SET(ANA_REG_GLB_VIBR_WR_PROT_VALUE, VIBRATOR_REG_UNLOCK); //unlock vibrator registor
+	if(on == 0)
+	{
 		mdelay(150);
-		ANA_REG_AND(ANA_APB_VIBR_CTL0, ~(VIBR_PD_SET | VIBR_PD_RST));
-		ANA_REG_OR(ANA_APB_VIBR_CTL0, VIBR_PD_SET);
-	}else{
-		ANA_REG_AND(ANA_APB_VIBR_CTL0, ~(VIBR_PD_SET | VIBR_PD_RST));
-		ANA_REG_OR(ANA_APB_VIBR_CTL0, VIBR_PD_RST);
+		ANA_REG_AND (ANA_REG_GLB_VIBR_CTRL0, ~(BIT_VIBR_PON));
 	}
-	ANA_REG_SET(ANA_APB_VIBR_PROT_VAL, VIBRATOR_REG_LOCK);   //lock vibrator registor
+	else
+	{
+		ANA_REG_OR (ANA_REG_GLB_VIBR_CTRL0, BIT_VIBR_PON);
+	}
+	ANA_REG_SET(ANA_REG_GLB_VIBR_WR_PROT_VALUE, VIBRATOR_REG_LOCK);   //lock vibrator registor
 }
+
+#define VIBR_STABLE_V_SHIFT 12
+#define VIBR_STABLE_V_MSK   (0x0F << VIBR_STABLE_V_SHIFT)
+#define VIBR_INIT_V_SHIFT   8
+#define VIBR_INIT_V_MSK     (0x0F << VIBR_INIT_V_SHIFT)
+#define VIBR_V_BP_SHIFT     4
+#define VIBR_V_BP_MSK       (0x0F << VIBR_V_BP_SHIFT)
+
 void vibrator_hw_init(void)
 {
-	ANA_REG_SET(ANA_APB_VIBR_PROT_VAL, VIBRATOR_REG_UNLOCK); //unlock vibrator registor
+	ANA_REG_SET(ANA_REG_GLB_VIBR_WR_PROT_VALUE, VIBRATOR_REG_UNLOCK); //unlock vibrator registor
 
-	ANA_REG_OR(ANA_APB_VIBR_CTL0, VIBR_RTC_EN);
-	ANA_REG_AND(ANA_APB_VIBR_CTL0, ~VIBR_BP_EN);   //enable new version,so VIBR_V_BP is disable.
+	ANA_REG_MSK_OR(ANA_REG_GLB_VIBR_CTRL0, (VIBRATOR_INIT_LEVEL << VIBR_INIT_V_SHIFT), VIBR_INIT_V_MSK); //set init current level
+	ANA_REG_MSK_OR(ANA_REG_GLB_VIBR_CTRL0, (VIBRATOR_STABLE_LEVEL << VIBR_STABLE_V_SHIFT), VIBR_STABLE_V_MSK); //set stable current level
+	ANA_REG_SET(ANA_REG_GLB_VIBR_CTRL1, VIBRATOR_INIT_STATE_CNT);   //set convert count
 
-	ANA_REG_MSK_OR(ANA_APB_VIBR_CTL0, (VIBRATOR_INIT_LEVEL << VIBR_INIT_V_SHIFT), VIBR_INIT_V_MSK); //set init current level
-	ANA_REG_MSK_OR(ANA_APB_VIBR_CTL0, (VIBRATOR_STABLE_LEVEL << VIBR_STABLE_V_SHIFT), VIBR_STABLE_V_MSK); //set stable current level
-	ANA_REG_SET(ANA_APB_VIBR_CTL1, VIBRATOR_INIT_STATE_CNT);   //set convert count
-
-	ANA_REG_SET(ANA_APB_VIBR_PROT_VAL, VIBRATOR_REG_LOCK);   //lock vibrator registor
+	ANA_REG_SET(ANA_REG_GLB_VIBR_WR_PROT_VALUE, VIBRATOR_REG_LOCK);   //lock vibrator registor
 }
 
 

@@ -21,27 +21,17 @@
 #include <asm/io.h>
 #include <asm/errno.h>
 #include <asm/arch/ldo.h>
-#include <asm/arch/sprd_reg_global.h>
-#include <asm/arch/regs_adi.h>
-#include <asm/arch/regs_global.h>
-#include <asm/arch/regs_cpc.h>
-#include <asm/arch/analog_reg_v3.h>
 #include <ubi_uboot.h>
 #include <asm/sizes.h>
-
-
-/* soc defined begin*/
-#define CTL_ADI_BASE			(SPRD_ADI_BASE)
-#define SPRD_MISC_BASE	(SPRD_ADI_BASE)
-#define SPRD_MISC_PHYS  (SPRD_ADI_BASE)
+#include <asm/arch/sprd_reg.h>
 
 /* registers definitions for controller CTL_ADI */
-#define REG_ADI_CTRL0					(CTL_ADI_BASE + 0x04)
-#define REG_ADI_CHNL_PRI				(CTL_ADI_BASE + 0x08)
-#define REG_ADI_INT_RAW					(CTL_ADI_BASE + 0x10)
-#define REG_ADI_RD_CMD					(CTL_ADI_BASE + 0x24)
-#define REG_ADI_RD_DATA					(CTL_ADI_BASE + 0x28)
-#define REG_ADI_FIFO_STS				(CTL_ADI_BASE + 0x2c)
+#define REG_ADI_CTRL0					(SPRD_MISC_BASE + 0x04)
+#define REG_ADI_CHNL_PRI				(SPRD_MISC_PHYS + 0x08)
+#define REG_ADI_INT_RAW					(SPRD_MISC_PHYS + 0x10)
+#define REG_ADI_RD_CMD					(SPRD_MISC_PHYS + 0x24)
+#define REG_ADI_RD_DATA					(SPRD_MISC_PHYS + 0x28)
+#define REG_ADI_FIFO_STS				(SPRD_MISC_PHYS + 0x2c)
 
 /* bits definitions for register REG_ADI_CTRL0 */
 #define BIT_ARM_SCLK_EN                 ( BIT_1 )
@@ -78,8 +68,8 @@
 /* bits definitions for register REG_ADI_CHNL_PRI */
 #define VALUE_CH_PRI	(0x0)
 
-#define REG_ADI_GSSI_CFG0					(CTL_ADI_BASE + 0x1C)
-#define REG_ADI_GSSI_CFG1					(CTL_ADI_BASE + 0x20)
+#define REG_ADI_GSSI_CFG0					(SPRD_MISC_PHYS + 0x1C)
+#define REG_ADI_GSSI_CFG1					(SPRD_MISC_PHYS + 0x20)
 
 /* soc defined end*/
 

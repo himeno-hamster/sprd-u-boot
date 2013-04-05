@@ -14,6 +14,7 @@
 #include <asm/arch/drv_usb20.h>
 #include <asm/arch/virtual_com.h>
 #include <asm/arch/packet.h>
+#include <asm/arch/usb20_reg_v3.h>
 
 #define FDL2_MODULE	1
 

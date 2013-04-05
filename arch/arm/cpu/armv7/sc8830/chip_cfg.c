@@ -22,8 +22,8 @@
 #include "asm/arch/arm_reg.h"
 #include "asm/arch/sc_reg.h"
 #include "asm/arch/sc_reg.h"
-#include "asm/arch/chng_freq.h"
-#include "asm/arch/emc_drv.h"
+//#include "asm/arch/chng_freq.h"
+//#include "asm/arch/emc_drv.h"
 #include "asm/arch/chip.h"
 
 /**---------------------------------------------------------------------------*

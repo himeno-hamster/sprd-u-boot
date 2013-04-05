@@ -20,13 +20,15 @@
 */
 #include <common.h>
 #include <config.h>
+#include <asm/arch/sci_types.h>
+#include <asm/arch/pinmap.h>
 #include <asm/arch/bits.h>
 #include <asm/arch/sprd_nfc_reg_v2.h>
-#include <asm/arch/regs_cpc.h>
+//#include <asm/arch/regs_cpc.h>
 #include <nand.h>
 #include <asm/io.h>
 #include <linux/mtd/nand.h>
-#include <asm/arch/pin_reg_v3.h>
+//#include <asm/arch/pin_reg_v3.h>
 //#define NAND_DBG
 #ifdef CONFIG_NAND_SPL
 #define printf(arg...) do{}while(0)
@@ -1144,9 +1146,8 @@ static void sprd_tiger_nand_hw_init(struct sprd_tiger_nand_info *tiger)
 	
 	sprd_tiger_reg_write(NFC_TIMING_REG, val);
 	sprd_tiger_reg_write(NFC_TIMEOUT_REG, 0x80400000);
-	sprd_tiger_reg_or(PIN_NFRB_REG, BIT_7);   //set PIN_NFRB pull up
-	sprd_tiger_reg_or(PIN_CTL2_REG, BIT_17);  //set PIN_NFRB pull up resiter 4.7k
-	for (i=PIN_NFWPN_REG; i<=PIN_NFD15_REG; i+=4)
+	sprd_tiger_reg_or(REG_PIN_NFRB, BIT_7);   //set PIN_NFRB pull up
+	for (i=REG_PIN_NFWPN; i<=REG_PIN_NFD15; i+=4)
 	{
 		sprd_tiger_reg_or( i, BIT_9);
 		sprd_tiger_reg_and(i, ~(BIT_8|BIT_10|BIT_6));

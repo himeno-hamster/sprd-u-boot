@@ -16,6 +16,5 @@
 #ifndef _BOOT_MODE_H_
 #define _BOOT_MODE_H_
 
-#include "pwm_drvapi.h"
 #include "boot_drvapi.h"
 #endif

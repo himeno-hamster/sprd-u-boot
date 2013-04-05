@@ -40,10 +40,10 @@
 #include <div64.h>
 #include <asm/io.h>
 #include <linux/types.h>
-#include <asm/arch/chip_drv_config_extern.h>
-#include <asm/arch/bits.h>
-#include "asm/arch/syscnt_drv.h"
+#include "asm/arch/bits.h"
 #include "asm/arch/sci_types.h"
+#include "asm/arch/chip_drv_common_io.h"
+#include "asm/arch/sys_timer_reg_v0.h"
 
 #define TIMER_MAX_VALUE 0xFFFFFFFF
 
@@ -82,8 +82,8 @@ static inline unsigned long long us_to_tick(unsigned long long us)
 
 int timer_init(void)
 {
-	REG32(AONAPB_EB0)    |= BIT_10; //make sys cnt writable
-	REG32(AONAPB_RTC_EB) |= BIT_3; //enable rtc clk input
+	REG32(REG_AON_APB_APB_EB0) |= BIT_AP_SYST_EB; //make sys cnt writable
+	REG32(REG_AON_APB_APB_RTC_EB) |= BIT_AP_SYST_RTC_EB;  //enable sys timer rtc
 	return 0;
 }
 
@@ -133,10 +133,28 @@ void __udelay (unsigned long usec)
 {
 	unsigned long long tmp;
 	ulong tmo;
-	
+
 	tmo = us_to_tick(usec);
 	tmp = get_ticks() + tmo; // get current timestamp
 	
 	while(get_ticks() < tmp) //loop till event
 		/*NOP*/;
 }
+
+uint32 SCI_GetTickCount(void)
+{
+	volatile uint32 tmp_tick1;
+	volatile uint32 tmp_tick2;
+
+	tmp_tick1 = SYSTEM_CURRENT_CLOCK;
+	tmp_tick2 = SYSTEM_CURRENT_CLOCK;
+
+	while (tmp_tick1 != tmp_tick2)
+	{
+		tmp_tick1 = tmp_tick2;
+		tmp_tick2 = SYSTEM_CURRENT_CLOCK;
+	}
+
+	return tmp_tick1;
+}
+

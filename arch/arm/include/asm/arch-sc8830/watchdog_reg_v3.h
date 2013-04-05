@@ -28,9 +28,10 @@ extern   "C"
 **                               Micro Define                                **
 **---------------------------------------------------------------------------*/
 /*----------Watchdog Timer Counter Register----------*/
-///
-///#define WDG_BASE                     0x82000040
-#define WDG_LOAD_LOW            (WDG_BASE + 0x00)
+#include "sprd_reg.h"
+
+#define WDG_BASE            (SPRD_ANA_WDG_PHYS)
+#define WDG_LOAD_LOW        (WDG_BASE + 0x00)
 #define WDG_LOAD_HIGH       (WDG_BASE + 0x04)
 #define WDG_CTRL            (WDG_BASE + 0x08)
 #define WDG_INT_CLR         (WDG_BASE + 0x0C)
@@ -39,10 +40,14 @@ extern   "C"
 #define WDG_CNT_LOW         (WDG_BASE + 0x18)
 #define WDG_CNT_HIGH        (WDG_BASE + 0x1C)
 #define WDG_LOCK            (WDG_BASE + 0x20)
+#define WDG_CNT_RD_LOW      (WDG_BASE + 0x24)
+#define WDG_CNT_RD_HIGH     (WDG_BASE + 0x28)
+#define WDG_CNT_IRQV_LOW    (WDG_BASE + 0x2C)
+#define WDG_CNT_IRQV_HIGH   (WDG_BASE + 0x30)
 
 #define WDG_INT_EN_BIT          BIT_0
 #define WDG_CNT_EN_BIT          BIT_1
-#define WDG_RST_EN_BIT           BIT_3
+#define WDG_RST_EN_BIT          BIT_3
 
 
 #define WDG_INT_CLEAR_BIT       BIT_0

@@ -98,7 +98,9 @@ uint32 SCI_GetTickCount(void)
 {
 	volatile uint32 tmp_tick1;
 	volatile uint32 tmp_tick2;
-
+#if defined CONFIG_SC8830
+#define SYSTEM_CURRENT_CLOCK 0x40230004
+#endif
 	tmp_tick1 = SYSTEM_CURRENT_CLOCK;
 	tmp_tick2 = SYSTEM_CURRENT_CLOCK;
 

@@ -28,6 +28,10 @@ extern   "C"
 **                               Micro Define                                **
 **---------------------------------------------------------------------------*/
 /*----------System Count----------*/
+#include "sprd_reg.h"
+
+#define SYSTIMER_BASE                   (SPRD_SYSCNT_PHYS)
+
 #define SYS_ALM                         (SYSTIMER_BASE + 0x0000)
 #define SYS_CNT0                        (SYSTIMER_BASE + 0x0004)
 #define SYS_CTL                         (SYSTIMER_BASE + 0x0008)

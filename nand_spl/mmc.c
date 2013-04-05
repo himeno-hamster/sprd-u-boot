@@ -5,16 +5,17 @@
 #include "asm/arch/sprd_reg_ahb.h"
 #include "asm/arch/sprd_module_config.h" 
 #include "asm/arch/regs_ahb.h"
+#include "asm/arch/chip_drv_common_io.h"
 #else
 #include "asm/arch/sc8810_reg_global.h" 
 #include "asm/arch/sc8810_reg_ahb.h"
 #include "asm/arch/sc8810_module_config.h" 
 #endif
-
+#include <asm/arch/isr_drvapi.h>
 #include <asm/arch/ldo.h>
 #include <asm/arch/ldo_reg_v3.h>
 #include <asm/arch/sdio_reg_v3.h>
-#include <asm/arch/int_reg_v3.h>
+//#include <asm/arch/int_reg_v3.h>
 #include <asm/arch/sys_timer_reg_v0.h>
 
 #define     SDIO_BASE_CLK_48M       48000000        // 48 MHz
@@ -332,6 +333,7 @@ typedef struct
 	int ref;
 }LDO_CTL_T, * LDO_CTL_PTR;
 
+#ifndef CONFIG_SC8830
 typedef struct
 {
 	SLP_LDO_E id;
@@ -341,7 +343,7 @@ typedef struct
 	int valid;
 	unsigned int reserved;
 }SLP_LDO_CTL_T, * SLP_LDO_CTL_PTR;
-
+#endif
 
 typedef enum
 {
@@ -667,7 +669,7 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
 {
     uint32 status = 0, i = 0;
 #if   defined (CONFIG_SC8830)
-     REG32 (AHB_CTL0)     |= BIT_11;
+     REG32 (AHB_EB)       |= BIT_11;
      REG32 (AHB_SOFT_RST) |= BIT_14;
      REG32 (AHB_SOFT_RST) &=~BIT_14;
      sdio_port_ctl[slot_NO].open_flag = TRUE;
@@ -839,9 +841,9 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 //---
 	while (0 != _WaitCardEvent(handle,s_cmdDetail[cmd].intFilter))
 	{
-		if(0 != (TB_SDIO1_INT&0x0000FFFF))
+		//if(0 != (TB_SDIO1_INT&0x0000FFFF))
 		{
-			_SDHOST_IrqHandle(TB_SDIO1_INT);
+			_SDHOST_IrqHandle(handle->sdio_No);
 		}
 	}
 //---

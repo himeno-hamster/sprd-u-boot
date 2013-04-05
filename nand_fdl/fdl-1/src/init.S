@@ -138,8 +138,8 @@ reset:
 	MOV R3, #0
 	bl  Chip_Init
 #elif defined(CONFIG_SC8830)		//Shark
-	bl  SDRAM_GetCfg
-	bl  sdram_init
+	/* bl  sdram_init */
+	bl  Chip_Init
 #else					//Tiger
 	LDR R0, =400000000
 	bl  DMC_Dev_Init

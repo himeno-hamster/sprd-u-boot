@@ -27,11 +27,11 @@ extern   "C"
 /**---------------------------------------------------------------------------*
 **                               Micro Define                                **
 **---------------------------------------------------------------------------*/
-
+#include "sprd_reg.h"
 ////
 /*----------Real Timer Counter Register----------*/
 ///
-#define RTC_BASE      CTL_BASE_ANA_RTC
+#define RTC_BASE      			SPRD_ANA_RTC_PHYS
 #define ANA_RTC_SEC_CNT                 (RTC_BASE + 0x00)
 #define ANA_RTC_MIN_CNT                 (RTC_BASE + 0x04)
 #define ANA_RTC_HOUR_CNT                (RTC_BASE + 0x08)
@@ -44,8 +44,8 @@ extern   "C"
 #define ANA_RTC_MIN_ALM                 (RTC_BASE + 0x24)
 #define ANA_RTC_HOUR_ALM                (RTC_BASE + 0x28)
 #define ANA_RTC_DAY_ALM                 (RTC_BASE + 0x2C)
-#define ANA_RTC_INT_EN                      (RTC_BASE + 0x30)
-#define ANA_RTC_INT_RSTS                    (RTC_BASE + 0x34)
+#define ANA_RTC_INT_EN                  (RTC_BASE + 0x30)
+#define ANA_RTC_INT_RSTS                (RTC_BASE + 0x34)
 #define ANA_RTC_INT_CLR                 (RTC_BASE + 0x38)
 #define ANA_RTC_INT_MSK                 (RTC_BASE + 0x3C)
 

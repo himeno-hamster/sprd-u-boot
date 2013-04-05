@@ -270,18 +270,18 @@ extern   "C"
 #define ADIM_BASE            CTL_BASE_ADI
 #define ADI_BASE             CTL_BASE_ADI
 
-#define ANA_WTG_BASE         0x42000040
-#define ANA_RTC_BASE         0x42000080
-#define ANA_DOPHIN_BASE      0x42000100
-#define ANA_PINREG_BASE      0x42000180
-#define ANA_TPC_BASE         0x42000280
-#define ANA_AUXADC_BASE      0x42000300
-#define ANA_INTC_BASE        0x42000380
-#define ANA_CHAGWDG_BASE     0x420003C0
-#define ANA_COMSLAVE_BASE    0x42000400
-#define ANA_GPIO_BASE        0x42000480
-#define ANA_REG_BASE         0x42000600
-#define ANA_EIC_BASE         0x42000700
+#define ANA_WTG_BASE         0x40038040
+#define ANA_RTC_BASE         0x40038080
+//#define ANA_DOPHIN_BASE    0x42000100
+#define ANA_PINREG_BASE      0x40038180
+//#define ANA_TPC_BASE       0x42000280
+#define ANA_AUXADC_BASE      0x40038300
+#define ANA_INTC_BASE        0x40038380
+//#define ANA_CHAGWDG_BASE   0x420003C0
+//#define ANA_COMSLAVE_BASE  0x42000400
+#define ANA_GPIO_BASE        0x40038480
+#define ANA_REG_BASE         0x40038800
+#define ANA_EIC_BASE         CTL_BASE_EIC 
 
 #define USB_REG_BASE         CTL_BASE_USB
 #define VBC_BASE             CTL_BASE_VBC

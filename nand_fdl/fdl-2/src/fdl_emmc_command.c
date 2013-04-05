@@ -943,12 +943,6 @@ int FDL2_eMMC_DataStart (PACKET_T *packet, void *arg)
 	g_prevstatus = EMMC_SUCCESS;
 	//set_dl_op_val(start_addr, size, STARTDATA, SUCCESS, 1);
 	FDL_SendAckPacket (BSL_REP_ACK);
-#ifdef CONFIG_SC8830
-	printf("total_recv_size:%d, total_size:%d\r\n", g_status.total_recv_size, g_status.total_size);
-	g_status.total_recv_size   = 0;
-	g_status.unsave_recv_size   = 0;
-	printf("total_recv_size:%d, total_size:%d\r\n", g_status.total_recv_size, g_status.total_size);
-#endif
 	return 1;
 }
 
