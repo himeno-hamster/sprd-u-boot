@@ -49,22 +49,21 @@ unsigned int *g_mmu_page_table;
 
 void MMU_Init (unsigned pageBaseAddr)
 {
-    unsigned int *page_table;
     int i;
 
     // 15Mb physical addr for page table
-    page_table = const_MMUTableStartAddr;
+    g_mmu_page_table = const_MMUTableStartAddr;
 
     // Create page table 1mb entries
     for (i = 0; i < 0x1000; i++)
     {
 		if (i>=0x800 && i<0xa00)
 		{
-			page_table[i] = (MMU_SD_CONST|MMU_AP_B11|MMU_C_BIT|MMU_B_BIT) + (i << 20);
+			g_mmu_page_table[i] = (MMU_SD_CONST|MMU_AP_B11|MMU_C_BIT|MMU_B_BIT) + (i << 20);
 		}
 		else
 		{
-		    page_table[i] = (MMU_SD_CONST|MMU_AP_B11) + (i << 20);
+		    g_mmu_page_table[i] = (MMU_SD_CONST|MMU_AP_B11) + (i << 20);
 		}
     }
 
