@@ -371,7 +371,7 @@ PUBLIC void SPI_WaitTxFinish()
 {
 	volatile SPI_CTL_REG_T *spi_ctr_ptr = (volatile SPI_CTL_REG_T *)(SPI_USED_BASE);
 
-	while( !(spi_ctr_ptr->iraw)&BIT_8 ) // IS tx finish
+	while( !((spi_ctr_ptr->iraw)&BIT_8) ) // IS tx finish
 	{
 	}  
 	spi_ctr_ptr->iclr |= BIT_8;
