@@ -22,6 +22,7 @@ extern void cmd_yaffs_mount(char *mp);
 extern void cmd_yaffs_umount(char *mp);
 extern int cmd_yaffs_ls_chk(const char *dirfilename);
 extern void cmd_yaffs_mread_file(char *fn, unsigned char *addr);
+extern void cmd_yaffs_mread_fileex(char *fn, unsigned char *addr, int size);
 extern void cmd_yaffs_mwrite_file(char *fn, char *addr, int size);
 extern int cmd_yaffs_rm_chk(const char *path);
 extern int  yaffs_get_reserved_block_num(void);
@@ -476,6 +477,9 @@ int nv_is_correct_endflag(unsigned char *array, unsigned long size)
 {
 	unsigned short sum = 0, *dataaddr;
 
+	printf("nv_is_correct_endflag size:%x,buf:%x, %x, %x, %x, --  %x, %x, %x, %x\n", size, array[size - 4], array[size - 3],array[size - 2]	,array[size - 1],
+		array[size], array[size + 1], array[size + 2], array[size + 3] );
+
 	if ((array[size - 4] == 0xff) && (array[size - 3] == 0xff) && (array[size - 2] == 0xff) \
 		&& (array[size - 1] == 0xff)) {
 		/* old version */
@@ -647,8 +651,11 @@ int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, un
 			/* read fixnv */
     			cmd_yaffs_mount(fixnvpoint);
 			ret = cmd_yaffs_ls_chk(fixnvfilename);
-			if (ret == (FIXNV_SIZE + 4)) {
-				cmd_yaffs_mread_file(fixnvfilename, g_fixnv_buf_yaffs);
+			printf("nand_read_fdl_yaffs-1 ret:%x\n", ret);
+			
+			if (ret == (FIXNV_SIZE + 4))
+			{
+				cmd_yaffs_mread_fileex(fixnvfilename, g_fixnv_buf_yaffs, FIXNV_SIZE+4);
 				if (1 == nv_is_correct_endflag(g_fixnv_buf_yaffs, FIXNV_SIZE)&&
 					1 == check_fixnv_struct(g_fixnv_buf_yaffs, FIXNV_SIZE))
 					read_nv_flag = 2;//right
@@ -659,8 +666,10 @@ int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, un
 			memset(g_fixnv_buf, 0xff, FIXNV_SIZE + 4);
 			cmd_yaffs_mount(backupfixnvpoint);
 			ret = cmd_yaffs_ls_chk(backupfixnvfilename);
-			if (ret == (FIXNV_SIZE + 4)) {
-				cmd_yaffs_mread_file(backupfixnvfilename, g_fixnv_buf);
+			printf("nand_read_fdl_yaffs-2 ret:%x\n", ret);
+			if (ret == (FIXNV_SIZE + 4)) 
+			{
+				cmd_yaffs_mread_fileex(backupfixnvfilename, g_fixnv_buf, FIXNV_SIZE+4);
 				if (1 == nv_is_correct_endflag(g_fixnv_buf, FIXNV_SIZE)&&
 					1== check_fixnv_struct(g_fixnv_buf_yaffs, FIXNV_SIZE))
 					read_bkupnv_flag = 2;//right
@@ -1437,11 +1446,11 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 		g_prevstatus = ret;
 		if (ret == NAND_SUCCESS) {
 			cmd_yaffs_mount(fixnvpoint);
-			cmd_yaffs_mread_file(fixnvfilename, g_fixnv_buf_yaffs);
+			cmd_yaffs_mread_fileex(fixnvfilename, g_fixnv_buf_yaffs, FIXNV_SIZE+4);
 			first_nv_ok = nv_is_correct_endflag(g_fixnv_buf_yaffs, FIXNV_SIZE);
 			if(first_nv_ok == 0) {
 				printf("/fixnv/fixnv.bin is error !\r\n");
-				cmd_yaffs_mread_file(fixnvfilename2, g_fixnv_buf_yaffs);
+				cmd_yaffs_mread_fileex(fixnvfilename2, g_fixnv_buf_yaffs, FIXNV_SIZE+4);
 				change_nv_ok = nv_is_correct_endflag(g_fixnv_buf_yaffs, FIXNV_SIZE);
 
 			}

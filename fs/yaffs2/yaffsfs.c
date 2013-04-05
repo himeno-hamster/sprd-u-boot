@@ -228,6 +228,8 @@ static yaffs_Object *yaffsfs_FollowLink(yaffs_Object *obj,int symDepth)
 			obj = yaffsfs_FindObject(obj->parent,alias,symDepth++);
 		}
 	}
+	printf("yaffsfs_FollowLink %x\n",obj);
+	
 	return obj;
 }
 
@@ -332,9 +334,11 @@ static yaffs_Object *yaffsfs_FindObject(yaffs_Object *relativeDirectory, const c
 	char *name;
 
 	dir = yaffsfs_FindDirectory(relativeDirectory,path,&name,symDepth);
+	printf("yaffsfs_FindObject-0 dir %x \n", dir);
 
 	if(dir && *name)
 	{
+		printf("yaffsfs_FindObject-0-0 dir %x \n", dir);
 		return yaffs_FindObjectByName(dir,name);
 	}
 
@@ -828,9 +832,12 @@ static int yaffsfs_DoStat(yaffs_Object *obj,struct yaffs_stat *buf)
 {
 	int retVal = -1;
 
+	printf("yaffsfs_DoStat-0 obj %x \n", obj);
+
 	if(obj)
 	{
 		obj = yaffs_GetEquivalentObject(obj);
+		printf("yaffsfs_DoStat-0-0 obj %x \n", obj);
 	}
 
 	if(obj && buf)
@@ -862,6 +869,16 @@ static int yaffsfs_DoStat(yaffs_Object *obj,struct yaffs_stat *buf)
     	buf->yst_atime = obj->yst_atime;
     	buf->yst_ctime = obj->yst_ctime;
     	buf->yst_mtime = obj->yst_mtime;
+
+		printf("yaffsfs_DoStat obj->variantType %x \n", obj->variantType);
+		printf("yaffsfs_DoStat buf %x\n", buf);
+		printf("yaffsfs_DoStat retValadd %x\n", &retVal);
+		printf("yaffsfs_DoStat buf->st_size %x\n", buf->st_size);
+		printf("yaffsfs_DoStat buf->st_blksize %x\n", buf->st_blksize);
+		printf("yaffsfs_DoStat buf->st_blocks %x\n", buf->st_blocks);
+		printf("yaffsfs_DoStat buf->yst_atime %x\n", buf->yst_atime);
+		printf("yaffsfs_DoStat buf->yst_ctime %x\n", buf->yst_ctime);
+		printf("yaffsfs_DoStat buf->yst_mtime %x\n", buf->yst_mtime);
 		retVal = 0;
 	}
 	return retVal;
@@ -876,11 +893,13 @@ static int yaffsfs_DoStatOrLStat(const char *path, struct yaffs_stat *buf,int do
 	yaffsfs_Lock();
 	obj = yaffsfs_FindObject(NULL,path,0);
 
+	printf("yaffsfs_DoStatOrLStat %x\n",obj);
+
 	if(!doLStat && obj)
 	{
 		obj = yaffsfs_FollowLink(obj,0);
 	}
-
+	printf("yaffsfs_DoStatOrLStat-1 %x\n",obj);
 	if(obj)
 	{
 		retVal = yaffsfs_DoStat(obj,buf);

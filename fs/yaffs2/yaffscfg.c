@@ -727,7 +727,37 @@ void cmd_yaffs_mread_file(char *fn, unsigned char *addr)
 
 	yaffs_close(h);
 }
+/*
+read file no more than "max size"
+to avoid the case : s.st_size is abnormal value, 
+i don't know why s.st_size is so strange value !!!
+*/
+void cmd_yaffs_mread_fileex(char *fn, unsigned char *addr, int size)
+{
+	int h;
+	struct yaffs_stat s;
 
+	checkMount();
+
+	yaffs_stat(fn,&s);
+
+	printf ("Copy %s to 0x%08x... ", fn, addr);
+	h = yaffs_open(fn, O_RDWR,0);
+	if(h<0)
+	{
+		printf("File not found\n");
+		return;
+	}
+	printf("st_size = %d, size= %d \n", (int)s.st_size, size);
+
+	if(s.st_size > size)
+		s.st_size = size;
+	
+	yaffs_read(h,addr,(int)s.st_size);
+	printf("\t[DONE]\n");
+
+	yaffs_close(h);
+}
 
 void cmd_yaffs_mwrite_file(char *fn, char *addr, int size)
 {
@@ -822,8 +852,8 @@ int cmd_yaffs_ls_chk(char *dirfilename)
 					memset(tempstr, 0, 255);
 					sprintf(tempstr, "%s/%s", mountpt, de->d_name);
 					yaffs_stat(tempstr, &stat);
-					//printf("%-25s\t%7d\n",de->d_name, stat.st_size);
-					//printf("%-25s\t%7d\n",tempstr, stat.st_size);
+					printf("%-25s\t%7d\n",de->d_name, stat.st_size);
+					printf("%-25s\t%7d\n",tempstr, stat.st_size);
 					ret = stat.st_size;
 					return ret;
 				}

@@ -6302,7 +6302,7 @@ static int yaffs_ScanBackwards(yaffs_Device * dev)
 					   ("yaffs tragedy: Could not make object for object  %d  "
 					    "at chunk %d during scan"
 					    TENDSTR), tags.objectId, chunk));
-
+					continue;
 				}
 
 				if (in->valid) {
@@ -6449,11 +6449,14 @@ static int yaffs_ScanBackwards(yaffs_Device * dev)
 					}
 					in->dirty = 0;
 
+					if (!parent)
+						alloc_failed = 1;
+
 					/* directory stuff...
 					 * hook up to parent
 					 */
 
-					if (parent->variantType ==
+					if (parent && parent->variantType ==
 					    YAFFS_OBJECT_TYPE_UNKNOWN) {
 						/* Set up as a directory */
 						parent->variantType =
@@ -6461,7 +6464,7 @@ static int yaffs_ScanBackwards(yaffs_Device * dev)
 						INIT_LIST_HEAD(&parent->variant.
 							       directoryVariant.
 							       children);
-					} else if (parent->variantType !=
+					} else if (!parent || parent->variantType !=
 						   YAFFS_OBJECT_TYPE_DIRECTORY)
 					{
 						/* Hoosterman, another problem....
@@ -6577,37 +6580,6 @@ static int yaffs_ScanBackwards(yaffs_Device * dev)
 	 */
 	yaffs_HardlinkFixup(dev,hardList);
 
-
-	/*
-	*  Sort out state of unlinked and deleted objects.
-	*/
-	{
-		struct list_head *i;
-		struct list_head *n;
-
-		yaffs_Object *l;
-
-		/* Soft delete all the unlinked files */
-		list_for_each_safe(i, n,
-				   &dev->unlinkedDir->variant.directoryVariant.
-				   children) {
-			if (i) {
-				l = list_entry(i, yaffs_Object, siblings);
-				yaffs_DestroyObject(l);
-			}
-		}
-
-		/* Soft delete all the deletedDir files */
-		list_for_each_safe(i, n,
-				   &dev->deletedDir->variant.directoryVariant.
-				   children) {
-			if (i) {
-				l = list_entry(i, yaffs_Object, siblings);
-				yaffs_DestroyObject(l);
-
-			}
-		}
-	}
 
 	yaffs_ReleaseTempBuffer(dev, chunkData, __LINE__);
 
@@ -6830,6 +6802,9 @@ int yaffs_GetObjectFileLength(yaffs_Object * obj)
 
 	/* Dereference any hard linking */
 	obj = yaffs_GetEquivalentObject(obj);
+	printf("yaffs_GetObjectFileLength obj %x \n", obj);
+	printf("yaffs_GetObjectFileLength obj->variantType %x \n", obj->variantType);
+	printf("yaffs_GetObjectFileLength obj->variant.fileVariant.fileSize %x \n", obj->variant.fileVariant.fileSize);
 
 	if (obj->variantType == YAFFS_OBJECT_TYPE_FILE) {
 		return obj->variant.fileVariant.fileSize;
