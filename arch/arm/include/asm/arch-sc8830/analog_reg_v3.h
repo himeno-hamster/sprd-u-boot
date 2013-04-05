@@ -151,13 +151,6 @@ extern   "C"
 #define VIBR_RTC_EN     BIT_0
 
 
-#define   HWRST_STATUS_POWERON_MASK 	(0xf0)
-#define   HWRST_STATUS_RECOVERY 		(0x20)
-#define   HWRST_STATUS_FASTBOOT 		(0X30)
-#define   HWRST_STATUS_NORMAL 			(0X40)
-#define   HWRST_STATUS_ALARM 			(0X50)
-#define   HWRST_STATUS_SLEEP 			(0X60)
-#define   HWRST_STATUS_NORMAL2 			(0Xf0)
 
 #ifdef   __cplusplus
 }

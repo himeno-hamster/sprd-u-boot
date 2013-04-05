@@ -17,8 +17,7 @@
 /*----------------------------------------------------------------------------*
  **                         Dependencies                                      *
  **------------------------------------------------------------------------- */
-#include <asm/arch/sci_types.h>
-#include <asm/arch/umctl2_reg.h>
+#include "umctl2_reg.h"
 /**---------------------------------------------------------------------------*
  **                             Compiler Flag                                 *
  **--------------------------------------------------------------------------*/
@@ -30,21 +29,65 @@ extern   "C"
 /******************************************************************************
                           Macro define
 ******************************************************************************/
+#define  DMC_CLK 100
+#define DLL_BYPASS
+
+
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
+#define IS_LPDDR1(x) (((x&0xF00) == 0)? TRUE:FALSE)
+#define IS_LPDDR2(x) (((x&0xF00) == 0X100)? TRUE:FALSE)
+#define IS_LPDDR3(x) (((x&0xF00) == 0X200)? TRUE:FALSE)
+#define IS_DDR2(x)   (((x&0xF00) == 0X300)? TRUE:FALSE)
+#define IS_DDR3(x)   (((x&0xF00) == 0X400)? TRUE:FALSE)
 /******************************************************************************
                             Enum define
 ******************************************************************************/
 typedef enum
 {
-    DRAM_LPDDR1     = 1, /*ALso called mobileDDR*/
-    DRAM_LPDDR2_S2,
-    DRAM_LPDDR2_S4,
-    DRAM_LPDDR2,
-    DRAM_DDR,
-    DRAM_DDR2,
-    DRAM_DDR3,
-    DRAM_LPDDR3,
+    //lpddr1
+    DRAM_LPDDR1             = 0x000, /*ALso called mobileDDR*/
+    DRAM_LPDDR1_1CS_2G_X32  = 0x001,
+    DRAM_LPDDR1_2CS_4G_X32  = 0x002,
+    //lpddr2
+    DRAM_LPDDR2             = 0x100,    
+    DRAM_LPDDR2_S2          = 0x101,
+    DRAM_LPDDR2_S4          = 0x102,
+    DRAM_LPDDR2_2CS_2G_X32  = 0x103,
+    DRAM_LPDDR2_2CS_4G_X32  = 0x104,
+    DRAM_LPDDR2_2CS_3G_X32  = 0x105,
+    DRAM_LPDDR2_1CS_4G_X32  = 0x106,
+    DRAM_LPDDR2_2CS_6G_X32  = 0x107,
+    DRAM_LPDDR2_2CS_5G_X32  = 0x108,
+    DRAM_LPDDR2_2CS_8G_X32  = 0x109,
+    DRAM_LPDDR2_1CS_8G_X32  = 0x10A,    
+    DRAM_LPDDR2_2CS_16G_X32 = 0x10B,        
+    DRAM_LPDDR2_2CS_12G_X32 = 0x10C,            
+    //lpddr3
+    DRAM_LPDDR3             = 0x200,
+    //ddr2
+    DRAM_DDR2               = 0x300,
+    //ddr3
+    DRAM_DDR3               = 0x400,
+    DRAM_DDR3_1CS_2G_X8     = 0x401,
+    DRAM_DDR3_1CS_4G_X8     = 0x402,
+    DRAM_DDR3_1CS_8G_X8     = 0x403,
+    DRAM_DDR3_1CS_2G_X8_4P  = 0x404, //4-piece 2g bit ddr3 chips, 4 cs bonded into 1 cs, 8g bit together
+    DRAM_DDR3_1CS_4G_X8_4P  = 0x405, //4-piece 4g bit ddr3 chips, 4 cs bonded into 1 cs, 16g bit together
+    DRAM_DDR3_1CS_8G_X8_4P  = 0x406, //4-piece 8g bit ddr3 chips, 4 cs bonded into 1 cs, 32g bit together
+    DRAM_DDR3_1CS_1G_X16    = 0x407,    
+    DRAM_DDR3_1CS_2G_X16    = 0x408,
+    DRAM_DDR3_1CS_4G_X16    = 0x409,
+    DRAM_DDR3_1CS_8G_X16    = 0x40A,
+    DRAM_DDR3_2CS_2G_X16    = 0x40B,    
+    DRAM_DDR3_2CS_4G_X16    = 0x40C,
+    DRAM_DDR3_2CS_8G_X16    = 0x40D,
+    DRAM_DDR3_2CS_16G_X16   = 0x40E,
+    
+    DRAM_DDR3_1CS_1G_X16_2P = 0x40F, 
+    DRAM_DDR3_1CS_2G_X16_2P = 0x410, //2-piece 2g bit ddr3 chips, 2 cs bonded into 1 cs, 4g bit together
+    DRAM_DDR3_1CS_4G_X16_2P = 0x411, //2-piece 4g bit ddr3 chips, 2 cs bonded into 1 cs, 8g bit together
+    DRAM_DDR3_1CS_8G_X16_2P = 0x412, //2-piece 8g bit ddr3 chips, 2 cs bonded into 1 cs, 16g bit together
 }DRAM_TYPE_E;
 
 typedef enum
@@ -100,6 +143,141 @@ typedef enum
     MR_READ,
 }MR_WR_E;
 
+typedef enum{
+    CLK_24MHZ    = 24,
+    CLK_26MHZ    = 26,
+    CLK_38_4MHZ  = 38,
+    CLK_48MHZ    = 48,
+    CLK_64MHZ    = 64,
+    CLK_76_8MHZ  = 77,
+    CLK_96MHZ    = 96,
+    CLK_100MHZ   = 100,    
+    CLK_153_6MHZ = 154,
+    CLK_150MHZ   = 150,    
+    CLK_166MHZ   = 166,
+    CLK_192MHZ   = 192,
+	CLK_200MHZ   = 200,  
+	CLK_250MHZ   = 250,  
+    CLK_333MHZ   = 333,
+    CLK_400MHZ   = 400,
+    CLK_427MHZ   = 427,
+    CLK_450MHZ   = 450,
+    CLK_500MHZ   = 500,
+    CLK_525MHZ   = 525,
+    CLK_533MHZ   = 533,    
+    CLK_537MHZ   = 537,
+    CLK_540MHZ   = 540,
+    CLK_550MHZ   = 550,
+    CLK_800MHZ	 = 800,
+    CLK_1000MHZ	 = 1000,
+    EMC_CLK_400MHZ = 400,
+    EMC_CLK_450MHZ = 450,
+    EMC_CLK_500MHZ = 500
+}CLK_TYPE_E;
+
+typedef enum
+{
+	DQS_STEP_DLY_MIN  = 0,
+	DQS_STEP_DLY_SUB3 = 0,
+	DQS_STEP_DLY_SUB2 = 1,
+	DQS_STEP_DLY_SUB1 = 2,
+	DQS_STEP_DLY_NOM  = 3,
+	DQS_STEP_DLY_DEF  = 3,
+	DQS_STEP_DLY_ADD1 = 4,
+	DQS_STEP_DLY_ADD2 = 5,
+	DQS_STEP_DLY_ADD3 = 6,
+	DQS_STEP_DLY_ADD4 = 7,
+	DQS_STEP_DLY_MAX  = 7
+}DQS_STEP_DLY_E;
+
+//DQS gating phase select
+typedef enum
+{
+	DQS_PHS_DLY_MIN = 0,
+	DQS_PHS_DLY_90  = 0,
+	DQS_PHS_DLY_180 = 1,
+	DQS_PHS_DLY_DEF = 1,
+	DQS_PHS_DLY_270 = 2,
+	DQS_PHS_DLY_360 = 3,
+	DQS_PHS_DLY_MAX = 3
+}DQS_PHS_DLY_E;
+
+//DQS gating system latency
+typedef enum
+{
+	DQS_CLK_DLY_MIN  = 0,
+	DQS_CLK_DLY_DEF  = 0,
+	DQS_CLK_DLY_1CLK = 1,
+	DQS_CLK_DLY_2CLK = 2,
+	DQS_CLK_DLY_3CLK = 3,
+	DQS_CLK_DLY_4CLK = 4,
+	DQS_CLK_DLY_5CLK = 5,
+	DQS_CLK_DLY_MAX  = 5	
+}DQS_CLK_DLY_E;
+
+//slave dll phase trim
+typedef enum
+{
+	SDLL_PHS_DLY_DEF  = 0x0,
+	SDLL_PHS_DLY_36   = 0x3,
+	SDLL_PHS_DLY_54   = 0x2,
+	SDLL_PHS_DLY_72   = 0x1,
+	SDLL_PHS_DLY_90   = 0x0,
+	SDLL_PHS_DLY_108  = 0x4,
+	SDLL_PHS_DLY_126  = 0x8,
+	SDLL_PHS_DLY_144  = 0x12
+}SDLL_PHS_DLY_E;
+
+typedef enum
+{
+	LPDDR2_DS_34_OHM = 0xd,
+	LPDDR2_DS_40_OHM = 0xb,
+	LPDDR2_DS_48_OHM = 0x9,
+	LPDDR2_DS_60_OHM = 0x7,
+	LPDDR2_DS_80_OHM = 0x5
+}LPDDR2_MEM_DS_T_E;
+
+typedef enum
+{
+	LPDDR1_DS_33_OHM = 0xa,
+	LPDDR1_DS_31_OHM = 0xb,
+	LPDDR1_DS_48_OHM = 0xc,
+	LPDDR1_DS_43_OHM = 0xd,
+	LPDDR1_DS_39_OHM = 0xe,
+	LPDDR1_DS_55_OHM = 0x5,
+	LPDDR1_DS_64_OHM = 0x4
+}LPDDR1_MEM_DS_T_E;
+
+typedef enum
+{
+	DQS_PDU_MIN    = 1,
+	DQS_PDU_688OHM = 1,
+	DQS_PDU_611OHM = 2,
+	DQS_PDU_550OHM = 3,
+	DQS_PDU_500OHM = 4,
+	DQS_PDU_DEF    = 4,
+	DQS_PDU_458OHM = 5,
+	DQS_PDU_393OHM = 6,
+	DQS_PDU_344OHM = 7,	
+	DQS_PDU_MAX    = 7
+}DQS_PDU_E;
+
+typedef enum
+{
+	UMCTL2_PORT_MIN     = 0,
+	UMCTL2_PORT_AP      = 0,
+	UMCTL2_PORT_MM      = 1,
+	UMCTL2_PORT_GPU     = 2,
+	UMCTL2_PORT_CP2_P0  = 3,
+	UMCTL2_PORT_CP1     = 4,
+	UMCTL2_PORT_AP_MTX  = 5,
+	UMCTL2_PORT_CP0     = 6,
+	UMCTL2_PORT_CP2_P1  = 7,
+	UMCTL2_PORT_CP0_MTX = 8,	
+	UMCTL2_PORT_DSP     = 9,
+	UMCTL2_PORT_MAX     = 10
+}UMCTL2_PORT_ID_E;
+
 /******************************************************************************
                             Structure define
 ******************************************************************************/
@@ -109,21 +287,23 @@ typedef enum
 */
 typedef struct 
 {
-    uint32   tMRD;    //MODE REGISTER SET command period,(>=2 tck)
-    uint32  tRAS;    //ACTIVE to PRECHARGE command period,(50~70000 ns)
-    uint32   tRC;     //ACTIVE to ACTIVE command period,(>=tRAS+tRP ns)
-    uint32   tRFC;    //AUTO REPRESH to ACTIVE/AUTO REPRESH command period,128M/256Mb(>=80 ns)
+	uint32 tREFI;	 //average Refresh interval time between each row,normall = 7800 ns	
+    uint8 tRAS;    //ACTIVE to PRECHARGE command period,(50~70000 ns)	
+    uint8   tRC;     //ACTIVE to ACTIVE command period,(>=tRAS+tRP ns)    
+    uint8   tRFC;    //AUTO REPRESH to ACTIVE/AUTO REPRESH command period,128M/256Mb(>=80 ns)
                                               //512Mb(>=110 ns)
                                               // 1Gb/2Gb(>=140 ns)
-    uint32   tRCD;    //ACTIVE to READ or WRITE delay,(>=30 ns)
-    uint32   tRP;     //PRECHARGE command period,(>=30 ns)
-    uint32   tRRD;    //ACTIVE bank A to ACTIVE bank B delay,(>=15 ns)
-    uint32   tWR;     //WRITE recovery time,(>=15 ns)
-    uint32   tWTR;    //internal write to Read command delay,(>=1 tck)
-    uint32   tXSR;    //self refresh exit to next valid command delay,(>=200 ns)
-    uint32   tXP;     //Exit power down to next valid command delay,(>=25 ns)
-    uint32   tCKE;    //CKE min pulse width,(>=2 tck)
-} LPDDR_ACTIMING;
+    uint8   tRCD;    //ACTIVE to READ or WRITE delay,(>=30 ns)
+    uint8   tRP;     //PRECHARGE command period,(>=30 ns)
+    uint8   tRRD;    //ACTIVE bank A to ACTIVE bank B delay,(>=15 ns)
+    uint8   tWR;     //WRITE recovery time,(>=15 ns)
+    uint8   tWTR;    //internal write to Read command delay,(>=1 tck)
+    uint8   tXP;     //Exit power down to next valid command delay,(>=25 ns)
+
+    uint8   tXSR;    //self refresh exit to next valid command delay,(>=200 ns)    
+    uint8   tMRD;    //MODE REGISTER SET command period,(>=2 tck)
+    uint8   tCKE;    //CKE min pulse width,(>=2 tck)
+} lpddr1_timing_t;
 
 /*
  *Refer to JEDEC STANDARD JESD209-2E for LPDDR2
@@ -134,23 +314,32 @@ typedef struct
     /*LPDDR2 SDRAM Core Parameters*/
     /*uint8 RL;   Read Latency,>=6@800Mhz*/
     /*uint8 WL;   Write Latency,>=3@800Mhz*/
+	uint32 tREFI;	// average Refresh interval time between each row,normall = 7800 ns	    
+    uint8 tRAS; /*Row Active Time,>=3tCK*/	
     uint8 tRC;  /*ACTIVE to ACTIVE command period,>=(tRAS + tRPab)ns*/
-    uint8 tCKESR;/*low pulse width during Self-Refresh,>=3tCK*/
-    uint8 tXSR; /*Self refresh exit to next valid command delay,>=2tCK*/
-    uint8 tXP;  /*Exit power down to next valid command delay,>=2tCK*/
-    uint8 tCCD; /*CAS to CAS delay,LPDDR2-S4>=2tCK,LPDDR2-S2>=1tCK*/
-    uint8 tRTP; /*Internal Read to Precharge command delay,>=2tCK*/
+    uint8 tRFCab; /*Refresh Cycle time tRFCab,64M~256Mb(>=90 ns)
+                                          / 1Gb/2Gb/4G(>=110 ns)
+                                          / 8Gb(>=210 ns) */
+    uint8 tRFCpb;
     uint8 tRCD; /*RAS to CAS Delayy,>=3tCK*/
     uint8 tRP;  /*Preactive to Activate command period,>=3tCK*/
-    uint8 tRAS; /*Row Active Time,>=3tCK*/
+    uint8 tRRD; /*Active bank A to Active bank B,>=2tCK*/
     uint8 tWR;  /*Write Recovery Time,>=3tCK*/
     uint8 tWTR; /*Internal Write to Read Command Delay,>=2tCK*/
-    uint8 tRRD; /*Active bank A to Active bank B,>=2tCK*/
+    uint8 tXP;  /*Exit power down to next valid command delay,>=2tCK*/
+    
+    uint8 tXSR; /*Self refresh exit to next valid command delay,>=2tCK*/    
+    uint8 tCKESR;/*low pulse width during Self-Refresh,>=3tCK*/
+    uint8 tCCD; /*CAS to CAS delay,LPDDR2-S4>=2tCK,LPDDR2-S2>=1tCK*/
+    uint8 tRTP; /*Internal Read to Precharge command delay,>=2tCK*/
     uint8 tFAW; /*Four Bank Activate Window,>=8tCK*/
-    uint8 tDPD; /*Minimum Deep Power Down Time,==500us*/
+    uint32 tDPD; /*Minimum Deep Power Down Time,==500us*/
 
     /*ZQ Calibration Parameters*/
-    /*uint8 tZQINIT; Initialization Calibration Time,>=1us*/
+    uint32 tZQINIT; /*Initialization Calibration Time,>=1us*/
+    uint8 tZQCL;
+    uint8 tZQCS;
+    uint8 tZQreset;
     /*Read Parameters*/
     uint8 tDQSCK; /*DQS output access time from CK_t/CK_c,(2500~5500)ps*/
     /*CKE Input Parameters*/
@@ -163,10 +352,7 @@ typedef struct
     /*Mode Register Parameters*/
     uint8 tMRW; /*MODE REGISTER Write command period,>=5tCK*/
     uint8 tMRR; /*Mode Register Read command period,>=2tCK*/
-    uint8 tRFC; /*Refresh Cycle time tRFCab,64M~256Mb(>=90 ns)
-                                          / 1Gb/2Gb/4G(>=110 ns)
-                                          / 8Gb(>=210 ns) */
-} LPDDR2_ACTIMING;
+} lpddr2_timing_t;
 
 
 /*
@@ -175,28 +361,33 @@ typedef struct
 */
 typedef struct 
 {
+	uint32 tREFI;	// average Refresh interval time between each row,normall = 7800 ns	
+    uint8 tRAS; /*ACTIVE to PRECHARGE command period,(35~9tREFI)*/
+    uint8 tRC; /*ACT to ACT or REF command period,>=(45~49)ns*/
+    uint8 tRFC;/*AUTO REPRESH to ACTIVE/AUTO REPRESH command period,
+                                  /512Mb(>=90 ns) /1Gb(>=110 ns)
+                                  /2Gb(>=160 ns)  /4Gb(>=300 ns)  
+                                  / 8Gb(>=350 ns) */                                             
+    uint8 tRCD; /*ACT to internal read or write delay time,,>=(11~15)ns*/                                  
+    uint8 tRP; /*PRE command period,>=(11~14)ns*/
+    uint8 tRRD; /*ACTIVE to ACTIVE command period for1/2KB page size,>=4tCK*/
+    uint8 tWR;  /*WRITE recovery time,>=15ns*/
+    uint8 tWTR; /*Delay from start of internal write transaction to internal read command,>=4tCK*/
+    uint8 tXP; /*max(3nCK,7.5ns)*/
+
     /*ZQ Calibration Parameters*/
-    /*uint8 tZQINIT; Power-up and RESET calibration time,>=512tCK*/
+    uint8 tZQINIT; /*Power-up and RESET calibration time,>=512tCK*/
+    uint8 tZQoper;
+    uint8 tZQCS;
     /*Data Strobe Timing*/
     uint8 tDQSCK; /*DQS,DQS# rising edge output access time from rising CK*/
 
     /*Command and Address Timing*/
     uint8 tDLLK; /*DLL locking time,>=512tCK*/
     uint8 tRTP; /*Internal READ Command to PRECHARGE Command delay,>=4tCK*/
-    uint8 tWTR; /*Delay from start of internal write transaction to internal read command,>=4tCK*/
-    uint8 tWR;  /*WRITE recovery time,>=15ns*/
     uint8 tMRD; /*Mode Register Set command cycle time,>=4tCK*/
     uint8 tMOD; /*Mode Register Set command update delay,>=12tCK*/
-    uint8   tRFC;/*AUTO REPRESH to ACTIVE/AUTO REPRESH command period,
-                                  /512Mb(>=90 ns) /1Gb(>=110 ns)
-                                  /2Gb(>=160 ns)  /4Gb(>=300 ns)  
-                                  / 8Gb(>=350 ns) */                                             
-    uint8 tRCD; /*ACT to internal read or write delay time,,>=(11~15)ns*/
-    uint8 tRP; /*PRE command period,>=(11~14)ns*/
-    uint8 tRC; /*ACT to ACT or REF command period,>=(45~49)ns*/
     uint8 tCCD; /*CAS# to CAS# command delay,>=4tCK*/
-    uint8 tRAS; /*ACTIVE to PRECHARGE command period,(35~9tREFI)*/
-    uint8 tRRD; /*ACTIVE to ACTIVE command period for1/2KB page size,>=4tCK*/
     uint8 tFAW; /*Four activate window for 1/2KB page size,>=40ns*/
 
     /*Self Refresh Timings*/
@@ -207,9 +398,9 @@ typedef struct
     /*Power Down Timings*/
     /*tXP:Exit Power Down with DLL on to any valid command; 
       Exit Precharge Power Down with DLL frozen to commands notrequiring a locked DLL*/
-    uint8 tXP; /*max(3nCK,7.5ns)*/
+
     uint8 tCKE; /*CKE minimum pulse width,max(3nCK,7.5ns)*/
-} DDR3_ACTIMING;
+} ddr3_timing_t;
 
 /*
  *Refer to JEDEC STANDARD JESDxx-xx 2008 for DDR2
@@ -242,9 +433,23 @@ typedef struct
                                     2.WL=AL+CWL,and CWL is 5~12tCK for DDR3
                            */ 
     void       *ac_timing; //AC character referring to SDRAM spec.
-} DRAM_DESC;
+} DRAM_INFO;
 
+typedef struct
+{
+    uint8 rdwr_order;
+    uint8 rd_hpr;
+    uint8 rd_pagematch;
+    uint8 rd_urgent;
+    uint8 rd_aging;
+    uint8 rd_reorder_bypass;
+    uint32 rd_priority;
 
+    uint8 wr_pagematch;
+    uint8 wr_urgent;
+    uint8 wr_aging;
+    uint32 wr_priority;    
+}umctl2_port_info_t;
 /**----------------------------------------------------------------------------*
 **                         Compiler Flag                                      **
 **----------------------------------------------------------------------------*/

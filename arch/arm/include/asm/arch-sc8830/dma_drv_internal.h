@@ -59,6 +59,15 @@ typedef void (*DMA_HAL_ISR_HANDLER) (uint32 inttype);
 
 typedef uint32 DMA_LINKLIST_HANDLE;
 
+//dma channel type
+typedef enum _DMA_CHN_TYPE
+{
+    DMA_CHN_TYPE_HARD = 0,
+    DMA_CHN_TYPE_SOFT,
+    DMA_CHN_TYPE_MAX
+}
+DMA_CHN_TYPE_E;
+
 //DMA priority
 typedef enum _DMA_CHN_PRIORITY
 {

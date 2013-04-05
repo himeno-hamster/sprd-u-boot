@@ -18,11 +18,11 @@
 /**---------------------------------------------------------------------------*
  **                         Dependencies                                      *
  **---------------------------------------------------------------------------*/
-#include "sc_reg.h"
-#include "adi_hal_internal.h"
-#include "wdg_drvapi.h"
-#include "mocor_boot_mode.h"
-
+#include "asm/arch/sc_reg.h"
+#include "asm/arch/adi_hal_internal.h"
+#include "asm/arch/wdg_drvapi.h"
+#include "asm/arch/sprd_reg.h"
+#include "asm/arch/boot_drvapi.h"
 /**---------------------------------------------------------------------------*
  **                         Compiler Flag                                     *
  **---------------------------------------------------------------------------*/
@@ -86,7 +86,7 @@ void CHIP_ResetMCU (void)  //reset interrupt disable??
 LOCAL uint32 CHIP_PHY_GetHwRstAddr (void)
 {
     // Returns a DWORD of IRAM shared with DCAM
-    return ANA_APB_POR_RST_MONTR;
+    return ANA_REG_GLB_WDG_RST_MONITOR;
 }
 
 /*****************************************************************************/
@@ -96,7 +96,7 @@ LOCAL uint32 CHIP_PHY_GetHwRstAddr (void)
 /*****************************************************************************/
 LOCAL uint32 CHIP_PHY_GetRstModeAddr (void)
 {
-    return ANA_APB_POR_RST_MONTR;
+    return ANA_REG_GLB_POR_RST_MONITOR;
 }
 
 /*****************************************************************************/
@@ -110,20 +110,7 @@ LOCAL uint32 CHIP_PHY_GetRstModeAddr (void)
 /*****************************************************************************/
 LOCAL uint32 CHIP_PHY_GetANAReg (void)
 {
-    uint32 adi_rd_data;
-
-    // Set read command
-    * (volatile uint32 *) ADI_ARM_RD_CMD = ANA_APB_POR_RST_MONTR;
-
-    // Wait read operation complete, RD_data[31] will be cleared after the read 
-    // operation complete
-    do
-    {
-        adi_rd_data = * (volatile uint32 *) ADI_RD_DATA;
-    }
-    while (adi_rd_data & BIT_31);
-
-    return ((adi_rd_data & 0x0000FFFF));
+    return ANA_REG_GET(ANA_REG_GLB_POR_RST_MONITOR);
 }
 
 /*****************************************************************************/
@@ -134,8 +121,7 @@ LOCAL uint32 CHIP_PHY_GetANAReg (void)
 LOCAL uint32 CHIP_PHY_GetHWFlag (void)
 {
     // Switch IRAM from DCAM to ARM
-    
-    return CHIP_REG_GET (CHIP_PHY_GetHwRstAddr ());
+    return ANA_REG_GET (CHIP_PHY_GetHwRstAddr ());
 }
 
 /*****************************************************************************/
@@ -145,8 +131,8 @@ LOCAL uint32 CHIP_PHY_GetHWFlag (void)
 /*****************************************************************************/
 PUBLIC void CHIP_PHY_SetRstMode (uint32 val)
 {
-    CHIP_REG_AND (CHIP_PHY_GetRstModeAddr (), ~0xFFFF);
-    CHIP_REG_OR (CHIP_PHY_GetRstModeAddr (), (val&0xFFFF));
+    ANA_REG_AND (CHIP_PHY_GetRstModeAddr (), ~0xFFFF);
+    ANA_REG_OR (CHIP_PHY_GetRstModeAddr (), (val&0xFFFF));
 }
 
 /*****************************************************************************/
@@ -156,7 +142,7 @@ PUBLIC void CHIP_PHY_SetRstMode (uint32 val)
 /*****************************************************************************/
 PUBLIC uint32 CHIP_PHY_GetRstMode (void)
 {
-    return (CHIP_REG_GET (CHIP_PHY_GetRstModeAddr ()) & 0xFFFF);
+    return (ANA_REG_GET (CHIP_PHY_GetRstModeAddr ()) & 0xFFFF);
 }
 
 /*****************************************************************************/
@@ -172,12 +158,12 @@ PUBLIC uint32 CHIP_PHY_GetRstMode (void)
 PUBLIC void CHIP_PHY_ResetHWFlag (uint32 val)
 {
     // Reset the analog die register
-    ANA_REG_AND (ANA_APB_POR_RST_MONTR, ~0xFFF);
-    ANA_REG_OR (ANA_APB_POR_RST_MONTR, (val&0xFFF));
+    ANA_REG_AND(ANA_REG_GLB_POR_RST_MONITOR, ~0xFFF);
+    ANA_REG_OR (ANA_REG_GLB_POR_RST_MONITOR, (val&0xFFF));
 
     // Reset the HW_RST
-    CHIP_REG_AND (CHIP_PHY_GetHwRstAddr (), ~0xFFFF);
-    CHIP_REG_OR (CHIP_PHY_GetHwRstAddr (), (val&0xFFFF));
+    ANA_REG_AND(CHIP_PHY_GetHwRstAddr (), ~0xFFFF);
+    ANA_REG_OR (CHIP_PHY_GetHwRstAddr (), (val&0xFFFF));
 }
 
 /*****************************************************************************/
@@ -190,8 +176,8 @@ PUBLIC void CHIP_PHY_SetWDGHWFlag (WDG_HW_FLAG_T type, uint32 val)
 {
     if(TYPE_RESET == type)
     {        
-        CHIP_REG_AND (CHIP_PHY_GetHwRstAddr (), ~0xFFFF);
-        CHIP_REG_OR (CHIP_PHY_GetHwRstAddr (), (val&0xFFFF));
+        ANA_REG_AND(CHIP_PHY_GetHwRstAddr (), ~0xFFFF);
+        ANA_REG_OR (CHIP_PHY_GetHwRstAddr (), (val&0xFFFF));
     }
     else
     {
@@ -218,7 +204,7 @@ PUBLIC void CHIP_PHY_BootIramEn ()
 PUBLIC BOOLEAN CHIP_PHY_IsWDGRstByMCU (uint32 flag)
 {
     // Copy the value of HW_RST register to the register specific to reset mode
-    CHIP_REG_SET (CHIP_PHY_GetRstModeAddr (),
+    ANA_REG_SET (CHIP_PHY_GetRstModeAddr (),
                   (CHIP_PHY_GetHWFlag () & 0xFFFF));
 
     if ((CHIP_PHY_GetHWFlag () & 0xFFFF) == (flag & 0xFFFF))

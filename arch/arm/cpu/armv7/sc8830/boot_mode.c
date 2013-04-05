@@ -20,8 +20,7 @@
 #include "os_api.h"
 #include "sc_reg.h"
 #include "chip_internal.h"
-#include "mocor_boot_mode.h"
-
+#include "asm/arch/boot_drvapi.h"
 /**---------------------------------------------------------------------------*
  **                         Compiler Flag                                     *
  **---------------------------------------------------------------------------*/

@@ -12,26 +12,7 @@
  * GNU General Public License for more details.
  *
  */
-#ifdef CONFIG_NKERNEL
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/debugfs.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/clk.h>
-#include <linux/clkdev.h>
-#include <linux/cpufreq.h>
-
-#include <mach/sci.h>
-#include <mach/hardware.h>
-#include <mach/regs_glb.h>
-#include <mach/regs_ahb.h>
-#else
 #include <ubi_uboot.h>
-#include <asm/arch/sprd_reg_base.h>
-#include <asm/arch/regs_glb.h>
-#include <asm/arch/__regs_ahb.h>
 #include <linux/compiler.h>
 
 #define __ffs(x) (ffs(x) - 1)
@@ -39,12 +20,11 @@
 #define DEFINE_SPINLOCK(...)
 #define spin_lock_irqsave(...)
 #define spin_unlock_irqrestore(...)
-#endif
 
+#include <asm/arch/sprd_reg.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/__clock_tree.h>
 
-//#ifndef CONFIG_NKERNEL
 #if 1
 const u32 __clkinit0 __clkinit_begin = 0xeeeebbbb;
 const u32 __clkinit2 __clkinit_end   = 0xddddeeee;
@@ -53,9 +33,7 @@ const u32 __clkinit0 __clkinit_begin = &CLK_LK_clk_mpll;
 const u32 __clkinit2 __clkinit_end   = &CLK_LK_clk_mpll;
 #endif
 
-#ifndef CONFIG_NKERNEL
 //#define debug0 printf
-#endif
 
 DEFINE_SPINLOCK(clocks_lock);
 

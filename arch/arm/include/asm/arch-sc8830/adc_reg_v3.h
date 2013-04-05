@@ -25,13 +25,13 @@
 extern   "C"
 {
 #endif
-#include <asm/arch/sprd_reg_base.h>
+#include <asm/arch/sprd_reg.h>
 
 /**---------------------------------------------------------------------------*
 **                               Micro Define                                **
 **---------------------------------------------------------------------------*/
 /* ADC Ctronl Registers */
-#define ADC_REG_BASE                        CTL_BASE_ADC
+#define ADC_REG_BASE                        SPRD_ANA_ADC_PHYS 
 
 #define ADC_CTRL                            (ADC_REG_BASE + 0x0000)
 #define ADC_CS                              (ADC_REG_BASE + 0x0004)

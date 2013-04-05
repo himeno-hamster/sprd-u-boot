@@ -18,17 +18,6 @@
  **------------------------------------------------------------------------- */
 
 #include "sprd_reg_ahb.h"
-//#include "sc8800g_reg_global.h"
-
-
-//Chip All module register miscs definitions
-#include "emc_reg_v3.h"
-#include "int_reg_v3.h"
-#include "lcdc_reg_v3.h"
-#include "pin_reg_v3.h"
-#include "sys_timer_reg_v0.h"
-#include "usb20_reg_v3.h"
-#include "watchdog_reg_v3.h"
 
 
 

@@ -140,9 +140,9 @@ int pin_init(void);
 #define REG_PIN_SIMDA2                  ( 0x01b0 )
 #define REG_PIN_SIMRST2                 ( 0x01b4 )
 #define REG_PIN_MEMS_MIC_CLK0           ( 0x01b8 )
-#define REG_PIN_MEMS_MIC_DAT0           ( 0x01bc )
+#define REG_PIN_MEMS_MIC_DATA0          ( 0x01bc )
 #define REG_PIN_MEMS_MIC_CLK1           ( 0x01c0 )
-#define REG_PIN_MEMS_MIC_DAT1           ( 0x01c4 )
+#define REG_PIN_MEMS_MIC_DATA1          ( 0x01c4 )
 #define REG_PIN_SD1_CLK                 ( 0x01c8 )
 #define REG_PIN_SD1_CMD                 ( 0x01cc )
 #define REG_PIN_SD1_D0                  ( 0x01d0 )
@@ -308,6 +308,10 @@ int pin_init(void);
 #define REG_PIN_MTRST_N                 ( 0x0450 )
 
 /* bits definitions for register REG_PIN_XXX */
+#define BIT_PIN_SLP_AP                  ( BIT_13 )
+#define BIT_PIN_SLP_CP0                 ( BIT_14 )
+#define BIT_PIN_SLP_CP1                 ( BIT_15 )
+#define BIT_PIN_SLP_CP2                 ( BIT_16 )
 #define BITS_PIN_SLP(_x_)               ( ((_x_) << 13) & (BIT_13|BIT_14|BIT_15|BIT_16) )
 #define BIT_PIN_WPU_SEL                 ( BIT_12 )
 #define BITS_PIN_DS(_x_)                ( ((_x_) << 8) & (BIT_8|BIT_9|BIT_10) )
@@ -323,6 +327,8 @@ int pin_init(void);
 #define BIT_PIN_NUL                     ( 0 )
 #define BIT_PIN_SLP_NUL                 ( 0 )
 #define BIT_PIN_SLP_Z                   ( 0 )
-
+#define BIT_PIN_WPU_SEL                 ( BIT_12 )
+#define BIT_PIN_WPUS                    ( BIT_12 )
+#define BIT_PIN_NULL                    ( 0 )
 #endif //_PINMAP_H_
 

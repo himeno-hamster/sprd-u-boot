@@ -22,15 +22,11 @@
  **---------------------------------------------------------------------------*/
 #include <common.h>
 #include <asm/io.h>
-#include <asm/arch/sprd_reg_base.h>
-#include <asm/arch/sprd_reg_global.h>
-#include <asm/arch/regs_adi.h>
+#include <asm/arch/sci_types.h>
+#include <asm/arch/adi_reg_v3.h>
+#include <asm/arch/chip_drv_common_io.h>
 
 #define TIMEOUT_ADI	(300)
-#define CHIP_REG_OR(reg_addr, value)    (*(volatile unsigned int *)(reg_addr) |= (unsigned int)(value))
-#define CHIP_REG_AND(reg_addr, value)   (*(volatile unsigned int *)(reg_addr) &= (unsigned int)(value))
-#define CHIP_REG_GET(reg_addr)          (*(volatile unsigned int *)(reg_addr))
-#define CHIP_REG_SET(reg_addr, value)   (*(volatile unsigned int *)(reg_addr)  = (unsigned int)(value))
 
 /*****************************************************************************
  *  Description:    this function performs read operation to the analog die reg .   *
@@ -71,7 +67,7 @@ unsigned short ADI_Analogdie_reg_read (unsigned int addr)
 ******************************************************************************/
 void ADI_Analogdie_reg_write (unsigned int addr, unsigned short data)
 {
-	
+
 	int timeout = TIMEOUT_ADI;
 	do {////ADI_wait_fifo_empty
 		if ( ( (CHIP_REG_GET (ADI_FIFO_STS) & ( (unsigned int) ADI_FIFO_EMPTY)) != 0))
@@ -96,15 +92,15 @@ void ADI_Analogdie_reg_write (unsigned int addr, unsigned short data)
 ******************************************************************************/
 void ADI_init (void)
 {
-    CHIP_REG_OR (AONAPB_EB0, BIT_16);
+	CHIP_REG_OR (REG_AON_APB_APB_EB0, BIT_ADI_EB);
 
-    //reset ADI module
-    CHIP_REG_OR (AONAPB_RST0, BIT_17);
-    {
-        unsigned int wait = 50;
+	//reset ADI module
+	CHIP_REG_OR (REG_AON_APB_APB_RST0, BIT_ADI_SOFT_RST);
+	{
+		unsigned int wait = 50;
 
-        while (wait--);
-    }
-    CHIP_REG_AND (AONAPB_RST0, (~BIT_17));
+		while (wait--);
+	}
+	CHIP_REG_AND(REG_AON_APB_APB_RST0, (~BIT_ADI_SOFT_RST));
 }
 

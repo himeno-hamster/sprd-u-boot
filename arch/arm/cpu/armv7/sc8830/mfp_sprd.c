@@ -17,7 +17,9 @@
 //#define DEBUG
 
 #include <asm/arch/mfp.h>
-#include <asm/arch/sprd_reg_base.h>
+#include <asm/arch/sprd_reg.h>
+//#include <asm/arch/analog_reg_v3.h>
+//#include <asm/arch/regs_adi.h>
 #include <common.h>
 #include <asm/io.h>
 
@@ -49,7 +51,7 @@ static  int __mfp_validate(unsigned long c)
 static unsigned long __mfp_get_pin_reg(int pin_offset)
 {
 	if (!(pin_offset & A_DIE_PIN)) {
-		return (unsigned long)PIN_CTL_BASE + pin_offset;
+		return (unsigned long)SPRD_PIN_PHYS + pin_offset;
 	} else {
 //		pin_offset &= ~A_DIE_PIN;
 //		return (unsigned long)ANA_PIN_CTL_BASE + pin_offset;

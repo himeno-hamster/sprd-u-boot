@@ -21,7 +21,7 @@
 #ifndef _CMDDEF_H
 #define _CMDDEF_H
 #include "sci_types.h"
-#include "tasks_id.h"
+//#include "tasks_id.h"
 /**---------------------------------------------------------------------------*
  **                         Compiler Flag                                     *
  **---------------------------------------------------------------------------*/
@@ -107,12 +107,6 @@ typedef enum
 } diag_cmd_code_enum_type;
 
 
-//yujun.ke add for layer1 to diag signals
-typedef enum
-{
-    L1_DIAG_RD_CALI_PARAM_CNF = DIAG<<8,
-    L1_DIAG_WR_CALI_PARAM_CNF
-}SIGNALS_TO_DIAG_E;
 
 
 

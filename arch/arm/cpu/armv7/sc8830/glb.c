@@ -16,11 +16,6 @@
 #include <common.h>
 #include <asm/io.h>
 #include <asm/errno.h>
-#include <asm/arch/ldo.h>
-#include <asm/arch/sprd_reg_global.h>
-#include <asm/arch/regs_global.h>
-#include <asm/arch/regs_cpc.h>
-#include <asm/arch/analog_reg_v3.h>
 #include <ubi_uboot.h>
 #include <asm/sizes.h>
 
@@ -50,6 +45,7 @@ int sci_glb_write(u32 reg, u32 val, u32 msk)
 static int __is_glb(u32 reg)
 {
 	//return rounddown(reg, SZ_64K) == rounddown(GREG_BASE, SZ_64K) || rounddown(reg, SZ_64K) == rounddown(AHB_GEN_CTL_BEGIN, SZ_64K);
+	return 1;
 }
 
 int sci_glb_set(u32 reg, u32 bit)

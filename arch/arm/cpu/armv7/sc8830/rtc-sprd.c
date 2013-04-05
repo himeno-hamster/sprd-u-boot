@@ -11,7 +11,6 @@
 #include <common.h>
 #include "asm/arch/bits.h"
 #include "asm/arch/rtc_reg_v3.h"
-#include "asm/arch/regs_ana.h"
 #include "asm/arch/adi_hal_internal.h"
 
 #define CLEAR_RTC_INT(mask) \
@@ -179,20 +178,20 @@ int sprd_clean_rtc(void)
 	int err;
 	ANA_REG_AND(ANA_RTC_INT_EN, ~(RTC_INT_ALL_MSK)); // disable all interrupt
 
-	ANA_REG_OR(ANA_APB_MOD_EN, BIT_1);  //rtc enable
-	ANA_REG_OR(ANA_APB_RTC_CLK_EN, BIT_1); //rtc rtc clock enable
+	ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_RTC_EN); //rtc enable
+	ANA_REG_OR(ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_RTC_EN); //rtc rtc clock enable
 
 	CLEAR_RTC_INT(RTC_INT_ALL_MSK);
 	sprd_rtc_set_sec(0);
-    sprd_rtc_set_alarm_sec(0);
-    printf("now time sec %lu\n", sprd_rtc_get_sec());
-    printf("now alarm sec %lu\n", sprd_rtc_get_alarm_sec());
+	sprd_rtc_set_alarm_sec(0);
+	printf("now time sec %lu\n", sprd_rtc_get_sec());
+	printf("now alarm sec %lu\n", sprd_rtc_get_alarm_sec());
 
 	return 0;
 }
 void sprd_rtc_init(void)
 {
-	ANA_REG_OR(ANA_APB_MOD_EN, BIT_1);  //rtc enable
-	ANA_REG_OR(ANA_APB_RTC_CLK_EN, BIT_1); //rtc rtc clock enable
+	ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_RTC_EN); //rtc enable
+	ANA_REG_OR(ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_RTC_EN); //rtc rtc clock enable
 }
 

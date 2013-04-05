@@ -24,9 +24,9 @@
 #elif defined(CONFIG_SC8830)
 #define GR_CTRL_REG        CTL_BASE_APB
 #define GR_UART_CTRL_EN    (0x3 << 13 )
-#elif defined(CONFIG_TIGER)
-#define GR_CTRL_REG        0x4b000004
-#define GR_UART_CTRL_EN    (0x3 << 20 )
+#elif defined(CONFIG_SC8825)
+#define GR_CTRL_REG        0x4b000008
+#define GR_UART_CTRL_EN    ((0x7 << 20 ) | (1))  /*UART0 UART1 UART2 UART3 enable*/
 #elif defined(PLATFORM_SC8800G) || defined(CONFIG_SC8810)
 #define GR_CTRL_REG        0x8b000004
 /* GEN0_UART0_EN    (0x1 << 20) */
@@ -37,14 +37,10 @@
 #define GR_UART_CTRL_EN    0x00400000
 #endif
 
-#ifdef CONFIG_SC8830
-#define ARM_APB_CLK    26000000UL
-#else
 #ifdef FPGA_VERIFICATION 
 #define ARM_APB_CLK    48000000UL
 #else
 #define ARM_APB_CLK    26000000UL
-#endif
 #endif
 
 #if defined(CONFIG_SC7710G2)
@@ -75,10 +71,18 @@ UartPort_T gUart1PortInfo =
     115200
 };
 
-#if defined(CONFIG_SC7710G2)
+#if defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
 UartPort_T gUart3PortInfo =
 {
     ARM_UART3_BASE,
+    115200
+};
+#endif
+
+#if defined(CONFIG_SC8830)
+UartPort_T gUart2PortInfo =
+{
+    ARM_UART2_BASE,
     115200
 };
 #endif
@@ -119,7 +123,6 @@ LOCAL void SIO_HwOpen (struct FDL_ChannelHandler *channel, unsigned int divider)
     * (volatile unsigned int *) (port->regBase + ARM_UART_CTL0) = UARTCTL_BL8BITS | UARTCTL_SL1BITS;
     * (volatile unsigned int *) (port->regBase+ ARM_UART_CTL1) = 0;
     * (volatile unsigned int *) (port->regBase + ARM_UART_CTL2) = 0;
-
 }
 
 LOCAL int SIO_Open (struct FDL_ChannelHandler  *channel, unsigned int baudrate)
@@ -129,6 +132,9 @@ LOCAL int SIO_Open (struct FDL_ChannelHandler  *channel, unsigned int baudrate)
 
 	UartPort_T *port  = (UartPort_T *) channel->priv;
 	
+    divider = SIO_GetHwDivider (baudrate);
+    SIO_HwOpen (channel, divider);
+
     while(!SIO_TRANS_OVER(port->regBase))  /* Wait until all characters are sent out */
     {
     	i++;
@@ -139,9 +145,6 @@ LOCAL int SIO_Open (struct FDL_ChannelHandler  *channel, unsigned int baudrate)
     	}
     }
 
-    divider = SIO_GetHwDivider (baudrate);
-
-    SIO_HwOpen (channel, divider);
     return 0;
 
 }
@@ -291,7 +294,7 @@ struct FDL_ChannelHandler gUart1Channel =
     &gUart1PortInfo
 };
 
-#if defined(CONFIG_SC7710G2)
+#if defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
 struct FDL_ChannelHandler gUart3Channel =
 {
     SIO_Open,
@@ -303,6 +306,21 @@ struct FDL_ChannelHandler gUart3Channel =
     SIO_SetBaudrate,
     SIO_Close,
     &gUart3PortInfo
+};
+#endif
+
+#if defined(CONFIG_SC8830)
+struct FDL_ChannelHandler gUart2Channel =
+{
+    SIO_Open,
+    SIO_Read,
+    SIO_GetChar,
+    SIO_GetSingleChar,
+    SIO_Write,
+    SIO_PutChar,
+    SIO_SetBaudrate,
+    SIO_Close,
+    &gUart2PortInfo
 };
 #endif
 

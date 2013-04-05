@@ -1,7 +1,5 @@
 #include <common.h>
 #include <asm/arch/adc_reg_v3.h>
-#include <asm/arch/regs_adi.h>
-#include <asm/arch/regs_ana.h>
 #include <asm/arch/adc_drvapi.h>
 #include <asm/arch/adi_hal_internal.h>
 
@@ -10,8 +8,8 @@
 
 void ADC_Init(void)
 {
-	ANA_REG_OR(ANA_APB_MOD_EN, BIT_6); //ADC enable
-	ANA_REG_OR(ANA_APB_CLK_EN, BIT_9); //enable auxad clock
+	ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_ADC_EN); //ADC enable
+	ANA_REG_OR(ANA_REG_GLB_ARM_CLK_EN,    BIT_CLK_AUXAD_EN); //enable auxad clock
 
 	ANA_REG_OR(ADC_CTRL, ADC_EN_BIT);
 	ANA_REG_OR(ADC_CTRL, ADC_MODE_12B);
@@ -29,12 +27,18 @@ void ADC_SetCs(adc_channel id)
 
 void ADC_SetScale(bool scale)
 {
-    if(ADC_SCALE_1V2 == scale){
+    if(ADC_SCALE_1V2 == scale)
+    {
         ANA_REG_AND(ADC_CS, ~ADC_SCALE_BIT);
-    }else if(ADC_SCALE_3V == scale){
+    }
+    else if(ADC_SCALE_3V == scale)
+    {
         ANA_REG_OR(ADC_CS, ADC_SCALE_BIT);
-    }else
-      pr_err("adc scale %d not support\n", scale);
+    }
+    else
+    {
+        pr_err("adc scale %d not support\n", scale);
+    }
 }
 
 int32_t ADC_GetValue(adc_channel id, bool scale)

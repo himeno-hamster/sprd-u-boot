@@ -20,7 +20,7 @@
 #include <asm/arch/sc_reg.h>
 #include <asm/arch/adi_hal_internal.h>
 #include <asm/arch/watchdog_phy.h>
-
+#include <asm/arch/watchdog_reg_v3.h>
 /**---------------------------------------------------------------------------*
  **                         Compiler Flag                                     *
  **---------------------------------------------------------------------------*/
@@ -123,8 +123,8 @@ PUBLIC int32 WDG_PHY_INT_CLR (void)
 }
 PUBLIC void WDG_ClockOn(void)
 {
-	ANA_REG_OR (ANA_APB_MOD_EN, BIT_2); //WDG enable
-	ANA_REG_OR (ANA_APB_RTC_CLK_EN, BIT_2); //WDG Rtc enable
+	ANA_REG_OR (ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_WDG_EN); //WDG enable
+	ANA_REG_OR (ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_WDG_EN); //WDG Rtc enable
 }
 
 

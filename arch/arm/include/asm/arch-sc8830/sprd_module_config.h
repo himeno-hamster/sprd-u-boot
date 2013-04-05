@@ -117,7 +117,9 @@ extern   "C"
 **                               Micro Define for SDIO                    **
 **---------------------------------------------------------------------------*/
 #define     SDIO_BASE_CLK_384M      384000000        // 384 MHz
+#define     SDIO_BASE_CLK_312M      312000000        // 312 MHz
 #define     SDIO_BASE_CLK_256M      256000000        // 256 MHz
+#define     SDIO_BASE_CLK_192M      192000000        // 192 MHz
 #define     SDIO_BASE_CLK_153M      153000000        // 153 MHz
 #define     SDIO_BASE_CLK_96M       96000000        // 96 MHz
 #define     SDIO_BASE_CLK_80M       80000000        // 80 MHz
@@ -222,15 +224,6 @@ extern   "C"
 #define SDIO_TRANSFER_CMPLETE       (BIT_1)
 #define SDIO_CMD_CMPLETE            (BIT_0)
 
-#include "sprd_int_cfg.h"
-#include "sprd_gpio_cfg.h"
-#include "sprd_i2c_cfg.h"
-#include "sprd_mem_cfg.h"
-#include "sprd_dma_cfg.h"
-#include "sprd_freq_cfg.h"
-#include "sprd_auddev_cfg.h"
-#include "sprd_sleep_cfg.h"
-#include "sprd_timer_cfg.h"
 /**----------------------------------------------------------------------------*
 **                         Local Function Prototype                           **
 **----------------------------------------------------------------------------*/

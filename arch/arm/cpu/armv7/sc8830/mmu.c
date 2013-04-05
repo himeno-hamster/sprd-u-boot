@@ -42,18 +42,7 @@ in 6800 serirs, maybe has little problem, have risk to overlap the memory!!!!
 Now, change to 0x008f0000, in reserved region.
 */
 
-#ifdef CONFIG_SC8825
 const uint32 const_MMUTableStartAddr       = 0x81600000 - 16*1024;
-const uint32 const_MMUTableStartAddrRemap1 = 0x81600000 - 16*1024;
-#else
-const uint32 const_MMUTableStartAddr       = 0x008f0000 ;//remap = 0,sdram from 0x0
-
-const uint32 const_MMUTableStartAddrRemap1 = 0x31600000 - 16*1024;//remap = 1,sdram from 0x3000,0000
-#endif
-//MMU_TABLE_ADDR must be aligned by 16K-Byte.
-#define MMU_TABLE_ADDR         ((const_MMUTableStartAddr) & 0xFFFFC000 )
-#define MMU_TABLE_ADDR_REMAP   ((const_MMUTableStartAddrRemap1) & 0xFFFFC000 )
-
 
 // MMU page table starting address to be referred in mmu_asm.s
 unsigned int *g_mmu_page_table;
@@ -61,87 +50,22 @@ unsigned int *g_mmu_page_table;
 void MMU_Init (unsigned pageBaseAddr)
 {
     unsigned int *page_table;
-    uint32 remap;
     int i;
 
-#ifdef PLATFORM_SC6800H
-    remap = * (volatile uint32 *) 0x20900014;
-#else
-    remap = * (volatile uint32 *) 0x20900218;
-#endif
-
-#ifdef CONFIG_SC8810
-
-    if (pageBaseAddr != 0 && ((pageBaseAddr & (~0xFFFFC000)) == 0) )
-    {
-	g_mmu_page_table = pageBaseAddr;
-    }
-    else
-    {
-    	g_mmu_page_table = (unsigned int *) MMU_TABLE_ADDR;
-    }
-#else
-    if (remap&0x01)
-    {
-        g_mmu_page_table = (unsigned int *) MMU_TABLE_ADDR_REMAP;
-    }
-    else
-    {
-        g_mmu_page_table = (unsigned int *) MMU_TABLE_ADDR;
-    }
-#endif
     // 15Mb physical addr for page table
-    page_table = g_mmu_page_table;
+    page_table = const_MMUTableStartAddr;
 
     // Create page table 1mb entries
     for (i = 0; i < 0x1000; i++)
     {
-#ifdef CONFIG_SC8825
-	if (i>=0x800 && i<0xa00)
-	{
-            page_table[i] = (MMU_SD_CONST|MMU_AP_B11|MMU_C_BIT|MMU_B_BIT) + (i << 20);
-	}
-#else
-#ifdef CONFIG_SC8810 		  
-       if (i < 0x100)
-       {
-       		page_table[i] = (MMU_SD_CONST|MMU_AP_B11|MMU_C_BIT |MMU_B_BIT) + (i << 20);
-       }
-#else	
-        // SDRAM -> CB (write back):0x0-0x0FFFFFFF
-        if (i < 0xA)
-        {
-            page_table[i] = (MMU_SD_CONST|MMU_AP_B11|MMU_C_BIT |MMU_B_BIT) + (i << 20);
-        }
-		
-//else if (( i>=0x12 )&&(i <= 0x15)){
-        //  page_table[i] = (MMU_SD_CONST|MMU_AP_B11) + (i << 20);
-        //}
-        else if ( (i>0x14) && (i < 0x100))
-        {
-            page_table[i] = (MMU_SD_CONST|MMU_AP_B11|MMU_C_BIT|MMU_B_BIT) + (i << 20);
-        }
-        // Internal Shared Memeory: 0x1000_0000-0x1FFF_FFFF
-        //else if ((i >= 0x100) && (i < 0x200))
-        //  page_table[i] = 0x00000C1E + (i << 20);
-        // Internal RAM Memeory: CB
-#endif        
-        else if (( (i >= 0x300) && (i <= 0x400)) )//  || (mustSetIramCached == TRUE && i == 0x400) )
-        {
-            page_table[i] = (MMU_SD_CONST|MMU_AP_B11|MMU_C_BIT|MMU_B_BIT) + (i << 20);
-        }
-        // FLASH memory:No CB
-        //else if ((i >= 0x400) && (i < 0x500))
-        //    page_table[i] = 0x00000C12 + (i << 20);
-        // IO: NO CB
-        //else if ((i >= 0x700) && (i < 0x900))
-        //    page_table[i] = 0x00000C12 + (i << 20);
-        // No Access
-#endif
-        else
-        {
-            page_table[i] = (MMU_SD_CONST|MMU_AP_B11) + (i << 20);
-        }
+		if (i>=0x800 && i<0xa00)
+		{
+			page_table[i] = (MMU_SD_CONST|MMU_AP_B11|MMU_C_BIT|MMU_B_BIT) + (i << 20);
+		}
+		else
+		{
+		    page_table[i] = (MMU_SD_CONST|MMU_AP_B11) + (i << 20);
+		}
     }
 
     MMU_InvalideICACHEALL();//steve.zhan add.
