@@ -16,11 +16,9 @@
 
 #include <asm/io.h>
 #ifdef CONFIG_SC8830
-#include <asm/arch/sprd_reg_ahb.h>
+#include <asm/arch/sprd_reg.h>
 #include <asm/arch/sprd_reg_base.h>
-#define 	DSI_CTL_BEGIN	MIPIDSIC_BASE
-#define	AHB_SOFT_RST	 (AHB_REG_BASE + 0x0210)
-#define	DSI_SOFT_RST	(26)
+#define 	DSI_CTL_BEGIN	CTL_BASE_DSI
 #else
 #include <asm/arch/sc8810_reg_ahb.h>
 #include <asm/arch/sc8810_reg_base.h>
@@ -72,13 +70,13 @@ static void dsi_core_write_function(uint32_t addr, uint32_t offset, uint32_t dat
 static void dsi_reset(void)
 {
 #ifdef CONFIG_SC8830
-	__raw_writel(__raw_readl(AHB_SOFT_RST) | (1<<DSI_SOFT_RST), AHB_SOFT_RST);
+	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) | (1<<BIT_DSI_SOFT_RST), REG_AP_AHB_AHB_RST);
 #else
 	__raw_writel(__raw_readl(AHB_SOFT_RST) | (1<<DSI_SOFT_RST), AHB_SOFT_RST);
 #endif
 	udelay(10);
 #ifdef CONFIG_SC8830
-	__raw_writel(__raw_readl(AHB_SOFT_RST) & (~(1<<DSI_SOFT_RST)),AHB_SOFT_RST);
+	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) & (~(1<<BIT_DSI_SOFT_RST)),REG_AP_AHB_AHB_RST);
 #else
 	__raw_writel(__raw_readl(AHB_SOFT_RST) & (~(1<<DSI_SOFT_RST)),AHB_SOFT_RST);
 #endif
