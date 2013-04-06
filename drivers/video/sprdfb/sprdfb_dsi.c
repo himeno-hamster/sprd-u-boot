@@ -18,6 +18,9 @@
 #ifdef CONFIG_SC8830
 #include <asm/arch/sprd_reg_ahb.h>
 #include <asm/arch/sprd_reg_base.h>
+#define 	DSI_CTL_BEGIN	MIPIDSIC_BASE
+#define	AHB_SOFT_RST	 (AHB_REG_BASE + 0x0210)
+#define	DSI_SOFT_RST	(26)
 #else
 #include <asm/arch/sc8810_reg_ahb.h>
 #include <asm/arch/sc8810_reg_base.h>
@@ -69,11 +72,13 @@ static void dsi_core_write_function(uint32_t addr, uint32_t offset, uint32_t dat
 static void dsi_reset(void)
 {
 #ifdef CONFIG_SC8830
+	__raw_writel(__raw_readl(AHB_SOFT_RST) | (1<<DSI_SOFT_RST), AHB_SOFT_RST);
 #else
 	__raw_writel(__raw_readl(AHB_SOFT_RST) | (1<<DSI_SOFT_RST), AHB_SOFT_RST);
 #endif
 	udelay(10);
 #ifdef CONFIG_SC8830
+	__raw_writel(__raw_readl(AHB_SOFT_RST) & (~(1<<DSI_SOFT_RST)),AHB_SOFT_RST);
 #else
 	__raw_writel(__raw_readl(AHB_SOFT_RST) & (~(1<<DSI_SOFT_RST)),AHB_SOFT_RST);
 #endif
@@ -117,6 +122,7 @@ static int32_t dsi_edpi_setbuswidth(struct info_mipi * mipi)
 		break;
 	}
 #ifdef CONFIG_SC8830
+	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_DPI_CFG, (uint32_t)(color_coding<<2));
 #else
 	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_DPI_CFG, (uint32_t)(color_coding<<2));
 #endif
@@ -127,6 +133,7 @@ static int32_t dsi_edpi_setbuswidth(struct info_mipi * mipi)
 static int32_t dsi_edpi_init(void)
 {
 #ifdef CONFIG_SC8830
+	dsi_core_write_function((uint32_t)DSI_CTL_BEGIN,  (uint32_t)DSI_EDPI_CFG, 0x10500);
 #else
 	dsi_core_write_function((uint32_t)DSI_CTL_BEGIN,  (uint32_t)DSI_EDPI_CFG, 0x10500);
 #endif
@@ -214,6 +221,7 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 
 	dsi_early_int();
 #ifdef CONFIG_SC8830
+	phy->address = DSI_CTL_BEGIN;
 #else
 	phy->address = DSI_CTL_BEGIN;
 #endif
@@ -223,6 +231,7 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 	phy->log_info = NULL;
 	phy->reference_freq = DSI_PHY_REF_CLOCK;
 #ifdef CONFIG_SC8830
+	dsi_instance->address = DSI_CTL_BEGIN;
 #else
 	dsi_instance->address = DSI_CTL_BEGIN;
 #endif
@@ -252,7 +261,8 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 	}
 */
 #ifdef CONFIG_SC8830
-
+	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_ERROR_MSK0, 0x1fffff);
+	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_ERROR_MSK1, 0x3ffff);
 #else
 	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_ERROR_MSK0, 0x1fffff);
 	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_ERROR_MSK1, 0x3ffff);
@@ -269,6 +279,7 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 		return -1;
 	}
 #ifdef CONFIG_SC8830
+	while(5 != (dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_STATUS) & 5));
 #else
 	while(5 != (dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_STATUS) & 5));
 #endif
@@ -319,6 +330,7 @@ int32_t sprdfb_dsi_uninit(struct sprdfb_device *dev)
 	}
 
 #ifdef CONFIG_SC8830
+	dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL, 0);
 #else
 	dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL, 0);
 #endif
@@ -334,6 +346,8 @@ int32_t sprdfb_dsi_ready(struct sprdfb_device *dev)
 	if(SPRDFB_MIPI_MODE_CMD == mipi->work_mode){
 		mipi_dsih_cmd_mode(&(dsi_ctx.dsi_inst), 1);
 #ifdef CONFIG_SC8830
+		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_CMD_MODE_CFG, 0x1);
+		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL, 0x1);
 #else		
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_CMD_MODE_CFG, 0x1);
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL, 0x1);
@@ -341,16 +355,20 @@ int32_t sprdfb_dsi_ready(struct sprdfb_device *dev)
 	}else{
 		mipi_dsih_video_mode(&(dsi_ctx.dsi_inst), 1);
 #ifdef CONFIG_SC8830
+		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PWR_UP, 0);
 #else
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PWR_UP, 0);
 #endif
 		udelay(100);
 #ifdef CONFIG_SC8830
+		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PWR_UP, 1);
 #else
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PWR_UP, 1);
 #endif
 		udelay(10*1000);
 #ifdef CONFIG_SC8830
+		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST0);
+		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST1);
 #else
 		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST0);
 		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST1);
