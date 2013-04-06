@@ -18,7 +18,7 @@
 
 #include "sprdfb.h"
 
-#define CONFIG_FB_NO_FMARK    /*Jessica for FPGA*/
+//#define CONFIG_FB_NO_FMARK    /*Jessica for FPGA*/
 
 static int32_t dispc_mcu_send_cmd(uint32_t cmd)
 {
