@@ -4,11 +4,11 @@
 #include "sdio_card_pal.h"
 #include "sdhost_drv.h"
 #include "asm/arch/mmu_drvapi.h"
-#include "asm/arch/chng_freq.h"
+//#include "asm/arch/chng_freq.h"
 #include "asm/arch/sc_reg.h"
 
-#include "asm/arch/deep_sleep.h"
-#include "asm/arch/deepsleep_drvapi.h"
+//#include "asm/arch/deep_sleep.h"
+//#include "asm/arch/deepsleep_drvapi.h"
 
 #define DUAL_TCARD_SUPPORT
 #ifndef OS_NONE

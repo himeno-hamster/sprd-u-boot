@@ -24,7 +24,7 @@
 
 #if   defined(CONFIG_SC8825) || defined (CONFIG_SC7710G2) || defined (CONFIG_SC8830)
 #include <asm/arch/sdio_reg_v3.h>
-#include <asm/arch/int_reg_v3.h>
+//#include <asm/arch/int_reg_v3.h>
 #include <asm/arch/sys_timer_reg_v0.h>
 #endif
 
