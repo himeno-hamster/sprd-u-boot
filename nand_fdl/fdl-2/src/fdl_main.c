@@ -91,10 +91,10 @@ int main(void)
 	int err;
 	uint32 sigture_address;
 	unsigned int i, j;
-#ifndef CONFIG_SC8830
-  	MMU_Init(0);
-#endif
- 	sigture_address = (uint32)FDL2_signature;
+
+	MMU_Init(0);
+
+	sigture_address = (uint32)FDL2_signature;
 
 #if defined(CHIP_ENDIAN_DEFAULT_LITTLE) && defined(CHIP_ENDIAN_BIG)    
 	usb_boot(1);  
