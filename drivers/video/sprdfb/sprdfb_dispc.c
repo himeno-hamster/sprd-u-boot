@@ -19,6 +19,13 @@
 #ifdef CONFIG_SC8830
 #include <asm/arch/sprd_reg_ahb.h>
 #include <asm/arch/sprd_reg_global.h>
+
+#define AHB_DISPC_CLK       (AHB_REG_BASE + 0x220)
+#define AHB_DISPC_CLK_EN	(AHB_REG_BASE + 0x208)
+#define AHB_DISPC_EN	(AHB_REG_BASE + 0x200)
+#define AHB_DISPC_SOFT_RST	(AHB_REG_BASE + 0x210)
+
+
 #else
 #include <asm/arch/sc8810_reg_ahb.h>
 #include <asm/arch/sc8810_reg_global.h>
@@ -64,7 +71,10 @@ static void dispc_reset(void)
 	udelay(10);
 	__raw_writel(__raw_readl(AHB_SOFT2_RST) & (~(1<<DISPC_SOFT_RST)), AHB_SOFT2_RST);
 #elif defined CONFIG_SC8830
-	// to do
+	#define DISPC_SOFT_RST (20)
+	__raw_writel(__raw_readl(AHB_DISPC_SOFT_RST) | (1<<DISPC_SOFT_RST), AHB_DISPC_SOFT_RST);
+	udelay(10);
+	__raw_writel(__raw_readl(AHB_DISPC_SOFT_RST) & (~(1<<DISPC_SOFT_RST)), AHB_DISPC_SOFT_RST);
 #else
 	__raw_writel(__raw_readl(AHB_SOFT_RST) | (1<<DISPC_SOFT_RST), AHB_SOFT_RST);
 	udelay(10);
@@ -237,7 +247,10 @@ static void dispc_update_clock(struct sprdfb_device *dev)
 		reg_val |= (dividor-1) << 12;
 		__raw_writel(reg_val, AHB_CTL6);
 #elif defined CONFIG_SC8830
-
+		reg_val = __raw_readl(AHB_DISPC_CLK);
+		reg_val  &= 0xF807FFFF; /*ckear bit 19~bit 26 */
+		reg_val |= (dividor-1) << 19;
+		__raw_writel(reg_val, AHB_DISPC_CLK);
 #else
 		reg_val = __raw_readl(AHB_DISPC_CLK);
 		reg_val  &= 0xF807FFFF; /*ckear bit 19~bit 26 */
@@ -295,6 +308,51 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	printf("0x2090023c = 0x%x\n", __raw_readl(0x2090023c));
 #elif defined CONFIG_SC8830
 	// to do
+	//select DISPC clock source
+	__raw_bits_and(~(1<<1), AHB_DISPC_CLK);    //pll_src=256M
+	__raw_bits_and(~(1<<2), AHB_DISPC_CLK);
+
+	//set DISPC divdior
+	__raw_bits_and(~(1<<3), AHB_DISPC_CLK);  //div=0
+	__raw_bits_and(~(1<<4), AHB_DISPC_CLK);
+	__raw_bits_and(~(1<<5), AHB_DISPC_CLK);
+
+	//select DBI clock source
+	__raw_bits_and(~(1<<9), AHB_DISPC_CLK);    //pll_src=256M
+	__raw_bits_and(~(1<<10), AHB_DISPC_CLK);
+
+	//set DBI divdior
+	__raw_bits_and(~(1<<11), AHB_DISPC_CLK);  //div=0
+	__raw_bits_and(~(1<<12), AHB_DISPC_CLK);
+	__raw_bits_and(~(1<<13), AHB_DISPC_CLK);
+
+	//select DPI clock source
+	__raw_bits_and(~(1<<17), AHB_DISPC_CLK);    //pll_src=384M
+	__raw_bits_and(~(1<<18), AHB_DISPC_CLK);
+
+	//set DPI divdior
+	__raw_bits_and(~(1<<19), AHB_DISPC_CLK);  //div=10, dpi_clk = pll_src/(10+1)
+	__raw_bits_or((1<<20), AHB_DISPC_CLK);
+	__raw_bits_and(~(1<<21), AHB_DISPC_CLK);
+	__raw_bits_or((1<<22), AHB_DISPC_CLK);
+	__raw_bits_and(~(1<<23), AHB_DISPC_CLK);
+	__raw_bits_and(~(1<<24), AHB_DISPC_CLK);
+	__raw_bits_and(~(1<<25), AHB_DISPC_CLK);
+	__raw_bits_and(~(1<<26), AHB_DISPC_CLK);
+
+	//enable dispc matric clock
+	__raw_bits_or((1<<9), AHB_DISPC_CLK_EN);  //core_clock_en
+	__raw_bits_or((1<<11), AHB_DISPC_CLK_EN);  //matrix clock en
+
+	//enable DISPC clock
+	__raw_bits_or(1<<22, AHB_DISPC_EN);
+
+	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC / 11;
+
+	printf("0x20D00200 = 0x%x\n", __raw_readl(0x20D00200));
+	printf("0x20D00208 = 0x%x\n", __raw_readl(0x20D00208));
+	printf("0x20D00220 = 0x%x\n", __raw_readl(0x20D00220));
+
 #else
 	//select DISPC clock source
 	__raw_bits_and(~(1<<1), AHB_DISPC_CLK);    //pll_src=256M
@@ -389,7 +447,7 @@ static int32_t sprdfb_dispc_uninit(struct sprdfb_device *dev)
 	//disable DISPC clock
 	__raw_bits_and(~(1<<0), AHB_CTL6);
 #elif defined CONFIG_SC8830
-	// to do
+	__raw_bits_or(~(1<<22), AHB_DISPC_EN);
 #else
 	//disable DISPC clock
 	__raw_bits_and(~(1<<22), AHB_CTL0);
