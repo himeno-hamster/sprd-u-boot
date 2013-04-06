@@ -37,7 +37,6 @@
 	do {		\
 		if(!(condition)) { \
 			printf("function :%s\r\n", __FUNCTION__);\
-			BUG();	\
 		} \
 	}while(0)
 
@@ -563,7 +562,7 @@ LDO_ERR_E LDO_TurnOnLDO(LDO_ID_E ldo_id)
 	ctl = LDO_GetLdoCtl(ldo_id);
 	SCI_PASSERT(ctl != NULL, ("ldo_id = %d", ldo_id));
 
-	if ((ctl->ref++) == 0)
+	//if ((ctl->ref++) == 0)
 	{
 		if(ctl->bp_reg == LDO_INVALID_REG_ADDR) 
 		{
@@ -581,8 +580,8 @@ LDO_ERR_E LDO_TurnOnLDO(LDO_ID_E ldo_id)
 					return LDO_ERR_ERR;
 				return LDO_ERR_OK;
 			}
-			ANA_REG_AND(ctl->bp_reg,     ~(ctl->bp_bits));
 			ANA_REG_OR (ctl->bp_rst_reg, ctl->bp_rst);
+			ANA_REG_AND(ctl->bp_reg,     ~(ctl->bp_bits));
 		}
 		ctl->current_status = CURRENT_STATUS_ON;
 	}
@@ -597,9 +596,9 @@ LDO_ERR_E LDO_TurnOffLDO(LDO_ID_E ldo_id)
 	ctl = LDO_GetLdoCtl(ldo_id);
 	SCI_PASSERT(ctl != NULL, ("ldo_id = %d", ldo_id));
 
-	local_irq_save(flags);
+	//local_irq_save(flags);
 
-	if ((--ctl->ref) == 0) 
+	//if ((--ctl->ref) == 0) 
 	{
 		if(ctl->bp_reg == LDO_INVALID_REG_ADDR)
 		{
@@ -622,7 +621,7 @@ LDO_ERR_E LDO_TurnOffLDO(LDO_ID_E ldo_id)
 		ctl->current_status = CURRENT_STATUS_OFF;
 	}
 
-	local_irq_restore(flags);
+	//local_irq_restore(flags);
 
 	return LDO_ERR_OK;
 }

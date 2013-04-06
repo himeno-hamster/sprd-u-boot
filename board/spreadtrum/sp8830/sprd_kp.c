@@ -1,15 +1,10 @@
 #include <common.h>
 #include <malloc.h>
 #include "key_map.h"
-#ifdef CONFIG_SC8825
-#include <asm/arch/sc8810_keypad.h>
-#elif defined CONFIG_SC8830
-#include <asm/arch/sprd_keypad.h>
-#else
-#error "no keypad definition file included"
-#endif
-#include <asm/arch/mfp.h>
 #include <boot_mode.h>
+#include <asm/arch/mfp.h>
+#include <asm/arch/sprd_keypad.h>
+#include <asm/arch/chip_drv_common_io.h>
 
 struct key_map_info * sprd_key_map = 0;
 
@@ -60,16 +55,10 @@ void board_keypad_init(void)
     }
 
     /* init sprd keypad controller */
-#ifndef CONFIG_SC8830
-    REG_INT_DIS = (1 << IRQ_KPD_INT);
-#endif
 
-#ifdef CONFIG_SC8830
-    *((volatile unsigned int *)AONAPB_EB0) |= BIT_8;
-    *((volatile unsigned int *)AONAPB_RTC_EB) |= BIT_1;
-#else
-    REG_GR_GEN0 |= BIT_8 | BIT_26;
-#endif
+    REG32(REG_AON_APB_APB_EB0) |= BIT_8;
+    REG32(REG_AON_APB_APB_RTC_EB) |= BIT_1;
+
     sprd_config_keypad_pins();
     REG_KPD_INT_CLR = KPD_INT_ALL;
     REG_KPD_POLARITY = CFG_ROW_POLARITY | CFG_COL_POLARITY;
@@ -90,14 +79,8 @@ void board_keypad_init(void)
         }
     }
 #endif
-	//open eic module
-#ifdef CONFIG_SC8830
-    *((volatile unsigned int *)AONAPB_EB0) |= BIT_14;
-    *((volatile unsigned int *)AONAPB_RTC_EB) |= BIT_6;	
-#else
-    REG_GR_GEN0 |= (BIT_9 | BIT_24);//EIC_EN,RTC_EIC_EN
-    printf("GEN0 %x\n", REG_GR_GEN0);
-#endif
+    REG32(REG_AON_APB_APB_EB0) |= BIT_8;
+    REG32(REG_AON_APB_APB_RTC_EB) |= BIT_1;
     return;
 }
 

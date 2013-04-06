@@ -17,16 +17,16 @@
 #define _PINMAP_H_
 
 #include "sci_types.h"
-#include "sprd_reg_base.h"
+#include "sprd_reg.h"
 
 typedef struct {
-		uint32_t reg;
-			uint32_t val;
+	uint32_t reg;
+	uint32_t val;
 } pinmap_t;
 int pin_init(void);
 //int pin_init(pinmap_t * pinmap);
 
-#define CTL_PIN_BASE			(PIN_CTL_BASE)
+#define CTL_PIN_BASE			(SPRD_PIN_PHYS)
 
 /* registers definitions for controller CTL_PIN */
 #define REG_PIN_CTRL0                   ( 0x0000 )

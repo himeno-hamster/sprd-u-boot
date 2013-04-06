@@ -13,14 +13,11 @@
  */
 #include <asm/io.h>
 #include <asm/arch/gpio.h>
-
-#include <asm/arch/sprd_reg_global.h>
-#include <asm/arch/sprd_reg_base.h>
-#include <asm/arch/gpio_reg_v0.h>
 #include <asm/arch/gpio_phy.h>
+#include <asm/arch/sprd_reg.h>
+#include <asm/arch/gpio_reg_v0.h>
 #include <asm/arch/asm_generic_gpio.h>
-#include <asm/arch/regs_ana.h>
-#include <asm/arch/regs_global.h>
+#include <asm/arch/chip_drv_common_io.h>
 
 #define KERN_WARNING ""
 #define WARN(nmu, fmt...) printf(fmt)
@@ -973,12 +970,6 @@ __init void sprd_gpio_init(void)
 #endif
 void sprd_gpio_init(void)
 {
-	unsigned int temp;
-    temp = readl(GR_GEN0);
-    temp |= (GEN0_GPIO_EN);
-    writel(temp, GR_GEN0);
-
-    volatile i = 0x2fff;
-    while (i--);
-	ANA_REG_OR (ANA_APB_MOD_EN, BIT_7); //Adie gpio enable
+	REG32(REG_AON_APB_APB_EB0) |= BIT_GPIO_EB;
+	ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_GPIO_EN);
 }
