@@ -53,6 +53,8 @@ BOOLEAN channel_read(uint8* buf, uint32 size, uint32* hasRead)
 		while(0 == gpio_get_value(CP_AP_RDY));
 
 		retRead = sdio_read(channel_fd,_revBuf,_REV_BUFSIZE);
+
+		printf("channel_read-0 retRead %x\n", retRead);		
 		if((sizeof(CHANNEL_PACKET_HEADER)+size) > retRead){
 			ifSuccess = 0;
 		}
@@ -69,13 +71,15 @@ BOOLEAN channel_read(uint8* buf, uint32 size, uint32* hasRead)
 			ifSuccess = 1;
 		}
 
+		printf("channel_read-0 ifSuccess %x\n", ifSuccess);		
+
 		if(ifSuccess) {
 			gpio_set_value(AP_CP_RDY, 1);
 			gpio_set_value(AP_CP_RTS, 0);
 			while(1 == gpio_get_value(CP_AP_RDY));
 			return 1;
 		} else {
-			gpio_set_value(AP_CP_RDY, 0);
+			gpio_set_value(AP_CP_RDY, 1);
 			gpio_set_value(AP_CP_RTS, 0);
 			while(1 == gpio_get_value(CP_AP_RDY));
 			return 0;
