@@ -49,7 +49,7 @@ LOCAL EMC_PARAM_T s_emc_config = {0};
 
 void delay(uint32 k)
 {
-    uint32 i, j;
+    volatile uint32 i, j;
 
     for (i=0; i<k; i++)
     {
@@ -627,52 +627,57 @@ void set_emc_pad(uint32 dqs_drv,uint32 data_drv,uint32 ctl_drv, uint32 clk_drv)
 
     for(i = 0; i < 2; i++)
     {// ckdp ckdm
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CLKDMMEM_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CLKDMMEM_REG_OFFS) + i*4) |= (clk_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CLKDMMEM_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CLKDMMEM_REG_OFFS) + i*4) |= ((clk_drv<<8) | 0x4);
     }
 
     //addr
     for(i = 0; i < 14; i++)
     {
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMA0_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMA0_REG_OFFS) + i*4) |= (ctl_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMA0_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMA0_REG_OFFS) + i*4) |= ((ctl_drv<<8) | 0x4);
     }
 
     for(i = 0; i < 7; i++)
     {//bank0 bank1 casn cke0 cke1 csn0 csn1
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMBA0_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMBA0_REG_OFFS) + i*4) |= (ctl_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMBA0_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMBA0_REG_OFFS) + i*4) |= ((ctl_drv<<8) | 0x4);
+    }
+
+    for(i = 0; i < 2; i++)
+    {//cke0 cke1
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMCKE0_REG_OFFS) + i*4) |= 0x5;
     }
 
     for(i = 0; i < 4; i++)
     {//dqm
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMDQM0_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMDQM0_REG_OFFS) + i*4) |= (data_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMDQM0_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMDQM0_REG_OFFS) + i*4) |= ((data_drv<<8) | 0x4);
     }
 
     for(i = 0; i < 4; i++)
     {//dqs
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMDQS0_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMDQS0_REG_OFFS) + i*4) |= (dqs_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMDQS0_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMDQS0_REG_OFFS) + i*4) |= ((dqs_drv<<8) | 0x4);
     }
 
     //data
     for(i = 0; i < 32; i++)
     {
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMD0_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMD0_REG_OFFS) + i*4) |= (data_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMD0_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMD0_REG_OFFS) + i*4) |= ((data_drv<<8) | 0x4);
     }
 
     for(i = 0; i < 2; i++)
     {//gpre_loop gpst_loop
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMGPRE_LOOP_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMGPRE_LOOP_REG_OFFS) + i*4) |= (ctl_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMGPRE_LOOP_REG_OFFS) + i*4) &= (~0x300F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMGPRE_LOOP_REG_OFFS) + i*4) |= ((ctl_drv<<8) | 0x4);
     }
 
     for(i = 0; i < 2; i++)
     {//rasn wen
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMRAS_N_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_EMRAS_N_REG_OFFS) + i*4) |= (ctl_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMRAS_N_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_EMRAS_N_REG_OFFS) + i*4) |= ((ctl_drv<<8) | 0x4);
     }
 }
 
@@ -860,7 +865,6 @@ LOCAL BOOLEAN DRAM_Para_SelfAdapt(void)
             )
         {
             pCfg->data_width = DATA_WIDTH_16;
-            
         }
         else if((pCfg->data_width == DATA_WIDTH_16)
                 && (pCfg->sdram_type == DDR_SDRAM)
@@ -1119,7 +1123,9 @@ void sdram_init(void)
     set_emc_pad(s_emc_config.dqs_drv, s_emc_config.dat_drv, s_emc_config.ctl_drv, s_emc_config.clk_drv);
 
     set_emc_clock_freq();
-    
+
+    delay(200000);
+
 #ifdef SDRAM_AUTODETECT_SUPPORT
     for (i=0; i<3; i++)
     {
