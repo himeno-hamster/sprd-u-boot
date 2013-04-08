@@ -25,10 +25,14 @@ parse_len(const char *str, uint64_t *plen)
     char tmp[64];
     int len_str;
     uint32_t multiple = 1;
-
+	int i;
     strncpy(tmp, str, sizeof(tmp));
     tmp[sizeof(tmp)-1] = '\0';
     len_str = strlen(tmp);
+	for(i=0;i<len_str;i++) {
+		printf("%c",tmp[i]);
+		}
+	printf("\n");
     if (!len_str) {
         printf("Invalid disk length specified.");
         return 1;
@@ -112,11 +116,11 @@ load_partitions(cnode *root, struct disk_info *dinfo)
             uint64_t len;
             if (parse_len(tmp, &len))
                 return 1;
-            pinfo->len_kb = (uint32_t) len/2;
+            pinfo->len_sec = (uint32_t) len;
 	    pinfo->start_lba = plba;
-	    plba = pinfo->len_kb /dinfo->sect_size + plba;
+	    plba = pinfo->len_sec /dinfo->sect_size + plba;
         } else 
-            pinfo->len_kb = 0;
+            pinfo->len_sec = 0;
 
         ++dinfo->num_parts;
     }
@@ -475,10 +479,10 @@ dump_disk_config(struct disk_info *dinfo)
                part->flags & PART_ACTIVE_FLAG ? "Active" : "None");
         printf("\t\ttype = %s\n",
                part->type == PC_PART_TYPE_LINUX ? "Linux" : "Unknown");
-        if (part->len_kb == (uint32_t)-1)
+        if (part->len_sec == (uint32_t)-1)
             printf("\t\tlen = rest of disk\n");
         else
-            printf("\t\tlen = %uKB\n", part->len_kb);
+            printf("\t\tlen = %uSector\n", part->len_sec);
     }
     printf("Total number of partitions: %d\n", cnt);
     printf("\n");

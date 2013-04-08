@@ -48,11 +48,11 @@ cfg_pentry(struct pc_partition *pentry, uint8_t status, uint8_t type,
 
 
 static inline uint32_t
-kb_to_lba(uint32_t len_kb, uint32_t sect_size)
+sec_to_lba(uint32_t len_sec, uint32_t sect_size)
 {
     uint64_t lba;
 
-    lba = (uint64_t)len_kb * 1024;
+    lba = (uint64_t)len_sec * 512;
     /* bump it up to the next LBA boundary just in case  */
     lba = (lba + (uint64_t)sect_size - 1) & ~((uint64_t)sect_size - 1);
     lba /= (uint64_t)sect_size;
@@ -90,12 +90,12 @@ mk_pri_pentry(struct disk_info *dinfo, struct part_info *pinfo, int pnum,
 
     /* need a standard primary partition entry */
     if (pinfo) {
-        /* need this to be 64 bit in case len_kb is large */
+        /* need this to be 64 bit in case len_sec is large */
         uint64_t len_lba; 
 
-        if (pinfo->len_kb != (uint32_t)-1) {
+        if (pinfo->len_sec != (uint32_t)-1) {
             /* bump it up to the next LBA boundary just in case */
-            len_lba = ((uint64_t)pinfo->len_kb * 1024);
+            len_lba = ((uint64_t)pinfo->len_sec * 512);
             len_lba += ((uint64_t)dinfo->sect_size - 1);
             len_lba &= ~((uint64_t)dinfo->sect_size - 1);
             len_lba /= (uint64_t)dinfo->sect_size;
@@ -154,8 +154,8 @@ mk_ext_pentry(struct disk_info *dinfo, struct part_info *pinfo, uint32_t *lba,
     memset(ebr, 0, sizeof(struct pc_boot_record));
     ebr->mbr_sig = PC_BIOS_BOOT_SIG;
 
-    if (pinfo->len_kb != (uint32_t)-1)
-        len = kb_to_lba(pinfo->len_kb, dinfo->sect_size);
+    if (pinfo->len_sec != (uint32_t)-1)
+        len = sec_to_lba(pinfo->len_sec, dinfo->sect_size);
     else {
         if (pnext) {
             printf("Only the last partition can be specified to fill the disk "
@@ -165,9 +165,9 @@ mk_ext_pentry(struct disk_info *dinfo, struct part_info *pinfo, uint32_t *lba,
         len = dinfo->num_lba - *lba;
         /* update the pinfo structure to reflect the new size, for
          * bookkeeping */
-        pinfo->len_kb =
+        pinfo->len_sec =
             (uint32_t)(((uint64_t)len * (uint64_t)dinfo->sect_size) /
-                       ((uint64_t)1024));
+                       ((uint64_t)512));
     }
 
     cfg_pentry(&ebr->ptable[PC_EBR_LOGICAL_PART], PC_PART_NORMAL,
@@ -187,8 +187,8 @@ mk_ext_pentry(struct disk_info *dinfo, struct part_info *pinfo, uint32_t *lba,
          * of the top-level extended partition */
         uint32_t next_start_lba = *lba - ext_lba;
         uint32_t next_len_lba;
-        if (pnext->len_kb != (uint32_t)-1)
-            next_len_lba = 1 + kb_to_lba(pnext->len_kb, dinfo->sect_size);
+        if (pnext->len_sec != (uint32_t)-1)
+            next_len_lba = 1 + sec_to_lba(pnext->len_sec, dinfo->sect_size);
         else
             next_len_lba = dinfo->num_lba - *lba;
         cfg_pentry(&ebr->ptable[PC_EBR_NEXT_PTR_PART], PC_PART_NORMAL,
@@ -233,12 +233,12 @@ config_mbr(struct disk_info *dinfo)
                 }
             }
         }
-
+	printf("cur_lba=%d,extended=%d,dinfo->num_lba=%d\n",cur_lba,extended,dinfo->num_lba);
         /* if extended, need 1 lba for ebr */
         if ((cur_lba + extended) >= dinfo->num_lba)
             goto nospace;
-        else if (pinfo->len_kb != (uint32_t)-1) {
-            uint32_t sz_lba = (pinfo->len_kb / dinfo->sect_size) * 1024;
+        else if (pinfo->len_sec != (uint32_t)-1) {
+            uint32_t sz_lba = (pinfo->len_sec / dinfo->sect_size) * 512;
             if ((cur_lba + sz_lba + extended) > dinfo->num_lba)
                 goto nospace;
         }

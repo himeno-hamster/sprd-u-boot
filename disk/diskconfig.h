@@ -83,7 +83,7 @@ struct part_info {
     char *name;
     uint8_t flags;
     uint8_t type;
-    uint32_t len_kb;       /* in 1K-bytes */
+    uint32_t len_sec;       /* in sector */
     uint32_t start_lba;    /* the LBA where this partition begins */
 };
 
