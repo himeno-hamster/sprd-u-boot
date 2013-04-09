@@ -167,12 +167,11 @@ typedef struct SDIO_CARD_PAL_Struct
 	SDIO_CARD_PAL_TYPE_E sdio_type;
 } SDIO_CARD_PAL_Struct_T;
 
-#define SDIO_CARD_PAL_SUPPORT_NUM 8
 #if defined (UCOS_BSD_EVENT)
 #elif defined (CARD_SDIO_EVENT)
-LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},,{FALSE,0,0,0,0}};
+LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDHOST_SLOT_MAX_NUM] = {{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},{FALSE,0,0,0,0},,{FALSE,0,0,0,0}};
 #else
-LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0},{FALSE,0,0},{FALSE,0,0},{FALSE,0,0}};
+LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDHOST_SLOT_MAX_NUM] = {{FALSE,0,0},{FALSE,0,0},{FALSE,0,0},{FALSE,0,0}};
 #endif
 
 #ifdef DUAL_TCARD_SUPPORT
@@ -327,11 +326,11 @@ LOCAL void _SlotSelect(SDIO_CARD_PAL_SLOT_E slotNo)
     SDIO_CARD_PAL_SLOT_E i;
     SDIO_CARD_PAL_HANDLE handle;
     
-    SDIO_CARD_PAL_ASSERT(SDIO_CARD_PAL_SUPPORT_NUM > slotNo);	/*assert verified*/
+    SDIO_CARD_PAL_ASSERT(SDHOST_SLOT_MAX_NUM > slotNo);	/*assert verified*/
 
     SDHOST_Slot_select((SDHOST_SLOT_NO)slotNo);
     
-    for(i = 0; i < SDIO_CARD_PAL_SUPPORT_NUM; i ++)
+    for(i = 0; i < SDHOST_SLOT_MAX_NUM; i ++)
     {
         handle = &s_sdioCardPalHd[i];
         if(PNULL == handle->sdio_port)
@@ -355,7 +354,7 @@ PUBLIC SDIO_CARD_PAL_HANDLE SDIO_Card_Pal_Open (SDIO_CARD_PAL_SLOT_E slotNo)
 {
     SDIO_CARD_PAL_IRQ_DECLARE;
 
-    SDIO_CARD_PAL_ASSERT (SDIO_CARD_PAL_SUPPORT_NUM > slotNo);	/*assert verified*/
+    SDIO_CARD_PAL_ASSERT (SDHOST_SLOT_MAX_NUM > slotNo);	/*assert verified*/
 
     // 检查是否有有效的handle存在
     SDIO_CARD_PAL_DISABLE_IRQ;

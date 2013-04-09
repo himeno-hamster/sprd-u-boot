@@ -425,7 +425,7 @@ LOCAL volatile uint32 s_CardErrCode = 0;
 CARD_PORT_T cadport ;
 CARD_SDIO_HANDLE  emmc_handle = NULL;
 LOCAL volatile uint32 s_CardEvent = 0;
-LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[2] = {{0,0},{0,0}};
+LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDHOST_SLOT_MAX_NUM] = {{0,0},{0,0}};
 
 PUBLIC uint32 SDHOST_GetDmaAddr (SDHOST_HANDLE sdhost_handler)
 {
@@ -1660,15 +1660,11 @@ PUBLIC uint32 SDHOST_SD_Clk_Freq_Set (SDHOST_HANDLE sdhost_handler,uint32 sdio_c
     tmpReg = sdhost_handler->host_cfg->HOST_CTL1;
 #if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined (CONFIG_SC8830)
     clkDiv--;
-#if defined(CONFIG_SC7710G2)
-    tmpReg &= (~(0x3ff << 6));
-    tmpReg |= ((clkDiv >> 8) & 0x3) << 6;
-    tmpReg |= (clkDiv & 0xff) << 8;
-#else
+
     tmpReg &= (~ (0x3ff<<6));
-    tmpReg |= clkDiv&(0x3<<6);
+    tmpReg |= ((clkDiv >> 8) & 0x3) << 6;
     tmpReg |= (clkDiv&0xff)<<8;
-#endif
+
     sdhost_handler->sdClock = sdhost_handler->baseClock/(2*(clkDiv+1));
 #else    
     tmpReg &= (~ (0xff<<8));

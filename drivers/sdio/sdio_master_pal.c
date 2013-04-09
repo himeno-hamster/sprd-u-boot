@@ -69,10 +69,8 @@ static CMD_CTL_FLG s_cmdDetail[] =
 
 #define SDIO_CARD_PAL_MAGICNUM 0x5344494F
 
-
-#define SDIO_CARD_PAL_SUPPORT_NUM  4
 extern void _SDHOST_IrqHandle(unsigned int isrnum);
-static SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDIO_CARD_PAL_SUPPORT_NUM] = {{FALSE,0,0,0}};
+static SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDHOST_SLOT_MAX_NUM] = {{FALSE,0,0,0}};
 static volatile unsigned int s_CardErrCode = 0;
 
 //-----------------------------------------------------------------------------------
@@ -115,7 +113,7 @@ static void  _irqCardProc(unsigned int msg, unsigned int errCode, SDHOST_SLOT_NO
 {
     SDIO_CARD_PAL_HANDLE handle;
 
-    if(slotNum >=SDIO_CARD_PAL_SUPPORT_NUM ) slotNum = SDIO_CARD_PAL_SUPPORT_NUM - 1;
+    if(slotNum >=SDHOST_SLOT_MAX_NUM ) slotNum = SDHOST_SLOT_MAX_NUM - 1;
     handle = &s_sdioCardPalHd[slotNum];
     if(errCode!=0)
         SDIO_CARD_PRINT(("slot0  msg = 0x%08x err = 0x%08x\n",msg,errCode));
@@ -170,7 +168,7 @@ static void  _irqCardProc(unsigned int msg, unsigned int errCode, SDHOST_SLOT_NO
 SDIO_CARD_PAL_SLOT_E Handle2SlotNo(SDIO_CARD_PAL_HANDLE handle)
 {
 	SDIO_CARD_PAL_SLOT_E slotNo;
-	for(slotNo=SDIO_CARD_PAL_SLOT_0;SDIO_CARD_PAL_SUPPORT_NUM > slotNo;slotNo++)
+	for(slotNo=SDIO_CARD_PAL_SLOT_0;SDHOST_SLOT_MAX_NUM > slotNo;slotNo++)
 		if(handle == &s_sdioCardPalHd[slotNo])
 			return slotNo;
 	return SDIO_CARD_PAL_SLOT_MAX;
@@ -179,7 +177,7 @@ SDIO_CARD_PAL_SLOT_E Handle2SlotNo(SDIO_CARD_PAL_HANDLE handle)
 SDIO_CARD_PAL_HANDLE SPRD_SDSlave_Pal_Open(SDIO_CARD_PAL_SLOT_E slotNo)
 {
 
-    SDIO_CARD_PAL_ASSERT(SDIO_CARD_PAL_SUPPORT_NUM > slotNo);
+    SDIO_CARD_PAL_ASSERT(SDHOST_SLOT_MAX_NUM > slotNo);
     
     if(TRUE == s_sdioCardPalHd[slotNo].flag)
         return NULL;
@@ -446,9 +444,9 @@ void SDIO_Card_Pal_SlotSelect(SDIO_CARD_PAL_SLOT_E slotNo)
     SDIO_CARD_PAL_SLOT_E i;
     SDIO_CARD_PAL_HANDLE handle;
     
-    SDIO_CARD_PAL_ASSERT(SDIO_CARD_PAL_SUPPORT_NUM > slotNo);
+    SDIO_CARD_PAL_ASSERT(SDHOST_SLOT_MAX_NUM > slotNo);
     SDHOST_Slot_select(slotNo);
-    for(i = 0; i < SDIO_CARD_PAL_SUPPORT_NUM; i ++)
+    for(i = 0; i < SDHOST_SLOT_MAX_NUM; i ++)
     {
         handle = &s_sdioCardPalHd[i];
         if(NULL == handle->sdio_port)
