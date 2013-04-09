@@ -30,40 +30,40 @@ void set_cp_emc_pad(void)
     u32 i = 0;
 
     for (i = 0; i < 2; i++) {// ckdp ckdm
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_CLKDMMEM_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_CLKDMMEM_REG_OFFS) + i*4) |= (clk_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_CLKDMMEM_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_CLKDMMEM_REG_OFFS) + i*4) |= (clk_drv<<8) | 0x4;
     }
 
     //addr
     for (i = 0; i<14; i++) {
-        CHIP_REG_AND(((CHIPPIN_CTL_BEGIN + PIN_CP_EMA0_REG_OFFS) + i*4), ~0x300);
-        CHIP_REG_OR(((CHIPPIN_CTL_BEGIN + PIN_CP_EMA0_REG_OFFS) + i*4), ctl_drv<<8);
+		REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMA0_REG_OFFS) + i*4) &= (~0x30F);
+		REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMA0_REG_OFFS) + i*4) |= (ctl_drv<<8) | 0x4;
     }
 
     for (i = 0; i < 5; i++) {//bank0 bank1 casn cke0 csn0
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMBA0_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMBA0_REG_OFFS) + i*4) |= (ctl_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMBA0_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMBA0_REG_OFFS) + i*4) |= (ctl_drv<<8) | 0x4;
     }
 
     for (i = 0; i < 4; i++) {//dqm
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMDQM0_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMDQM0_REG_OFFS) + i*4) |= (data_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMDQM0_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMDQM0_REG_OFFS) + i*4) |= (data_drv<<8) | 0x4;
     }
 
     for (i = 0; i < 4; i++) {//dqs
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMDQS0_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMDQS0_REG_OFFS) + i*4) |= (dqs_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMDQS0_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMDQS0_REG_OFFS) + i*4) |= (dqs_drv<<8) | 0x4;
     }
 
     //data
     for (i = 0; i < 32; i++) {
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMD0_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMD0_REG_OFFS) + i*4) |= (data_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMD0_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMD0_REG_OFFS) + i*4) |= (data_drv<<8) | 0x4;
     }
 
     for (i = 0; i < 4; i++) {//gpre_loop gpst_loop rasn wen
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMGPRE_LOOP_REG_OFFS) + i*4) &= (~0x300);
-        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMGPRE_LOOP_REG_OFFS) + i*4) |= (ctl_drv<<8);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMGPRE_LOOP_REG_OFFS) + i*4) &= (~0x30F);
+        REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMGPRE_LOOP_REG_OFFS) + i*4) |= (ctl_drv<<8) | 0x4;
     }
 }
 
