@@ -129,7 +129,9 @@ static ADDR_TO_PART g_eMMC_Addr2Part_Table[] = {
 #if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined (CONFIG_SC7710G2)
 	{0x80000013, PARTITION_FIRMWARE},
 #endif
+#ifdef CONFIG_SIMLOCK
 	{0x80000015, PARTITION_SIMLOCK},
+#endif
 	{0x90000001, PARTITION_FIX_NV1}, 
 	{0x90000002, PARTITION_PROD_INFO1},
 	{0x9000000f, PARTITION_PROD_INFO3},
@@ -291,6 +293,7 @@ int uefi_get_part_info(unsigned long part_total)
 	}
 
 	#ifdef CONFIG_EBR_PARTITION
+		printf("EBR PARTITION \n");
 		for(i=0; i < MAX_PARTITION_INFO; i++) {
 			if(part_num ==PARTITION_EMPTY) {
 				part_num++;
@@ -304,10 +307,11 @@ int uefi_get_part_info(unsigned long part_total)
 			uefi_part_info[i].partition_index =part_num;
 			uefi_part_info[i].partition_size = info.size;
 			uefi_part_info[i].partition_offset = info.start;
-			//printf("uefi_part_info[i] =%d,partiton num =%d,size=%d,offset=%d\n",i,part_num,info.size,info.offset);
+			printf("partiton num =%d,size=%d,offset=%d\n",part_num,info.size,info.start);
 			part_num++;
 		}
 	#else
+	printf("GPT PARTITION \n");
 	for(i=0; i < MAX_PARTITION_INFO; i++) {
 		if(g_sprd_emmc_partition_cfg[i].partition_index == 0)
 			break;
@@ -323,6 +327,7 @@ int uefi_get_part_info(unsigned long part_total)
 		uefi_part_info[i].partition_index = g_sprd_emmc_partition_cfg[i].partition_index;
 		uefi_part_info[i].partition_size = info.size;
 		uefi_part_info[i].partition_offset = info.start;
+		printf("uefi_part_info[i].partition_index =%d,size=%d,offset=%d\n",uefi_part_info[i].partition_index,info.size,info.start);
 	}
 	#endif
 	uefi_part_info_ok_flag = 1;
@@ -388,7 +393,7 @@ int format_sd_partition(void)
 
 int FDL_Check_Partition_Table(void)
 {
-	//printf("FDL_Check_Partition_Table -----\n");
+	printf("FDL Check Partition Table -----\n");
 	int i = 0;
 	unsigned long parttotal = 0;
 
@@ -414,6 +419,7 @@ int FDL_Check_Partition_Table(void)
 		if (MAX_SIZE_FLAG == g_sprd_emmc_partition_cfg[i].partition_size)
 			continue;
 		if(2 * g_sprd_emmc_partition_cfg[i].partition_size !=  uefi_part_info[i].partition_size) {
+			printf("partition tables is  different ,repartition \n");
 			return 0;
 		}
 	}

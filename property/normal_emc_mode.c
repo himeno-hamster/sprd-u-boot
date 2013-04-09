@@ -1015,7 +1015,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	}
 	secure_check(VMJALUNA_ADR, 0, VMJALUNA_ADR + VMJALUNA_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
 #endif
-
+#ifdef CONFIG_SIMLOCK
 #if((!BOOT_NATIVE_LINUX)||(BOOT_NATIVE_LINUX_MODEM))
 	////////////////////////////////////////////////////////////////
 	/* SIMLOCK_PART */
@@ -1036,7 +1036,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	}
 	secure_check(SIMLOCK_ADR, 0, SIMLOCK_ADR + SIMLOCK_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
 #endif
-
+#endif
 	creat_cmdline(cmdline,hdr);
 
 #if BOOT_NATIVE_LINUX_MODEM
