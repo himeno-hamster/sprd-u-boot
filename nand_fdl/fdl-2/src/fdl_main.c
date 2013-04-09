@@ -92,6 +92,7 @@ int main(void)
 	uint32 sigture_address;
 	unsigned int i, j;
 
+	printf("fdl main \n");
 	MMU_Init(0);
 
 	sigture_address = (uint32)FDL2_signature;

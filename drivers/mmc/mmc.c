@@ -1018,6 +1018,7 @@ int mmc_initialize(bd_t *bis)
 #define MMCSD_SECTOR_SIZE 512
 int mmc_legacy_init(int dev)
 {
+	printf("mmc_legacy_init\n");
 	int retries, rc = -ENODEV;
 	uint32_t cid_resp[4];
 	uint32_t *resp;

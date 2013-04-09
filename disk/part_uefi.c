@@ -281,6 +281,7 @@ unsigned int _parser_cfg(unsigned int *total_partition,PARTITION_CFG *p_partitio
 
 unsigned int _gen_gpt(gpt_header *g_header,PARTITION_CFG *p_partition_cfg)
 {
+	printf("write gpt header \n");
 	int i = 0 ,gpt_partition_number = 0;
 	unsigned long crc = 0;
 	_parser_cfg(&gpt_partition_number,p_partition_cfg);
@@ -313,6 +314,7 @@ unsigned int _gen_gpt(gpt_header *g_header,PARTITION_CFG *p_partition_cfg)
 
 	_cur_lba_num = MAX_PARTITION_INFO/4 + 2;
 
+	printf("write gpt partition \n");
 	for(i=0;i<gpt_partition_number;i++)
 	{	
 		_gen_gpt_entry(i,&g_gpt_entry_block._gpt_entry[i],p_partition_cfg);
@@ -325,8 +327,6 @@ unsigned int _gen_gpt(gpt_header *g_header,PARTITION_CFG *p_partition_cfg)
 	//CRC32 check
 	crc = uefi_crc32(g_header,le32_to_int(g_header->header_size));
 	*(unsigned long int*)g_header->header_crc32 = PED_CPU_TO_LE32(crc);
-
-	
 
 	return 1;
 }
@@ -350,17 +350,17 @@ unsigned int _write_gpt(gpt_header *g_header)
 	//write gpt header
 	emmc_part_device._device_io->_write(2,MAX_PARTITION_INFO/4,(unsigned char*)&g_gpt_entry_block);
 
+	printf("write gpt entry success \n");
 	return 1;
 }
 
 unsigned int _write_backup_gpt(gpt_header *g_header)
 {
 	//write gpt entry
-
 	emmc_part_device._device_io->_write((emmc_part_device.total_sector-1),1,(unsigned char*)g_header);
 	//write gpt header
 	emmc_part_device._device_io->_write((emmc_part_device.total_sector-1-MAX_PARTITION_INFO/4),MAX_PARTITION_INFO/4,(unsigned char*)&g_gpt_entry_block);
-
+	printf("write gpt entry success \n");
 	return 1;
 }
 
@@ -410,6 +410,7 @@ unsigned int write_uefi_partition_table(PARTITION_CFG *p_partition_cfg)
 	memset(&gpt_head, 0x0, GPT_BLOCK_SIZE);
 	emmc_part_device_init();
 
+	printf("write gpt \n");
 	//write pmbr
 	_gen_pmbr(&pmbr.pmbr);
 	_write_pmbr(&pmbr.pmbr);
@@ -425,6 +426,7 @@ unsigned int write_uefi_partition_table(PARTITION_CFG *p_partition_cfg)
 	//backup
 	_gen_backup_gpt(&gpt_head,p_partition_cfg);
 	_write_backup_gpt(&gpt_head);
+	printf("write gpt success\n");
 	return 1;
 }
 
