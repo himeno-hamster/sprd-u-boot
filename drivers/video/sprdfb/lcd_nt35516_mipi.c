@@ -227,6 +227,9 @@ static uint32_t nt35516_readid(struct panel_spec *self)
 	mipi_force_read_t mipi_force_read = self->info.mipi->ops->mipi_force_read;
 
 	printk("lcd_nt35516_mipi read id!\n");
+#ifdef CONFIG_SC8830
+	return 0x16;	//debug
+#endif
 	mipi_set_cmd_mode();
 	for(j = 0; j < 4; j++){
 		rd_prepare = rd_prep_code;

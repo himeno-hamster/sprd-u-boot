@@ -74,6 +74,17 @@ static struct panel_cfg lcd_panel[] = {
 };
 #endif
 
+#elif defined CONFIG_SC8830
+extern struct panel_spec lcd_nt35516_mipi_spec;
+static struct panel_cfg lcd_panel[] = {
+    [0]={
+        .lcd_id = 0x16,
+        .panel = &lcd_nt35516_mipi_spec ,
+        },
+};
+
+
+
 #elif defined CONFIG_LCD_788
 extern struct panel_spec lcd_panel_hx8357;
 static struct panel_cfg lcd_panel[] = {
@@ -258,6 +269,11 @@ static int panel_mount(struct sprdfb_device *dev, struct panel_spec *panel)
 		dev->if_ctrl = &sprdfb_rgb_ctrl;
 		break;
 #ifdef CONFIG_SC8825
+	case SPRDFB_PANEL_TYPE_MIPI:
+		dev->if_ctrl = &sprdfb_mipi_ctrl;
+		break;
+#endif
+#ifdef CONFIG_SC8830
 	case SPRDFB_PANEL_TYPE_MIPI:
 		dev->if_ctrl = &sprdfb_mipi_ctrl;
 		break;

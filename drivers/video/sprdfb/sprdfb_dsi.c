@@ -91,8 +91,10 @@ int32_t dsi_early_int(void)
 		return 0;
 	}
 
-	//TODO:Enable DSI clock
-
+#ifdef CONFIG_SC8830
+	//Enable DSI clock
+	__raw_writel(__raw_readl(REG_AP_AHB_MISC_CKG_EN) | (BIT_DPHY_REF_CKG_EN) | (BIT_DPHY_CFG_CKG_EN) , REG_AP_AHB_MISC_CKG_EN);
+#endif
 	dsi_reset();
 
 	memset(&(dsi_ctx.dsi_inst), 0, sizeof(dsi_ctx.dsi_inst));
@@ -213,7 +215,11 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 	dphy_t *phy = &(dsi_instance->phy_instance);
 	struct info_mipi * mipi = dev->panel->info.mipi;
 
+#ifdef CONFIG_SC8830
+	__raw_bits_or((BIT_DSI_EB), REG_AP_AHB_AHB_EB);  //enable DSI
+#else
 	__raw_bits_or((1<<0), 0x2090021c);  //enable dphy
+#endif
 
 	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
 
@@ -276,6 +282,17 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 		FB_PRINT("sprdfb: [%s]: mipi_dsih_dphy_configure fail (%d)!\n", __FUNCTION__, result);
 		return -1;
 	}
+#ifdef CONFIG_SC8830
+		{/*for debug*/
+			int32_t i;
+			for(i=0x21800000;i<0x21800080;i+=16){
+				printk("sprdfb: %x: 0x%x, 0x%x, 0x%x, 0x%x\n", i, __raw_readl(i), __raw_readl(i+4), __raw_readl(i+8), __raw_readl(i+12));
+			}
+			printk("**************************************\n");
+			printk("0x20d00014:%x\n",__raw_readl(0x20d00014));
+		}
+#endif
+
 #ifdef CONFIG_SC8830
 	while(5 != (dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_STATUS) & 5));
 #else
