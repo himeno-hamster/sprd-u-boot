@@ -90,7 +90,7 @@
 #define CONFIG_SYS_STACK_SIZE	0x400
 
 //SDIO HOST NUM for handshake
-#define SDIO_APCP_HOST_SLOT_NUM  2
+#define SDIO_APCP_HOST_SLOT_NUM  6
 
 /* SDIO GPIO HANDSHAKE */
 #define AP_CP_RTS 208

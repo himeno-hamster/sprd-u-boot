@@ -2187,7 +2187,7 @@ LOCAL SDHOST_SLOT_NO _GetIntSDHOSTSlotNum (uint32 port)
     ret = SDHOST_SLOT_7;
 #else
 #if defined(CONFIG_TIGER)|| defined (CONFIG_SC7710G2)
-    if(port == 2){
+    if(SDHOST_SLOT_6 == port){
 	tmpReg = REG32 (SDIO2_NML_INT_SIG_EN);
 	if(tmpReg == 0)
 		REG32 (SDIO2_NML_INT_SIG_EN) = BIT_1;
@@ -2209,8 +2209,8 @@ LOCAL SDHOST_SLOT_NO _GetIntSDHOSTSlotNum (uint32 port)
     if ( (tmpReg& (0x01<<0)))
     {
 #if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
-	if(SDHOST_SLOT_2 == port)
-		ret = SDHOST_SLOT_2;
+	if(SDHOST_SLOT_6 == port)
+		ret = SDHOST_SLOT_6;
 	else
         	ret = SDHOST_SLOT_7;
 #else
@@ -2609,7 +2609,7 @@ PUBLIC uint32 SDHOST_BaseClk_Set(SDHOST_SLOT_NO slot_NO,uint32 sdio_base_clk)
         REG32 (GR_CLK_GEN5) |= (3<<23);
     }
 #elif defined(CONFIG_SC7710G2)
-    if(SDHOST_SLOT_2 == slot_NO){
+    if(SDHOST_SLOT_6 == slot_NO){
 	REG32 (GR_CLK_GEN7) &= ~ (BIT_21|BIT_22);
 	//Select the clk source of SDIO
 	if (sdio_base_clk >= SDIO_BASE_CLK_96M) {
