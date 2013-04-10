@@ -643,9 +643,6 @@ static int start_linux()
 	u32 machine_type;
 
 	machine_type = machine_arch_type;         /* get machine type */
-#ifdef CONFIG_SC8830
-	machine_type = 0x7de;
-#endif
 	theKernel = (void (*)(int, int, u32))KERNEL_ADR; /* set the kernel address */
 #ifndef CONFIG_SC8830
 	*(volatile u32*)0x84001000 = 'j';
