@@ -4,6 +4,7 @@
 #include <asm/arch/chip_drv_config_extern.h>
 #include <asm/arch/regs_nfc.h>
 #include <asm/arch/regs_cpc.h>
+#include <asm/arch/sdram_cfg.h>
 #include <nand.h>
 #include <asm/io.h>
 #include <linux/mtd/nand.h>
@@ -102,6 +103,8 @@ static int mtdoobsize = 0;
 static struct sc8810_nand_info g_info ={0};
 static nand_ecc_modes_t sprd_ecc_mode = NAND_ECC_NONE;
 static __attribute__((aligned(4))) unsigned char io_wr_port[NAND_MAX_PAGESIZE + NAND_MAX_OOBSIZE];
+static char nand_id_table[5]={0};
+static int  re_oob_layout=0;
 
 struct nand_ecclayout _nand_oob_64 = {
 	.eccbytes = 24,
@@ -113,6 +116,19 @@ struct nand_ecclayout _nand_oob_64 = {
 		{.offset = 2,
 		 .length = 38}}
 };
+
+struct nand_ecclayout _nand_oob_64_4bit = {
+	.eccbytes = 28,
+	.eccpos = {
+	               36, 37, 38, 39, 40, 41, 42, 43,
+                   44, 45, 46, 47, 48, 49, 50, 51,
+                   52, 53, 54, 55, 56, 57, 58, 59,
+                   60, 61, 62, 63},
+	.oobfree = {
+		{.offset = 2,
+		 .length = 34}}
+};
+
 
 static struct nand_ecclayout nand_oob_128 = {
 	.eccbytes = 48,
@@ -198,7 +214,10 @@ static struct sc8810_nand_page_oob nand_config_table[] =
 	{0x2c, 0xb3, 0x90, 0x66, 0x64, 4096, 224, 512, 8},
 	{0x2c, 0xbc, 0x90, 0x66, 0x54, 4096, 224, 512, 8},
 	{0xec, 0xb3, 0x01, 0x66, 0x5a, 4096, 128, 512, 4},
-	{0xec, 0xbc, 0x00, 0x6a, 0x56, 4096, 256, 512, 8}
+    {0xec, 0xbc, 0x00, 0x6a, 0x56, 4096, 256, 512, 8},
+    {0x2c, 0xbc, 0x90, 0x55, 0x56, 2048, 64,  512, 4},
+    {0x2c, 0xb3, 0xd1, 0x55, 0x56, 2048, 64,  512, 4},
+	{0xc8, 0xbc, 0x90, 0x55, 0x54, 2048, 64,  512, 4}
 };
 
 /* some nand id could not be calculated the pagesize by mtd, replace it with a known id which has the same format. */
@@ -669,9 +688,16 @@ static void sc8810_nand_hwcontrol(struct mtd_info *mtd, int cmd,
 			break;
 		case NAND_CMD_STATUS:
 			nfc_mcr_inst_init();
-			nfc_reg_write(NFC_CMD, 0x80000070);
+			//nfc_reg_write(NFC_CMD, 0x80000070);
+			//sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
+			//memcpy(io_wr_port, (void *)NFC_ID_STS, 1);
+			nfc_mcr_inst_add(0x70, NF_MC_CMD_ID);
+			nfc_mcr_inst_add(0x10, NF_MC_NOP_ID);//add nop clk for twrh timing param
+			nfc_mcr_inst_add(3, NF_MC_RWORD_ID);
+			nfc_mcr_inst_exc_for_id();
 			sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
-			memcpy(io_wr_port, (void *)NFC_ID_STS, 1);
+			memcpy(io_wr_port, (void *)NFC_MBUF_ADDR, 1);
+			//printf("read status3  0x%x, 0x%x\r\n", io_wr_port[0], nfc_reg_read(NFC_MBUF_ADDR));
 			break;
 		case NAND_CMD_READID:
 			nfc_mcr_inst_init();
@@ -936,6 +962,7 @@ int board_nand_init(struct nand_chip *this)
 	return 0;
 }
 
+#ifndef CONFIG_NAND_SPL
 static unsigned long nfc_read_status(void)
 {
 	unsigned long status = 0;
@@ -950,7 +977,6 @@ static unsigned long nfc_read_status(void)
 	return status;
 }
 
-#ifndef CONFIG_NAND_SPL
 static int sprd_scan_one_block(int blk, int erasesize, int writesize)
 {
 	int i, cmd;
