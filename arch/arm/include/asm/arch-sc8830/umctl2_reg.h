@@ -192,16 +192,16 @@ extern   "C"
 #define UMCTL_PCFGW_15   UMCTL2_REG_(0x0408+(0x0F)*0xB0)
 
 
-#define UMCTL_PORT_EN_0    UMCTL2_REG_(0x0490+(0x00)*0xB0)/*Port n enable reg*/
-#define UMCTL_PORT_EN_1    UMCTL2_REG_(0x0490+(0x01)*0xB0)/*Port n enable reg*/
-#define UMCTL_PORT_EN_2    UMCTL2_REG_(0x0490+(0x02)*0xB0)/*Port n enable reg*/
-#define UMCTL_PORT_EN_3    UMCTL2_REG_(0x0490+(0x03)*0xB0)/*Port n enable reg*/
-#define UMCTL_PORT_EN_4    UMCTL2_REG_(0x0490+(0x04)*0xB0)/*Port n enable reg*/
-#define UMCTL_PORT_EN_5    UMCTL2_REG_(0x0490+(0x05)*0xB0)/*Port n enable reg*/
-#define UMCTL_PORT_EN_6    UMCTL2_REG_(0x0490+(0x06)*0xB0)/*Port n enable reg*/
-#define UMCTL_PORT_EN_7    UMCTL2_REG_(0x0490+(0x07)*0xB0)/*Port n enable reg*/
-#define UMCTL_PORT_EN_8    UMCTL2_REG_(0x0490+(0x08)*0xB0)/*Port n enable reg*/
-#define UMCTL_PORT_EN_9    UMCTL2_REG_(0x0490+(0x09)*0xB0)/*Port n enable reg*/
+#define UMCTL_PORT_EN_0    0xFFFF0000//UMCTL2_REG_(0x0490+(0x00)*0xB0)/*Port n enable reg*/
+#define UMCTL_PORT_EN_1    0xFFFF0000//UMCTL2_REG_(0x0490+(0x01)*0xB0)/*Port n enable reg*/
+#define UMCTL_PORT_EN_2    0xFFFF0000//UMCTL2_REG_(0x0490+(0x02)*0xB0)/*Port n enable reg*/
+#define UMCTL_PORT_EN_3    0xFFFF0000//UMCTL2_REG_(0x0490+(0x03)*0xB0)/*Port n enable reg*/
+#define UMCTL_PORT_EN_4    0xFFFF0000//UMCTL2_REG_(0x0490+(0x04)*0xB0)/*Port n enable reg*/
+#define UMCTL_PORT_EN_5    0xFFFF0000//UMCTL2_REG_(0x0490+(0x05)*0xB0)/*Port n enable reg*/
+#define UMCTL_PORT_EN_6    0xFFFF0000//UMCTL2_REG_(0x0490+(0x06)*0xB0)/*Port n enable reg*/
+#define UMCTL_PORT_EN_7    0xFFFF0000//UMCTL2_REG_(0x0490+(0x07)*0xB0)/*Port n enable reg*/
+#define UMCTL_PORT_EN_8    0xFFFF0000//UMCTL2_REG_(0x0490+(0x08)*0xB0)/*Port n enable reg*/
+#define UMCTL_PORT_EN_9    0xFFFF0000//UMCTL2_REG_(0x0490+(0x09)*0xB0)/*Port n enable reg*/
 
 
 /*
