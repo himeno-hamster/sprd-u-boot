@@ -643,11 +643,11 @@ static int start_linux()
 	u32 machine_type;
 
 	machine_type = machine_arch_type;         /* get machine type */
-#ifdef CONFIG_MACH_SP8830FPGA
+#ifdef CONFIG_SC8830
 	machine_type = 0x7de;
 #endif
 	theKernel = (void (*)(int, int, u32))KERNEL_ADR; /* set the kernel address */
-#ifndef CONFIG_MACH_SP8830FPGA
+#ifndef CONFIG_SC8830
 	*(volatile u32*)0x84001000 = 'j';
 	*(volatile u32*)0x84001000 = 'm';
 	*(volatile u32*)0x84001000 = 'p';
@@ -784,7 +784,6 @@ void creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 }
 void vlx_entry()
 {
-	void (*entry)(void) = (void*) VMJALUNA_ADR;
 #if !(defined CONFIG_SC8810 || defined CONFIG_TIGER || defined CONFIG_SC8830)
 	MMU_InvalideICACHEALL();
 #endif
@@ -800,6 +799,7 @@ void vlx_entry()
 #if BOOT_NATIVE_LINUX
 	start_linux();
 #else
+	void (*entry)(void) = (void*) VMJALUNA_ADR;
 	entry();
 #endif
 }

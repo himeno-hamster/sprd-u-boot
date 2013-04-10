@@ -35,7 +35,7 @@ typedef enum _PARTITION_INDEX_TAG
 }EFI_PARTITION_INDEX;
 #else
 
-#ifdef CONFIG_SHARK
+#ifdef CONFIG_SC8830
 typedef enum _PARTITION_INDEX_TAG
 {
 	PARTITON_NULL = 0,

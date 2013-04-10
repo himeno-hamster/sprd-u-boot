@@ -86,7 +86,7 @@ int FDL_BootIsEMMC(void)
 #define PARTITION_SPL_LOADER	(MAX_PARTITION_INFO + 0)
 #define PARTITION_UBOOT		(MAX_PARTITION_INFO + 1)
 
-#ifdef CONFIG_SHARK
+#ifdef CONFIG_SC8830
 static ADDR_TO_PART g_eMMC_Addr2Part_Table[] = {
 	{0x80000000, PARTITION_SPL_LOADER},
 	{0x80000002, PARTITION_UBOOT},
@@ -851,8 +851,12 @@ int FDL2_eMMC_DataStart (PACKET_T *packet, void *arg)
 		return 0;
 	}
 #endif
-
+#ifdef CONFIG_SC8830
+	if (PARTITION_TDFIX_NV1 == g_dl_eMMCStatus.curUserPartition ||
+		PARTITION_WFIX_NV1  == g_dl_eMMCStatus.curUserPartition) {
+#else
 	if (PARTITION_FIX_NV1 == g_dl_eMMCStatus.curUserPartition) {
+#endif
 		if (packet->packet_body.size > 8) {
 			g_dl_eMMCStatus.curEMMCArea = PARTITION_USER;
 
@@ -1337,6 +1341,28 @@ int FDL2_eMMC_DataEnd (PACKET_T *packet, void *arg)
 
 		memset(g_fixbucknv_buf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
 		memcpy(g_fixbucknv_buf, g_fix_nv_buf, FIXNV_SIZE + 4);
+#ifdef CONFIG_SC8830
+		if (PARTITION_TDFIX_NV1 == g_dl_eMMCStatus.curUserPartition) {
+			nSectorBase = efi_GetPartBaseSec(PARTITION_TDFIX_NV2);
+			emmc_real_erase_partition(PARTITION_TDFIX_NV2);
+			if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, nSectorBase, nSectorCount,
+				(unsigned char *)g_fixbucknv_buf)) {
+				//The fixnv checksum is error.
+				SEND_ERROR_RSP (BSL_WRITE_ERROR);
+				return 0;
+			}
+		}
+		if (PARTITION_WFIX_NV1 == g_dl_eMMCStatus.curUserPartition) {
+			nSectorBase = efi_GetPartBaseSec(PARTITION_WFIX_NV2);
+			emmc_real_erase_partition(PARTITION_WFIX_NV2);
+			if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, nSectorBase, nSectorCount,
+				(unsigned char *)g_fixbucknv_buf)) {
+				//The fixnv checksum is error.
+				SEND_ERROR_RSP (BSL_WRITE_ERROR);
+				return 0;
+			}
+		}
+#else
 		nSectorBase = efi_GetPartBaseSec(PARTITION_FIX_NV2);
 		emmc_real_erase_partition(PARTITION_FIX_NV2);		
 		if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, nSectorBase, nSectorCount, 
@@ -1345,6 +1371,7 @@ int FDL2_eMMC_DataEnd (PACKET_T *packet, void *arg)
 			SEND_ERROR_RSP (BSL_WRITE_ERROR);
 			return 0;
 		}
+#endif
 	} else if (is_ProdInfo_flag) {
 		is_factorydownload_flag = 1;
 		/* 5a is defined by raw data */
@@ -1409,7 +1436,12 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 	}
 
 	g_dl_eMMCStatus.curUserPartition = addr2part(addr);
+#ifdef CONFIG_SC8830
+	if (PARTITION_TDFIX_NV1 == g_dl_eMMCStatus.curUserPartition ||
+		PARTITION_WFIX_NV1  == g_dl_eMMCStatus.curUserPartition) {
+#else
     	if (PARTITION_FIX_NV1 == g_dl_eMMCStatus.curUserPartition) {
+#endif
 		g_dl_eMMCStatus.curEMMCArea = PARTITION_USER;
 		if ((g_dl_eMMCStatus.curUserPartition < 0) || (g_dl_eMMCStatus.curUserPartition >= MAX_PARTITION_INFO)) {
 			FDL2_eMMC_SendRep (EMMC_SYSTEM_ERROR);
@@ -1477,6 +1509,9 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 
 	if (is_nv_flag) {
 		if ((read_nv_flag == 0) && (read_bkupnv_flag == 0)) {
+#ifdef CONFIG_SC8830
+			//do it later
+#else
 			read_nv_flag = 1;//wrong
 			memset(g_fix_nv_buf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
 			if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
@@ -1552,6 +1587,7 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 
 			nv_is_correct(g_fix_nv_buf, FIXNV_SIZE);
 			memset(g_fixbucknv_buf, 0xff, FIXNV_SIZE + 4);
+#endif
 		} //if ((read_nv_flag == 0) && (read_bkupnv_flag == 0))
 
 		ret = EMMC_SUCCESS;
@@ -1649,13 +1685,27 @@ int FDL2_eMMC_Erase(PACKET_T *packet, void *arg)
 			return 0;
 		}
 
-		if (g_dl_eMMCStatus.curUserPartition == PARTITION_RUNTIME_NV1) {
-			if (!emmc_real_erase_partition(PARTITION_RUNTIME_NV2)) {
-				SEND_ERROR_RSP (BSL_WRITE_ERROR);			
+#ifdef CONFIG_SC8830
+		if (g_dl_eMMCStatus.curUserPartition == PARTITION_TDRUNTIME_NV1) {
+			if (!emmc_real_erase_partition(PARTITION_TDRUNTIME_NV2)) {
+				SEND_ERROR_RSP (BSL_WRITE_ERROR);
 				return 0;
 			}
 		}
-
+		if (g_dl_eMMCStatus.curUserPartition == PARTITION_WRUNTIME_NV1) {
+			if (!emmc_real_erase_partition(PARTITION_WRUNTIME_NV2)) {
+				SEND_ERROR_RSP (BSL_WRITE_ERROR);
+				return 0;
+			}
+		}
+#else
+		if (g_dl_eMMCStatus.curUserPartition == PARTITION_RUNTIME_NV1) {
+			if (!emmc_real_erase_partition(PARTITION_RUNTIME_NV2)) {
+				SEND_ERROR_RSP (BSL_WRITE_ERROR);
+				return 0;
+			}
+		}
+#endif
 		if (g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3) {
 			part_size = efi_GetPartSize(PARTITION_PROD_INFO3);
 			make_ext4fs_main(g_eMMCBuf, part_size);

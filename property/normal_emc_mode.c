@@ -17,8 +17,11 @@ int nv_erase_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part)
 {
 	disk_partition_t info;
 	int ret = 0; /* success */
+#ifdef CONFIG_SC8830
+	unsigned char *tmpbuf = (unsigned char *)TDMODEM_ADR;
+#else
 	unsigned char *tmpbuf = (unsigned char *)MODEM_ADR;
-
+#endif
 	if (!get_partition_info(p_block_dev, part, &info)) {
 		memset(tmpbuf, 0xff, info.size * EMMC_SECTOR_SIZE);
 		//printf("part = %d  info.start = 0x%08x  info.size = 0x%08x\n", part, info.start, info.size);
@@ -278,6 +281,57 @@ void addbuf(char *buf)
 void addcmdline(char *buf)
 {
 #if (!BOOT_NATIVE_LINUX) || BOOT_NATIVE_LINUX_MODEM
+#if defined (CONFIG_SC8830)
+	/* tdfixnv=0x????????,0x????????*/
+	int str_len = strlen(buf);
+	sprintf(&buf[str_len], " tdfixnv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", TDFIXNV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", FIXNV_SIZE);
+
+	/* tdruntimenv=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " tdruntimenv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", TDRUNTIMENV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
+
+	/* wfixnv=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " wfixnv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", WFIXNV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", FIXNV_SIZE);
+
+	/* wruntimenv=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " wruntimenv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", WRUNTIMENV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
+
+	/* productinfo=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " productinfo=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", PRODUCTINFO_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", PRODUCTINFO_SIZE);
+#else
 	/* fixnv=0x????????,0x????????*/
 	int str_len = strlen(buf);
 	sprintf(&buf[str_len], " fixnv=0x");
@@ -307,6 +361,7 @@ void addcmdline(char *buf)
 	sprintf(&buf[str_len], ",0x");
 	str_len = strlen(buf);
 	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
+#endif
 #endif
 #if BOOT_NATIVE_LINUX_MODEM
 	str_len = strlen(buf);
@@ -340,14 +395,41 @@ void modem_entry()
 	memcpy((volatile u32*)0x30000, cpdata, sizeof(cpdata));
 	*(volatile u32*)0x20900250 =0xf;// 0x3;//enale cp clock, cp iram select to cp
 	*(volatile u32*)0x20900254 = 1;// reset cp
+#elif defined (CONFIG_SC8830)
+	u32 state;
+	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
+	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
+	memcpy(0x50000000, cp0data, sizeof(cp0data));      /* copy cp0 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000001;       /* reset cp0 */
+	*((volatile u32*)0x402B003C) &= ~0x02000000;       /* clear cp0 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00B8);
+		if (!(state & (0xf<<28)))
+			break;
+	}
+	*((volatile u32*)0x402B003C) &= ~0x10000000;       /* clear cp0 force deep sleep */
+
+	memcpy(0x50001800, cp1data, sizeof(cp1data));      /* copy cp1 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000002;       /* reset cp1 */
+	*((volatile u32*)0x402B0050) &= ~0x02000000;       /* clear cp1 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00BC);
+		if (!(state & (0xf<<16)))
+			break;
+	}
+	*((volatile u32*)0x402B0050) &= ~0x10000000;       /* clear cp1 force deep sleep */
+
+	*((volatile u32*)0x402B00A8) &= ~0x00000003;       /* clear reset cp0 cp1 */
 #endif
 }
-
+#ifndef CONFIG_SC8830
 void sipc_addr_reset()
 {
 	memset((void *)SIPC_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 }
-
+#endif
 #endif
 
 void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
@@ -605,6 +687,80 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #if((!BOOT_NATIVE_LINUX)||(BOOT_NATIVE_LINUX_MODEM))
 
 	/* recovery damaged fixnv or backupfixnv */
+#ifdef CONFIG_SC8830
+	orginal_right = 0;
+	memset((unsigned char *)TDFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+	if(0 == nv_read_partition(p_block_dev, PARTITION_TDFIX_NV1, (char *)TDFIXNV_ADR, FIXNV_SIZE + 4)){
+		if (1 == fixnv_is_correct_endflag((unsigned char *)TDFIXNV_ADR, FIXNV_SIZE))
+			orginal_right = 1;//right
+	}
+
+    backupfile_right = 0;
+	memset((unsigned char *)TDRUNTIMENV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+	if(0 == nv_read_partition(p_block_dev, PARTITION_TDFIX_NV2, (char *)TDRUNTIMENV_ADR, FIXNV_SIZE + 4)){
+		if (1 == fixnv_is_correct_endflag((unsigned char *)TDRUNTIMENV_ADR, FIXNV_SIZE))
+			backupfile_right = 1;//right
+	}
+
+	if ((orginal_right == 1) && (backupfile_right == 1)) {
+		/* check index */
+		orginal_index = get_nv_index((unsigned char *)TDFIXNV_ADR, FIXNV_SIZE);
+		backupfile_index = get_nv_index((unsigned char *)TDRUNTIMENV_ADR, FIXNV_SIZE);
+		if (orginal_index != backupfile_index) {
+			orginal_right = 1;
+			backupfile_right = 0;
+		}
+	}
+
+    if ((orginal_right == 1) && (backupfile_right == 0)) {
+		printf("TDfixnv is right, but backupfixnv is wrong, so erase and recovery backupfixnv\n");
+		nv_erase_partition(p_block_dev, PARTITION_TDFIX_NV2);
+		nv_write_partition(p_block_dev, PARTITION_TDFIX_NV2, (char *)TDFIXNV_ADR, (FIXNV_SIZE + 4));
+	} else if ((orginal_right == 0) && (backupfile_right == 1)) {
+		printf("TDbackupfixnv is right, but fixnv is wrong, so erase and recovery fixnv\n");
+		nv_erase_partition(p_block_dev, PARTITION_TDFIX_NV1);
+		nv_write_partition(p_block_dev, PARTITION_TDFIX_NV1, (char *)TDRUNTIMENV_ADR, (FIXNV_SIZE + 4));
+	} else if ((orginal_right == 0) && (backupfile_right == 0)) {
+		printf("\n\nTDfixnv and backupfixnv are all wrong.\n\n");
+	}
+
+	orginal_right = 0;
+	memset((unsigned char *)WFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+	if(0 == nv_read_partition(p_block_dev, PARTITION_WFIX_NV1, (char *)WFIXNV_ADR, FIXNV_SIZE + 4)){
+		if (1 == fixnv_is_correct_endflag((unsigned char *)WFIXNV_ADR, FIXNV_SIZE))
+			orginal_right = 1;//right
+	}
+
+    backupfile_right = 0;
+	memset((unsigned char *)WRUNTIMENV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+	if(0 == nv_read_partition(p_block_dev, PARTITION_WFIX_NV2, (char *)WRUNTIMENV_ADR, FIXNV_SIZE + 4)){
+		if (1 == fixnv_is_correct_endflag((unsigned char *)WRUNTIMENV_ADR, FIXNV_SIZE))
+			backupfile_right = 1;//right
+	}
+
+	if ((orginal_right == 1) && (backupfile_right == 1)) {
+		/* check index */
+		orginal_index = get_nv_index((unsigned char *)WFIXNV_ADR, FIXNV_SIZE);
+		backupfile_index = get_nv_index((unsigned char *)WRUNTIMENV_ADR, FIXNV_SIZE);
+		if (orginal_index != backupfile_index) {
+			orginal_right = 1;
+			backupfile_right = 0;
+		}
+	}
+
+    if ((orginal_right == 1) && (backupfile_right == 0)) {
+		printf("Wfixnv is right, but backupfixnv is wrong, so erase and recovery backupfixnv\n");
+		nv_erase_partition(p_block_dev, PARTITION_WFIX_NV2);
+		nv_write_partition(p_block_dev, PARTITION_WFIX_NV2, (char *)WFIXNV_ADR, (FIXNV_SIZE + 4));
+	} else if ((orginal_right == 0) && (backupfile_right == 1)) {
+		printf("Wbackupfixnv is right, but fixnv is wrong, so erase and recovery fixnv\n");
+		nv_erase_partition(p_block_dev, PARTITION_WFIX_NV1);
+		nv_write_partition(p_block_dev, PARTITION_WFIX_NV1, (char *)WRUNTIMENV_ADR, (FIXNV_SIZE + 4));
+	} else if ((orginal_right == 0) && (backupfile_right == 0)) {
+		printf("\n\nWfixnv and backupfixnv are all wrong.\n\n");
+	}
+
+#else
 	orginal_right = 0;
 	memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
 	if(0 == nv_read_partition(p_block_dev, PARTITION_FIX_NV1, (char *)FIXNV_ADR, FIXNV_SIZE + 4)){
@@ -640,8 +796,73 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	} else if ((orginal_right == 0) && (backupfile_right == 0)) {
 		printf("\n\nfixnv and backupfixnv are all wrong.\n\n");
 	}
+#endif
 	///////////////////////////////////////////////////////////////////////
 	/* FIXNV_PART */
+#if defined(CONFIG_SC8830)
+	printf("Reading TDfixnv to 0x%08x\n", TDFIXNV_ADR);
+	memset((unsigned char *)TDFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+	/* fixnv */
+	if (nv_read_partition(p_block_dev, PARTITION_TDFIX_NV1, (char *)TDFIXNV_ADR, FIXNV_SIZE + 4) == 0) {
+		if (-1 == fixnv_is_correct((unsigned char *)TDFIXNV_ADR, FIXNV_SIZE)) {
+			printf("TD nv is wrong, read backup nv\n");
+			memset((unsigned char *)TDFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+			if (nv_read_partition(p_block_dev, PARTITION_TDFIX_NV2, (char *)TDFIXNV_ADR, FIXNV_SIZE + 4) == 0) {
+				if (-1 == fixnv_is_correct((unsigned char *)TDFIXNV_ADR, FIXNV_SIZE)) {
+					memset((unsigned char *)TDFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+					printf("nv and backup nv are all wrong!\n");
+				}
+			} else {
+				printf("TD read backup nv fail\n");
+				memset((unsigned char *)TDFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+				printf("TD nv and backup nv are all wrong!\n");
+			}
+		}
+	} else {
+		printf("TD read nv fail, read backup nv\n");
+		if (nv_read_partition(p_block_dev, PARTITION_TDFIX_NV2, (char *)TDFIXNV_ADR, FIXNV_SIZE + 4) == 0) {
+			if (-1 == fixnv_is_correct((unsigned char *)TDFIXNV_ADR, FIXNV_SIZE)) {
+				memset((unsigned char *)TDFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+				printf("TD nv and backup nv are all wrong!\n");
+			}
+		} else {
+			printf("TD read backup nv fail\n");
+			memset((unsigned char *)TDFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+			printf("nv and backup nv are all wrong!\n");
+		}
+	}
+	printf("Reading Wfixnv to 0x%08x\n", WFIXNV_ADR);
+	memset((unsigned char *)WFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+	/* fixnv */
+	if (nv_read_partition(p_block_dev, PARTITION_WFIX_NV1, (char *)WFIXNV_ADR, FIXNV_SIZE + 4) == 0) {
+		if (-1 == fixnv_is_correct((unsigned char *)WFIXNV_ADR, FIXNV_SIZE)) {
+			printf("W nv is wrong, read backup nv\n");
+			memset((unsigned char *)WFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+			if (nv_read_partition(p_block_dev, PARTITION_WFIX_NV2, (char *)WFIXNV_ADR, FIXNV_SIZE + 4) == 0) {
+				if (-1 == fixnv_is_correct((unsigned char *)WFIXNV_ADR, FIXNV_SIZE)) {
+					memset((unsigned char *)WFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+					printf("W nv and backup nv are all wrong!\n");
+				}
+			} else {
+				printf("W read backup nv fail\n");
+				memset((unsigned char *)WFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+				printf("W nv and backup nv are all wrong!\n");
+			}
+		}
+	} else {
+		printf("W read nv fail, read backup nv\n");
+		if (nv_read_partition(p_block_dev, PARTITION_WFIX_NV2, (char *)WFIXNV_ADR, FIXNV_SIZE + 4) == 0) {
+			if (-1 == fixnv_is_correct((unsigned char *)WFIXNV_ADR, FIXNV_SIZE)) {
+				memset((unsigned char *)WFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+				printf("W nv and backup nv are all wrong!\n");
+			}
+		} else {
+			printf("W read backup nv fail\n");
+			memset((unsigned char *)WFIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
+			printf("W nv and backup nv are all wrong!\n");
+		}
+	}
+#else
 	printf("Reading fixnv to 0x%08x\n", FIXNV_ADR);
 	memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
 	/* fixnv */
@@ -673,6 +894,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 			printf("nv and backup nv are all wrong!\n");
 		}
 	}
+#endif
 	//array_value((unsigned char *)FIXNV_ADR, FIXNV_SIZE);
 
 	///////////////////////////////////////////////////////////////////////
@@ -683,14 +905,21 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		PRODUCTINFO_SIZE + 4) == 0){
 		orginal_right = 1;
 	}
-
+#ifdef CONFIG_SC8830
+	backupfile_right = 0;
+	memset((unsigned char *)TDRUNTIMENV_ADR, 0xff, PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE);
+	if(prodinfo_read_partition_flag(p_block_dev, PARTITION_PROD_INFO2, 0, (char *)TDRUNTIMENV_ADR,
+		PRODUCTINFO_SIZE + 4) == 0){
+			backupfile_right = 1;
+	}
+#else
 	backupfile_right = 0;
 	memset((unsigned char *)RUNTIMENV_ADR, 0xff, PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE);
 	if(prodinfo_read_partition_flag(p_block_dev, PARTITION_PROD_INFO2, 0, (char *)RUNTIMENV_ADR,
 		PRODUCTINFO_SIZE + 4) == 0){
 			backupfile_right = 1;
 	}
-
+#endif
 	if ((orginal_right == 1) && (backupfile_right == 0)) {
 		printf("productinfo is right, but productinfobkup is wrong, so recovery productinfobkup\n");
 		nv_erase_partition(p_block_dev, PARTITION_PROD_INFO2);
@@ -698,7 +927,11 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	} else if ((orginal_right == 0) && (backupfile_right == 1)) {
 		printf("productinfobkup is right, but productinfo is wrong, so recovery productinfo\n");
 		nv_erase_partition(p_block_dev, PARTITION_PROD_INFO1);
+#ifdef CONFIG_SC8830
+		nv_write_partition(p_block_dev, PARTITION_PROD_INFO1, (char *)TDRUNTIMENV_ADR, (PRODUCTINFO_SIZE + 8));
+#else
 		nv_write_partition(p_block_dev, PARTITION_PROD_INFO1, (char *)RUNTIMENV_ADR, (PRODUCTINFO_SIZE + 8));
+#endif
 	} else if ((orginal_right == 0) && (backupfile_right == 0)) {
 		printf("\n\nproductinfo and productinfobkup are all wrong or no phasecheck.\n\n");
 	}
@@ -720,6 +953,109 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	eng_phasechecktest((unsigned char *)PRODUCTINFO_ADR, SP09_MAX_PHASE_BUFF_SIZE);
 
 	/* RUNTIMEVN_PART */
+#if defined(CONFIG_SC8830)
+	orginal_right = 0;
+	memset((unsigned char *)TDRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+	if(nv_read_partition(p_block_dev, PARTITION_TDRUNTIME_NV1, (char *)TDRUNTIMENV_ADR, RUNTIMENV_SIZE) == 0) {
+		if (1 == runtimenv_is_correct((unsigned char *)TDRUNTIMENV_ADR, RUNTIMENV_SIZE)) {
+			orginal_right = 1;//right
+		}
+	}
+	backupfile_right = 0;
+	memset((unsigned char *)TDDSP_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+	if(nv_read_partition(p_block_dev, PARTITION_TDRUNTIME_NV2, (char *)TDDSP_ADR, RUNTIMENV_SIZE) == 0) {
+		if (1 == runtimenv_is_correct((unsigned char *)TDDSP_ADR, RUNTIMENV_SIZE)) {
+			backupfile_right = 1;//right
+		}
+	}
+	if ((orginal_right == 1) && (backupfile_right == 0)) {
+		printf("TDruntimenv is right, but runtimenvbkup is wrong, so recovery runtimenvbkup\n");
+		nv_erase_partition(p_block_dev, PARTITION_TDRUNTIME_NV2);
+		nv_write_partition(p_block_dev, PARTITION_TDRUNTIME_NV2, (char *)TDRUNTIMENV_ADR, RUNTIMENV_SIZE);
+	} else if ((orginal_right == 0) && (backupfile_right == 1)) {
+		printf("TDruntimenvbkup is right, but runtimenv is wrong, so recovery runtimenv\n");
+		nv_erase_partition(p_block_dev, PARTITION_TDRUNTIME_NV1);
+		nv_write_partition(p_block_dev, PARTITION_TDRUNTIME_NV1, (char *)TDDSP_ADR, RUNTIMENV_SIZE);
+	} else if ((orginal_right == 0) && (backupfile_right == 0)) {
+		printf("\n\nTDruntimenv and runtimenvbkup are all wrong or no runtimenv.\n\n");
+	}
+	printf("Reading TDruntimenv to 0x%08x\n", TDRUNTIMENV_ADR);
+	/* runtimenv */
+	memset((unsigned char *)TDRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+	if(nv_read_partition(p_block_dev, PARTITION_TDRUNTIME_NV1, (char *)TDRUNTIMENV_ADR, RUNTIMENV_SIZE) == 0) {
+		if (-1 == runtimenv_is_correct((unsigned char *)TDRUNTIMENV_ADR, RUNTIMENV_SIZE)) {
+			/* file isn't right and read backup file */
+			memset((unsigned char *)TDRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+			if(nv_read_partition(p_block_dev, PARTITION_TDRUNTIME_NV2, (char *)TDRUNTIMENV_ADR, RUNTIMENV_SIZE) == 0) {
+				if (-1 == runtimenv_is_correct((unsigned char *)TDRUNTIMENV_ADR, RUNTIMENV_SIZE)) {
+					/* file isn't right */
+					memset((unsigned char *)TDRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+				}
+			}
+		}
+	} else {
+		/* file don't exist and read backup file */
+		memset((unsigned char *)TDRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+		if(nv_read_partition(p_block_dev, PARTITION_TDRUNTIME_NV2, (char *)TDRUNTIMENV_ADR, RUNTIMENV_SIZE) == 0){
+			if (-1 == runtimenv_is_correct((unsigned char *)TDRUNTIMENV_ADR, RUNTIMENV_SIZE)) {
+				/* file isn't right */
+				memset((unsigned char *)TDRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
+			}
+		}
+	}
+
+	//Wruntimenv
+	orginal_right = 0;
+	memset((unsigned char *)WRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+	if(nv_read_partition(p_block_dev, PARTITION_WRUNTIME_NV1, (char *)WRUNTIMENV_ADR, RUNTIMENV_SIZE) == 0) {
+		if (1 == runtimenv_is_correct((unsigned char *)WRUNTIMENV_ADR, RUNTIMENV_SIZE)) {
+			orginal_right = 1;//right
+		}
+	}
+	backupfile_right = 0;
+	memset((unsigned char *)TDDSP_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+	if(nv_read_partition(p_block_dev, PARTITION_WRUNTIME_NV2, (char *)TDDSP_ADR, RUNTIMENV_SIZE) == 0) {
+		if (1 == runtimenv_is_correct((unsigned char *)TDDSP_ADR, RUNTIMENV_SIZE)) {
+			backupfile_right = 1;//right
+		}
+	}
+	if ((orginal_right == 1) && (backupfile_right == 0)) {
+		printf("Wruntimenv is right, but runtimenvbkup is wrong, so recovery runtimenvbkup\n");
+		nv_erase_partition(p_block_dev, PARTITION_WRUNTIME_NV2);
+		nv_write_partition(p_block_dev, PARTITION_WRUNTIME_NV2, (char *)WRUNTIMENV_ADR, RUNTIMENV_SIZE);
+	} else if ((orginal_right == 0) && (backupfile_right == 1)) {
+		printf("Wruntimenvbkup is right, but runtimenv is wrong, so recovery runtimenv\n");
+		nv_erase_partition(p_block_dev, PARTITION_WRUNTIME_NV1);
+		nv_write_partition(p_block_dev, PARTITION_WRUNTIME_NV1, (char *)TDDSP_ADR, RUNTIMENV_SIZE);
+	} else if ((orginal_right == 0) && (backupfile_right == 0)) {
+		printf("\n\nWruntimenv and runtimenvbkup are all wrong or no runtimenv.\n\n");
+	}
+
+	printf("Reading Wruntimenv to 0x%08x\n", WRUNTIMENV_ADR);
+	/* runtimenv */
+	memset((unsigned char *)WRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+	if(nv_read_partition(p_block_dev, PARTITION_WRUNTIME_NV1, (char *)WRUNTIMENV_ADR, RUNTIMENV_SIZE) == 0) {
+		if (-1 == runtimenv_is_correct((unsigned char *)WRUNTIMENV_ADR, RUNTIMENV_SIZE)) {
+			/* file isn't right and read backup file */
+			memset((unsigned char *)WRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+			if(nv_read_partition(p_block_dev, PARTITION_WRUNTIME_NV2, (char *)WRUNTIMENV_ADR, RUNTIMENV_SIZE) == 0) {
+				if (-1 == runtimenv_is_correct((unsigned char *)WRUNTIMENV_ADR, RUNTIMENV_SIZE)) {
+					/* file isn't right */
+					memset((unsigned char *)WRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+				}
+			}
+		}
+	} else {
+		/* file don't exist and read backup file */
+		memset((unsigned char *)WRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
+		if(nv_read_partition(p_block_dev, PARTITION_WRUNTIME_NV2, (char *)WRUNTIMENV_ADR, RUNTIMENV_SIZE) == 0){
+			if (-1 == runtimenv_is_correct((unsigned char *)WRUNTIMENV_ADR, RUNTIMENV_SIZE)) {
+				/* file isn't right */
+				memset((unsigned char *)WRUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
+			}
+		}
+	}
+#else
 	orginal_right = 0;
 	memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE + EMMC_SECTOR_SIZE);
 	if(nv_read_partition(p_block_dev, PARTITION_RUNTIME_NV1, (char *)RUNTIMENV_ADR, RUNTIMENV_SIZE) == 0) {
@@ -772,9 +1108,34 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 			}
 		}
 	}
+#endif
 	//array_value((unsigned char *)RUNTIMENV_ADR, RUNTIMENV_SIZE);
 
 	/* DSP_PART */
+#ifdef CONFIG_SC8830
+	if (!get_partition_info(p_block_dev, PARTITION_TDDSP, &info)) {
+		printf("Reading TDdsp to 0x%08x, base_sector:%8x\r\n", TDDSP_ADR, info.start);
+		if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, DSP_SIZE/512+1, (uint8*)TDDSP_ADR)){
+			printf("TDdsp nand read error \n");
+			return;
+		}
+	}
+	else{
+		printf("get TDDsp info failed!\r\n");
+		return;
+	}
+	if (!get_partition_info(p_block_dev, PARTITION_WDSP, &info)) {
+		printf("Reading Wdsp to 0x%08x, base_sector:%8x\r\n", WDSP_ADR, info.start);
+		if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, DSP_SIZE/512+1, (uint8*)WDSP_ADR)){
+			printf("Wdsp nand read error \n");
+			return;
+		}
+	}
+	else{
+		printf("get WDsp info failed!\r\n");
+		return;
+	}
+#else
 	printf("Reading dsp to 0x%08x\n", DSP_ADR);
 	if (!get_partition_info(p_block_dev, PARTITION_DSP, &info)) {
 		 if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, DSP_SIZE/512+1, (uint8*)DSP_ADR)){
@@ -786,6 +1147,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		return;
 	}
 	secure_check(DSP_ADR, 0, DSP_ADR + DSP_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
+#endif
 #elif defined(CONFIG_CALIBRATION_MODE_NEW)
 #if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W)
 	/*
@@ -974,6 +1336,43 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 #if((!BOOT_NATIVE_LINUX)||(BOOT_NATIVE_LINUX_MODEM))
 	////////////////////////////////////////////////////////////////
+#ifdef CONFIG_SC8830
+	/* TDMODEM_PART */
+	size = (MODEM_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
+	if(size <= 0) {
+		printf("modem image should not be zero\n");
+		return;
+	}
+	if (!get_partition_info(p_block_dev, PARTITION_TDMODEM, &info)) {
+		printf("Reading TDmodem to 0x%08x, base_sector:%08x\r\n", TDMODEM_ADR, info.start);
+		if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, size/EMMC_SECTOR_SIZE, (uint8*)TDMODEM_ADR)){
+			printf("modem nand read error \n");
+			return;
+		}
+	}
+	else{
+		printf("get TDModem info failed!\r\n");
+		return;
+	}
+
+	/* WMODEM_PART */
+	size = (MODEM_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
+	if(size <= 0) {
+		printf("modem image should not be zero\n");
+		return;
+	}
+	if (!get_partition_info(p_block_dev, PARTITION_WMODEM, &info)) {
+		printf("Reading Wmodem to 0x%08x, base_sector:%08x\r\n", WMODEM_ADR, info.start);
+		if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, size/EMMC_SECTOR_SIZE, (uint8*)WMODEM_ADR)){
+			printf("Wmodem nand read error \n");
+			return;
+		}
+	}
+	else{
+		printf("get WModem info failed!\r\n");
+		return;
+	}
+#else
 	/* MODEM_PART */
 	printf("Reading modem to 0x%08x\n", MODEM_ADR);
 	size = (MODEM_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
@@ -991,7 +1390,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		return;
 	}
 	secure_check(MODEM_ADR, 0, MODEM_ADR + MODEM_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
-
+#endif
 	//array_value((unsigned char *)MODEM_ADR, MODEM_SIZE);
 #endif
 
@@ -1041,7 +1440,9 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 #if BOOT_NATIVE_LINUX_MODEM
 	//sipc addr clear
+#ifndef CONFIG_SC8830
 	sipc_addr_reset();
+#endif
 	// start modem CP
 	modem_entry();
 #endif

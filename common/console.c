@@ -701,7 +701,9 @@ int console_init_r(void)
 #endif
 	}
 
+#ifndef CONFIG_SC8830
 	gd->flags |= GD_FLG_DEVINIT;	/* device initialization completed */
+#endif
 
 	stdio_print_current_devices();
 

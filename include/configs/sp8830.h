@@ -21,8 +21,10 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 //only used in fdl2 .in uart download, the debug infors  from  serial will break the download process.
-#define CONFIG_FDL2_PRINT  0	
-#define BOOT_NATIVE_LINUX (1)
+#define CONFIG_FDL2_PRINT        0
+#define BOOT_NATIVE_LINUX        1
+#define BOOT_NATIVE_LINUX_MODEM  1
+#define CALIBRATION_FLAG         0X81C01000
 
 #define CONFIG_SILENT_CONSOLE
 #define CONFIG_GPIOLIB 1
@@ -48,69 +50,6 @@
  */
 #define CONFIG_SP8830
 #define CONFIG_SC8830
-#define CONFIG_MACH_SP8830FPGA
-
-/********** DDR timing configuration for customer begin *************/
-#define CONFIG_DDR_TIMING_CUSTOM FALSE //TRUE or FALSE
-
-// name: CONFIG_LPDDR1_DS
-// description: to config lpddr1 driver strength
-// note: when lpddr2, don't need to set this parameter
-// legal value:  
-// LPDDR1_DS_33_OHM
-// LPDDR1_DS_31_OHM
-// LPDDR1_DS_48_OHM
-// LPDDR1_DS_43_OHM
-// LPDDR1_DS_39_OHM
-// LPDDR1_DS_55_OHM
-// LPDDR1_DS_64_OHM
-#define CONFIG_LPDDR1_DS  LPDDR1_DS_39_OHM 
-
-// name: CONFIG_LPDDR2_DS
-// note: to config lpddr2 driver strength, when lpddr1, don't need to set this parameter
-// legal value:  
-// LPDDR2_DS_34_OHM
-// LPDDR2_DS_40_OHM
-// LPDDR2_DS_48_OHM
-// LPDDR2_DS_60_OHM
-// LPDDR2_DS_80_OHM
-#define CONFIG_LPDDR2_DS LPDDR2_DS_40_OHM
-
-// name: CONFIG_BYTEx_PHY_DLY
-// description: to config BYTE0~BYTE3 slave dll phase delay in ddr controller
-// note: when lpddr1, don't need to set this parameter
-// legal value:  
-// SDLL_PHS_DLY_DEF
-// SDLL_PHS_DLY_36
-// SDLL_PHS_DLY_54
-// SDLL_PHS_DLY_72
-// SDLL_PHS_DLY_90
-// SDLL_PHS_DLY_108
-// SDLL_PHS_DLY_126
-// SDLL_PHS_DLY_144
-#define CONFIG_BYTE0_PHS_DLY SDLL_PHS_DLY_DEF
-#define CONFIG_BYTE1_PHS_DLY SDLL_PHS_DLY_DEF
-#define CONFIG_BYTE2_PHS_DLY SDLL_PHS_DLY_DEF
-#define CONFIG_BYTE3_PHS_DLY SDLL_PHS_DLY_DEF
-
-// name: CONFIG_BYTEx_STEP_DLY
-// description: to config BYTE0~BYTE3 dqs step delay in ddr controller
-// note: when lpddr1, don't need to set this parameter
-// legal value:  
-// DQS_STEP_DLY_SUB3,
-// DQS_STEP_DLY_SUB2,
-// DQS_STEP_DLY_SUB1,
-// DQS_STEP_DLY_NOM,
-// DQS_STEP_DLY_DEF,
-// DQS_STEP_DLY_ADD1,
-// DQS_STEP_DLY_ADD2,
-// DQS_STEP_DLY_ADD3,
-// DQS_STEP_DLY_ADD4,
-#define CONFIG_BYTE0_STEP_DLY DQS_STEP_DLY_NOM
-#define CONFIG_BYTE1_STEP_DLY DQS_STEP_DLY_NOM
-#define CONFIG_BYTE2_STEP_DLY DQS_STEP_DLY_NOM
-#define CONFIG_BYTE3_STEP_DLY DQS_STEP_DLY_NOM
-/************* DDR timing configuration for customer end **************/
 
 #define CHIP_ENDIAN_LITTLE
 #define _LITTLE_ENDIAN 1
@@ -134,9 +73,9 @@
  * MMC definition
  */
 #define CONFIG_CMD_MMC
-#ifdef CONFIG_CMD_MMC
+#ifdef  CONFIG_CMD_MMC
 #define CONFIG_CMD_FAT			1
-#define CONFIG_FAT_WRITE	1
+#define CONFIG_FAT_WRITE		1
 #define CONFIG_MMC			1
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_SDHCI			1
@@ -146,7 +85,7 @@
 #define CONFIG_DOS_PARTITION		1
 #define CONFIG_EFI_PARTITION		1
 #define CONFIG_SYS_MMC_NUM		1
-#define CONFIG_SYS_MMC_BASE		{0x20510000}
+#define CONFIG_SYS_MMC_BASE		{0x20600000}
 #endif
 
 #define BB_DRAM_TYPE_256MB_32BIT
@@ -162,11 +101,11 @@
 
 #define FIXNV_SIZE			(64 * 1024)
 #define PRODUCTINFO_SIZE	(3 * 1024)
-#define MODEM_SIZE		(0x800000)
-#define DSP_SIZE        (0x3E0400) /* 3968K */
-#define VMJALUNA_SIZE       (0x64000) /* 400K */
-#define RUNTIMENV_SIZE      (256 * 1024)
-#define CONFIG_SPL_LOAD_LEN (0x6000)
+#define MODEM_SIZE			(0x800000)
+#define DSP_SIZE			(0x3E0400) /* 3968K */
+#define VMJALUNA_SIZE		(0x64000) /* 400K */
+#define RUNTIMENV_SIZE		(256 * 1024)
+#define CONFIG_SPL_LOAD_LEN	(0x6000)
 
 #define PRODUCTINFO_ADR		0x80490000
 
@@ -357,13 +296,12 @@
 #ifdef  CONFIG_LCD
 #define LCD_BPP LCD_COLOR16
 //#define CONFIG_LCD_HVGA   1
-//#define CONFIG_LCD_QVGA   1
-#define CONFIG_LCD_QHD 1
+#define CONFIG_LCD_QVGA   1
+//#define CONFIG_LCD_QHD 1
 //#define CONFIG_LCD_INFO
 //#define LCD_TEST_PATTERN
 //#define CONFIG_LCD_LOGO
-//#define CONFIG_FB_LCD_S6D0139
-#define CONFIG_FB_LCD_NT35516_MIPI
+#define CONFIG_FB_LCD_S6D0139
 #define CONFIG_SYS_WHITE_ON_BLACK
 #ifdef  LCD_TEST_PATTERN
 #define CONSOLE_COLOR_RED 0xf800 
@@ -375,22 +313,6 @@
 #endif
 #endif // CONFIG_LCD
 
-/*
- * MMC definition
- */
-#define CONFIG_CMD_MMC
-#ifdef CONFIG_CMD_MMC
-#define CONFIG_CMD_FAT			1
-#define CONFIG_FAT_WRITE	1
-#define CONFIG_GENERIC_MMC		1
-#define CONFIG_SDHCI			1
-#define CONFIG_SYS_MMC_MAX_BLK_COUNT	0x1000
-#define CONFIG_MMC_SDMA			1
-#define CONFIG_MV_SDHCI			1
-#define CONFIG_DOS_PARTITION		1
-#define CONFIG_SYS_MMC_NUM		1
-#define CONFIG_SYS_MMC_BASE		{0x20510000,0x20530000}
-#endif
 
 #define CALIBRATE_ENUM_MS 15000
 #define CALIBRATE_IO_MS 10000

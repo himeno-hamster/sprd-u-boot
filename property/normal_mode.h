@@ -36,7 +36,19 @@ extern unsigned char raw_header[8192];
 #define SIMLOCK_PART "simlock"
 #define SIMLOCK_SIZE	1024
 
-#if defined(CONFIG_TIGER) || defined(CONFIG_SC8830)
+#if defined(CONFIG_SC8830)
+#define KERNEL_ADR      0x80008000
+#define VLX_TAG_ADDR    0x82000100
+#define RAMDISK_ADR     0x85500000
+#define TDDSP_ADR       0x88000000
+#define TDFIXNV_ADR     0x88480000
+#define TDRUNTIMENV_ADR 0x884a0000
+#define TDMODEM_ADR     0x88500000
+#define WDSP_ADR        0x90000000
+#define WFIXNV_ADR      0x90480000
+#define WRUNTIMENV_ADR  0x904a0000
+#define WMODEM_ADR      0x90500000
+#elif defined(CONFIG_TIGER)
 #define DSP_ADR          0x80020000
 #define VMJALUNA_ADR     0x80400000
 #define FIXNV_ADR        0x80480000
@@ -48,11 +60,7 @@ extern unsigned char raw_header[8192];
 #if BOOT_NATIVE_LINUX
 //pls make sure uboot running area
 #define VLX_TAG_ADDR     (0x82000100)
-#ifdef CONFIG_MACH_SP8830FPGA
-#define KERNEL_ADR       (0x80008000)
-#else
 #define KERNEL_ADR       (0x82008000)
-#endif
 #else
 #define KERNEL_ADR       0x84508000
 #define VLX_TAG_ADDR     0x85100000 //after initrd

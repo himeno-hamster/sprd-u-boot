@@ -84,7 +84,7 @@ typedef struct
 	char *partition_str;
 } eMMC_Parttion;
 
-#ifdef CONFIG_SHARK
+#ifdef CONFIG_SC8830
 eMMC_Parttion const _sprd_emmc_partition[]={
 	{PARTITION_TDMODEM, PARTITION_USER, "tdmodem"},
 	{PARTITION_WMODEM, PARTITION_USER, "wmodem"},

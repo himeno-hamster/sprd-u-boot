@@ -1,7 +1,7 @@
 #include <config.h>
 #include "../../../disk/part_uefi.h"
 
-#ifdef CONFIG_SHARK
+#ifdef CONFIG_SC8830
 PARTITION_CFG const g_sprd_emmc_partition_cfg[MAX_PARTITION_INFO] = {
 	{PARTITION_TDMODEM, 10 * 1024, PARTITION_RAW},
 	{PARTITION_TDDSP, 5 * 1024, PARTITION_RAW},

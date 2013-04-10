@@ -101,6 +101,7 @@ gpt_header gpt_head __attribute__ ((aligned(4))) = {0};
 unsigned long long int _cur_lba_num = 0; 
 unsigned long long int all_used_size = 0;
 
+#ifndef CONFIG_SC8830
 PARTITION_CFG g_partition_cfg[]={
 	{PARTITION_VM, 512, PARTITION_RAW},		/* 512KB */
 	{PARTITION_MODEM, 10 * 1024, PARTITION_RAW},	/* 10 * 1024KB */
@@ -130,6 +131,7 @@ PARTITION_CFG g_partition_cfg[]={
 #endif
 	{0,0,0}
 };
+#endif
 
 
 /* Convert char[2] in little endian format to the host format integer
@@ -414,12 +416,13 @@ unsigned int write_uefi_partition_table(PARTITION_CFG *p_partition_cfg)
 	//write pmbr
 	_gen_pmbr(&pmbr.pmbr);
 	_write_pmbr(&pmbr.pmbr);
-
+#ifndef CONFIG_SC8830
 	//write gpt
 	if( NULL == p_partition_cfg )
 	{
 		p_partition_cfg = &g_partition_cfg;  
 	}
+#endif
 	_gen_gpt(&gpt_head,p_partition_cfg);
 	_write_gpt(&gpt_head);
 

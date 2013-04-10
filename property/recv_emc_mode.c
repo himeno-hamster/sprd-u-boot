@@ -236,7 +236,9 @@ void try_update_modem(void)
 		}
 		size = FIXNV_SIZE + 4;
 		nv_patch(BUF_ADDR, ret);
-
+#ifdef CONFIG_SC8830
+		//sc8830 do it later
+#else
 		memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
 		if(0 == nv_read_partition(p_block_dev, PARTITION_FIX_NV1, (char *)FIXNV_ADR, FIXNV_SIZE + 4)){
 			if (1 == fixnv_is_correct_endflag((unsigned char *)FIXNV_ADR, FIXNV_SIZE)){
@@ -248,8 +250,12 @@ void try_update_modem(void)
 		}else{
 			goto NEXT;
 		}
+#endif
 
 NEXT:
+#ifdef CONFIG_SC8830
+			//sc8830 do it later
+#else
 		memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
 		if(0 == nv_read_partition(p_block_dev, PARTITION_FIX_NV2, (char *)FIXNV_ADR, FIXNV_SIZE + 4)){
 			if (1 == fixnv_is_correct_endflag((unsigned char *)FIXNV_ADR, FIXNV_SIZE)){
@@ -262,12 +268,15 @@ NEXT:
 			printf("both of the fixnv files are not correct,skip parameter backup process!\n");
 			break;
 		}
-
+#endif
 
 SKIP:
+#ifdef CONFIG_SC8830
+				//sc8830 do it later
+#else
 		nv_write_partition(p_block_dev, PARTITION_FIX_NV1, (char *)BUF_ADDR, size);
 		nv_write_partition(p_block_dev, PARTITION_FIX_NV2, (char *)BUF_ADDR, size);
-
+#endif
 		file_fat_rm(SD_NV_NAME);
 	}while(0);
 
@@ -279,8 +288,11 @@ SKIP:
 			break;
 		}
 		size = ret;
+#ifdef CONFIG_SC8830
+				//sc8830 do it later
+#else
 		nv_write_partition(p_block_dev, PARTITION_MODEM, (char *)BUF_ADDR, size);
-
+#endif
 		file_fat_rm(SD_MODEM_NAME);
 	}while(0);
 
@@ -292,8 +304,11 @@ SKIP:
 			break;
 		}
 		size = ret;
+#ifdef CONFIG_SC8830
+				//sc8830 do it later
+#else
 		nv_write_partition(p_block_dev, PARTITION_DSP, (char *)BUF_ADDR, size);
-
+#endif
 		file_fat_rm(SD_DSP_NAME);
 	}while(0);
 
@@ -305,8 +320,9 @@ SKIP:
 			break;
 		}
 		size = ret;
+#ifndef CONFIG_SC8830
 		nv_write_partition(p_block_dev, PARTITION_VM, (char *)BUF_ADDR, size);
-
+#endif
 		file_fat_rm(SD_VM_NAME);
 	}while(0);
 
