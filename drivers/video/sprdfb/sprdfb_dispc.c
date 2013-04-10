@@ -332,12 +332,12 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	__raw_bits_and(~(1<<15), REG_AP_CLK_DISPC0_DPI_CFG);
 
 	//enable dispc clock
-	__raw_bits_or((1<<BIT_AP_CKG_EB), REG_AP_APB_APB_EB);  //core_clock_en
+	__raw_bits_or(BIT_AP_CKG_EB, REG_AP_APB_APB_EB);  //core_clock_en
 
-	__raw_bits_or((1<<BIT_DISP_EMC_EB), REG_AON_APB_APB_EB1);  //matrix clock_en
+	__raw_bits_or(BIT_DISP_EMC_EB, REG_AON_APB_APB_EB1);  //matrix clock_en
 
 	//enable DISPC
-	__raw_bits_or(1<<BIT_DISPC0_EB, REG_AP_AHB_AHB_EB);
+	__raw_bits_or(BIT_DISPC0_EB, REG_AP_AHB_AHB_EB);
 
 	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC / 11;
 
@@ -346,6 +346,7 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	printf("0x71200034 = 0x%x\n", __raw_readl(0x71200034));
 	printf("0x20d00000 = 0x%x\n", __raw_readl(0x20d00000));
 	printf("0x71300000 = 0x%x\n", __raw_readl(0x71300000));
+	printf("0x402e0004 = 0x%x\n", __raw_readl(0x402e0004));
 
 #else
 	//select DISPC clock source
@@ -431,6 +432,15 @@ static int32_t sprdfb_dispc_init(struct sprdfb_device *dev)
 		/* enable dispc DONE  INT*/
 //		dispc_write((1<<0), DISPC_INT_EN);
 	}
+#ifdef CONFIG_SC8830
+		{/*for debug*/
+			int32_t i;
+			for(i=0x20800000;i<0x208000c0;i+=16){
+				printk("sprdfb: %x: 0x%x, 0x%x, 0x%x, 0x%x\n", i, __raw_readl(i), __raw_readl(i+4), __raw_readl(i+8), __raw_readl(i+12));
+			}
+			printk("**************************************\n");
+		}
+#endif
 	return 0;
 }
 
