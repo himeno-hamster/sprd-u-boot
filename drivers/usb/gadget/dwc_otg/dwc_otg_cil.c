@@ -920,8 +920,13 @@ void dwc_otg_core_dev_init(dwc_otg_core_if_t * core_if)
 		/** Set Periodic Tx FIFO Mask all bits 0 */
 		core_if->p_tx_msk = 0;
 
+#ifdef CONFIG_SC8830
+		/**fisrt 3 txfifos are 0x40 in shark, tooo small, don't use them*/
+		core_if->tx_msk = 3;
+#else
 		/** Set Tx FIFO Mask all bits 0 */
 		core_if->tx_msk = 0;
+#endif
 
 		if (core_if->en_multiple_tx_fifo == 0) {
 			/* Non-periodic Tx FIFO */

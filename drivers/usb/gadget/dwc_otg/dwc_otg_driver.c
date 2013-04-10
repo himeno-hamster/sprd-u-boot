@@ -175,6 +175,27 @@ static struct dwc_otg_driver_module_params dwc_otg_module_params = {
 	.ulpi_fs_ls = -1,
 	.ts_dline = -1,
 	.en_multiple_tx_fifo = -1,
+#ifdef CONFIG_SC8830
+	.dev_tx_fifo_size = {
+			     /* dev_tx_fifo_size */
+			     0x40,
+			     0x40,
+			     0x40,
+			     0x100,
+			     0x100,
+			     0x100,
+			     0x100,
+			     0x80,
+			     0x80,
+			     0x80,
+			     0x80,
+			     0x80,
+			     0x80,
+			     -1,
+			     -1
+			     /* 15 */
+			     },
+#else
 	.dev_tx_fifo_size = {
 			     /* dev_tx_fifo_size */
 			     0x80,
@@ -194,6 +215,7 @@ static struct dwc_otg_driver_module_params dwc_otg_module_params = {
 			     -1
 			     /* 15 */
 			     },
+#endif
 	.thr_ctl = -1,
 	.tx_thr_length = -1,
 	.rx_thr_length = -1,
@@ -559,7 +581,11 @@ static int dwc_otg_driver_remove(void)
 }
 
 void udc_power_on(void);
+#ifdef CONFIG_SC8830
+#define USB_PHYS            0x20200000
+#else
 #define USB_PHYS            0x20300000
+#endif
 /**
  * This function is called when an lm_device is bound to a
  * dwc_otg_driver. It creates the driver components required to

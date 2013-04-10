@@ -583,15 +583,17 @@ static void usb_startup(void)
         usb_ldo_switch(1);
 #ifdef CONFIG_SC8830
         __raw_bits_or(BIT_4, AHB_CTL0);
+	__raw_bits_or(BIT_5|BIT_6|BIT_7, AHB_SOFT_RST);
+	dwc_mdelay(5);
+	__raw_bits_and(~(BIT_5|BIT_6|BIT_7), AHB_SOFT_RST);
 #else
         __raw_bits_or(BIT_6, AHB_CTL3);
-#endif
-
 	__raw_bits_or(BIT_6|BIT_7, AHB_SOFT_RST);
 	dwc_mdelay(5);
 	__raw_bits_and(~(BIT_6|BIT_7), AHB_SOFT_RST);
 
 	__raw_bits_or(BIT_5, AHB_CTL0);
+#endif
         dwc_mdelay(5);
 }
 
@@ -627,11 +629,7 @@ void udc_power_on(void)
 		__raw_bits_or(BIT_15 | BIT_14, USB_PHY_CTRL);
 #endif
 	}
-#ifdef CONFIG_SC8830
-#else
-	__raw_bits_and(~BIT_1, AHB_CTL3);
-	__raw_bits_and(~BIT_2, AHB_CTL3);
-#endif
+
 	usb_startup();
 }
 
