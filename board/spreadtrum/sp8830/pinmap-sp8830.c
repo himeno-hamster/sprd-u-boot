@@ -17,7 +17,7 @@
 static pinmap_t  pinmap[] = {
 	{REG_PIN_CTRL0,			0},	//modify it later
 	{REG_PIN_CTRL1,			0},	//modify it later
-	{REG_PIN_CTRL2,			0},	//modify it later
+	{REG_PIN_CTRL2,			(1<<16)|(2<<13)|(2<<10)}, //ap_uart4-->cp0_uart0, ap_uart3-->cp1_uart0, ap_uart2-->cp1_uart1
 	{REG_PIN_CTRL3,			0},	//modify it later
 	{REG_PIN_TRACECLK,            BIT_PIN_NULL|BITS_PIN_DS(1)|BITS_PIN_AF(3)|BIT_PIN_NUL|BIT_PIN_SLP_NUL|BIT_PIN_SLP_OE},
 	{REG_PIN_TRACECTRL,           BIT_PIN_NULL|BITS_PIN_DS(1)|BITS_PIN_AF(3)|BIT_PIN_NUL|BIT_PIN_SLP_NUL|BIT_PIN_SLP_OE},
