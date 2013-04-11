@@ -8,30 +8,6 @@
 
 struct key_map_info * sprd_key_map = 0;
 
-static unsigned long keypad_func_cfg[] = {
-        MFP_CFG_X(KEYOUT0, AF0, DS1, F_PULL_NONE, S_PULL_NONE, IO_OE),
-        MFP_CFG_X(KEYOUT1, AF0, DS1, F_PULL_NONE, S_PULL_NONE, IO_OE),
-        MFP_CFG_X(KEYOUT2, AF0, DS1, F_PULL_NONE, S_PULL_NONE, IO_OE),
-        MFP_CFG_X(KEYOUT3, AF0, DS1, F_PULL_NONE, S_PULL_NONE, IO_OE),
-        MFP_CFG_X(KEYOUT4, AF0, DS1, F_PULL_NONE, S_PULL_NONE, IO_OE),
-        MFP_CFG_X(KEYOUT5, AF0, DS1, F_PULL_NONE, S_PULL_NONE, IO_OE),
-        MFP_CFG_X(KEYOUT6, AF0, DS1, F_PULL_NONE, S_PULL_NONE, IO_OE),
-        MFP_CFG_X(KEYOUT7, AF0, DS1, F_PULL_NONE, S_PULL_NONE, IO_OE),
-        MFP_CFG_X(KEYIN0,  AF0, DS1, F_PULL_UP,   S_PULL_UP,   IO_IE),
-        MFP_CFG_X(KEYIN1,  AF0, DS1, F_PULL_UP,   S_PULL_UP,   IO_IE),
-        MFP_CFG_X(KEYIN2,  AF0, DS1, F_PULL_UP,   S_PULL_UP,   IO_IE),
-        MFP_CFG_X(KEYIN3,  AF0, DS1, F_PULL_UP,   S_PULL_UP,   IO_IE),
-        MFP_CFG_X(KEYIN4,  AF0, DS1, F_PULL_UP,   S_PULL_UP,   IO_IE),
-        MFP_CFG_X(KEYIN5,  AF0, DS1, F_PULL_UP,   S_PULL_UP,   IO_IE),
-        MFP_CFG_X(KEYIN6,  AF0, DS1, F_PULL_UP,   S_PULL_UP,   IO_IE),
-        MFP_CFG_X(KEYIN7,  AF0, DS1, F_PULL_UP,   S_PULL_UP,   IO_IE),
-};
-
-static void sprd_config_keypad_pins(void)
-{
-        sprd_mfp_config(keypad_func_cfg, ARRAY_SIZE(keypad_func_cfg));
-}
-
 void board_keypad_init(void)
 {
     unsigned int key_type;
@@ -55,33 +31,16 @@ void board_keypad_init(void)
     }
 
     /* init sprd keypad controller */
-
     REG32(REG_AON_APB_APB_EB0) |= BIT_8;
     REG32(REG_AON_APB_APB_RTC_EB) |= BIT_1;
 
-    sprd_config_keypad_pins();
     REG_KPD_INT_CLR = KPD_INT_ALL;
     REG_KPD_POLARITY = CFG_ROW_POLARITY | CFG_COL_POLARITY;
     REG_KPD_CLK_DIV_CNT = CFG_CLK_DIV & KPDCLK0_CLK_DIV0;
     REG_KPD_LONG_KEY_CNT = CONFIG_KEYPAD_LONG_CNT;
     REG_KPD_DEBOUNCE_CNT = CONFIG_KEYPAD_DEBOUNCE_CNT;//0x8;0x13
-    key_type = ((((~(0xffffffff << (sprd_key_map->total_col - KPD_COL_MIN_NUM))) << 20) | ((~(0xffffffff << (sprd_key_map->total_row- KPD_ROW_MIN_NUM))) << 16)) & (KPDCTL_ROW | KPDCTL_COL));
-    REG_KPD_CTRL = 0x7 | key_type;
-    
-    //open all press & release & long key operation flags
-    REG_KPD_INT_EN = KPD_INT_ALL;
-#if 0
-    for(;;){
-        if(REG_KPD_INT_RAW_STATUS){
-            printf("key operation flags is %08x, key %08x\n", REG_KPD_INT_RAW_STATUS, REG_KPD_KEY_STATUS);
-
-            REG_KPD_INT_CLR = KPD_INT_ALL;
-        }
-    }
-#endif
-    REG32(REG_AON_APB_APB_EB0) |= BIT_8;
-    REG32(REG_AON_APB_APB_RTC_EB) |= BIT_1;
-    return;
+    REG_KPD_CTRL  = (7<<8)/*Col0-Col2 Enable*/|(7<<16)/*Row0-Row2 Enable*/;
+    REG_KPD_CTRL |= 1; /*Keypad Enable*/;
 }
 
 static char handle_scan_code(unsigned char scan_code)
