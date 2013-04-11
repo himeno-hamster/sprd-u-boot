@@ -38,26 +38,30 @@ SCI_CLK_ADD(clk_26m_rf1, 0, 0, 0,
 	0, 0, 0, 0,
 	1, &ext_26m);
 
-SCI_CLK_ADD(clk_26m_ap, 0, 0, 0,
+SCI_CLK_ADD(clk_26m_ap, 0, REG_PMU_APB_CGM_AP_AUTO_GATE_EN, BIT(0),
 	0, 0, 0, 0,
 	1, &ext_26m);
 
-SCI_CLK_ADD(clk_mpll, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(6),
+SCI_CLK_ADD(clk_26m_ap0, 0, 0, 0,
+	0, 0, 0, 0,
+	1, &ext_26m);
+
+SCI_CLK_ADD(clk_mpll, 0, REG_PMU_APB_CGM_AP_AUTO_GATE_EN, BIT(6),
 	REG_AON_APB_MPLL_CFG, BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4)|BIT(5)|BIT(6)|BIT(7)|BIT(8)|BIT(9)|BIT(10), 0, 0, 0);
 
-SCI_CLK_ADD(clk_dpll, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(1),
+SCI_CLK_ADD(clk_dpll, 0, REG_PMU_APB_CGM_AP_AUTO_GATE_EN, BIT(1),
 	REG_AON_APB_DPLL_CFG, BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4)|BIT(5)|BIT(6)|BIT(7)|BIT(8)|BIT(9)|BIT(10), 0, 0, 0);
 
-SCI_CLK_ADD(clk_tdpll, 768000000, REG_PMU_APB_PLL_DIV_EN1, BIT(3),
+SCI_CLK_ADD(clk_tdpll, 768000000, REG_PMU_APB_CGM_AP_AUTO_GATE_EN, BIT(3),
 	0, 0, 0, 0, 0);
 
-SCI_CLK_ADD(clk_wpll, 921600000, REG_PMU_APB_PLL_DIV_EN1, BIT(5),
+SCI_CLK_ADD(clk_wpll, 921600000, REG_PMU_APB_CGM_AP_AUTO_GATE_EN, BIT(5),
 	0, 0, 0, 0, 0);
 
-SCI_CLK_ADD(clk_cpll, 624000000, REG_PMU_APB_PLL_DIV_EN1, BIT(2),
+SCI_CLK_ADD(clk_cpll, 624000000, REG_PMU_APB_CGM_AP_AUTO_GATE_EN, BIT(2),
 	0, 0, 0, 0, 0);
 
-SCI_CLK_ADD(clk_wifipll, 880000000, REG_PMU_APB_PLL_DIV_EN1, BIT(4),
+SCI_CLK_ADD(clk_wifipll, 880000000, REG_PMU_APB_CGM_AP_AUTO_GATE_EN, BIT(4),
 	0, 0, 0, 0, 0);
 
 SCI_CLK_ADD(clk_300m, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(0),
@@ -67,6 +71,22 @@ SCI_CLK_ADD(clk_300m, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(0),
 SCI_CLK_ADD(clk_37m5, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(1),
 	24, 0, 0, 0,
 	1, &clk_mpll);
+
+SCI_CLK_ADD(clk_533m, 533000000, 0, 0,
+	0, 0, 0, 0,
+	1, &clk_dpll);
+
+SCI_CLK_ADD(clk_66m, 66000000, REG_PMU_APB_PLL_DIV_EN1, BIT(2),
+	0, 0, 0, 0,
+	1, &clk_dpll);
+
+SCI_CLK_ADD(clk_51m2_w, 51200000, REG_PMU_APB_PLL_DIV_EN1, BIT(23),
+	0, 0, 0, 0,
+	1, &clk_wpll);
+
+SCI_CLK_ADD(clk_40m, 40000000, REG_PMU_APB_PLL_DIV_EN1, BIT(27),
+	0, 0, 0, 0,
+	1, &clk_wifipll);
 
 SCI_CLK_ADD(clk_312m, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(16),
 	2, 0, 0, 0,
@@ -83,26 +103,6 @@ SCI_CLK_ADD(clk_104m, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(18),
 SCI_CLK_ADD(clk_52m, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(19),
 	12, 0, 0, 0,
 	1, &clk_cpll);
-
-SCI_CLK_ADD(clk_26m_ap0, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(19),//new add
-	12, 0, 0, 0,
-	1, &ext_26m);
-
-SCI_CLK_ADD(clk_533m, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(19),//new add
-	12, 0, 0, 0,
-	1, &clk_dpll);
-
-SCI_CLK_ADD(clk_66m, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(19), //new add
-	12, 0, 0, 0,
-	1, &clk_dpll);
-
-SCI_CLK_ADD(clk_56m, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(19), //new add
-	12, 0, 0, 0,
-	1, &clk_mpll);
-
-SCI_CLK_ADD(clk_40m, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(19), //new add
-	12, 0, 0, 0,
-	1, &clk_wifipll);
 
 SCI_CLK_ADD(clk_384m, 0, REG_PMU_APB_PLL_DIV_EN1, BIT(3),
 	2, 0, 0, 0,
@@ -219,6 +219,7 @@ SCI_CLK_ADD(clk_disc1_dbi, 0, REG_AP_AHB_AHB_EB, BIT(2),
 SCI_CLK_ADD(clk_disc1_dpi, 0, REG_AP_AHB_AHB_EB, BIT(2),
 	REG_AP_CLK_DISPC1_DPI_CFG, BIT(8)|BIT(9)|BIT(10), REG_AP_CLK_DISPC1_DPI_CFG, BIT(0)|BIT(1),
 	4, &clk_128m, &clk_153m6, &clk_192m, &clk_384m);
+
 SCI_CLK_ADD(clk_nfc, 0, REG_AP_AHB_AHB_EB, BIT(6),
 	REG_AP_CLK_NFC_CFG, BIT(8)|BIT(9)|BIT(10), REG_AP_CLK_NFC_CFG, BIT(0)|BIT(1),
 	3, &clk_64m, &clk_128m, &clk_153m6);
@@ -313,7 +314,7 @@ SCI_CLK_ADD(clk_iis1, 0, REG_AP_APB_APB_EB, BIT(2),
 SCI_CLK_ADD(clk_iis2, 0, REG_AP_APB_APB_EB, BIT(3),
 	REG_AP_CLK_IIS2_CFG, BIT(8)|BIT(9)|BIT(10), REG_AP_CLK_IIS2_CFG, BIT(0)|BIT(1),
 	3, &clk_26m_ap, &clk_51m2, &clk_128m);
-
+#if 0
 SCI_CLK_ADD(clk_iis3, 0, REG_AP_APB_APB_EB, BIT(4),
 	REG_AP_CLK_IIS3_CFG, BIT(8)|BIT(9)|BIT(10), REG_AP_CLK_IIS3_CFG, BIT(0)|BIT(1),
 	3, &clk_26m_ap, &clk_51m2, &clk_128m);
@@ -379,19 +380,19 @@ SCI_CLK_ADD(clk_fm, 0, REG_AON_APB_APB_EB0, BIT(1),
 SCI_CLK_ADD(clk_adi, 0, REG_AON_APB_APB_EB0, BIT(16),
 	0, 0, REG_AON_CLK_ADI_CFG, BIT(0)|BIT(1),
 	3, &clk_26m_rf0, &clk_51m2, &clk_76m8);
-
+#endif
 SCI_CLK_ADD(clk_aux0, 0, REG_AON_APB_APB_EB1, BIT(2),
 	REG_AON_APB_AON_CGM_CFG, BIT(16)|BIT(17)|BIT(18)|BIT(19), REG_AON_APB_AON_CGM_CFG, BIT(0)|BIT(1)|BIT(2)|BIT(3),
-	9, &ext_32k, &clk_26m_rf0, &clk_26m_rf0, &clk_66m, &clk_48m, &clk_52m, &clk_51m2, &clk_56m, &clk_40m);
+	10, &ext_32k, &clk_26m_rf0, &clk_26m_rf1, &clk_48m, &clk_52m, &clk_51m2, &clk_37m5, &clk_40m, &clk_66m, &clk_40m);
 
 SCI_CLK_ADD(clk_aux1, 0, REG_AON_APB_APB_EB1, BIT(3),
 	REG_AON_APB_AON_CGM_CFG, BIT(20)|BIT(21)|BIT(22)|BIT(23), REG_AON_APB_AON_CGM_CFG, BIT(4)|BIT(5)|BIT(6)|BIT(7),
-	9, &ext_32k, &clk_26m_rf0, &clk_26m_rf0, &clk_66m, &clk_48m, &clk_52m, &clk_51m2, &clk_56m, &clk_40m);
+	10, &ext_32k, &clk_26m_rf0, &clk_26m_rf1, &clk_48m, &clk_52m, &clk_51m2, &clk_37m5, &clk_40m, &clk_66m, &clk_40m);
 
 SCI_CLK_ADD(clk_aux2, 0, REG_AON_APB_APB_EB1, BIT(4),
 	REG_AON_APB_AON_CGM_CFG, BIT(24)|BIT(25)|BIT(26)|BIT(27), REG_AON_APB_AON_CGM_CFG, BIT(8)|BIT(9)|BIT(10)|BIT(11),
-	9, &ext_32k, &clk_26m_rf0, &clk_26m_rf0, &clk_66m, &clk_48m, &clk_52m, &clk_51m2, &clk_56m, &clk_40m);
-
+	10, &ext_32k, &clk_26m_rf0, &clk_26m_rf1, &clk_48m, &clk_52m, &clk_51m2, &clk_37m5, &clk_40m, &clk_66m, &clk_40m);
+#if 0
 SCI_CLK_ADD(clk_pwm0, 0, REG_AON_APB_APB_EB0, BIT(4),
 	0, 0, REG_AON_CLK_PWM0_CFG, BIT(0),
 	2, &ext_32k, &clk_26m_rf0);
@@ -435,3 +436,5 @@ SCI_CLK_ADD(clk_avs0, 0, REG_AON_APB_APB_EB0, BIT(6),
 SCI_CLK_ADD(clk_avs1, 0, REG_AON_APB_APB_EB0, BIT(7),
 	0, 0, REG_AON_CLK_AVS1_CFG, BIT(0)|BIT(1),
 	4, &clk_26m_rf0, &clk_48m, &clk_51m2, &clk_96m);
+#endif	
+
