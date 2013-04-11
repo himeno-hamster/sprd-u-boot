@@ -319,7 +319,7 @@ static pinmap_t  pinmap[] = {
 int  pin_init(void)
 {
 	int i;
-	for (i = 0; i < ARRAY_SIZE(pinmap); i++) {
+	for (i = 0; i < sizeof(pinmap)/sizeof(pinmap[0]); i++) {
 		__raw_writel(pinmap[i].val, CTL_PIN_BASE + pinmap[i].reg);
 	}
 	return 0;

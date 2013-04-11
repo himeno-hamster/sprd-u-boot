@@ -62,8 +62,8 @@ int board_init()
     sprd_gpio_init();
     //board_gpio_init();
 #endif	
-#ifndef CONFIG_SC8830
 	pin_init();
+#ifndef CONFIG_SC8830
 	sprd_gpio_init(sprd_gpio_resource);
 #endif
 	return 0;
