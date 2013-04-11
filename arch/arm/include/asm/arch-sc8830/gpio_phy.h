@@ -29,7 +29,7 @@ enum gpio_die {
 	D_DIE = 1,
 };
 
-#define NR_D_DIE_GPIOS 16
+#define NR_D_DIE_GPIOS 10
 
 /*
 	gpio is locate in Digital Die(D die) or Analog Die(A die),
@@ -51,7 +51,6 @@ static __inline u32 __get_base_addr (u32 gpio_id)
     {
        return ANA_GPIO_BASE;
     }
-    gpio_id -= NR_D_DIE_GPIOS;
     return (gpio_id>>4) * 0x80 + (u32) GPIO_BASE;
 }
 

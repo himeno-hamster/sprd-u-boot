@@ -363,7 +363,7 @@ int sprd_gpio_get(struct gpio_chip *chip, unsigned offset)
 /*
  * Set output GPIO level
  */
-static void sprd_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+void sprd_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
 {
 	struct gpio_info gpio_info;
 	u32 gpio_id = offset;
