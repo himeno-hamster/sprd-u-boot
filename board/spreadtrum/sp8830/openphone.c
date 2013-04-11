@@ -14,7 +14,7 @@
 #include <asm/arch/pinmap.h>
 DECLARE_GLOBAL_DATA_PTR;
 
-extern void sprd_gpio_init(struct eic_gpio_resource *r);
+extern void sprd_gpio_init(void);
 extern void ADI_init (void);
 extern int LDO_Init(void);
 
@@ -55,17 +55,12 @@ int board_init()
 {
 	gd->bd->bi_arch_number = MACH_TYPE_OPENPHONE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
-#if 0
-    ADI_init();
-    chip_init();
-    LDO_Init();
-    sprd_gpio_init();
-    //board_gpio_init();
-#endif	
+
+	ADI_init();
+	LDO_Init();
 	pin_init();
-#ifndef CONFIG_SC8830
-	sprd_gpio_init(sprd_gpio_resource);
-#endif
+	sprd_gpio_init();
+
 	return 0;
 }
 
