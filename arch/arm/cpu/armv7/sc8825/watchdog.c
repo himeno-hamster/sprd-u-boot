@@ -41,3 +41,14 @@ int hw_watchdog_rst_pending(void)
     WDG_ClockOn();
 	return WDG_PHY_RST_INT_ON();
 }
+
+/* the last word is used as a flag of weather dump memory after fatal error 
+ * such as kernel panic, hw watchdog fire
+ * */
+int fatal_dump_enabled(void)
+{
+	if(REG32(0x20900218) & 0x1) /* get remap status */
+		return REG32(0x7ffc);
+	else
+		return REG32(0x27ffc);
+}

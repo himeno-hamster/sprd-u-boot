@@ -13,6 +13,7 @@ void sleep_mode(void);
 void watchdog_mode(void);
 void unknow_reboot_mode(void);
 void special_mode(void);
+void panic_reboot_mode(void);
 int is_bat_low(void);
 int alarm_flag_check(void);
 
@@ -24,6 +25,7 @@ int alarm_flag_check(void);
 #define WATCHDOG_REBOOT 0x77665506
 #define SPECIAL_MODE 0x77665507
 #define UNKNOW_REBOOT_MODE 0x77665508
+#define PANIC_REBOOT 0x77665509
 
 #define BOOT_NORAML 0xf1
 #define BOOT_FASTBOOT 0xf2
@@ -31,6 +33,7 @@ int alarm_flag_check(void);
 #define BOOT_CALIBRATE 0xf4
 #define BOOT_DLOADER 0xf5
 #define BOOT_CHARGE 0xf6
+#define BOOT_PANIC 0xf7
 
 #define BACKLIGHT_ON 1
 #define BACKLIGHT_OFF 0

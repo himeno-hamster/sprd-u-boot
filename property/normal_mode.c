@@ -848,6 +848,7 @@ void write_modem_memory()
 	block_dev_desc_t *dev_desc=NULL;
 	int ret;
 	char bufread[50];
+	printf("go to dump memory\n");
 	mmc = find_mmc_device(0);
 	if(mmc){
 		ret = mmc_init(mmc);
@@ -883,11 +884,13 @@ void write_modem_memory()
 	}
 }
 #endif
+extern int fatal_dump_enabled(void);
 void watchdog_mode(void)
 {
 	printf("watchdog_mode\n");
 #ifdef CONFIG_GENERIC_MMC
-	write_modem_memory();
+	if(fatal_dump_enabled())
+		write_modem_memory();
 #endif
 #if BOOT_NATIVE_LINUX
 	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=wdgreboot", BACKLIGHT_OFF);
@@ -900,11 +903,25 @@ void unknow_reboot_mode(void)
 {
 	printf("unknow_reboot_mode\n");
 #ifdef CONFIG_GENERIC_MMC
-	write_modem_memory();
+	if(fatal_dump_enabled())
+		write_modem_memory();
 #endif
 #if BOOT_NATIVE_LINUX
 	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=unknowreboot", BACKLIGHT_OFF);
 #else
 	vlx_nand_boot(BOOT_PART, "androidboot.mode=unknowreboot", BACKLIGHT_OFF);
+#endif
+}
+void panic_reboot_mode(void)
+{
+	printf("%s\n", __func__);
+#ifdef CONFIG_GENERIC_MMC
+	if(fatal_dump_enabled())
+		write_modem_memory();
+#endif
+#if BOOT_NATIVE_LINUX
+	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=panic", BACKLIGHT_OFF);
+#else
+	vlx_nand_boot(BOOT_PART, "androidboot.mode=panic", BACKLIGHT_OFF);
 #endif
 }

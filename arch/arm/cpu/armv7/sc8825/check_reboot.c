@@ -34,6 +34,8 @@ unsigned check_reboot_mode(void)
 			return SLEEP_MODE;
 		else if(rst_mode == HWRST_STATUS_SPECIAL)
 			return SPECIAL_MODE;
+		else if(rst_mode == HWRST_STATUS_PANIC)
+			return PANIC_REBOOT;
 		else{
 			printf(" a boot mode not supported\n");
 			return 0;
