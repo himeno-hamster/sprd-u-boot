@@ -134,8 +134,9 @@ void MMU_Init (unsigned pageBaseAddr)
     }
 
     MMU_InvalideICACHEALL();//steve.zhan add.
+#ifndef CONFIG_SC7710G2
     MMU_EnableIDCM();
-	
+#endif
     //Delay some time
     for (i=0; i<1000; i++);
 }

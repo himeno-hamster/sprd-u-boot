@@ -632,6 +632,72 @@ int sn_is_correct_endflag(unsigned char *array, unsigned long size)
    1 ; success
    2 : error
 */
+#ifdef CONFIG_SC7710G2
+static int _fixnv_chkEcc(unsigned char* buf, int size)
+{
+	unsigned short crc,crcOri;
+//	crc = __crc_16_l_calc(buf, size-2);
+//	crcOri = (uint16)((((uint16)buf[size-2])<<8) | ((uint16)buf[size-1]) );
+
+	crc = calc_checksum(buf,size-4);
+	crcOri = (unsigned short)((((unsigned short)buf[size-3])<<8) | ((unsigned short)buf[size-4]) );
+
+	return (crc == crcOri);
+}
+
+int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, unsigned int size, unsigned char *buf)
+{
+	char *fixnvpoint = "/fixnv";
+	char *fixnvfilename = "/fixnv/fixnv.bin";
+	char *backupfixnvpoint = "/backupfixnv";
+	char *backupfixnvfilename = "/backupfixnv/fixnv.bin";
+	static int ifFirstRead = 0;	// 0  unread, 1 read fail 2 read success
+
+
+	if (strcmp(phypart->name, "fixnv")) {
+		// only support read fix nv
+		return NAND_SYSTEM_ERROR;
+	}
+
+	if(!ifFirstRead){
+		ifFirstRead = 1;
+		// 1 read orighin fixNv
+		memset((unsigned char *)g_fixnv_buf_yaffs, 0xff, FIXNV_SIZE);
+		cmd_yaffs_mount(fixnvpoint);
+		cmd_yaffs_ls_chk(fixnvfilename);
+		cmd_yaffs_mread_fileex(fixnvfilename, (unsigned char *)g_fixnv_buf_yaffs, FIXNV_SIZE);
+		cmd_yaffs_umount(fixnvpoint);
+		if(!_fixnv_chkEcc(g_fixnv_buf_yaffs, FIXNV_SIZE)){
+			// 2 read backup fixNv
+			printf("Read origin fixnv fail\n");
+			memset((unsigned char *)g_fixnv_buf_yaffs, 0xff, FIXNV_SIZE);
+			cmd_yaffs_mount(backupfixnvpoint);
+			cmd_yaffs_ls_chk(backupfixnvfilename);
+			cmd_yaffs_mread_fileex(backupfixnvfilename, (unsigned char *)g_fixnv_buf_yaffs, FIXNV_SIZE);
+			cmd_yaffs_umount(backupfixnvpoint);
+			if(!_fixnv_chkEcc(g_fixnv_buf_yaffs, FIXNV_SIZE)){
+				printf("Read backup fixnv fail\n");
+			}
+			else{
+				ifFirstRead = 2;
+				printf("Read backup fixnv pass\n");
+			}
+		}
+		else{
+			ifFirstRead =2;
+			printf("Read origin fixnv pass\n");
+		}
+	}
+	if(2 == ifFirstRead){
+		memcpy(buf, (unsigned char *)(g_fixnv_buf_yaffs + off), size);
+		return NAND_SUCCESS;
+	}else{
+		return NAND_SYSTEM_ERROR;
+	}
+}
+
+#else
+
 int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, unsigned int size, unsigned char *buf)
 {
 	int ret = 0;
@@ -908,6 +974,7 @@ int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, un
 	}//if (strcmp(phypart->name, "dlstatus") == 0)
        return NAND_SYSTEM_ERROR;
 }
+#endif
 
 #ifdef CONFIG_BOARD_788
 static char * g_zte_version(char *buf)

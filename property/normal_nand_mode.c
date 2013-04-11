@@ -511,7 +511,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE);
 		cmd_yaffs_mount(fixnvpoint);
 		cmd_yaffs_ls_chk(fixnvfilename);
-		cmd_yaffs_mread_fileex(fixnvfilename, (unsigned char *)FIXNV_ADR, FIXNV_SIZE+4);
+		cmd_yaffs_mread_fileex(fixnvfilename, (unsigned char *)FIXNV_ADR, FIXNV_SIZE);
 		cmd_yaffs_umount(fixnvpoint);
 		if(!fixnv_chkEcc(FIXNV_ADR, FIXNV_SIZE)){
 			// 2 read backup fixNv
@@ -519,7 +519,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 			memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE);
 			cmd_yaffs_mount(backupfixnvpoint);
 			cmd_yaffs_ls_chk(backupfixnvfilename);
-			cmd_yaffs_mread_fileex(backupfixnvfilename, (unsigned char *)FIXNV_ADR, FIXNV_SIZE+4);
+			cmd_yaffs_mread_fileex(backupfixnvfilename, (unsigned char *)FIXNV_ADR, FIXNV_SIZE);
 			cmd_yaffs_umount(backupfixnvpoint);
 			if(!fixnv_chkEcc(FIXNV_ADR, FIXNV_SIZE)){
 				printf("Read backup fixnv fail\n");
@@ -536,7 +536,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
 		cmd_yaffs_mount(runtimenvpoint);
 		cmd_yaffs_ls_chk(runtimenvfilename);
-		cmd_yaffs_mread_fileex(runtimenvfilename, (unsigned char *)RUNTIMENV_ADR,RUNTIMENV_SIZE+4 );
+		cmd_yaffs_mread_fileex(runtimenvfilename, (unsigned char *)RUNTIMENV_ADR,RUNTIMENV_SIZE);
 		cmd_yaffs_umount(runtimenvpoint);
 		if(!fixnv_chkEcc(RUNTIMENV_ADR, RUNTIMENV_SIZE)){
 			// 2 read backup runtime nv
@@ -544,7 +544,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 			memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
 			cmd_yaffs_mount(runtimenvpoint2);
 			cmd_yaffs_ls_chk(runtimenvfilename2);
-			cmd_yaffs_mread_fileex(runtimenvfilename2, (unsigned char *)RUNTIMENV_ADR, RUNTIMENV_SIZE+4);
+			cmd_yaffs_mread_fileex(runtimenvfilename2, (unsigned char *)RUNTIMENV_ADR, RUNTIMENV_SIZE);
 			cmd_yaffs_umount(runtimenvpoint2);
 			if(!fixnv_chkEcc(RUNTIMENV_ADR, RUNTIMENV_SIZE)){
 				printf("Read backup  runtime nv fail\n");
@@ -581,7 +581,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		else{
 			char *product_data = (char *)PRODUCTINFO_ADR;
 			printf("productinfo: %c %c %c %c\n",product_data[0],product_data[1],product_data[2],product_data[3]);
-		    printf("Read origin productinfo pass\n");
+			printf("Read origin productinfo pass\n");
 		}
 
 		// ---------------------DSP ----------------------------

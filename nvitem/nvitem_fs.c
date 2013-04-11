@@ -168,7 +168,7 @@ BOOLEAN		ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 		printf("NVITEM partId%x:bakup image read error!\n",_ramdiskCfg[idx].partId);
 		return 1;
 	}
-	if(!Emmc_Read(PARTITION_USER, info.start, (size>>9)+1, (uint8*)buf))
+	if(!Emmc_Read(PARTITION_USER, info.start, (size>>9), (uint8*)buf))
 	{
 		printf("NVITEM partId%x:bakup image read error!\n",_ramdiskCfg[idx].partId);
 	}
@@ -178,7 +178,7 @@ BOOLEAN		ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 	}
 
 	if(!get_partition_info(s_block_dev, _ramdiskCfg[idx].image_path, &info)){
-		Emmc_Write(PARTITION_USER, info.start, (size>>9)+1, (uint8*)buf);
+		Emmc_Write(PARTITION_USER, info.start, (size>>9), (uint8*)buf);
 	}
 
 	printf("NVITEM  partId%x:bakup image read success!\n",_ramdiskCfg[idx].partId);
@@ -214,7 +214,7 @@ BOOLEAN		ramDisk_Write(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 // 2 write bakup image
 	bakRet = 0;
 	if(!get_partition_info(s_block_dev, _ramdiskCfg[idx].imageBak_path, &info)){
-		if(Emmc_Write(PARTITION_USER, info.start, (size>>9)+1, (uint8*)buf)){
+		if(Emmc_Write(PARTITION_USER, info.start, (size>>9), (uint8*)buf)){
 			bakRet = 1;
 		}
 	}
@@ -224,7 +224,7 @@ BOOLEAN		ramDisk_Write(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 // 3 write origin image
 	oriRet = 0;
 	if(!get_partition_info(s_block_dev, _ramdiskCfg[idx].image_path, &info)){
-		if(Emmc_Write(PARTITION_USER, info.start, (size>>9)+1, (uint8*)buf)){
+		if(Emmc_Write(PARTITION_USER, info.start, (size>>9), (uint8*)buf)){
 			oriRet = 1;
 		}
 	}
@@ -246,7 +246,7 @@ void		ramDisk_Close(RAMDISK_HANDLE handle)
 static RAM_NV_CONFIG _ramdiskCfg[RAMNV_NUM+1] = 
 {
 	{1,	 "/fixnv/fixnv.bin",			 "/backupfixnv/fixnv.bin",		0x20000	},
-	{2,	"/runtimenv/runtimenv.bin",	"/runtimenv/runtimenv_bak.bin",	0x40000	},
+	{2,	"/runtimenv/runtimenv.bin",	"/runtimenv/runtimenvbkup.bin",	0x40000	},
 	{3,     "/productinfo/productinfo.bin", "/productinfo/productinfobkup.bin",     0x4000  },
         {0,	"",	"",						0		},
 };
@@ -366,12 +366,12 @@ BOOLEAN		ramDisk_Write(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 // 2 write bakup image
 	_getPath(_ramdiskCfg[idx].imageBak_path,path);
 	cmd_yaffs_mount(path);
-	cmd_yaffs_mwrite_file(_ramdiskCfg[idx].imageBak_path, (char*)buf, _ramdiskCfg[idx].image_size+4);
+	cmd_yaffs_mwrite_file(_ramdiskCfg[idx].imageBak_path, (char*)buf, _ramdiskCfg[idx].image_size);
 	cmd_yaffs_umount(path);
 // 3 write origin image
 	_getPath(_ramdiskCfg[idx].image_path,path);
 	cmd_yaffs_mount(path);
-	cmd_yaffs_mwrite_file(_ramdiskCfg[idx].image_path, (char*)buf, _ramdiskCfg[idx].image_size+4);
+	cmd_yaffs_mwrite_file(_ramdiskCfg[idx].image_path, (char*)buf, _ramdiskCfg[idx].image_size);
 	cmd_yaffs_umount(path);
 	return 1;
 
