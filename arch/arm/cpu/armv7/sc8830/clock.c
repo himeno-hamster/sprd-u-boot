@@ -21,6 +21,7 @@
 #define spin_lock_irqsave(...)
 #define spin_unlock_irqrestore(...)
 
+#include <asm/io.h>
 #include <asm/arch/sprd_reg.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/__clock_tree.h>
@@ -479,6 +480,12 @@ static struct notifier_block __clk_cpufreq_notifier_block = {
 
 int __init sci_clock_init(void)
 {
+	__raw_writel(__raw_readl(REG_PMU_APB_PD_MM_TOP_CFG)
+		& ~(BIT_PD_MM_TOP_FORCE_SHUTDOWN), REG_PMU_APB_PD_MM_TOP_CFG);
+
+	__raw_writel(__raw_readl(REG_PMU_APB_PD_GPU_TOP_CFG)
+		& ~(BIT_PD_GPU_TOP_FORCE_SHUTDOWN), REG_PMU_APB_PD_GPU_TOP_CFG);
+
 #if defined(CONFIG_DEBUG_FS)
 	clk_debugfs_root = debugfs_create_dir("clock", NULL);
 	if (IS_ERR_OR_NULL(clk_debugfs_root))
