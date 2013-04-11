@@ -206,7 +206,7 @@ static int tiger_probe(void * lcdbase)
 		return -EFAULT;
 	}
 
-	dev->smem_start = (uint32_t)lcdbase;
+	dev->smem_start = ((uint32_t)lcdbase)-196*2;//-205*2;
 
 	dev->ctrl->init(dev);
 	return 0;
