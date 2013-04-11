@@ -67,7 +67,7 @@ unsigned char *g_eMMCBuf = (unsigned char*)0x82000000;
 unsigned char *g_eMMCBuf = (unsigned char*)0x2000000;
 #endif
 
-#if defined CONFIG_SC8825
+#if defined CONFIG_SC8825 || defined(CONFIG_SC8830)
 #define BOOTLOADER_HEADER_OFFSET 0x20
 typedef struct{
 	uint32 version;
@@ -496,7 +496,7 @@ void fastboot_splFillCheckData(unsigned int * splBuf,  int len)
 	*(splBuf + MAGIC_DATA_SAVE_OFFSET) = MAGIC_DATA;
 	*(splBuf + CHECKSUM_SAVE_OFFSET) = (unsigned int)fastboot_eMMCCheckSum((unsigned int *)&splBuf[CHECKSUM_START_OFFSET/4], SPL_CHECKSUM_LEN - CHECKSUM_START_OFFSET);
 
-#elif defined(CONFIG_SC8825) || defined(CONFIG_SC7710G2)
+#elif defined(CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
 	EMMC_BootHeader *header;
 	header = (EMMC_BootHeader *)((unsigned char*)splBuf+BOOTLOADER_HEADER_OFFSET);
 	header->version  = 0;
@@ -522,7 +522,7 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 			break;
 		pnum++;
 	}
-	printf("Flash emmc partition:%s check:%s-%d\n", _sprd_emmc_partition[pos-1].partition_str, arg, pnum);
+	printf("Flash emmc partition:%s check:%s-%d\n", _sprd_emmc_partition[pos].partition_str, arg, pnum);
 	if (pnum >= sizeof(_sprd_emmc_partition) / sizeof(eMMC_Parttion)){
 		fastboot_fail("unknown partition name");
 		return;
@@ -560,12 +560,29 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 			fastboot_fail("eMMC WRITE_ERROR!");
 			return;
 		}
-	}else if (!strcmp(_sprd_emmc_partition[pnum].partition_str, "fixnv")) {
+	}
+#ifdef CONFIG_SC8830
+	else if (!strcmp(_sprd_emmc_partition[pnum].partition_str, "tdfixnv")) {
+		if (!fastboot_flashNVParttion(_sprd_emmc_partition[pnum].partition_index, data, size)) {
+			fastboot_fail("eMMC TDNV WRITE_ERROR!");
+			return;
+		}
+	}
+	else if (!strcmp(_sprd_emmc_partition[pnum].partition_str, "wfixnv")) {
+		if (!fastboot_flashNVParttion(_sprd_emmc_partition[pnum].partition_index, data, size)) {
+			fastboot_fail("eMMC WNV WRITE_ERROR!");
+			return;
+		}
+	}
+#else
+	else if (!strcmp(_sprd_emmc_partition[pnum].partition_str, "fixnv")) {
 		if (!fastboot_flashNVParttion(_sprd_emmc_partition[pnum].partition_index, data, size)) {
 			fastboot_fail("eMMC NV WRITE_ERROR!");
 			return;
 		}
-	}else{
+	}
+#endif
+	else{
 		//Flash other partitions - RAW img without sprase or filesystem
 		block_dev_desc_t *pdev;
 		disk_partition_t info;

@@ -29,6 +29,8 @@ extern   "C"
 /**---------------------------------------------------------------------------*
 **                               Micro Define                                **
 **---------------------------------------------------------------------------*/
+#define ANA_GPIO_BASE                           SPRD_ANA_GPIO_PHYS
+#define GPIO_BASE                               SPRD_GPIO_PHYS
 //GPIO_OFFSET
 #define GPIO_DATA                               0x0000    //GPIO data register
 #define GPIO_DMSK                               0x0004    //GPIO data mask register, GPIO pin can be read and write if the mask bit is "1"

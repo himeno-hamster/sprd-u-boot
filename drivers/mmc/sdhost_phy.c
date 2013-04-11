@@ -34,6 +34,7 @@
 #include <asm/arch/sprd_module_config.h>
 #include <asm/arch/regs_ahb.h>
 #include <asm/arch/isr_drvapi.h>
+#include <asm/arch/pinmap.h>
 #endif
 
 #include "asm/arch/ldo.h"
@@ -2460,6 +2461,17 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
 			REG32(PIN_SD3D5_REG) = 0x280;
 			REG32(PIN_SD3D6_REG) = 0x280;
 			REG32(PIN_SD3D7_REG) = 0x280;
+#elif defined(CONFIG_SC8830)
+			REG32(REG_PIN_EMMC_CLK)= 0x200;
+			REG32(REG_PIN_EMMC_CMD)= 0x280;
+			REG32(REG_PIN_EMMC_D0) = 0x280;
+			REG32(REG_PIN_EMMC_D1) = 0x280;
+			REG32(REG_PIN_EMMC_D2) = 0x280;
+			REG32(REG_PIN_EMMC_D3) = 0x280;
+			REG32(REG_PIN_EMMC_D4) = 0x280;
+			REG32(REG_PIN_EMMC_D5) = 0x280;
+			REG32(REG_PIN_EMMC_D6) = 0x280;
+			REG32(REG_PIN_EMMC_D7) = 0x280;
 #endif
             {
                 sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) EMMC_BASE_ADDR);
