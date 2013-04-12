@@ -424,12 +424,17 @@ void modem_entry()
 	*((volatile u32*)0x402B00A8) &= ~0x00000003;       /* clear reset cp0 cp1 */
 #endif
 }
-#ifndef CONFIG_SC8830
+
 void sipc_addr_reset()
 {
+#ifdef CONFIG_SC8825
 	memset((void *)SIPC_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-}
+#elif defined (CONFIG_SC8830)
+	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 #endif
+}
+
 #endif
 
 void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
@@ -1444,9 +1449,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 #if BOOT_NATIVE_LINUX_MODEM
 	//sipc addr clear
-#ifndef CONFIG_SC8830
 	sipc_addr_reset();
-#endif
 	// start modem CP
 	modem_entry();
 #endif
