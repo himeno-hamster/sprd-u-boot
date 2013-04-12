@@ -2637,9 +2637,60 @@ PUBLIC BOOLEAN Emmc_Init()
 }
 
 #if defined CONFIG_SC8830
-CARD_SDIO_HANDLE  sdcard_handle = NULL;
+LOCAL CARD_SDIO_HANDLE  sdcard_handle = NULL;
 
-PUBLIC BOOLEAN SDCARD_SDIO_ReadMultiBlock(CARD_SDIO_HANDLE cardHandle, uint32 startBlock, uint32 num, uint8 *buf)
+LOCAL BOOLEAN SDCARD_SDIO_WriteMultiBlock(CARD_SDIO_HANDLE cardHandle,uint32 startBlock,uint32 num,uint8* buf)
+{
+	uint8 rspBuf[16];
+	uint32 address;
+	CARD_DATA_PARAM_T data;
+
+	CARD_SDIO_ASSERT(TRUE == _IsCardHandleValid(cardHandle));	/*assert verified*/
+
+	if((CARD_SD_V2_0_STANDARD == cardHandle->vertion) || (CARD_SD_V1_X == cardHandle->vertion) || (CARD_MMC_331 == cardHandle->vertion))
+    {
+        address = startBlock * cardHandle->BlockLen;
+    }
+    else if(CARD_SD_V2_0_HIGHCAP == cardHandle->vertion)
+    {
+        address = startBlock;
+    }
+    else
+    {
+        CARD_SDIO_ASSERT(0);
+    }
+
+	data.blkLen = cardHandle->BlockLen;
+	data.blkNum = num;
+	data.databuf = buf;
+	if (num == 1)
+	{
+		if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd, CARD_CMD24_WRITE_BLOCK, address, &data, rspBuf))
+		{
+			return FALSE;
+		}
+	}
+	else
+	{
+		if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD25_WRITE_MULTIPLE_BLOCK,address,&data,rspBuf))
+		{
+			SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,NULL,NULL,rspBuf);
+			return FALSE;
+		}
+		if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,NULL,NULL,rspBuf))
+		{
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+PUBLIC BOOLEAN SDCARD_Write(uint32 startBlcok, uint32 blkCnt, uint8* buf)
+{
+	return SDCARD_SDIO_WriteMultiBlock(sdcard_handle, startBlcok, blkCnt, buf);
+}
+
+LOCAL BOOLEAN SDCARD_SDIO_ReadMultiBlock(CARD_SDIO_HANDLE cardHandle, uint32 startBlock, uint32 num, uint8 *buf)
 {
     uint8 rspBuf[16];
     uint32 address;
@@ -2663,15 +2714,27 @@ PUBLIC BOOLEAN SDCARD_SDIO_ReadMultiBlock(CARD_SDIO_HANDLE cardHandle, uint32 st
     data.blkLen = cardHandle->BlockLen;
     data.blkNum = num;
     data.databuf = buf;
-    if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd, CARD_CMD18_READ_MULTIPLE_BLOCK_AUT12, address, &data, rspBuf))
-    {
-        return FALSE;
-    }
-
+	if (num == 1)
+	{
+	    if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd, CARD_CMD17_READ_SINGLE_BLOCK, address, &data, rspBuf))
+	    {
+	        return FALSE;
+	    }
+	}
+	else
+	{
+	    if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd, CARD_CMD18_READ_MULTIPLE_BLOCK_AUT12, address, &data, rspBuf))
+	    {
+	        return FALSE;
+	    }
+	}
     return TRUE;
-
 }
 
+PUBLIC BOOLEAN SDCARD_Read(uint32 startBlcok, uint32 blkCnt, uint8* buf)
+{
+	return SDCARD_SDIO_ReadMultiBlock(sdcard_handle, startBlcok, blkCnt, buf);
+}
 
 PUBLIC BOOLEAN SDCARD_Init()
 {
@@ -2682,19 +2745,7 @@ PUBLIC BOOLEAN SDCARD_Init()
 	SDIO_Card_Pal_SetType(sdcard_handle->sdioPalHd, SDIO_CARD_PAL_TYPE_SD);
 
 	CARD_SDIO_PwrCtl(sdcard_handle, TRUE);
-	ret = SDCARD_SDIO_InitCard(sdcard_handle, HIGH_SPEED_MODE);
-
-	SDCARD_SDIO_ReadMultiBlock(sdcard_handle, 0, 48, 0x84000000);
-	{
-		uint32 i;
-		uint32 *ptr = (uint32 *)0x84000000;
-		printf("SDCARD Init, Read Data Success!\r\n");
-		for (i=0; i<32; i++)
-		{
-			printf("[%8x] : %08X\r\n", i, ptr[i]);
-		}
-	}
-	return ret;
+	return SDCARD_SDIO_InitCard(sdcard_handle, HIGH_SPEED_MODE);
 }
 
 #endif
