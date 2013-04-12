@@ -40,7 +40,7 @@ extern unsigned char raw_header[8192];
 #define KERNEL_ADR      0x80008000
 #define VLX_TAG_ADDR    0x82000100
 #define RAMDISK_ADR     0x85500000
-#define TDDSP_ADR       0x88000000
+#define TDDSP_ADR       0x88020000
 #define TDFIXNV_ADR     0x88480000
 #define TDRUNTIMENV_ADR 0x884a0000
 #define TDMODEM_ADR     0x88500000
