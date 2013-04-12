@@ -421,9 +421,12 @@ static uint32 GET_SPL_Data()
 void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 {
     uint32 ret;
+
+#ifdef CONFIG_NAND_SPL    	
     MCU_Init();
-    
+
     ret = GET_SPL_Data();
+#endif
 
 #if 0    
 #if defined USE_SPL_DATA
@@ -462,8 +465,8 @@ void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
         B2_DQS_STEP_DLY = CONFIG_BYTE2_STEP_DLY;
         B3_DQS_STEP_DLY = CONFIG_BYTE3_STEP_DLY;
     }
-
-
+ 	
+	#ifdef CONFIG_NAND_SPL	  
     if (ret == 0) //chesum is pass       
     {
         LPDDR1_MEM_DS = emc_data->mem_drv;
@@ -479,6 +482,7 @@ void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
         B2_DQS_STEP_DLY = (emc_data->dqs_step&0xff00)>>8;
         B3_DQS_STEP_DLY = emc_data->dqs_step&0xff;
     }
+	#endif
 
     DMC_Dev_Init(400000000);
 
