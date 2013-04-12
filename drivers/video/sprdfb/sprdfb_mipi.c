@@ -56,6 +56,9 @@ static void mipi_dispc_init_config(struct panel_spec *panel)
 		dispc_set_bits((1<<1), DISPC_CTRL);
 	}else{
 		/*use dpi as interface*/
+#ifdef CONFIG_SC8830
+		dispc_write(0x1, DISPC_CTRL);
+#endif
 	}
 
 	/*h sync pol*/

@@ -206,7 +206,11 @@ static int tiger_probe(void * lcdbase)
 		return -EFAULT;
 	}
 
+#ifdef CONFIG_SC8830
 	dev->smem_start = ((uint32_t)lcdbase)-196*2;//-205*2;
+#else
+	dev->smem_start = ((uint32_t)lcdbase);
+#endif
 
 	dev->ctrl->init(dev);
 	return 0;
