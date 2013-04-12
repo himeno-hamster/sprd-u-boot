@@ -9,6 +9,7 @@
 #include <asm/arch/packet.h>
 #include <asm/arch/common.h>
 #include <asm/arch/fdl_channel.h>
+#include <asm/arch/mfp.h>
 
 #define __REG(x)     (*((volatile u32 *)(x)))
 
@@ -427,6 +428,14 @@ int  serial3_flowctl_enable(void)
 {
 	/*enable tx/rx flow control*/	   
 	* (volatile unsigned int *) (ARM_UART3_BASE + ARM_UART_CTL1)   |= UART_RX_FLOW_EN  | (UART_RX_THRESHOLD & 0x7F);    
+	return 0;
+}
+
+int  serial1_SwitchToModem(void)
+{
+	//Switch Uart1 from AP to CP
+	REG32(CHIPPIN_CTL_BEGIN + PIN_U1RXD_REG_OFFS) = 0x190;
+	REG32(CHIPPIN_CTL_BEGIN + PIN_U1TXD_REG_OFFS)  = 0x110;
 	return 0;
 }
 

@@ -808,6 +808,13 @@ void normal_mode(void)
 #endif
     set_vibrator(1);
 
+#ifndef UART_CONSOLE_SUPPORT
+#ifdef CONFIG_SC7710G2
+	extern int  serial1_SwitchToModem(void);
+	serial1_SwitchToModem();
+#endif
+#endif
+
 #if BOOT_NATIVE_LINUX
     vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS, BACKLIGHT_ON);
 #else
