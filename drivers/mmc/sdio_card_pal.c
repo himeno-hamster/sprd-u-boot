@@ -70,6 +70,74 @@ typedef struct
 //#define CARD_SDIO_R5B     NULL/*|SIG_CARD_IN|SIG_CARD_INSERT|SIG_CARD_REMOVE*/|SIG_CMD_CMP    ,CMD_RSP_R5B    ,ERR_RSP|ERR_CMD_INDEX| ERR_CMD_END|    ERR_CMD_CRC|    ERR_CMD_TIMEOUT
 
 
+LOCAL const CMD_CTL_FLG s_SDCmdDetail[]=
+{
+	// cmdindex,rsp,transmode
+	//#define CMDname						cmdindex	,data int filter	+	(cmd int filter+)rsp(+cmd error filter) +	,data error filter						,transmode
+	{	CARD_CMD0_GO_IDLE_STATE 				, 0 , NULL				|	CARD_SDIO_NO_RSP	| NULL															, NULL																																},
+	{	CARD_CMD1_SEND_OP_COND /*MMC*/			, 1 , NULL				|	CARD_SDIO_R3		| NULL															, NULL																																},
+	{	CARD_CMD2_ALL_SEND_CID					, 2 , NULL				|	CARD_SDIO_R2		| NULL															, NULL																																},
+	{	CARD_CMD3_SEND_RELATIVE_ADDR /*SD*/ 	, 3 , NULL				|	CARD_SDIO_R6		| NULL															, NULL																																},
+	{	CARD_CMD3_SET_RELATIVE_ADDR /*MMC*/ 	, 3 , NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_CMD4_SET_DSR						, 4 , NULL				|	CARD_SDIO_NO_RSP	| NULL															, NULL																																},
+	{	CARD_CMD6_SWITCH_FUNC					, 6 , SIG_TRANS_CMP 	|	CARD_SDIO_R1		| ERR_DATA_END |	ERR_DATA_CRC |	ERR_DATA_TIMEOUT				,						TRANS_MODE_READ |														TRANS_MODE_DMA_EN | CMD_HAVE_DATA	},
+	{	CARD_CMD7_SELECT_DESELECT_CARD			, 7 , NULL				|	CARD_SDIO_R1B		| NULL															, NULL																																},
+	{	CARD_CMD8_SEND_IF_COND /*SD*/			, 8 , NULL				|	CARD_SDIO_R7		| NULL															, NULL																																},
+	{	CARD_CMD9_SEND_CSD						, 9 , NULL				|	CARD_SDIO_R2		| NULL															, NULL																																},
+	{	CARD_CMD10_SEND_CID 					, 10	, NULL				|	CARD_SDIO_R2		| NULL															, NULL																																},
+	{	CARD_CMD11_READ_DAT_UNTIL_STOP /*MMC*/	, 11	, SIG_TRANS_CMP 	|	CARD_SDIO_R1		| ERR_DATA_END |	ERR_DATA_CRC |	ERR_DATA_TIMEOUT				, TRANS_MODE_MULTI_BLOCK | TRANS_MODE_READ							|	TRANS_MODE_BLOCK_COUNT_EN | TRANS_MODE_DMA_EN | CMD_HAVE_DATA	},
+	{	CARD_CMD11_READ_DAT_UNTIL_STOP_AUT12 /*MMC*/, 11, SIG_TRANS_CMP |	CARD_SDIO_R1		| ERR_DATA_END |	ERR_DATA_CRC |	ERR_DATA_TIMEOUT	| ERR_CMD12 , TRANS_MODE_MULTI_BLOCK | TRANS_MODE_READ |	TRANS_MODE_CMD12_EN |	TRANS_MODE_BLOCK_COUNT_EN | TRANS_MODE_DMA_EN | CMD_HAVE_DATA	},
+	{	CARD_CMD12_STOP_TRANSMISSION			, 12	, SIG_TRANS_CMP 	|	CARD_SDIO_R1B		| NULL															, NULL																																},	//It is auto performed by Host
+	{	CARD_CMD13_SEND_STATUS					, 13	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_CMD15_GO_INACTIVE_STATE			, 15	, NULL				|	CARD_SDIO_NO_RSP	| NULL															, NULL																																},
+	{	CARD_CMD16_SET_BLOCKLEN 				, 16	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_CMD17_READ_SINGLE_BLOCK			, 17	, SIG_TRANS_CMP 	|	CARD_SDIO_R1		| ERR_DATA_END |	ERR_DATA_CRC |	ERR_DATA_TIMEOUT				,						TRANS_MODE_READ |														TRANS_MODE_DMA_EN | CMD_HAVE_DATA	},
+	{	CARD_CMD18_READ_MULTIPLE_BLOCK			, 18	, SIG_TRANS_CMP 	|	CARD_SDIO_R1		| ERR_DATA_END |	ERR_DATA_CRC |	ERR_DATA_TIMEOUT				, TRANS_MODE_MULTI_BLOCK | TRANS_MODE_READ							|	TRANS_MODE_BLOCK_COUNT_EN | TRANS_MODE_DMA_EN | CMD_HAVE_DATA	},
+	{	CARD_CMD18_READ_MULTIPLE_BLOCK_AUT12	, 18	, SIG_TRANS_CMP 	|	CARD_SDIO_R1		| ERR_DATA_END |	ERR_DATA_CRC |	ERR_DATA_TIMEOUT	| ERR_CMD12 , TRANS_MODE_MULTI_BLOCK | TRANS_MODE_READ |	TRANS_MODE_CMD12_EN |	TRANS_MODE_BLOCK_COUNT_EN | TRANS_MODE_DMA_EN | CMD_HAVE_DATA	},
+	{	CARD_CMD20_WRITE_DAT_UNTIL_STOP /*MMC*/ , 20	, SIG_TRANS_CMP 	|	CARD_SDIO_R1		|				ERR_DATA_CRC |	ERR_DATA_TIMEOUT				, TRANS_MODE_MULTI_BLOCK											|	TRANS_MODE_BLOCK_COUNT_EN | TRANS_MODE_DMA_EN | CMD_HAVE_DATA	},
+	{	CARD_CMD20_WRITE_DAT_UNTIL_STOP_AUT12 /*MMC*/, 20, SIG_TRANS_CMP	|	CARD_SDIO_R1		|				ERR_DATA_CRC |	ERR_DATA_TIMEOUT	| ERR_CMD12 , TRANS_MODE_MULTI_BLOCK					|	TRANS_MODE_CMD12_EN |	TRANS_MODE_BLOCK_COUNT_EN | TRANS_MODE_DMA_EN | CMD_HAVE_DATA	},
+	{	CARD_CMD23_SET_BLOCK_COUNT /*MMC*/		, 23	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_CMD24_WRITE_BLOCK					, 24	, SIG_TRANS_CMP 	|	CARD_SDIO_R1		|				ERR_DATA_CRC |	ERR_DATA_TIMEOUT				,																								TRANS_MODE_DMA_EN | CMD_HAVE_DATA	},
+	{	CARD_CMD25_WRITE_MULTIPLE_BLOCK 		, 25	, SIG_TRANS_CMP 	|	CARD_SDIO_R1		|				ERR_DATA_CRC |	ERR_DATA_TIMEOUT				, TRANS_MODE_MULTI_BLOCK											|	TRANS_MODE_BLOCK_COUNT_EN | TRANS_MODE_DMA_EN | CMD_HAVE_DATA	},
+	{	CARD_CMD25_WRITE_MULTIPLE_BLOCK_AUT12	, 25	, SIG_TRANS_CMP 	|	CARD_SDIO_R1		|				ERR_DATA_CRC |	ERR_DATA_TIMEOUT	| ERR_CMD12 , TRANS_MODE_MULTI_BLOCK					|	TRANS_MODE_CMD12_EN |	TRANS_MODE_BLOCK_COUNT_EN | TRANS_MODE_DMA_EN | CMD_HAVE_DATA	},
+
+	{	CARD_CMD26_PROGRAM_CID /*MMC*/			, 26	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_CMD27_PROGRAM_CSD					, 27	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_CMD28_SET_WRITE_PROT				, 28	, SIG_TRANS_CMP 	|	CARD_SDIO_R1B		| NULL															, NULL																																},
+	{	CARD_CMD29_CLR_WRITE_PROT				, 29	, SIG_TRANS_CMP 	|	CARD_SDIO_R1B		| NULL															, NULL																																},
+	{	CARD_CMD30_SEND_WRITE_PROT				, 30	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},	// ??
+
+	{	CARD_CMD32_ERASE_WR_BLK_START /*SD*/	, 32	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_CMD33_ERASE_WR_BLK_END /*SD*/		, 33	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+
+	{	CARD_CMD35_ERASE_GROUP_START /*MMC*/	, 35	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_CMD36_ERASE_GROUP_END /*MMC*/		, 36	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+
+	{	CARD_CMD38_ERASE						, 38	, SIG_TRANS_CMP 	|	CARD_SDIO_R1B		| NULL															, NULL																																},
+
+	{	CARD_CMD39_FAST_IO /*MMC*/				, 39	, NULL				|	CARD_SDIO_R4		| NULL															, NULL																																},
+	{	CARD_CMD40_GO_IRQ_STATE /*MMC*/ 		, 40	, NULL				|	CARD_SDIO_R5		| NULL															, NULL																																},
+
+	{	CARD_CMD42_LOCK_UNLOCK_SD /*SD*/		, 42	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},	// ??
+	{	CARD_CMD42_LOCK_UNLOCK_MMC /*MMC*/		, 42	, NULL				|	CARD_SDIO_R1B		| NULL															, NULL																																},	// ??
+	{	CARD_CMD55_APP_CMD						, 55	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_CMD56_GEN_CMD_SD /*SD*/			, 56	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},	//??
+	{	CARD_CMD56_GEN_CMD_MMC /*MMC*/			, 56	, NULL				|	CARD_SDIO_R1B		| NULL															, NULL																																},	//??
+
+
+	{	CARD_ACMD6_SET_BUS_WIDTH	 /*SD*/ 	, 6 , NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_ACMD13_SD_STATUS /*SD*/			, 13	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_ACMD22_SEND_NUM_WR_BLCOKS /*SD*/	, 22	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_ACMD23_SET_WR_BLK_ERASE_COUNT /*SD*/, 23, NULL 			|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_ACMD41_SD_SEND_OP_COND /*SD*/		, 41	, NULL				|	CARD_SDIO_R3		| NULL															, NULL																																},
+	{	CARD_ACMD42_SET_CLR_CARD_DETECT /*SD*/	, 42	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},
+	{	CARD_ACMD51_SEND_SCR /*SD*/ 			, 51	, NULL				|	CARD_SDIO_R1		| NULL															, NULL																																},	// ??
+
+	{	CARD_CMDMAX 							, 0 , NULL				|	CARD_SDIO_NO_RSP	| NULL															, NULL																																}
+
+};
+
+
 static const CMD_CTL_FLG s_cmdDetail[] =
 {
     // cmdindex,rsp,transmode
@@ -521,7 +589,7 @@ PUBLIC BOOLEAN SDIO_Card_Pal_SetClk (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_C
                 SDHOST_SD_Clk_Freq_Set (handle->sdio_port,400000);
             }
             break;
-#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2)
+#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined (CONFIG_SC8830)
 		case SDIO_CARD_PAL_1MHz:
                 SDHOST_SD_Clk_Freq_Set (handle->sdio_port,1000000);
 				break;
@@ -740,17 +808,25 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 )
 {
     uint32 tmpIntFilter;
+	const CMD_CTL_FLG* curCmdInfo = NULL;
+#if defined CONFIG_SC8830
+	if (handle->sdio_type == SDIO_CARD_PAL_TYPE_SD)
+		curCmdInfo = &s_SDCmdDetail[cmd];
+	else
+#endif
+		curCmdInfo = &s_cmdDetail[cmd];
+
 
 #ifdef OS_NONE
    	uint32  isr_status;
 #endif
-	SDIO_CARD_PRINT(("%s : cmd:%x, cmdIndex:%x, argument:%x\r\n", __FUNCTION__, cmd, s_cmdDetail[cmd].cmdIndex, argument));
+	SDIO_CARD_PRINT(("%s : cmd:%x, cmdIndex:%x, argument:%x\r\n", __FUNCTION__, cmd, curCmdInfo->cmdIndex, argument));
 	
     SDIO_CARD_PAL_ASSERT (	/*assert verified*/
         (SDIO_CARD_PAL_MAGICNUM == handle->MagicNum)
         && (TRUE == handle->flag)
     );
-    SDIO_CARD_PAL_ASSERT (cmd == s_cmdDetail[cmd].cmd);	/*assert verified*/
+    SDIO_CARD_PAL_ASSERT (cmd == curCmdInfo->cmd);	/*assert verified*/
 
 #ifdef DUAL_TCARD_SUPPORT
     switch(handle->sdio_No)
@@ -787,11 +863,11 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
     SDHOST_SetDataTimeOutValue (handle->sdio_port,0xE);
 
     //--
-    SDHOST_SetErrCodeFilter (handle->sdio_port, s_cmdDetail[cmd].errFilter);
+    SDHOST_SetErrCodeFilter (handle->sdio_port, curCmdInfo->errFilter);
 
-    tmpIntFilter = s_cmdDetail[cmd].intFilter;
+    tmpIntFilter = curCmdInfo->intFilter;
 
-    if (NULL != s_cmdDetail[cmd].errFilter)
+    if (NULL != curCmdInfo->errFilter)
     {
         tmpIntFilter |= SIG_ERR;
     }
@@ -833,7 +909,7 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 
     SDHOST_SetCmdArg (handle->sdio_port,argument);
     //__udelay(1000);
-    SDHOST_SetCmd (handle->sdio_port,s_cmdDetail[cmd].cmdIndex,s_cmdDetail[cmd].transmode,CMD_TYPE_NORMAL, s_cmdDetail[cmd].Response);
+    SDHOST_SetCmd (handle->sdio_port,curCmdInfo->cmdIndex,curCmdInfo->transmode,CMD_TYPE_NORMAL, curCmdInfo->Response);
     //__udelay(1000);
     #if 0
         // Get interrupt status.
@@ -850,7 +926,7 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
     #endif
 #endif
 //---
-	while (0 != _WaitCardEvent(handle,s_cmdDetail[cmd].intFilter))
+	while (0 != _WaitCardEvent(handle,curCmdInfo->intFilter))
 	{
 		//if(0 != (TB_SDIO1_INT&0x0000FFFF))
 		{
@@ -912,10 +988,11 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 			      Dcache_InvalRegion((unsigned int)(dataParam->databuf), dataParam->blkLen  *  dataParam->blkNum);
        }*/
 
-    SDHOST_GetRspFromBuf (handle->sdio_port, s_cmdDetail[cmd].Response, rspBuf);
+    SDHOST_GetRspFromBuf (handle->sdio_port, curCmdInfo->Response, rspBuf);
+
+	SDIO_CARD_PRINT(("resp[0-4]:%02X, %02X, %02X, %02X\r\n", rspBuf[0], rspBuf[1], rspBuf[2], rspBuf[3]));
 
     return SDIO_CARD_PAL_ERR_NONE;
-
 }
 
 PUBLIC BOOLEAN SDIO_Card_Pal_Close (SDIO_CARD_PAL_HANDLE handle)

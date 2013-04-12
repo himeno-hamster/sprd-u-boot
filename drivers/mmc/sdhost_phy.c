@@ -479,6 +479,16 @@ PUBLIC void SDHOST_SD_POWER (SDHOST_HANDLE sdhost_handler,SDHOST_PWR_ONOFF_E on_
 #if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
 		LDO_TurnOnLDO(LDO_LDO_SDIO3);
 		LDO_TurnOnLDO(LDO_LDO_VDD30);
+#elif defined CONFIG_SC8830
+		if (sdhost_handler->slotNo == SDHOST_SLOT_7)
+		{
+			LDO_TurnOnLDO(LDO_LDO_SDIO3);
+		}
+		else if (sdhost_handler->slotNo == SDHOST_SLOT_6)
+		{
+			printf("%s config SDHOST_SLOT_6\r\n", __FUNCTION__);
+			LDO_TurnOnLDO(LDO_LDO_SDIO0);
+		}
 #else
 		if(&sdio_port_ctl[SDHOST_SLOT_0] == sdhost_handler)
 		{
@@ -496,6 +506,15 @@ PUBLIC void SDHOST_SD_POWER (SDHOST_HANDLE sdhost_handler,SDHOST_PWR_ONOFF_E on_
 #if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
 		LDO_TurnOffLDO(LDO_LDO_SDIO3);
 		LDO_TurnOffLDO(LDO_LDO_VDD30);
+#elif defined (CONFIG_SC8830)
+		if (sdhost_handler->slotNo == SDHOST_SLOT_7)
+		{
+			LDO_TurnOffLDO(LDO_LDO_SDIO3);
+		}
+		else if (sdhost_handler->slotNo == SDHOST_SLOT_6)
+		{
+			LDO_TurnOffLDO(LDO_LDO_SDIO0);
+		}
 #else
 		if(&sdio_port_ctl[SDHOST_SLOT_0] == sdhost_handler){
 			LDO_TurnOffLDO (LDO_LDO_SDIO0);
@@ -2441,6 +2460,13 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
 			REG32(PIN_SD0_D3_REG) = 0x180;
 			sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) SDIO0_BASE_ADDR );
 #elif defined CONFIG_SC8830
+			REG32(REG_PIN_SD0_CLK0)= 0x300;
+			REG32(REG_PIN_SD0_CLK1)= 0x300;
+			REG32(REG_PIN_SD0_CMD) = 0x280;
+			REG32(REG_PIN_SD0_D0)  = 0x280;
+			REG32(REG_PIN_SD0_D0)  = 0x280;
+			REG32(REG_PIN_SD0_D1)  = 0x280;
+			REG32(REG_PIN_SD0_D2)  = 0x280;
 			sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) SDIO0_BASE_ADDR );
 #elif defined CONFIG_SC7710G2
             sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) SDIO2_BASE_ADDR );
@@ -2576,27 +2602,55 @@ PUBLIC uint32 SDHOST_BaseClk_Set(SDHOST_SLOT_NO slot_NO,uint32 sdio_base_clk)
     uint32 clk = 0;
 
 #if   defined(CONFIG_SC8830)
-	if (sdio_base_clk >= SDIO_BASE_CLK_312M)
+	if (slot_NO == SDHOST_SLOT_6)
 	{
-		REG32(REG_AP_CLK_EMMC_CFG) |=  3;
-    	clk = SDIO_BASE_CLK_312M;
-	}
-	else if (sdio_base_clk >= SDIO_BASE_CLK_256M)
-	{
-		REG32(REG_AP_CLK_EMMC_CFG) &= ~3;
-		REG32(REG_AP_CLK_EMMC_CFG) |=  2;
-    	clk = SDIO_BASE_CLK_256M;
-	}
-	if (sdio_base_clk >= SDIO_BASE_CLK_192M)
-	{
-		REG32(REG_AP_CLK_EMMC_CFG) &= ~3;
-		REG32(REG_AP_CLK_EMMC_CFG) |=  1;
-    	clk = SDIO_BASE_CLK_192M;
+		if (sdio_base_clk >= SDIO_BASE_CLK_312M)
+		{
+			REG32(REG_AP_CLK_SDIO0_CFG) |=  3;
+			clk = SDIO_BASE_CLK_312M;
+		}
+		else if (sdio_base_clk >= SDIO_BASE_CLK_256M)
+		{
+			REG32(REG_AP_CLK_SDIO0_CFG) &= ~3;
+			REG32(REG_AP_CLK_SDIO0_CFG) |=  2;
+			clk = SDIO_BASE_CLK_256M;
+		}
+		if (sdio_base_clk >= SDIO_BASE_CLK_192M)
+		{
+			REG32(REG_AP_CLK_SDIO0_CFG) &= ~3;
+			REG32(REG_AP_CLK_SDIO0_CFG) |=  1;
+			clk = SDIO_BASE_CLK_192M;
+		}
+		else
+		{
+			REG32(REG_AP_CLK_SDIO0_CFG) &= ~3;
+			clk = SDIO_BASE_CLK_26M;
+		}
 	}
 	else
 	{
-		REG32(REG_AP_CLK_EMMC_CFG) &= ~3;
-    	clk = SDIO_BASE_CLK_26M;
+		if (sdio_base_clk >= SDIO_BASE_CLK_312M)
+		{
+			REG32(REG_AP_CLK_EMMC_CFG) |=  3;
+			clk = SDIO_BASE_CLK_312M;
+		}
+		else if (sdio_base_clk >= SDIO_BASE_CLK_256M)
+		{
+			REG32(REG_AP_CLK_EMMC_CFG) &= ~3;
+			REG32(REG_AP_CLK_EMMC_CFG) |=  2;
+			clk = SDIO_BASE_CLK_256M;
+		}
+		if (sdio_base_clk >= SDIO_BASE_CLK_192M)
+		{
+			REG32(REG_AP_CLK_EMMC_CFG) &= ~3;
+			REG32(REG_AP_CLK_EMMC_CFG) |=  1;
+			clk = SDIO_BASE_CLK_192M;
+		}
+		else
+		{
+			REG32(REG_AP_CLK_EMMC_CFG) &= ~3;
+			clk = SDIO_BASE_CLK_26M;
+		}
 	}
 #elif defined(CONFIG_TIGER)
     REG32 (GR_CLK_GEN5) &= ~ (BIT_23|BIT_24);

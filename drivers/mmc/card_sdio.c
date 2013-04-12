@@ -1006,8 +1006,174 @@ LOCAL BOOLEAN CARD_SDIO_ReadCSD(CARD_SDIO_HANDLE cardHandle,CARD_CSD_T* CSD)
 
 	return TRUE;
 }
+#if defined CONFIG_SC8830
+PUBLIC BOOLEAN SDCARD_SDIO_ReadCSD(CARD_SDIO_HANDLE cardHandle, CARD_CSD_T *CSD)
+{
+    uint8 rspBuf[16];
+    uint16 RCA = cardHandle->RCA;
+    uint32 argument = 0;
+
+    CARD_SDIO_ASSERT(TRUE == _IsCardHandleValid(cardHandle));
+    cardHandle->CCC = 0;
+
+    argument = RCA;
+    argument = argument << 16;
 
 
+    if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd, CARD_CMD9_SEND_CSD, argument, NULL, rspBuf))
+    {
+        return FALSE;
+    }
+    //--
+    CARD_SDIO_PRINT(("SD20 %x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", rspBuf[0], rspBuf[1], rspBuf[2], rspBuf[3], rspBuf[4], rspBuf[5], rspBuf[6], rspBuf[7], rspBuf[8], rspBuf[9], rspBuf[10], rspBuf[11], rspBuf[12], rspBuf[13], rspBuf[14]));
+
+    if(CARD_SD_V2_0_HIGHCAP == cardHandle->vertion)
+    {
+        _SD_CSD20_Analyze(rspBuf, &(CSD->SD_CSD20));
+        cardHandle->CCC = CSD->SD_CSD20.CCC;
+
+        CARD_SDIO_PRINT(("CARD_SD_V2_0_HIGHCAP:"));
+        CARD_SDIO_PRINT(("CSD_STRUCTURE = %x", CSD->SD_CSD20.CSD_STRUCTURE));
+        CARD_SDIO_PRINT(("reserved1= %x", CSD->SD_CSD20.reserved1));
+        CARD_SDIO_PRINT(("TAAC= %x", CSD->SD_CSD20.TAAC));
+        CARD_SDIO_PRINT(("NSAC= %x", CSD->SD_CSD20.NSAC));
+        CARD_SDIO_PRINT(("TRAN_SPEED= %x", CSD->SD_CSD20.TRAN_SPEED));
+        CARD_SDIO_PRINT(("CCC= %x", CSD->SD_CSD20.CCC));
+        CARD_SDIO_PRINT(("READ_BL_LEN= %x", CSD->SD_CSD20.READ_BL_LEN));
+        CARD_SDIO_PRINT(("READ_BL_PARTIAL= %x", CSD->SD_CSD20.READ_BL_PARTIAL));
+        CARD_SDIO_PRINT(("WRITE_BLK_MISALIGN= %x", CSD->SD_CSD20.WRITE_BLK_MISALIGN));
+        CARD_SDIO_PRINT(("READ_BLK_MISALIGN= %x", CSD->SD_CSD20.READ_BLK_MISALIGN));
+        CARD_SDIO_PRINT(("DSR_IMP= %x", CSD->SD_CSD20.DSR_IMP));
+
+        CARD_SDIO_PRINT(("reserved2= %x", CSD->SD_CSD20.reserved2));
+        CARD_SDIO_PRINT(("C_SIZE= %x", CSD->SD_CSD20.C_SIZE));
+        CARD_SDIO_PRINT(("reserved3= %x", CSD->SD_CSD20.reserved3));
+
+        CARD_SDIO_PRINT(("ERASE_BLK_EN= %x", CSD->SD_CSD20.ERASE_BLK_EN));
+        CARD_SDIO_PRINT(("SECTOR_SIZE= %x", CSD->SD_CSD20.SECTOR_SIZE));
+        CARD_SDIO_PRINT(("WP_GRP_SIZE= %x", CSD->SD_CSD20.WP_GRP_SIZE));
+        CARD_SDIO_PRINT(("WP_GRP_ENABLE= %x", CSD->SD_CSD20.WP_GRP_ENABLE));
+        CARD_SDIO_PRINT(("reserved4= %x", CSD->SD_CSD20.reserved4));
+
+        CARD_SDIO_PRINT(("R2W_FACTOR= %x", CSD->SD_CSD20.R2W_FACTOR));
+        CARD_SDIO_PRINT(("WRITE_BL_LEN= %x", CSD->SD_CSD20.WRITE_BL_LEN));
+        CARD_SDIO_PRINT(("WRITE_BL_PARTIAL= %x", CSD->SD_CSD20.WRITE_BL_PARTIAL));
+        CARD_SDIO_PRINT(("reserved5= %x", CSD->SD_CSD20.reserved5));
+
+        CARD_SDIO_PRINT(("FILE_FORMAT_GRP= %x", CSD->SD_CSD20.FILE_FORMAT_GRP));
+        CARD_SDIO_PRINT(("COPY= %x", CSD->SD_CSD20.COPY));
+        CARD_SDIO_PRINT(("PERM_WRITE_PROTECT= %x", CSD->SD_CSD20.PERM_WRITE_PROTECT));
+        CARD_SDIO_PRINT(("TMP_WRITE_PROTECT= %x", CSD->SD_CSD20.TMP_WRITE_PROTECT));
+        CARD_SDIO_PRINT(("FILE_FORMAT= %x", CSD->SD_CSD20.FILE_FORMAT));
+        CARD_SDIO_PRINT(("reserved6= %x", CSD->SD_CSD20.reserved6));
+        //	CARD_SDIO_PRINT(("CRC= %x",CSD->SD_CSD20.CRC));
+        //	CARD_SDIO_PRINT(("LastBit= %x",CSD->SD_CSD20.LastBit));
+    }
+    else if(
+        (CARD_SD_V2_0_STANDARD == cardHandle->vertion)
+        || (CARD_SD_V1_X == cardHandle->vertion)
+    )
+    {
+        _SD_CSD10_Analyze(rspBuf, &(CSD->SD_CSD10));
+        cardHandle->CCC = CSD->SD_CSD10.CCC;
+
+        CARD_SDIO_PRINT(("CARD_SD_V2_0_STANDARD||CARD_SD_V1_X:"));
+        CARD_SDIO_PRINT(("CSD_STRUCTURE = %x", CSD->SD_CSD10.CSD_STRUCTURE));
+        CARD_SDIO_PRINT(("reserved1= %x", CSD->SD_CSD10.reserved1));
+        CARD_SDIO_PRINT(("TAAC= %x", CSD->SD_CSD10.TAAC));
+        CARD_SDIO_PRINT(("NSAC= %x", CSD->SD_CSD10.NSAC));
+        CARD_SDIO_PRINT(("TRAN_SPEED= %x", CSD->SD_CSD10.TRAN_SPEED));
+        CARD_SDIO_PRINT(("CCC= %x", CSD->SD_CSD10.CCC));
+        CARD_SDIO_PRINT(("READ_BL_LEN= %x", CSD->SD_CSD10.READ_BL_LEN));
+        CARD_SDIO_PRINT(("READ_BL_PARTIAL= %x", CSD->SD_CSD10.READ_BL_PARTIAL));
+        CARD_SDIO_PRINT(("WRITE_BLK_MISALIGN= %x", CSD->SD_CSD10.WRITE_BLK_MISALIGN));
+        CARD_SDIO_PRINT(("READ_BLK_MISALIGN= %x", CSD->SD_CSD10.READ_BLK_MISALIGN));
+        CARD_SDIO_PRINT(("DSR_IMP= %x", CSD->SD_CSD10.DSR_IMP));
+
+        CARD_SDIO_PRINT(("reserved2= %x", CSD->SD_CSD10.reserved2));
+        CARD_SDIO_PRINT(("C_SIZE= %x", CSD->SD_CSD10.C_SIZE));
+        CARD_SDIO_PRINT(("VDD_R_CURR_MIN = %x", CSD->SD_CSD10.VDD_R_CURR_MIN));
+        CARD_SDIO_PRINT(("VDD_R_CURR_MAX = %x", CSD->SD_CSD10.VDD_R_CURR_MAX));
+        CARD_SDIO_PRINT(("VDD_W_CURR_MIN = %x", CSD->SD_CSD10.VDD_W_CURR_MIN));
+        CARD_SDIO_PRINT(("VDD_W_CURR_MAX = %x", CSD->SD_CSD10.VDD_W_CURR_MAX));
+        CARD_SDIO_PRINT(("C_SIZE_MULT = %x", CSD->SD_CSD10.C_SIZE_MULT));
+
+        CARD_SDIO_PRINT(("ERASE_BLK_EN= %x", CSD->SD_CSD10.ERASE_BLK_EN));
+        CARD_SDIO_PRINT(("SECTOR_SIZE= %x", CSD->SD_CSD10.SECTOR_SIZE));
+        CARD_SDIO_PRINT(("WP_GRP_SIZE= %x", CSD->SD_CSD10.WP_GRP_SIZE));
+        CARD_SDIO_PRINT(("WP_GRP_ENABLE= %x", CSD->SD_CSD10.WP_GRP_ENABLE));
+        CARD_SDIO_PRINT(("reserved3= %x", CSD->SD_CSD10.reserved3));
+
+        CARD_SDIO_PRINT(("R2W_FACTOR= %x", CSD->SD_CSD10.R2W_FACTOR));
+        CARD_SDIO_PRINT(("WRITE_BL_LEN= %x", CSD->SD_CSD10.WRITE_BL_LEN));
+        CARD_SDIO_PRINT(("WRITE_BL_PARTIAL= %x", CSD->SD_CSD10.WRITE_BL_PARTIAL));
+        CARD_SDIO_PRINT(("reserved4= %x", CSD->SD_CSD10.reserved4));
+
+        CARD_SDIO_PRINT(("FILE_FORMAT_GRP= %x", CSD->SD_CSD10.FILE_FORMAT_GRP));
+        CARD_SDIO_PRINT(("COPY= %x", CSD->SD_CSD10.COPY));
+        CARD_SDIO_PRINT(("PERM_WRITE_PROTECT= %x", CSD->SD_CSD10.PERM_WRITE_PROTECT));
+        CARD_SDIO_PRINT(("TMP_WRITE_PROTECT= %x", CSD->SD_CSD10.TMP_WRITE_PROTECT));
+        CARD_SDIO_PRINT(("FILE_FORMAT= %x", CSD->SD_CSD10.FILE_FORMAT));
+        CARD_SDIO_PRINT(("reserved5= %x", CSD->SD_CSD10.reserved5));
+        //	CARD_SDIO_PRINT(("CRC= %x",CSD->SD_CSD10.CRC));
+        //	CARD_SDIO_PRINT(("LastBit= %x",CSD->SD_CSD10.LastBit));
+    }
+    else if(CARD_MMC_331 == cardHandle->vertion)
+    {
+        _MMC_CSD_Analyze(rspBuf, &(CSD->MMC_CSD));
+        cardHandle->CCC = CSD->MMC_CSD.CCC;
+        cardHandle->CCC &= (~((1 << 10) | (1 << 11)));	// for MMC mode This two classes is reserved
+
+        CARD_SDIO_PRINT(("CARD_MMC_331:"));
+        CARD_SDIO_PRINT(("CSD_STRUCTURE\t\t  = 0x%x", CSD->MMC_CSD.CSD_STRUCTURE));
+        CARD_SDIO_PRINT(("SPEC_VERS\t\t  = 0x%x", CSD->MMC_CSD.SPEC_VERS));
+        CARD_SDIO_PRINT(("reserved1\t\t  = 0x%x", CSD->MMC_CSD.reserved1));
+        CARD_SDIO_PRINT(("TAAC\t\t\t  = 0x%x", CSD->MMC_CSD.TAAC));
+        CARD_SDIO_PRINT(("NSAC\t\t\t  = 0x%x", CSD->MMC_CSD.NSAC));
+        CARD_SDIO_PRINT(("TRAN_SPEED\t\t  = 0x%x", CSD->MMC_CSD.TRAN_SPEED));
+        CARD_SDIO_PRINT(("CCC\t\t\t  = 0x%x", CSD->MMC_CSD.CCC));
+        CARD_SDIO_PRINT(("READ_BL_LEN\t\t  = 0x%x", CSD->MMC_CSD.READ_BL_LEN));
+        CARD_SDIO_PRINT(("READ_BL_PARTIAL\t\t  = 0x%x", CSD->MMC_CSD.READ_BL_PARTIAL));
+        CARD_SDIO_PRINT(("WRITE_BLK_MISALIGN\t  = 0x%x", CSD->MMC_CSD.WRITE_BLK_MISALIGN));
+        CARD_SDIO_PRINT(("READ_BLK_MISALIGN\t  = 0x%x", CSD->MMC_CSD.READ_BLK_MISALIGN));
+        CARD_SDIO_PRINT(("DSR_IMP\t\t\t  = 0x%x", CSD->MMC_CSD.DSR_IMP));
+        CARD_SDIO_PRINT(("reserved2\t\t  = 0x%x", CSD->MMC_CSD.reserved2));
+        CARD_SDIO_PRINT(("C_SIZE\t\t\t  = 0x%x", CSD->MMC_CSD.C_SIZE));
+        CARD_SDIO_PRINT(("VDD_R_CURR_MIN\t\t  = 0x%x", CSD->MMC_CSD.VDD_R_CURR_MIN));
+        CARD_SDIO_PRINT(("VDD_R_CURR_MAX\t\t  = 0x%x", CSD->MMC_CSD.VDD_R_CURR_MAX));
+        CARD_SDIO_PRINT(("VDD_W_CURR_MIN\t\t  = 0x%x", CSD->MMC_CSD.VDD_W_CURR_MIN));
+        CARD_SDIO_PRINT(("VDD_W_CURR_MAX\t\t  = 0x%x", CSD->MMC_CSD.VDD_W_CURR_MAX));
+        CARD_SDIO_PRINT(("C_SIZE_MULT\t\t  = 0x%x", CSD->MMC_CSD.C_SIZE_MULT));
+        CARD_SDIO_PRINT(("ERASE_GRP_SIZE\t\t  = 0x%x", CSD->MMC_CSD.ERASE_GRP_SIZE));
+        CARD_SDIO_PRINT(("ERASE_GRP_MULT\t\t  = 0x%x", CSD->MMC_CSD.ERASE_GRP_MULT));
+        CARD_SDIO_PRINT(("WP_GRP_SIZE\t\t  = 0x%x", CSD->MMC_CSD.WP_GRP_SIZE));
+        CARD_SDIO_PRINT(("WP_GRP_ENABLE\t\t  = 0x%x", CSD->MMC_CSD.WP_GRP_ENABLE));
+        CARD_SDIO_PRINT(("DEFAULT_ECC\t\t  = 0x%x", CSD->MMC_CSD.DEFAULT_ECC));
+        CARD_SDIO_PRINT(("R2W_FACTOR\t\t  = 0x%x", CSD->MMC_CSD.R2W_FACTOR));
+        CARD_SDIO_PRINT(("WRITE_BL_LEN\t\t  = 0x%x", CSD->MMC_CSD.WRITE_BL_LEN));
+        CARD_SDIO_PRINT(("WRITE_BL_PARTIAL\t  = 0x%x", CSD->MMC_CSD.WRITE_BL_PARTIAL));
+        CARD_SDIO_PRINT(("reserved3\t\t  = 0x%x", CSD->MMC_CSD.reserved3));
+        CARD_SDIO_PRINT(("CONTENT_PROT_APP\t  = 0x%x", CSD->MMC_CSD.CONTENT_PROT_APP));
+        CARD_SDIO_PRINT(("----RW bit---"));
+        CARD_SDIO_PRINT(("FILE_FORMAT_GRP\t\t  = 0x%x", CSD->MMC_CSD.FILE_FORMAT_GRP));
+        CARD_SDIO_PRINT(("COPY\t\t\t  = 0x%x", CSD->MMC_CSD.COPY));
+        CARD_SDIO_PRINT(("PERM_WRITE_PROTECT\t  = 0x%x", CSD->MMC_CSD.PERM_WRITE_PROTECT));
+        CARD_SDIO_PRINT(("TMP_WRITE_PROTECT\t  = 0x%x", CSD->MMC_CSD.TMP_WRITE_PROTECT));
+        CARD_SDIO_PRINT(("FILE_FORMAT\t\t  = 0x%x", CSD->MMC_CSD.FILE_FORMAT));
+        CARD_SDIO_PRINT(("ECC\t\t\t  = 0x%x", CSD->MMC_CSD.ECC));
+        //		CARD_SDIO_PRINT(("CRC\t\t\t  = 0x%x",CSD->MMC_CSD.CRC));
+        //		CARD_SDIO_PRINT(("LastBit\t\t\t  = 0x%x",CSD->MMC_CSD.LastBit));
+
+    }
+    else
+    {
+        CARD_SDIO_ASSERT(0);
+    }
+
+
+    return TRUE;
+}
+#endif
 /*****************************************************************************/
 //  Description:  Read EXT CSD register and analyze it
 //  Author: Jason.wu
@@ -1145,6 +1311,30 @@ LOCAL BOOLEAN CARD_SDIO_ReadRCA(CARD_SDIO_HANDLE cardHandle,uint16*RCA)
 	*RCA = 1;
 	return TRUE;
 }
+#ifdef CONFIG_SC8830
+LOCAL BOOLEAN SDCARD_SDIO_ReadRCA(CARD_SDIO_HANDLE cardHandle,uint16*RCA)
+{
+	uint8  rspBuf[16];
+	uint16 tmpRCA;
+
+	CARD_SDIO_ASSERT(TRUE == _IsCardHandleValid(cardHandle));	/*assert verified*/
+
+
+	if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD3_SEND_RELATIVE_ADDR,1<<16,NULL,rspBuf))
+	{
+		return FALSE;
+	}
+    tmpRCA = 0;
+    tmpRCA = rspBuf[0];
+    tmpRCA = tmpRCA << 8;
+    tmpRCA |= rspBuf[1];
+
+    *RCA = tmpRCA;
+
+	return TRUE;
+}
+#endif
+
 
 //-----------------------------------------------------------------------------------
 //	Before operate card ,we must active card first,this function is used to active card
@@ -1427,10 +1617,10 @@ LOCAL void _CMD6_Response_Analyze(uint8* resBuf,CARD_CMD6_STATUS_T* cmdStatus)
 	return;
 }
 
-#define EMMC_TEST
+
 #define SECTOR_MODE 0x40000000 
 #define BYTE_MODE   0x00000000 
-#ifdef EMMC_TEST
+
 PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE speedmode)
 {
 	uint8 rspBuf[16];
@@ -1646,7 +1836,81 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 
 }
 
-#else
+
+#if defined CONFIG_SC8830
+
+PUBLIC BOOLEAN SDSetBusWidth(CARD_SDIO_HANDLE cardHandle, CARD_BUS_WIDTH_E width)
+{
+    uint8 rspBuf[16];
+    uint16 RCA = cardHandle->RCA;
+    uint32 argument = 0;
+
+
+    if(width == cardHandle->bus_width)
+    {
+        return TRUE;
+    }
+
+    argument = RCA;
+    argument = argument << 16;
+    if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd, CARD_CMD55_APP_CMD, argument, NULL, rspBuf))
+    {
+        return FALSE;
+    }
+
+    switch(width)
+    {
+    case CARD_WIDTH_1_BIT:
+    {
+        argument = 0;
+    }
+    break;
+
+    case CARD_WIDTH_4_BIT:
+    {
+        argument = 2;
+    }
+    break;
+
+    default:
+    {
+        CARD_SDIO_ASSERT(0);
+    }
+    break;
+    }
+    if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd, CARD_ACMD6_SET_BUS_WIDTH, argument, NULL, rspBuf))
+    {
+        return FALSE;
+    }
+
+    switch(width)
+    {
+    case CARD_WIDTH_1_BIT:
+    {
+        SDIO_Card_Pal_SetBusWidth(cardHandle->sdioPalHd, SDIO_CARD_PAL_1_BIT);
+    }
+    break;
+
+    case CARD_WIDTH_4_BIT:
+    {
+        SDIO_Card_Pal_SetBusWidth(cardHandle->sdioPalHd, SDIO_CARD_PAL_4_BIT);
+    }
+    break;
+
+    default:
+    {
+        CARD_SDIO_ASSERT(0);
+    }
+    break;
+    }
+    cardHandle->bus_width = width;
+
+    return TRUE;
+}
+
+
+
+
 /*****************************************************************************/
 //  Description:  Initialize card, change card from idle state to standy by state ,and get some information from card
 //  Author: Jason.wu
@@ -1657,7 +1921,7 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 //		FALSE: fail
 //  Note: 
 /*****************************************************************************/
-PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE speedmode)
+PUBLIC BOOLEAN SDCARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE speedmode)
 {
 	uint8 rspBuf[16];
 	uint32 pre_tick, cur_tick;
@@ -1704,7 +1968,7 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 				continue;
 			}
 		}
-		CARD_SDIO_PRINT(("SD20 %x,%x,%x,%x",rspBuf[0],rspBuf[1],rspBuf[2],rspBuf[3]));
+		CARD_SDIO_PRINT(("SD20 %x,%x,%x,%x\r\n",rspBuf[0],rspBuf[1],rspBuf[2],rspBuf[3]));
 		if((0xAA == rspBuf[3])&&(0x00 == rspBuf[2]))
 		{
 			//SD2.0 not support current voltage
@@ -1715,7 +1979,7 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 	}
 	while(0xAA != rspBuf[3]);	/*lint !e644 */
 
-	CARD_SDIO_PRINT(("SD20 vertion_flag = %x",vertion_flag));
+	CARD_SDIO_PRINT(("SD20 vertion_flag = %x\r\n",vertion_flag));
 
        pre_tick = SCI_GetTickCount(); /*set start tick value*/
 	if(FALSE == vertion_flag)
@@ -1750,7 +2014,7 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 				}
 			}
 			//---
-			CARD_SDIO_PRINT(("SD20 %x,%x,%x,%x",rspBuf[0],rspBuf[1],rspBuf[2],rspBuf[3]));
+			CARD_SDIO_PRINT(("SD20 %x,%x,%x,%x\r\n",rspBuf[0],rspBuf[1],rspBuf[2],rspBuf[3]));
 			if(0 != (rspBuf[0]&BIT_7))
 			{
 				cardHandle->vertion = CARD_SD_V1_X;
@@ -1809,7 +2073,7 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 				return FALSE;
 			}
 			//---
-			CARD_SDIO_PRINT(("SD20 %x,%x,%x,%x",rspBuf[0],rspBuf[1],rspBuf[2],rspBuf[3]));
+			CARD_SDIO_PRINT(("SD20 %x,%x,%x,%x\r\n",rspBuf[0],rspBuf[1],rspBuf[2],rspBuf[3]));
 			if(0 != (rspBuf[0]&BIT_7))
 			{
 				if(0 != (rspBuf[0]&BIT_6))
@@ -1859,8 +2123,9 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 		||(CARD_SD_V2_0_HIGHCAP == cardHandle->vertion)
 	)
 	{
-		if(FALSE == CARD_SDIO_ReadRCA(cardHandle,&RCA))
+		if(FALSE == SDCARD_SDIO_ReadRCA(cardHandle,&RCA))
 		{
+			printf("SDCARD_SDIO_ReadRCA failed!\r\n");
 			return FALSE;
 		}
 		cardHandle->RCA = RCA;
@@ -1875,8 +2140,9 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 
 	CARD_SDIO_PRINT(("SD20 type is %x",cardHandle->vertion));
 
-	if(FALSE == CARD_SDIO_ReadCSD(cardHandle,&CSD))
+	if(FALSE == SDCARD_SDIO_ReadCSD(cardHandle,&CSD))
 	{
+		printf("read csd failed!\r\n");
 		return FALSE;
 	}
 
@@ -1886,6 +2152,7 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 		||((CARD_MMC_331 == cardHandle->vertion))
 	))
 	{
+		printf("unkown sd type0!\r\n");
 		return FALSE;
 	}
 	if((CARD_SD_V1_X == cardHandle->vertion)||(CARD_SD_V2_0_STANDARD== cardHandle->vertion))
@@ -1908,101 +2175,31 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 	else
 	{
 		CARD_SDIO_ASSERT(0);	/*assert verified*/
+		printf("unkown sd type1!\r\n");
 		return FALSE;     /*lint !e527*/
 	}
 
-//---
-	if(CARD_MMC_331 == cardHandle->vertion)
-	{
-		SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd,SDIO_CARD_PAL_20MHz);
-	}
-	else if(
-		(CARD_SD_V1_X == cardHandle->vertion)
-		||(CARD_SD_V2_0_STANDARD== cardHandle->vertion)
-		||(CARD_SD_V2_0_HIGHCAP== cardHandle->vertion)
-	)
-	{
-		SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd,SDIO_CARD_PAL_25MHz);
-	}
-	else
-	{
-		CARD_SDIO_ASSERT(0);	/*assert verified*/
-		return FALSE;	/*lint !e527*/
-	}
+	SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd,SDIO_CARD_PAL_25MHz);
 
 	if(FALSE == _SelectCard(cardHandle))
 	{
+		printf("select card failed!\r\n");
 		return FALSE;
 	}
-	if(
-		(CARD_SD_V1_X == cardHandle->vertion)
-		||(CARD_SD_V2_0_STANDARD == cardHandle->vertion)
-		||(CARD_SD_V2_0_HIGHCAP == cardHandle->vertion)
-	)
+
+	if(FALSE == SDSetBusWidth(cardHandle,CARD_WIDTH_4_BIT))
 	{
-		busWidth = CARD_WIDTH_4_BIT;
-		if(FALSE == _SetBusWidth(cardHandle,CARD_WIDTH_4_BIT))
-		{
-			return FALSE;
-		}
-	}
-	else if(CARD_MMC_331 == cardHandle->vertion)
-	{
-		busWidth = CARD_WIDTH_1_BIT;
-	}
-	else
-	{
-		CARD_SDIO_ASSERT(0);	/*assert verified*/
-		return FALSE;     /*lint !e527*/
+		printf("set bus width failed!\r\n");
+		return FALSE;
 	}
 
 	if(FALSE == CARD_SDIO_SetBlockLength( cardHandle,DEFAULT_CARD_BLOCKLEN))
 	{
+		printf("set block length failed!\r\n");
 		return FALSE;
 	}
 
-#if defined(CARD_SDIO_HIGHSPEED_SUPPORT)
-	if(HIGH_SPEED_MODE == speedmode)
-	{
-		if(FALSE == ifSupportHighSpeed(cardHandle))
-		{
-			return FALSE;
-		}
-		if(TRUE == cardHandle->ifSupportHighSpeed)
-		{
-			if(FALSE == CARD_SDIO_EnterHighSpeed(cardHandle))
-			{
-				return FALSE;
-			}
-		}
-	}
-	else
-	{
-		cardHandle->ifEnterHighSpeed = FALSE;
-		CARD_SDIO_PRINT(("[Card_sdio] CARD_SDIO_InitCard: Disable HighSpeed Mode !"));
-	}
-#endif
-
-#if defined(SPRD_SUPPORT_MCEX)
-	if(FALSE == ifSupportMcex(cardHandle))
-	{
-		return FALSE;
-	}
-	if(TRUE == cardHandle->ifEnterEC)
-	{
-		BOOLEAN ifEnterMcex;
-		if(FALSE == CARD_SDIO_EnterMcex(cardHandle,&ifEnterMcex))
-		{
-			return FALSE;
-		}
-	}
-#endif
-
-
-
-//---
 	return TRUE;
-
 }
 #endif
 
@@ -2438,6 +2635,69 @@ PUBLIC BOOLEAN Emmc_Init()
 
 	return ret;
 }
+
+#if defined CONFIG_SC8830
+CARD_SDIO_HANDLE  sdcard_handle = NULL;
+
+PUBLIC BOOLEAN SDCARD_SDIO_ReadMultiBlock(CARD_SDIO_HANDLE cardHandle, uint32 startBlock, uint32 num, uint8 *buf)
+{
+    uint8 rspBuf[16];
+    uint32 address;
+    CARD_DATA_PARAM_T data;
+
+    CARD_SDIO_ASSERT(TRUE == _IsCardHandleValid(cardHandle));
+
+    if((CARD_SD_V2_0_STANDARD == cardHandle->vertion) || (CARD_SD_V1_X == cardHandle->vertion) || (CARD_MMC_331 == cardHandle->vertion))
+    {
+        address = startBlock * cardHandle->BlockLen;
+    }
+    else if(CARD_SD_V2_0_HIGHCAP == cardHandle->vertion)
+    {
+        address = startBlock;
+    }
+    else
+    {
+        CARD_SDIO_ASSERT(0);
+    }
+
+    data.blkLen = cardHandle->BlockLen;
+    data.blkNum = num;
+    data.databuf = buf;
+    if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd, CARD_CMD18_READ_MULTIPLE_BLOCK_AUT12, address, &data, rspBuf))
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+
+}
+
+
+PUBLIC BOOLEAN SDCARD_Init()
+{
+	uint32 ret = 0;
+
+	sdcard_handle = CARD_SDIO_Open(CARD_SDIO_SLOT_6);
+
+	SDIO_Card_Pal_SetType(sdcard_handle->sdioPalHd, SDIO_CARD_PAL_TYPE_SD);
+
+	CARD_SDIO_PwrCtl(sdcard_handle, TRUE);
+	ret = SDCARD_SDIO_InitCard(sdcard_handle, HIGH_SPEED_MODE);
+
+	SDCARD_SDIO_ReadMultiBlock(sdcard_handle, 0, 48, 0x84000000);
+	{
+		uint32 i;
+		uint32 *ptr = (uint32 *)0x84000000;
+		printf("SDCARD Init, Read Data Success!\r\n");
+		for (i=0; i<32; i++)
+		{
+			printf("[%8x] : %08X\r\n", i, ptr[i]);
+		}
+	}
+	return ret;
+}
+
+#endif
 
 PUBLIC BOOLEAN Emmc_Write(CARD_EMMC_PARTITION_TPYE  cardPartiton, uint32 startBlock,uint32 num,uint8* buf)
 {
