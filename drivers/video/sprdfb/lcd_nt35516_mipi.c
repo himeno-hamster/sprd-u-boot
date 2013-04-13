@@ -47,7 +47,7 @@ typedef struct LCM_force_cmd_code_tag{
 #define LCM_TAG_SLEEP (1 << 1)
 
 static LCM_Init_Code init_data[] = {
-#if 1
+
 // NT35516, LGD
 // VCC=2.8V, IOVCC=1.8V
 {LCM_SEND(7), {5, 0, 0xFF,0xAA,0x55,0x25,0x01}},
@@ -116,7 +116,7 @@ static LCM_Init_Code init_data[] = {
 {LCM_SEND(1), {0x29}}, // display on
 {LCM_SLEEP(100),},
 {LCM_SEND(2), {0x13,0x00}}, // normal on
-#endif
+
 
 #if 0
 {LCM_SEND(7), {0x5, 0, 0xFF, 0xAA, 0x55, 0x25, 0x01}},
@@ -269,7 +269,11 @@ static struct timing_rgb lcd_nt35516_mipi_timing = {
 };
 
 static struct info_mipi lcd_nt35516_mipi_info = {
+#ifdef CONFIG_SC8830
+	.work_mode  = SPRDFB_MIPI_MODE_CMD,
+#else
 	.work_mode  = SPRDFB_MIPI_MODE_VIDEO,
+#endif
 	.video_bus_width = 24, /*18,16*/
 	.lan_number = 3,
 	.phy_feq = 500*1000,

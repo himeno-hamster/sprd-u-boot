@@ -53,7 +53,11 @@ static void mipi_dispc_init_config(struct panel_spec *panel)
 
 	if(SPRDFB_MIPI_MODE_CMD == panel->info.mipi->work_mode){
 		/*use edpi as interface*/
+#ifdef CONFIG_SC8830
+		dispc_write(0x3, DISPC_CTRL);
+#else
 		dispc_set_bits((1<<1), DISPC_CTRL);
+#endif
 	}else{
 		/*use dpi as interface*/
 #ifdef CONFIG_SC8830
