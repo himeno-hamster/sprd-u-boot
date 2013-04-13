@@ -84,7 +84,9 @@ void initBuf(void)
 			config++;
 			continue;
 		}
-		backupData(i);
+		memcpy(ramNvCtl.part[i].backup.diskbuf,ramNvCtl.part[i].fromChannel.diskbuf,config->image_size+512);
+		memcpy(ramNvCtl.part[i].toDisk.diskbuf,ramNvCtl.part[i].fromChannel.diskbuf,config->image_size+512);
+//		backupData(i);
 		ramNvCtl.partNum++;
 		i++;
 		config++;
