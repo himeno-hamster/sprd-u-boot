@@ -1938,11 +1938,12 @@ PUBLIC BOOLEAN SDCARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE
 	cardHandle->bus_width = CARD_WIDTH_1_BIT;
 	cardHandle->BlockLen = 0;
 	cardHandle->vertion = CARD_V_UNKONWN;
-
+#if 0
 	if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD0_GO_IDLE_STATE,0,NULL,rspBuf))
 	{
 		return FALSE;
 	}
+#endif
 //Now the card is in Idle State
 	vertion_flag = TRUE;
        pre_tick = SCI_GetTickCount();
