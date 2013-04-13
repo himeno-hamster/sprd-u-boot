@@ -679,16 +679,17 @@ void lcd_display_logo(int backlight_set,ulong bmp_img,size_t size)
 #endif
 }
 
-void creat_cmdline(char * cmdline,boot_img_hdr *hdr)
+char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 {
 	int str_len;
 	char * buf;
 	buf = malloc(1024);
 	memset(buf, 0, 1024);
 
-	sprintf(buf, "initrd=0x%x,0x%x", RAMDISK_ADR, hdr->ramdisk_size);
-	addbuf(buf);
-
+	if(hdr){
+		sprintf(buf, "initrd=0x%x,0x%x", RAMDISK_ADR, hdr->ramdisk_size);
+		addbuf(buf);
+	}
 	/* preset loop_per_jiffy */
 #ifdef CONFIG_LOOP_PER_JIFFY
 	str_len = strlen(buf);
@@ -778,6 +779,7 @@ void creat_cmdline(char * cmdline,boot_img_hdr *hdr)
     //lcd_printf(" pass cmdline : %s\n",buf);
     //lcd_display();
     creat_atags(VLX_TAG_ADDR, buf, NULL, 0);
+    return buf;
 }
 void vlx_entry()
 {

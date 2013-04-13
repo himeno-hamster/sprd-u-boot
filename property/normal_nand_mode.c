@@ -652,7 +652,12 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		        return;
 		}
 		printf("call bootup modem in vlx_nand_boot,0x%x 0x%x\n",FIXNV_ADR, FIXNV_SIZE);
-
+		{
+			char * cmd_line_ptr;
+			cmd_line_ptr = creat_cmdline(NULL,NULL);
+			memset((PRODUCTINFO_ADR+16*1024),0,1024);
+			strcpy((PRODUCTINFO_ADR+16*1024),cmd_line_ptr);
+		}
 		bootup_modem((char *)VMJALUNA_ADR,0x3000);
 		calibration_mode(cmdline, 10);	
 		memset(VMJALUNA_ADR,0,VMJALUNA_SIZE);
