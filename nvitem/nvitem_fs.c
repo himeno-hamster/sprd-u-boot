@@ -139,6 +139,7 @@ BOOLEAN		ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 {
 	int idx;
 	disk_partition_t info;
+	int firstName, secondName;
 
 	idx = _getIdx(handle);
 	if(-1 == idx){
@@ -149,39 +150,48 @@ BOOLEAN		ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 		printf("NVITEM partId%x:image read error!\n",_ramdiskCfg[idx].partId);
 		return 1;
 	}
+// 0 get read order
+	if(1){
+		firstName = _ramdiskCfg[idx].image_path;
+		secondName = _ramdiskCfg[idx].imageBak_path;
+	}
+	else{
+		secondName = _ramdiskCfg[idx].image_path;
+		firstName = _ramdiskCfg[idx].imageBak_path;
+	}
 // 1 read origin image
 	memset(buf, 0xFF, size);
-	if(!get_partition_info(s_block_dev, _ramdiskCfg[idx].image_path, &info)){
+	if(!get_partition_info(s_block_dev, firstName, &info)){
 		if(Emmc_Read(PARTITION_USER, info.start, (size>>9)+1, (uint8*)buf)){
 			//check crc
 			if(_chkEcc(buf, size)){
-				printf("NVITEM partId%x:origin image read success!\n",_ramdiskCfg[idx].partId);
+				printf("NVITEM partId%x:%x read success!\n",_ramdiskCfg[idx].partId,firstName);
 				return 1;
 			}
-			printf("NVITEM partId%x:origin image ECC error!\n",_ramdiskCfg[idx].partId);
+			printf("NVITEM partId%x:%x ECC error!\n",_ramdiskCfg[idx].partId,firstName);
 		}
 	}
-	printf("NVITEM partId%x:origin image read error!\n",_ramdiskCfg[idx].partId);
+	printf("NVITEM partId%x:%x read error!\n",_ramdiskCfg[idx].partId,firstName);
 // 2 read bakup image
 	memset(buf, 0xFF, size);
-	if(get_partition_info(s_block_dev, _ramdiskCfg[idx].imageBak_path, &info)){
-		printf("NVITEM partId%x:bakup image read error!\n",_ramdiskCfg[idx].partId);
+	if(get_partition_info(s_block_dev, secondName, &info)){
+		printf("NVITEM partId%x:%x read error!\n",_ramdiskCfg[idx].partId,secondName);
 		return 1;
 	}
 	if(!Emmc_Read(PARTITION_USER, info.start, (size>>9), (uint8*)buf))
 	{
-		printf("NVITEM partId%x:bakup image read error!\n",_ramdiskCfg[idx].partId);
+		printf("NVITEM partId%x:%x read error!\n",_ramdiskCfg[idx].partId,secondName);
 	}
 	if(!_chkEcc(buf, size)){
-		printf("NVITEM partId%x:bakup image ECC error!\n",_ramdiskCfg[idx].partId);
+		printf("NVITEM partId%x:%x ECC error!\n",_ramdiskCfg[idx].partId,secondName);
 		return 1;
 	}
 
-	if(!get_partition_info(s_block_dev, _ramdiskCfg[idx].image_path, &info)){
+	if(!get_partition_info(s_block_dev, firstName, &info)){
 		Emmc_Write(PARTITION_USER, info.start, (size>>9), (uint8*)buf);
 	}
 
-	printf("NVITEM  partId%x:bakup image read success!\n",_ramdiskCfg[idx].partId);
+	printf("NVITEM  partId%x:%x read success!\n",_ramdiskCfg[idx].partId,secondName);
 	return 1;
 
 }
@@ -302,43 +312,52 @@ BOOLEAN		ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 {
 	int idx;
 	char path[100];
+	char *firstName, *secondName;
 
 	idx = _getIdx(handle);
 	if(-1 == idx){
 		return 0;
 	}
+// 0 get read order
+	if(1){
+		firstName = _ramdiskCfg[idx].image_path;
+		secondName = _ramdiskCfg[idx].imageBak_path;
+	}
+	else{
+		secondName = _ramdiskCfg[idx].image_path;
+		firstName = _ramdiskCfg[idx].imageBak_path;
+	}
 // 1 read origin image
 	memset(buf, 0xFF, size);
-	_getPath(_ramdiskCfg[idx].image_path,path);
+	_getPath(firstName,path);
 	cmd_yaffs_mount(path);
-	cmd_yaffs_mread_file(_ramdiskCfg[idx].image_path, buf);
+	cmd_yaffs_mread_file(firstName, buf);
 	cmd_yaffs_umount(path);
 
 	//check crc
 	if(_chkEcc(buf, size)){
-		printf("NVITEM partId%x:origin image read success!\n",_ramdiskCfg[idx].partId);
+		printf("NVITEM partId%x:%s read success!\n",_ramdiskCfg[idx].partId,firstName);
 		return 1;
 	}
-	printf("NVITEM partId%x:origin image ECC error!\n",_ramdiskCfg[idx].partId);
-	printf("NVITEM partId%x:origin image read error!\n",_ramdiskCfg[idx].partId);
+	printf("NVITEM partId%x:%s ECC error!\n",_ramdiskCfg[idx].partId,firstName);
 // 2 read bakup image
 	memset(buf, 0xFF, size);
-	_getPath(_ramdiskCfg[idx].imageBak_path,path);
+	_getPath(secondName,path);
 	cmd_yaffs_mount(path);
-	cmd_yaffs_mread_file(_ramdiskCfg[idx].imageBak_path, buf);
+	cmd_yaffs_mread_file(secondName, buf);
 	cmd_yaffs_umount(path);
 
 	if(!_chkEcc(buf, size)){
-		printf("NVITEM partId%x:bakup image ECC error!\n",_ramdiskCfg[idx].partId);
+		printf("NVITEM partId%x:%s ECC error!\n",_ramdiskCfg[idx].partId,secondName);
 		return 1;
 	}
 
-	_getPath(_ramdiskCfg[idx].image_path,path);
+	_getPath(firstName,path);
 	cmd_yaffs_mount(path);
-	cmd_yaffs_mwrite_file(_ramdiskCfg[idx].image_path, (char*)buf, _ramdiskCfg[idx].image_size);
+	cmd_yaffs_mwrite_file(firstName, (char*)buf, _ramdiskCfg[idx].image_size);
 	cmd_yaffs_umount(path);
 
-	printf("NVITEM  partId%x:bakup image read success!\n",_ramdiskCfg[idx].partId);
+	printf("NVITEM  partId%x:%s read success!\n",_ramdiskCfg[idx].partId,secondName);
 	return 1;
 
 }
