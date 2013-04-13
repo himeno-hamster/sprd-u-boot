@@ -26,6 +26,7 @@ static nv_read_flag = 0;
 #define AP_ADC_CALIB    1
 #define AP_ADC_LOAD     2
 #define AP_ADC_SAVE     3
+#define	AP_GET_VOLT	4
 
 typedef struct
 {
@@ -224,7 +225,9 @@ static uint8 is_adc_calibration(char *dest, int destSize, char *src,int srcSize)
 				default:
 				break;                        
 			}
-		}                    		
+		} else if(DIAG_POWER_SUPPLY_F  == lpHeader->type){
+			return AP_GET_VOLT;
+		}
 	}					
 
 	return 0;
@@ -293,7 +296,42 @@ static int ap_adc_load(MSG_AP_ADC_CNF *pMsgADC)
 
 	return ret;
 }
+static uint32 ap_get_voltage(uint32 channel, MSG_AP_ADC_CNF *pMsgADC)
+{
+        volatile uint32 adc_channel = 0, adc_result = 0;
+	uint32	voltage = 0;
+	uint32  *para=NULL;
+        int i = 0;
+        adc_channel = channel;
 
+        if (adc_channel <= 8)
+        {
+                if (adc_channel == 0)
+                {
+                        adc_channel = 1;
+                }
+
+                adc_result = 0;
+                for(; i < 16; i++)
+                {
+                        adc_result += ADC_GetValue(adc_channel-1, 0);
+                }
+                adc_result >>= 4;
+		voltage = CHGMNG_AdcvalueToVoltage(adc_result);
+                pMsgADC->diag_ap_cnf.status  = 0;
+		para = &pMsgADC->ap_adc_req. parameters;
+                *para = (voltage/10);
+        }
+        else
+        {
+                pMsgADC->diag_ap_cnf.status  = 1;
+                pMsgADC->ap_adc_req. parameters[0] = 0xFFFF;
+        }
+	pMsgADC->msg_head.len = 12;
+        printf("\n Read voltage : %d\n", voltage);
+
+        return voltage;
+}
 uint8 ap_adc_process(int flag, char * src, int size, MSG_AP_ADC_CNF * pMsgADC)
 {
 	MSG_HEAD_T *lpHeader = (MSG_HEAD_T *)src;
@@ -322,7 +360,12 @@ uint8 ap_adc_process(int flag, char * src, int size, MSG_AP_ADC_CNF * pMsgADC)
 			ap_adc_save(lpApADCReq, pMsgADC);
 		}
 		break;
-            
+            	case AP_GET_VOLT:
+		{
+			uint32 channel = lpApADCReq->parameters[0];
+			ap_get_voltage(channel,pMsgADC);
+		}
+		break;
 		default:
 		return 0;                     
 	}
@@ -365,7 +408,7 @@ uint32 ap_calibration_proc(uint8 *data,uint32 count,uint8 *out_msg)
 			printf("\n adcFlag = %d", adcFlag);
 
 			ap_adc_process(adcFlag, g_usb_buf_dest, count, &adcMsg);
-			index = translate_packet(out_msg, &adcMsg, sizeof(MSG_AP_ADC_CNF));	
+			index = translate_packet(out_msg, &adcMsg, adcMsg.msg_head.len);	
 			count = 0;
               
 			return index;			
