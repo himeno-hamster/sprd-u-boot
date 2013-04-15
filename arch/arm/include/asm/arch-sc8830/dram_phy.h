@@ -29,9 +29,10 @@ extern   "C"
 /******************************************************************************
                           Macro define
 ******************************************************************************/
-#define  DMC_CLK 100
-#define DLL_BYPASS
-
+#define  DMC_CLK 533
+//#define DLL_BYPASS
+#define VDD_MEM VDDMEM_1V20
+#define READ_VALID_TRAINING
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
@@ -53,16 +54,18 @@ typedef enum
     DRAM_LPDDR2             = 0x100,    
     DRAM_LPDDR2_S2          = 0x101,
     DRAM_LPDDR2_S4          = 0x102,
+
     DRAM_LPDDR2_2CS_2G_X32  = 0x103,
     DRAM_LPDDR2_2CS_4G_X32  = 0x104,
-    DRAM_LPDDR2_2CS_3G_X32  = 0x105,
-    DRAM_LPDDR2_1CS_4G_X32  = 0x106,
-    DRAM_LPDDR2_2CS_6G_X32  = 0x107,
-    DRAM_LPDDR2_2CS_5G_X32  = 0x108,
-    DRAM_LPDDR2_2CS_8G_X32  = 0x109,
-    DRAM_LPDDR2_1CS_8G_X32  = 0x10A,    
-    DRAM_LPDDR2_2CS_16G_X32 = 0x10B,        
-    DRAM_LPDDR2_2CS_12G_X32 = 0x10C,            
+    DRAM_LPDDR2_1CS_2G_X32  = 0x105,
+    DRAM_LPDDR2_2CS_3G_X32  = 0x106,
+    DRAM_LPDDR2_1CS_4G_X32  = 0x107,
+    DRAM_LPDDR2_2CS_6G_X32  = 0x108,
+    DRAM_LPDDR2_2CS_5G_X32  = 0x109,
+    DRAM_LPDDR2_2CS_8G_X32  = 0x10A,
+    DRAM_LPDDR2_1CS_8G_X32  = 0x10B,
+    DRAM_LPDDR2_2CS_16G_X32 = 0x10C,
+    DRAM_LPDDR2_2CS_12G_X32 = 0x10D,
     //lpddr3
     DRAM_LPDDR3             = 0x200,
     //ddr2
@@ -176,77 +179,95 @@ typedef enum{
 }CLK_TYPE_E;
 
 typedef enum
+{   
+    VDDMEM_1V15 = 0x00,
+    VDDMEM_1V20 = 0x20,
+    VDDMEM_1V21 = 0x22,
+    VDDMEM_1V22 = 0x24,
+    VDDMEM_1V25 = 0x28,
+    VDDMEM_1V30 = 0x30,
+    VDDMEM_1V35 = 0x38,
+    VDDMEM_1V40 = 0x3f,
+    VDDMEM_1V45 = 0x48,
+    VDDMEM_1V50 = 0x50,
+    VDDMEM_1V55 = 0x58,
+    VDDMEM_1V60 = 0x60
+}VDDMEM_TYPE_E;
+
+typedef enum
 {
-	DQS_STEP_DLY_MIN  = 0,
-	DQS_STEP_DLY_SUB3 = 0,
-	DQS_STEP_DLY_SUB2 = 1,
-	DQS_STEP_DLY_SUB1 = 2,
-	DQS_STEP_DLY_NOM  = 3,
-	DQS_STEP_DLY_DEF  = 3,
-	DQS_STEP_DLY_ADD1 = 4,
-	DQS_STEP_DLY_ADD2 = 5,
-	DQS_STEP_DLY_ADD3 = 6,
-	DQS_STEP_DLY_ADD4 = 7,
-	DQS_STEP_DLY_MAX  = 7
-}DQS_STEP_DLY_E;
+	PUBL_DQS_STEP_MIN  = 0,
+	PUBL_DQS_STEP_SUB3 = 0,
+	PUBL_DQS_STEP_SUB2 = 1,
+	PUBL_DQS_STEP_SUB1 = 2,
+	PUBL_DQS_STEP_NOM  = 3,
+	PUBL_DQS_STEP_DEF  = 3,
+	PUBL_DQS_STEP_ADD1 = 4,
+	PUBL_DQS_STEP_ADD2 = 5,
+	PUBL_DQS_STEP_ADD3 = 6,
+	PUBL_DQS_STEP_ADD4 = 7,
+	PUBL_DQS_STEP_MAX  = 7
+}PUBL_DQS_STEP_E;
 
 //DQS gating phase select
 typedef enum
 {
-	DQS_PHS_DLY_MIN = 0,
-	DQS_PHS_DLY_90  = 0,
-	DQS_PHS_DLY_180 = 1,
-	DQS_PHS_DLY_DEF = 1,
-	DQS_PHS_DLY_270 = 2,
-	DQS_PHS_DLY_360 = 3,
-	DQS_PHS_DLY_MAX = 3
-}DQS_PHS_DLY_E;
+	PUBL_DQS_PHS_MIN = 0,
+	PUBL_DQS_PHS_90  = 0,
+	PUBL_DQS_PHS_180 = 1,
+	PUBL_DQS_PHS_DEF = 1,
+	PUBL_DQS_PHS_270 = 2,
+	PUBL_DQS_PHS_360 = 3,
+	PUBL_DQS_PHS_MAX = 3
+}PUBL_DQS_PHS_E;
 
 //DQS gating system latency
 typedef enum
 {
-	DQS_CLK_DLY_MIN  = 0,
-	DQS_CLK_DLY_DEF  = 0,
-	DQS_CLK_DLY_1CLK = 1,
-	DQS_CLK_DLY_2CLK = 2,
-	DQS_CLK_DLY_3CLK = 3,
-	DQS_CLK_DLY_4CLK = 4,
-	DQS_CLK_DLY_5CLK = 5,
-	DQS_CLK_DLY_MAX  = 5	
-}DQS_CLK_DLY_E;
+	PUBL_DQS_CLK_MIN  = 0,
+	PUBL_DQS_CLK_DEF  = 0,
+	PUBL_DQS_CLK_1CLK = 1,
+	PUBL_DQS_CLK_2CLK = 2,
+	PUBL_DQS_CLK_3CLK = 3,
+	PUBL_DQS_CLK_4CLK = 4,
+	PUBL_DQS_CLK_5CLK = 5,
+	PUBL_DQS_CLK_MAX  = 5	
+}PUBL_DQS_CLK_E;
 
 //slave dll phase trim
 typedef enum
 {
-	SDLL_PHS_DLY_DEF  = 0x0,
-	SDLL_PHS_DLY_36   = 0x3,
-	SDLL_PHS_DLY_54   = 0x2,
-	SDLL_PHS_DLY_72   = 0x1,
-	SDLL_PHS_DLY_90   = 0x0,
-	SDLL_PHS_DLY_108  = 0x4,
-	SDLL_PHS_DLY_126  = 0x8,
-	SDLL_PHS_DLY_144  = 0x12
-}SDLL_PHS_DLY_E;
+	PUBL_SDLL_PHS_MIN  = 0x0,
+	PUBL_SDLL_PHS_DEF  = 0x0,
+	PUBL_SDLL_PHS_36   = 0x3,
+	PUBL_SDLL_PHS_54   = 0x2,
+	PUBL_SDLL_PHS_72   = 0x1,
+	PUBL_SDLL_PHS_90   = 0x0,
+	PUBL_SDLL_PHS_108  = 0x4,
+	PUBL_SDLL_PHS_126  = 0x8,
+	PUBL_SDLL_PHS_144  = 0x12,
+	PUBL_SDLL_PHS_MAX  = 0x12,
+}PUBL_SDLL_PHS_E;
 
 typedef enum
 {
-	LPDDR2_DS_34_OHM = 0xd,
-	LPDDR2_DS_40_OHM = 0xb,
-	LPDDR2_DS_48_OHM = 0x9,
-	LPDDR2_DS_60_OHM = 0x7,
-	LPDDR2_DS_80_OHM = 0x5
-}LPDDR2_MEM_DS_T_E;
 
-typedef enum
-{
-	LPDDR1_DS_33_OHM = 0xa,
-	LPDDR1_DS_31_OHM = 0xb,
-	LPDDR1_DS_48_OHM = 0xc,
-	LPDDR1_DS_43_OHM = 0xd,
-	LPDDR1_DS_39_OHM = 0xe,
-	LPDDR1_DS_55_OHM = 0x5,
-	LPDDR1_DS_64_OHM = 0x4
-}LPDDR1_MEM_DS_T_E;
+	PUBL_LPDDR1_DS_33OHM = 0xa,
+	PUBL_LPDDR1_DS_31OHM = 0xb,
+	PUBL_LPDDR1_DS_48OHM = 0xc,
+	PUBL_LPDDR1_DS_43OHM = 0xd,
+	PUBL_LPDDR1_DS_39OHM = 0xe,
+	PUBL_LPDDR1_DS_55OHM = 0x5,
+	PUBL_LPDDR1_DS_64OHM = 0x4,
+
+	PUBL_LPDDR2_DS_MIN    = 0xd,
+	PUBL_LPDDR2_DS_34OHM = 0xd,
+	PUBL_LPDDR2_DS_40OHM = 0xb,
+	PUBL_LPDDR2_DS_48OHM = 0x9,
+	PUBL_LPDDR2_DS_60OHM = 0x7,
+	PUBL_LPDDR2_DS_80OHM = 0x5,
+	PUBL_LPDDR2_DS_MAX    = 0x5	
+}PUBL_DS_E;
 
 typedef enum
 {
@@ -278,6 +299,92 @@ typedef enum
 	UMCTL2_PORT_MAX     = 10
 }UMCTL2_PORT_ID_E;
 
+typedef enum
+{
+    MEM_CS_MIN = 0,
+    MEM_CS0 = 0,
+    MEM_CS1 = 1,
+    MEM_CS_MAX = 1,
+}MEM_CS_E;
+
+typedef enum
+{
+	MEM_MR0 = 0,
+	MEM_MR1 = 1,
+	MEM_MR2 = 2,
+	MEM_MR3 = 3,
+	MEM_MR10 = 10,
+}MEM_MR_E;
+
+
+typedef enum
+{
+	MEM_MRW = 0,
+	MEM_MRD = 1,
+}MEM_CMD_E;
+
+typedef enum
+{
+	PUBL_BYTE_MIN = 0,
+	PUBL_BYTE0 = 0,
+	PUBL_BYTE1 = 1,
+	PUBL_BYTE2 = 2,
+	PUBL_BYTE3 = 3,
+	PUBL_BYTE_MAX = 3
+}PUBL_BYTE_E;
+
+typedef enum
+{
+	SCAN_DS_MIN   = 0,
+	SCAN_DS_DEF   = 0,		
+	SCAN_DS_34ohm = 0,
+	SCAN_DS_40ohm = 1,	
+	SCAN_DS_48ohm = 2,	
+	SCAN_DS_60ohm = 3,	
+	SCAN_DS_80ohm = 4,	
+	SCAN_DS_MAX   = 4	
+}SCAN_DS_E;
+
+typedef enum
+{
+	SCAN_STEP_MIN  = 0,
+	SCAN_STEP_SUB3 = 0,
+	SCAN_STEP_SUB2 = 1,
+	SCAN_STEP_SUB1 = 2,
+	SCAN_STEP_NOM  = 3,
+	SCAN_STEP_DEF  = 3,
+	SCAN_STEP_ADD1 = 4,
+	SCAN_STEP_ADD2 = 5,
+	SCAN_STEP_ADD3 = 6,
+	SCAN_STEP_ADD4 = 7,
+	SCAN_STEP_MAX  = 7
+}SCAN_STEP_E;
+
+typedef enum
+{
+	SCAN_PHS_MIN = 0,
+	SCAN_PHS_DEF = 2,	
+	SCAN_PHS_36  = 0,
+	SCAN_PHS_54  = 1,
+	SCAN_PHS_72  = 2,
+	SCAN_PHS_90  = 3,
+	SCAN_PHS_108 = 4,
+	SCAN_PHS_126 = 5,	
+	SCAN_PHS_144 = 6,	
+	SCAN_PHS_MAX = 6
+}SCAN_PHS_E;
+
+typedef enum
+{
+    UMCTL_AUTO_PD_EN     = 1,
+    UMCTL_AUTO_PD_DIS    = 0,    
+    UMCTL_AUTO_DPD_EN    = 1,
+    UMCTL_AUTO_DPD_DIS   = 0,
+    UMCTL_AUTO_SF_EN     = 1,
+    UMCTL_AUTO_SF_DIS    = 0,    
+    UMCTL_AUTO_CKP_EN    = 1,
+    UMCTL_AUTO_CKP_DIS   = 0    
+}UMCTL_LP_E;
 /******************************************************************************
                             Structure define
 ******************************************************************************/
