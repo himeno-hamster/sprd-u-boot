@@ -59,6 +59,7 @@ int board_init()
 	ADI_init();
 	LDO_Init();
 	pin_init();
+	sprd_eic_init();
 	sprd_gpio_init();
 
 	return 0;
