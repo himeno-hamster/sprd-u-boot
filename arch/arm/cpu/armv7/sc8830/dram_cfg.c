@@ -20,26 +20,24 @@
 /*----------------------------------------------------------------------------*
  *Configuration for SDRAM used --*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*
 **----------------------------------------------------------------------------*/
-/*--*/   MEM_IODS_E       MEM_IO_DS          =DS_34R3; //DS_34R3(lpddr2 used)                 /*--*--*--*/
+/*--*/   MEM_IODS_E       MEM_IO_DS          =DS_40R; //DS_34R3(lpddr2 used)                 /*--*--*--*/
 /*--*/   DRAM_BURSTTYPE_E MEM_BURST_TYPE     =DRAM_BT_SEQ;              /*--*--*--*/
-/*--*/   DRAM_WC_E        MEM_WC_TYPE        =DRAM_WRAP;
-
 
 /*--*/   uint32 DQS_PDU_RES = DQS_PDU_500OHM;	//dqs pull up and pull down resist
 /*--*/   uint32 DQS_GATE_EARLY_LATE = 2;	                      
     
-/*--*/   uint32 PUBL_LPDDR1_DS = PUBL_LPDDR1_DS_48OHM; //lpddr1 driver strength,refer to multiPHY p155
-/*--*/   uint32 PUBL_LPDDR2_DS = PUBL_LPDDR2_DS_48OHM; //lpddr2 driver strength,
+/*--*/   uint32 UMCTL2_LPDDR1_MEM_DS = LPDDR1_DS_48_OHM; //lpddr1 driver strength,refer to multiPHY p155
+/*--*/   uint32 UMCTL2_LPDDR2_MEM_DS = LPDDR2_DS_40_OHM; //lpddr2 driver strength,
     
-/*--*/   uint32 B0_SDLL_PHS_DLY = PUBL_SDLL_PHS_DEF; //byte0 sll dll phase delay 
-/*--*/   uint32 B1_SDLL_PHS_DLY = PUBL_SDLL_PHS_DEF; //byte1 sll dll phase delay 
-/*--*/   uint32 B2_SDLL_PHS_DLY = PUBL_SDLL_PHS_DEF; //byte2 sll dll phase delay 
-/*--*/   uint32 B3_SDLL_PHS_DLY = PUBL_SDLL_PHS_DEF; //byte3 sll dll phase delay 
+/*--*/   uint32 B0_SDLL_PHS_DLY = SDLL_PHS_DLY_72; //byte0 sll dll phase delay 
+/*--*/   uint32 B1_SDLL_PHS_DLY = SDLL_PHS_DLY_72; //byte1 sll dll phase delay 
+/*--*/   uint32 B2_SDLL_PHS_DLY = SDLL_PHS_DLY_72; //byte2 sll dll phase delay 
+/*--*/   uint32 B3_SDLL_PHS_DLY = SDLL_PHS_DLY_72; //byte3 sll dll phase delay 
     
-/*--*/   uint32 B0_DQS_STEP_DLY = PUBL_DQS_STEP_DEF; //byte0 dqs step delay
-/*--*/   uint32 B1_DQS_STEP_DLY = PUBL_DQS_STEP_DEF; //byte1 dqs step delay
-/*--*/   uint32 B2_DQS_STEP_DLY = PUBL_DQS_STEP_DEF; //byte2 dqs step delay
-/*--*/   uint32 B3_DQS_STEP_DLY = PUBL_DQS_STEP_DEF; //byte3 dqs step delay
+/*--*/   uint32 B0_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte0 dqs step delay
+/*--*/   uint32 B1_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte1 dqs step delay
+/*--*/   uint32 B2_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte2 dqs step delay
+/*--*/   uint32 B3_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte3 dqs step delay
 
 /**---------------------------------------------------------------------------*
  **                            Macro Define
@@ -72,12 +70,12 @@ const lpddr2_timing_t LPDDR2_ACTIMING =
     NS2CLK(43),     //tRAS 		unite : tCK    
     NS2CLK(65),		//tRC 		unite : tCK
     NS2CLK(130),    //tRFCab    unite : tCK
-    NS2CLK(60),     //tRFCpb    unite : tCK
+    NS2CLK(130),     //tRFCpb    unite : tCK
     NS2CLK(20),     //tRCD      unite : tCK
     NS2CLK(20),     //tRP       unite : tCK
     NS2CLK(20),     //tRRD      unite : tCK
     //NS2CLK(15),     //tWR       unite : tCK
-    6,              //tWR       unite : tCK
+	6, 			    //tWR       unite : tCK
     3,              //tWTR      unite : tCK
     NS2CLK(20),     //tXP       unite : tCK
     NS2CLK(140),     //tXSR      unite : tCK  
@@ -129,8 +127,8 @@ DRAM_INFO DRAM_INFO_ARRAY[] =
 { 
 /*-dram_type-----------cs_num--bank_num--BUS_WIDTH--BL-CL/RL-WL-AL-actiming-*/
 //  {DRAM_LPDDR1,    2,      4,         32,       8,   3,  1, 0, &LPDDR1_ACTIMING},//NORMAL_LPDDR1_1CS_1G_32BIT
-//  {DRAM_LPDDR1,    1,      4,         32,       2,   3,  2, 0, &LPDDR1_ACTIMING},//NORMAL_LPDDR1_1CS_2G_32BIT    
-//  {DRAM_LPDDR1,    2,      4,         32,       2,   3,  2, 0, &LPDDR1_ACTIMING},//NORMAL_LPDDR1_2CS_4G_32BIT
+//{DRAM_LPDDR1,    1,      4,         32,       2,   3,  2, 0, &LPDDR1_ACTIMING},//NORMAL_LPDDR1_1CS_2G_32BIT    
+//{DRAM_LPDDR1,    2,      4,         32,       2,   3,  2, 0, &LPDDR1_ACTIMING},//NORMAL_LPDDR1_2CS_4G_32BIT
 //  {DRAM_LPDDR2,    2,      8,         32,       4,   6,  3, 0, &LPDDR2_ACTIMING},//NORMAL_LPDDR2_1CS_4G_32BIT
 //  {DRAM_LPDDR2_S4, 2,      4,         32,       4,   6,  3, 0, &LPDDR2_ACTIMING},//NORMAL_LPDDR2_2CS_8G_32BIT
 //  {DRAM_LPDDR1,    2,      4,         32,       4,   3,  0, 0, NULL},//HYNIX_LPDDR1_H9DA4GH4JJAMCR4EM
@@ -139,51 +137,39 @@ DRAM_INFO DRAM_INFO_ARRAY[] =
                                                                     //CL=AL+1/2/0 for DDR3
                                                                     //WL=AL+CWL,and CWL is 5~12tCK for DDR3
   //{DRAM_DDR3_1CS_4G_X8_4P,   1,   8,      32,        8,   7,  6, 0, (void *)(&DDR3_ACTIMING)},//DDR3-x8-4die-4gbit_1die-16gbit 
-
-  /*-dram_type-----------cs_num--bank_num-BUS_WIDTH--BL-CL/RL-WL-AL-actiming-*/  
-  {DRAM_LPDDR2_1CS_4G_X32,   1,   8,      32,        4,   6,  3, 0, (void *)(&LPDDR2_ACTIMING)},
-  {DRAM_LPDDR2_2CS_8G_X32,   1,   8,      32,        4,   6,  3, 0, (void *)(&LPDDR2_ACTIMING)},
-  {DRAM_LPDDR2_2CS_6G_X32,   1,   8,      32,        4,   6,  3, 0, (void *)(&LPDDR2_ACTIMING)},
-  {DRAM_LPDDR2_1CS_8G_X32,   1,   8,      32,        4,   6,  3, 0, (void *)(&LPDDR2_ACTIMING)},  
-  {DRAM_LPDDR2_2CS_16G_X32,  1,   8,      32,        4,   6,  3, 0, (void *)(&LPDDR2_ACTIMING)},    
-  {DRAM_LPDDR2_2CS_12G_X32,  1,   8,      32,        4,   6,  3, 0, (void *)(&LPDDR2_ACTIMING)}
+  {DRAM_LPDDR2_1CS_4G_X32,   2,   8,      32,        4,   6,  3, 0, (void *)(&LPDDR2_ACTIMING)},//NORMAL_LPDDR2_1CS_4G_32BIT  
 };
 
 umctl2_port_info_t UMCTL2_PORT_CONFIG[] = 
 {
 //rw_order r_hpr r_pg  r_ugent r_age r_rord_bp r_age_cnt, w_pg  w_ugent w_age  w_age_cnt
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,    0,        TRUE, FALSE,  FALSE, 5},//port0,AP
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,    0,        TRUE, FALSE,  FALSE, 5},//port1,Multi Media
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,    0,        TRUE, FALSE,  FALSE, 5},//port2,GPU
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,    0,        TRUE, FALSE,  FALSE, 5},//port3,CP2-WIFI channel0
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,    0,        TRUE, FALSE,  FALSE, 5},//port4,CP1-TD
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,    0,        TRUE, FALSE,  FALSE, 5},//port5,AP-Matrix,DMA,SDIO,EMMC,NFC,USB
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,    0,        TRUE, FALSE,  FALSE, 5},//port6,CP0-WCDMA
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,    0,        TRUE, FALSE,  FALSE, 5},//port7,CP2-WIFI port1    
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,    0,        TRUE, FALSE,  FALSE, 5},//port8,WCDMA CP Matrix        
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,    0,        TRUE, FALSE,  FALSE, 5}, //port9,TD DSP&WCDMA DSP
+    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port0,AP
+    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port1,Multi Media
+    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port2,GPU
+    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port3,CP2-WIFI channel0
+    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port4,CP1-TD
+    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port5,AP-Matrix,DMA,SDIO,EMMC,NFC,USB
+    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port6,CP0-WCDMA
+    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port7,CP2-WIFI port1    
+    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port8,WCDMA CP Matrix        
+    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5}, //port9,TD DSP&WCDMA DSP
     {0xff},
 };
 /**---------------------------------------------------------------------------*
  **                            PUBLIC Functions
  **---------------------------------------------------------------------------*/
-PUBLIC DRAM_INFO* SDRAM_GetCfg(DRAM_TYPE_E dram_type)
+PUBLIC DRAM_INFO* SDRAM_GetCfg()
 {
     uint i=0;
 
-#if 0
+#if 1
     return (DRAM_INFO*)(&DRAM_INFO_ARRAY[0]);
 #else
-    for(i=0; i<ARRAY_SIZE(DRAM_INFO_ARRAY); i++) 
-    {
-        if(DRAM_INFO_ARRAY[i].dram_type == dram_type) 
-        break;
+    for(i=0; i<ARRAY_SIZE(DRAM_INFO_ARRAY); i++) {
+        if(DRAM_INFO_ARRAY[i].dram_index == SDRAM_USING) break;
     }
-    
-    if(i==ARRAY_SIZE(DRAM_INFO_ARRAY)) 
-    {
-        i=0;
-    }
+    if(i==ARRAY_SIZE(DRAM_INFO_ARRAY)) i=0;
+
     return (DRAM_INFO*)(&DRAM_INFO_ARRAY[i]);
 #endif
 }
