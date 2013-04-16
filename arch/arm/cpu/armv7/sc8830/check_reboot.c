@@ -49,24 +49,32 @@ void power_down_devices(unsigned pd_cmd)
 
 int power_button_pressed(void)
 {
-	ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_EIC_EN); //EIC enable
-	ANA_REG_OR(ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_EIC_EN); //EIC RTC enable
-	ANA_REG_SET(ADI_EIC_MASK, 0xff);
+	//ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_EIC_EN); //EIC enable
+	//ANA_REG_OR(ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_EIC_EN); //EIC RTC enable
+	//ANA_REG_SET(ADI_EIC_MASK, 0xff);
+	//sprd_eic_init();
+	sprd_eic_request(162);
 	udelay(3000);
-	int status = ANA_REG_GET(ADI_EIC_DATA);
-	printf("eica status %x\n", status);
-	return !!(status & (1 << 3)/*PBINT*/);//low level if pb hold
+	//int status = ANA_REG_GET(ADI_EIC_DATA);
+	//printf("eica status %x\n", status);
+	//return !!(status & (1 << 3)/*PBINT*/);//low level if pb hold
+	printf("eica status %x\n", sprd_eic_get(162));
+	return !!sprd_eic_get(162);
 }
 
 int charger_connected(void)
 {
-	ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_EIC_EN); //EIC enable
-	ANA_REG_OR(ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_EIC_EN); //EIC RTC enable
-	ANA_REG_SET(ADI_EIC_MASK, 0xff);
+	//ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_EIC_EN); //EIC enable
+	//ANA_REG_OR(ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_EIC_EN); //EIC RTC enable
+	//ANA_REG_SET(ADI_EIC_MASK, 0xff);
+	//sprd_eic_init();
+	sprd_eic_request(160);
 	udelay(3000);
-	int status = ANA_REG_GET(ADI_EIC_DATA);
+	//int status = ANA_REG_GET(ADI_EIC_DATA);
 	//printf("charger_connected eica status %x\n", status);
-	return !!(status & (1 << 2));
+	//return !!(status & (1 << 2));
+	printf("eica status %x\n", sprd_eic_get(160));
+	return !!sprd_eic_get(160);
 }
 
 int alarm_triggered(void)
