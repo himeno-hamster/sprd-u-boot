@@ -216,6 +216,10 @@
 #define CONFIG_CMD_UBI
 #define CONFIG_RBTREE
 
+/*DDR*/
+#define DDR_TYPE DRAM_LPDDR2_1CS_4G_X32
+#define DDR_CLK 533
+
 /* U-Boot general configuration */
 #define CONFIG_SYS_PROMPT	"=> "	/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	1024	/* Console I/O Buffer Size  */
