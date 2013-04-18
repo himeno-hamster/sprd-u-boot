@@ -301,7 +301,7 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	// to do
 	//select DISPC clock source
 	__raw_bits_and(~(1<<0), REG_AP_CLK_DISPC0_CFG);    //pll_src=256M
-	__raw_bits_and((1<<1), REG_AP_CLK_DISPC0_CFG);
+	__raw_bits_or((1<<1), REG_AP_CLK_DISPC0_CFG);
 
 	//set DISPC divdior
 	__raw_bits_and(~(1<<8), REG_AP_CLK_DISPC0_CFG);  //div=0
@@ -309,8 +309,8 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	__raw_bits_and(~(1<<10), REG_AP_CLK_DISPC0_CFG);
 
 	//select DBI clock source
-	__raw_bits_and((1<<0), REG_AP_CLK_DISPC0_DBI_CFG);    //pll_src=256M
-	__raw_bits_and((1<<1), REG_AP_CLK_DISPC0_DBI_CFG);
+	__raw_bits_or((1<<0), REG_AP_CLK_DISPC0_DBI_CFG);    //pll_src=256M
+	__raw_bits_or((1<<1), REG_AP_CLK_DISPC0_DBI_CFG);
 
 	//set DBI divdior
 	__raw_bits_and(~(1<<8), REG_AP_CLK_DISPC0_DBI_CFG);  //div=0
@@ -318,12 +318,13 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	__raw_bits_and(~(1<<10), REG_AP_CLK_DISPC0_DBI_CFG);
 
 	//select DPI clock source
-	__raw_bits_and((1<<0), REG_AP_CLK_DISPC0_DPI_CFG);    //pll_src=384M
-	__raw_bits_and((1<<1), REG_AP_CLK_DISPC0_DPI_CFG);
+	__raw_bits_or((1<<0), REG_AP_CLK_DISPC0_DPI_CFG);    //pll_src=384M
+	__raw_bits_or((1<<1), REG_AP_CLK_DISPC0_DPI_CFG);
 
 	//set DPI divdior
 	__raw_bits_and(~(1<<8), REG_AP_CLK_DISPC0_DPI_CFG);  //div=10, dpi_clk = pll_src/(10+1)
 	__raw_bits_or((1<<9), REG_AP_CLK_DISPC0_DPI_CFG);
+
 	__raw_bits_and(~(1<<10), REG_AP_CLK_DISPC0_DPI_CFG);
 	__raw_bits_or((1<<11), REG_AP_CLK_DISPC0_DPI_CFG);
 	__raw_bits_and(~(1<<12), REG_AP_CLK_DISPC0_DPI_CFG);
