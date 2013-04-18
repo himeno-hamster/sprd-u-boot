@@ -345,13 +345,17 @@ int panel_ready(struct sprdfb_device *dev)
 
 static struct panel_spec *adapt_panel_from_readid(struct sprdfb_device *dev)
 {
-	int id, i;
+	int id, i, ret;
 
 	FB_PRINT("sprdfb: [%s]\n",__FUNCTION__);
 
 	for(i = 0;i<(sizeof(lcd_panel))/(sizeof(lcd_panel[0]));i++) {
 		FB_PRINT("sprdfb: [%s]: try panel 0x%x\n", __FUNCTION__, lcd_panel[i].lcd_id);
-		panel_mount(dev, lcd_panel[i].panel);
+		ret = panel_mount(dev, lcd_panel[i].panel);
+		if(ret < 0){
+			FB_PRINT("sprdfb: panel_mount failed!\n");
+			continue;
+		}
 		panel_init(dev);
 		panel_reset(lcd_panel[i].panel);
 		id = dev->panel->ops->panel_readid(dev->panel);
@@ -437,7 +441,7 @@ void sprdfb_panel_remove(struct sprdfb_device *dev)
 {
 	FB_PRINT("sprdfb: [%s]\n",__FUNCTION__);
 
-	if(NULL != dev->if_ctrl->panel_if_uninit){
+	if((NULL != dev->if_ctrl) && (NULL != dev->if_ctrl->panel_if_uninit)){
 		dev->if_ctrl->panel_if_uninit(dev);
 	}
 	dev->panel = NULL;
