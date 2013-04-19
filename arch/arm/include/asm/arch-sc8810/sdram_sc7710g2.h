@@ -197,13 +197,12 @@ typedef enum
 
 typedef enum{
     EMC_CLK_26MHZ    = 26000000,
-    EMC_CLK_48MHZ    = 48000000,
     EMC_CLK_67MHZ    = 67000000,
-    EMC_CLK_133MHZ    = 133000000,
-    EMC_CLK_192MHZ   = 192000000,
+    EMC_CLK_133MHZ    = 133333333,
     EMC_CLK_200MHZ   = 200000000,
-    EMC_CLK_266MHZ   = 266000000,
-    EMC_CLK_333MHZ   = 333000000,
+    EMC_CLK_266MHZ   = 266666666,
+    EMC_CLK_333MHZ   = 333333333,
+    EMC_CLK_370MHZ   = 370000000,
     EMC_CLK_400MHZ   = 400000000,
     EMC_CLK_MAX = EMC_CLK_400MHZ
 }EMC_CLK_TYPE_E;
@@ -212,7 +211,9 @@ typedef enum{
     CHIP_CLK_26MHZ    = 26000000,
     CHIP_CLK_800MHZ   = 800000000,
     CHIP_CLK_850MHZ   = 850000000,
+    CHIP_CLK_900MHZ   = 900000000,
     CHIP_CLK_1000MHZ   = 1000000000,
+    CHIP_CLK_1100MHZ   = 1100000000,
     CHIP_CLK_1200MHZ   = 1200000000,
     CHIP_CLK_1300MHZ   = 1300000000,
     CHIP_CLK_1400MHZ   = 1400000000,
@@ -397,8 +398,10 @@ EMC_DQS_GATE_MODE_E;
 
 typedef enum EMC_PHYL1_TIMING_NUM_TAG
 {
+#ifdef SDR_SDRAM_SUPPORT
     EMC_PHYL1_TIMING_SDRAM_LATENCY2 = 0,
     EMC_PHYL1_TIMING_SDRAM_LATENCY3,
+#endif
     EMC_PHYL1_TIMING_DDRAM_LATENCY2,
     EMC_PHYL1_TIMING_DDRAM_LATENCY3,
     EMC_PHYL1_TIMING_MATRIX_MAX
@@ -473,7 +476,8 @@ typedef enum EMC_CHANNEL_PRIORITY_TAG
 ******************************************************************************/
 typedef struct
 {
-	uint8 row_ref_max;		//ROW_REFRESH_TIME,Refresh interval time , ns, tREF-max = 7800 ns
+	//uint8 row_ref_max;		//ROW_REFRESH_TIME,Refresh interval time , ns, tREF-max = 7800 ns
+    uint16 trefi_max;
 	uint8 row_pre_min;		//ROW_PRECHARGE_TIME , ns, tRP-min = 27 ns.
 	uint8 rcd_min;     	// T_RCD,ACTIVE to READ or WRITE delay  , ns, tRCD-min = 27 ns
 	uint32 wr_min;      	// T_WR  ,WRITE recovery time  , ns, tWR-min = 15 ns.
@@ -566,13 +570,13 @@ typedef struct
 {
     CHIP_CLK_TYPE_E arm_clk;
     EMC_CLK_TYPE_E emc_clk;
-    
+
     DDR_DRIVER_STRENGTH_T ddr_drv;  // DDR SDRAM driver strength in mode register
 
-    uint8 dqs_drv;  // data qs pin driver
-    uint8 dat_drv;  // data pin driver
-    uint8 ctl_drv;  // ctrl pin driver
-    uint8 clk_drv;  // clock pin driver
+    uint8 dqs_drv;          //data_qs pin driver strength
+    uint8 dat_drv;          //data pin driver strength
+    uint8 ctl_drv;          //ctrl pin driver strength
+    uint8 clk_drv;          //clock pin driver strength
 
     uint8 clk_wr;   // dll clk wr balance
 }EMC_PARAM_T, *EMC_PARAM_PTR;

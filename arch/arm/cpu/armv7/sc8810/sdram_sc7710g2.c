@@ -39,15 +39,18 @@ uint32 DRAM_CAP;
 #define MEM_REF_DATA0       0x12345678
 #define SDRAM_BASE_ADDR     0x00000000UL
 
+#define DMC_SOFT_RST BIT_11
 
 LOCAL BOOLEAN s_emc_dll_open = FALSE;
 LOCAL EMC_PARAM_T s_emc_config = {0};
+
+LOCAL void DMC_Init(void);
 
 /**---------------------------------------------------------------------------*
  **                     Static Function Prototypes                            *
  **---------------------------------------------------------------------------*/
 
-void delay(uint32 k)
+LOCAL void delay(uint32 k)
 {
     volatile uint32 i, j;
 
@@ -59,7 +62,7 @@ void delay(uint32 k)
 //    return k;
 }
 
-void EMC_AddrMode_Set(SDRAM_CFG_INFO_T_PTR mem_info)
+LOCAL void EMC_AddrMode_Set(SDRAM_CFG_INFO_T_PTR mem_info)
 {
     uint32 reg_val = 0;
 
@@ -75,11 +78,13 @@ void EMC_AddrMode_Set(SDRAM_CFG_INFO_T_PTR mem_info)
 
 LOCAL void EMC_SoftReset(void)
 {
-    REG32(AHB_SOFT_RST) |= BIT_11;
+    REG32(AHB_SOFT_RST) |= DMC_SOFT_RST;
     delay(10);
-    REG32(AHB_SOFT_RST) &= (~BIT_11);
+    REG32(AHB_SOFT_RST) &= (~DMC_SOFT_RST);
     delay(10);
 }
+
+#ifndef SDRAM_AUTODETECT_SUPPORT
 
 PUBLIC uint32 SDRAM_GetCap(void)  // capability in bytes
 {
@@ -91,9 +96,11 @@ PUBLIC uint32 SDRAM_GetCap(void)  // capability in bytes
 
     return SDRAM_Cap;
 }
+#endif
 
 PUBLIC EMC_PHY_L1_TIMING_T_PTR EMC_GetPHYL1_Timing(DMEM_TYPE_E mem_type, uint32 cas_latency)
 {
+#ifdef SDR_SDRAM_SUPPORT
     if (SDR_SDRAM == mem_type)
     {
         if (CAS_LATENCY_2 == cas_latency)
@@ -106,6 +113,7 @@ PUBLIC EMC_PHY_L1_TIMING_T_PTR EMC_GetPHYL1_Timing(DMEM_TYPE_E mem_type, uint32 
         }
     }
     else
+#endif
     {
         if (CAS_LATENCY_2 == cas_latency)
         {
@@ -195,10 +203,12 @@ PUBLIC void EMC_CSx_Burst_Set(EMC_CS_NUM_E emc_cs_num, SDRAM_CFG_INFO_T_PTR mem_
             burst_len = mem_info->burst_length;
         }
     }
+#ifdef SDR_SDRAM_SUPPORT
     else if (SDR_SDRAM == mem_info ->sdram_type)
     {
         burst_len = 0;
     }
+#endif
 
     i = REG32(emc_cs_cfg);
     i &= ~((0x7<<8)|(0x7<<4)|(1<<1)|1);
@@ -299,52 +309,108 @@ LOCAL void EMC_MEM_Timing_Set(uint32 emc_freq,
                         SDRAM_CFG_INFO_T_PTR     mem_info,
                         SDRAM_TIMING_PARA_T_PTR  mem_timing)
 {
+#if 1 // low code size
+    switch (emc_freq)
+    {
+        case EMC_CLK_26MHZ:
+            REG32(EXT_MEM_DCFG1) = 0x13311211;
+            REG32(EXT_MEM_DCFG2) = 0x02020322;
+            break;
+        case EMC_CLK_67MHZ:
+            REG32(EXT_MEM_DCFG1) = 0x13321211;
+            REG32(EXT_MEM_DCFG2) = 0x04050322;
+            break;
+        case EMC_CLK_133MHZ:
+            REG32(EXT_MEM_DCFG1) = 0x13341322;
+            REG32(EXT_MEM_DCFG2) = 0x080A0322;
+            break;
+        case EMC_CLK_200MHZ:
+            REG32(EXT_MEM_DCFG1) = 0x13352333;
+            REG32(EXT_MEM_DCFG2) = 0x0B0E0322;
+            break;
+        case EMC_CLK_266MHZ:
+            REG32(EXT_MEM_DCFG1) = 0x13383455;
+            REG32(EXT_MEM_DCFG2) = 0x10140322;
+            break;
+        case EMC_CLK_333MHZ:
+            REG32(EXT_MEM_DCFG1) = 0x13393455;
+            REG32(EXT_MEM_DCFG2) = 0x13180322;
+            break;
+        case EMC_CLK_370MHZ:
+        case EMC_CLK_400MHZ:
+        default:
+            REG32(EXT_MEM_DCFG1) = 0x133A3566;
+            REG32(EXT_MEM_DCFG2) = 0x161C0322;
+            break;
+    }
+#else
     uint32 cycle_ns = (uint32)(2000000000/emc_freq);//2000/(clk); //device clock is half of emc clock.
-    uint32 cycle_t_ref = 1000000000/EMC_T_REF_CLK;
+    uint32 cycle_t_ref = 1000000/EMC_T_REF_CLK;
 
-    uint32 row_mode    = mem_info->row_mode + ROW_LINE_MIN;
-    uint32 t_rtw       = mem_info->cas_latency;
+//    uint32 row_mode    = mem_info->row_mode + ROW_LINE_MIN;
+    uint32 t_rtr  = 1;
+    uint32 t_wtr    = mem_timing->wtr_min+1;
+    uint32 t_rtw    = mem_info->cas_latency;
+    uint32 t_ras;
+    uint32 t_rrd;
+
+    uint32 t_wr;
+    uint32 t_rcd;
+    uint32 t_rp;
+    uint32 t_rfc;
+    uint32 t_xsr;
+    uint32 tREFI = mem_timing->trefi_max;
+    uint32 t_ref;
+    uint32 t_mrd   = mem_timing->mrd_min;
 
     //round all timing parameter
-    uint32  t_ras	= mem_timing->ras_min/cycle_ns;
-    uint32  t_xsr 	= mem_timing->xsr_min/cycle_ns;
-    uint32  t_rfc 	= mem_timing->rfc_min/cycle_ns;
-    uint32  t_wr  	= mem_timing->wr_min/cycle_ns+2; //note: twr should add 2 for ddr
-    uint32  t_rcd 	= mem_timing->rcd_min/cycle_ns;
-    uint32  t_rp  	= mem_timing->row_pre_min/cycle_ns;
-    uint32  t_rrd 	= mem_timing->rrd_min/cycle_ns;
-    uint32  t_mrd	= mem_timing->mrd_min;
-    uint32  t_wtr 	= mem_timing->wtr_min+1;
-    uint32  t_ref 	= mem_timing->row_ref_max*1000000/cycle_t_ref/(1<<row_mode) -2;
+    t_ras = ((mem_timing->ras_min % cycle_ns) == 0) ? (mem_timing->ras_min/cycle_ns) : (mem_timing->ras_min/cycle_ns + 1);
+    t_rrd = ((mem_timing->rrd_min % cycle_ns) == 0) ? (mem_timing->rrd_min/cycle_ns) : (mem_timing->rrd_min/cycle_ns + 1);
+    t_rcd = ((mem_timing->rcd_min % cycle_ns) == 0) ? (mem_timing->rcd_min/cycle_ns) : (mem_timing->rcd_min/cycle_ns + 1);
+    t_rp = ((mem_timing->row_pre_min % cycle_ns) == 0) ? (mem_timing->row_pre_min/cycle_ns) : (mem_timing->row_pre_min/cycle_ns + 1);
+    t_rfc = ((mem_timing->rfc_min % cycle_ns) == 0) ? (mem_timing->rfc_min/cycle_ns) : (mem_timing->rfc_min/cycle_ns + 1);
+    t_xsr = ((mem_timing->xsr_min % cycle_ns) == 0) ? (mem_timing->xsr_min/cycle_ns) : (mem_timing->xsr_min/cycle_ns + 1);
+
+    
+#ifdef SDR_SDRAM_SUPPORT
+    if (SDR_SDRAM == mem_info->sdram_type)
+    {
+        t_wr = mem_timing->wr_min/cycle_ns; 
+    }
+    else
+#endif
+    {
+        t_wr = mem_timing->wr_min/cycle_ns+2;//note: twr should add 2 for ddr
+    }
+
+    t_ref 	= tREFI / cycle_t_ref;
 
     //prevent the maximun overflow of all timing parameter
-    t_ras	= (t_ras >= 0xf) ? 0x7  : t_ras;
+    t_ras	= (t_ras >= 0xf) ? 0xa  : t_ras;
     t_xsr 	= (t_xsr >= 0xff) ? 0x26 : t_xsr;
     t_rfc 	= (t_rfc >= 0x3f) ? 0x1a : t_rfc;
     t_wr  	= (t_wr  >= 0xf) ? 0x4  : t_wr;
-    t_rcd 	= (t_rcd >= 0xf) ? 0x3  : t_rcd;
-    t_rp  	= (t_rp  >= 0xf) ? 0x3  : t_rp;
-    t_rrd 	= (t_rrd >= 0xf) ? 0x2  : t_rrd;
-    t_mrd	= (t_mrd >= 0xf) ? 0x0  : t_mrd;
+    t_rcd 	= (t_rcd >= 0xf) ? 0x7  : t_rcd;
+    t_rp  	= (t_rp  >= 0xf) ? 0x7  : t_rp;
+    t_rrd 	= (t_rrd >= 0xf) ? 0x4  : t_rrd;
+    t_mrd	= (t_mrd >= 0xf) ? 0x3  : t_mrd;
     t_wtr 	= (t_wtr >= 0xf) ? 0x3  : t_wtr;
-    t_ref 	= (t_ref >=0xfff) ? 0x100: t_ref ;
+    t_ref 	= (t_ref >=0xfff) ? 0x32: t_ref ;
 
     //prevent the minmun value of all timing
-    t_ras	= (t_ras <= 0) ? 0x7  : t_ras;
-    t_xsr 	= (t_xsr <= 0) ? 0x26 : t_xsr;
-    t_rfc 	= (t_rfc <= 0) ? 0x1a : t_rfc;
-    t_wr  	= (t_wr  <= 0) ? 0x4  : t_wr;
-    t_rcd 	= (t_rcd <= 0) ? 0x3  : t_rcd;
-    t_rp  	= (t_rp  <= 0) ? 0x3  : t_rp;
-    t_rrd 	= (t_rrd <= 0) ? 0x2  : t_rrd;
-    t_mrd	= (t_mrd <= 0) ? 0x2  : t_mrd;
-    t_wtr 	= (t_wtr <= 0) ? 0x3  : t_wtr;
-    t_ref 	= (t_ref <=00) ? 0x100: t_ref ;
-
-
+    t_ras	= (t_ras == 0) ? 0xa  : t_ras;
+    t_xsr 	= (t_xsr == 0) ? 0x26 : t_xsr;
+    t_rfc 	= (t_rfc == 0) ? 0x1a : t_rfc;
+    t_wr  	= (t_wr  == 0) ? 0x4  : t_wr;
+    t_rcd 	= (t_rcd == 0) ? 0x7  : t_rcd;
+    t_rp  	= (t_rp  == 0) ? 0x7  : t_rp;
+    t_rrd 	= (t_rrd == 0) ? 0x4  : t_rrd;
+    t_mrd	= (t_mrd == 0) ? 0x3  : t_mrd;
+    t_wtr 	= (t_wtr == 0) ? 0x3  : t_wtr;
+    t_ref 	= (t_ref == 0) ? 0x32: t_ref ;
 
     REG32(EXT_MEM_DCFG1) =
-        ((1<<28)	  |//read to read turn around time between different cs,default:0     2 cs or above:1
+        ((t_rtr << 28)	  |//read to read turn around time between different cs,default:0     2 cs or above:1
          (t_wtr << 24) |
          (t_rtw << 20) |
          (t_ras << 16) |
@@ -358,6 +424,7 @@ LOCAL void EMC_MEM_Timing_Set(uint32 emc_freq,
          (t_xsr << 16) |
          (t_ref << 4)  |
          (t_mrd << 0));
+#endif
 }
 
 
@@ -370,7 +437,7 @@ LOCAL void EMC_MEM_Timing_Set(uint32 emc_freq,
 //  Note:			None
 //
 /*****************************************************************************/
-void EMC_SCMD_Issue(SDRAM_CFG_INFO_T_PTR mem_info)
+LOCAL void EMC_SCMD_Issue(SDRAM_CFG_INFO_T_PTR mem_info)
 {
     uint32 i = 0;
 
@@ -399,11 +466,8 @@ void EMC_SCMD_Issue(SDRAM_CFG_INFO_T_PTR mem_info)
 
     if (SDRAM_EXT_MODE_INVALID != mem_info->ext_mode_val)
     {
-        if (s_emc_dll_open)
-        {
-            mem_info->ext_mode_val &= (~(0x7 << 5));
-            mem_info->ext_mode_val |= (s_emc_config.ddr_drv << 5);
-        }
+        mem_info->ext_mode_val &= (~(0x7 << 5));
+        mem_info->ext_mode_val |= (s_emc_config.ddr_drv << 5);
         
         //load external mode register
         REG32(EXT_MEM_DCFG4) = 0x40040000 | mem_info->ext_mode_val;
@@ -435,6 +499,7 @@ void EMC_SCMD_Issue(SDRAM_CFG_INFO_T_PTR mem_info)
 /*****************************************************************************/
 PUBLIC void EMC_PHY_Latency_Set(SDRAM_CFG_INFO_T_PTR mem_info)
 {
+#ifdef SDR_SDRAM_SUPPORT
     if (SDR_SDRAM == mem_info->sdram_type)
     {
         if (CAS_LATENCY_2 == mem_info->cas_latency)
@@ -448,6 +513,7 @@ PUBLIC void EMC_PHY_Latency_Set(SDRAM_CFG_INFO_T_PTR mem_info)
         
     }
     else
+#endif
     {
         if (CAS_LATENCY_2 == mem_info->cas_latency)
         {
@@ -482,7 +548,7 @@ LOCAL void EMC_PHY_Mode_Set(SDRAM_CFG_INFO_T_PTR mem_info)
 {
     uint32 i = 0;
 
-    SCI_ASSERT(mem_info != NULL);
+//    SCI_ASSERT(mem_info != NULL);
 
     i = REG32(EXT_MEM_CFG1);
     i &= ~((3<<14)|0x3ff);
@@ -527,7 +593,7 @@ PUBLIC void EMC_PHY_Timing_Set(SDRAM_CFG_INFO_T_PTR mem_info,
 //    uint32 clkwr_dll = (64*s_emc_config.clk_wr)/(s_emc_config.read_value/2);
     uint8 clkwr_dll;
 
-    SCI_ASSERT((mem_info != NULL) && (emc_phy_l1_timing != NULL) && (emc_phy_l2_timing != NULL));
+//    SCI_ASSERT((mem_info != NULL) && (emc_phy_l1_timing != NULL) && (emc_phy_l2_timing != NULL));
 
     REG32(EXT_MEM_DCFG8) = ((emc_phy_l1_timing->data_pad_ie_delay & 0xffff) <<16) |
                            (emc_phy_l1_timing->data_pad_oe_delay & 0xff);
@@ -549,7 +615,11 @@ PUBLIC void EMC_PHY_Timing_Set(SDRAM_CFG_INFO_T_PTR mem_info,
         }
         else
         {
-            REG32(EXT_MEM_CFG0_DLL) = 0x0; //DLL disable
+            REG32(EXT_MEM_CFG0_DLL) &= ~BIT_10; //DLL disable
+			for(i=0;i<20;i++);
+			REG32(EXT_MEM_CFG0_DLL) &= ~BIT_7; //DLL disable
+			for(i=0;i<20;i++);
+			REG32(EXT_MEM_CFG0_DLL) = 0; //DLL disable
         }
 
         for (i = 0; i < 20; i++)
@@ -581,7 +651,7 @@ PUBLIC void EMC_PHY_Timing_Set(SDRAM_CFG_INFO_T_PTR mem_info,
 }
 
 
-void EMC_CHL_Init(EMC_CHL_INFO_PTR emc_chl_info)
+LOCAL void EMC_CHL_Init(EMC_CHL_INFO_PTR emc_chl_info)
 {
     int i = 0;
     EMC_CHL_NUM_E emc_channel_num;
@@ -611,14 +681,14 @@ void EMC_CHL_Init(EMC_CHL_INFO_PTR emc_chl_info)
 }
 
 
-void set_emc_pad(uint32 dqs_drv,uint32 data_drv,uint32 ctl_drv, uint32 clk_drv)
+LOCAL void set_emc_pad(uint32 dqs_drv,uint32 data_drv,uint32 ctl_drv, uint32 clk_drv)
 {
     unsigned int i = 0;
 
-    SCI_ASSERT(dqs_drv < 4);
-    SCI_ASSERT(data_drv < 4);
-    SCI_ASSERT(ctl_drv < 4);
-    SCI_ASSERT(clk_drv < 4);
+//    SCI_ASSERT(dqs_drv < 4);
+//    SCI_ASSERT(data_drv < 4);
+//    SCI_ASSERT(ctl_drv < 4);
+//    SCI_ASSERT(clk_drv < 4);
 
     dqs_drv &= 0x3;
     data_drv &= 0x3;
@@ -708,7 +778,7 @@ LOCAL BOOLEAN __is_rw_ok(uint32 addr,uint32 val)
 }
 
 
-void dram_detect_write_addr(uint32 start_addr, uint32 detect_size)
+LOCAL void dram_detect_write_addr(uint32 start_addr, uint32 detect_size)
 {
     uint32 addr;
     uint32 detect_unit = 0x200;
@@ -721,7 +791,7 @@ void dram_detect_write_addr(uint32 start_addr, uint32 detect_size)
     }
 }
 
-uint32 dram_detect_check_addr(uint32 start_addr, uint32 detect_size)
+LOCAL uint32 dram_detect_check_addr(uint32 start_addr, uint32 detect_size)
 {
     uint32 addr;
     uint32 detect_unit = 0x200;
@@ -746,7 +816,7 @@ uint32 dram_detect_check_addr(uint32 start_addr, uint32 detect_size)
 }
 
 
-BOOLEAN dram_mode_check(uint32 dram_cap)
+LOCAL BOOLEAN dram_mode_check(uint32 dram_cap)
 {
     BOOLEAN ret = TRUE;
     uint32 i = 0;
@@ -759,7 +829,7 @@ BOOLEAN dram_mode_check(uint32 dram_cap)
         INVALIDE_VAL
     };
 
-    SCI_ASSERT(dram_cap >= CAP_1G_BIT);
+//    SCI_ASSERT(dram_cap >= CAP_1G_BIT);
     
     switch (dram_cap)
     {
@@ -800,55 +870,12 @@ BOOLEAN dram_mode_check(uint32 dram_cap)
     return ret;
 }
 
-
-BOOLEAN dram_mode_set(SDRAM_CFG_INFO_T_PTR pCfg)
-{
-    EMC_Base_Mode_Set(pCfg);
-    EMC_AddrMode_Set(pCfg);
-
-    return SCI_TRUE;
-}
-
-BOOLEAN dram_mode_detect(SDRAM_CFG_INFO_T_PTR pCfg)
-{
-    uint32 i;
-    BOOLEAN ret = TRUE;
-    SDRAM_MODE_PTR modetable_ptr = SDRAM_GetModeTable();
-
-    for(i=0; modetable_ptr[i].capacity != CAP_ZERO; i++)
-    {
-        if(modetable_ptr[i].data_width != pCfg->data_width)
-        {
-            continue;
-        }
-
-        pCfg->cs_position = modetable_ptr[i].cs_position;
-        pCfg->col_mode = modetable_ptr[i].col_mode;
-        pCfg->row_mode = modetable_ptr[i].row_mode;
-        
-        //dram_mode_set(pCfg);
-        DMC_Init();
-
-        if(dram_mode_check(modetable_ptr[i].capacity))
-        {
-            DRAM_CAP = modetable_ptr[i].capacity;
-            break;
-        }    
-    }
-
-    if (modetable_ptr[i].capacity == CAP_ZERO)
-    {
-        ret = FALSE;
-        //SCI_ASSERT(0);
-    }
-
-    return ret;
-}
-
 LOCAL BOOLEAN DRAM_Para_SelfAdapt(void)
 {
-    BOOLEAN ret = FALSE;
+    int i;
+//    BOOLEAN ret = FALSE;
     SDRAM_CFG_INFO_T_PTR pCfg = SDRAM_GetCfg();
+    SDRAM_MODE_PTR modetable_ptr = SDRAM_GetModeTable();
 
     for (;;)
     {
@@ -856,7 +883,6 @@ LOCAL BOOLEAN DRAM_Para_SelfAdapt(void)
         
         if (__is_rw_ok(SDRAM_BASE_ADDR, MEM_REF_DATA0))
         {
-            ret = TRUE;
             break;
         }
 
@@ -885,17 +911,40 @@ LOCAL BOOLEAN DRAM_Para_SelfAdapt(void)
         }
     }
 
-    ret = dram_mode_detect(pCfg);
+    for(i=0; modetable_ptr[i].capacity != CAP_ZERO; i++)
+    {
+        if(modetable_ptr[i].data_width != pCfg->data_width)
+        {
+            continue;
+        }
 
-    return ret;
+        pCfg->cs_position = modetable_ptr[i].cs_position;
+        pCfg->col_mode = modetable_ptr[i].col_mode;
+        pCfg->row_mode = modetable_ptr[i].row_mode;
+
+        DMC_Init();
+
+        if(dram_mode_check(modetable_ptr[i].capacity))
+        {
+            DRAM_CAP = modetable_ptr[i].capacity;
+            break;
+        }
+    }
+
+    if (modetable_ptr[i].capacity == CAP_ZERO)
+    {
+        return FALSE;
+        //SCI_ASSERT(0);
+    }
+
+    return TRUE;
 }
 
 #endif
 
 
-void DMC_Init(void)
+LOCAL void DMC_Init(void)
 {
-    int i;
     uint32 emc_freq = s_emc_config.emc_clk;
     SDRAM_CFG_INFO_T_PTR    mem_info = SDRAM_GetCfg();
     SDRAM_TIMING_PARA_T_PTR mem_timing = SDRAM_GetTimingPara();
@@ -921,11 +970,11 @@ void DMC_Init(void)
     return;
 }
 
-void mcu_clock_select(MCU_CLK_SOURCE_E mcu_clk_sel)
+LOCAL void mcu_clock_select(MCU_CLK_SOURCE_E mcu_clk_sel)
 {
     uint32 i;
 
-    SCI_ASSERT(mcu_clk_sel < MCU_CLK_NONE);
+//    SCI_ASSERT(mcu_clk_sel < MCU_CLK_NONE);
 
     i = REG32(AHB_ARM_CLK);
     i &= ~(0x3 << 23);
@@ -933,14 +982,14 @@ void mcu_clock_select(MCU_CLK_SOURCE_E mcu_clk_sel)
     REG32(AHB_ARM_CLK) = i; 
 }
 
-void set_arm_bus_clk_div(uint32 arm_drv, uint32 axi_div, uint32 ahb_div, uint32 dbg_div)
+LOCAL void set_arm_bus_clk_div(uint32 arm_drv, uint32 axi_div, uint32 ahb_div, uint32 dbg_div)
 {
     uint32 i;
 
-    SCI_ASSERT(arm_drv < 8);
-    SCI_ASSERT(axi_div < 4);
-    SCI_ASSERT(ahb_div < 8);
-    SCI_ASSERT(dbg_div < 8);
+//    SCI_ASSERT(arm_drv < 8);
+//    SCI_ASSERT(axi_div < 4);
+//    SCI_ASSERT(ahb_div < 8);
+//    SCI_ASSERT(dbg_div < 8);
 
     // A5 AXI DIV
     i = REG32(CA5_CFG); // 0x20900238
@@ -957,13 +1006,13 @@ void set_arm_bus_clk_div(uint32 arm_drv, uint32 axi_div, uint32 ahb_div, uint32 
     for(i = 0; i < 50; i++);
 }
 
-void set_gpu_clock_freq(void)
+LOCAL void set_gpu_clock_freq(void)
 {
     // GPU AXI 256M
     REG32(GR_GEN2) &= ~(0x3);
 }
 
-void set_mpll_clock_freq(uint32 clk_freq_hz)
+LOCAL void set_mpll_clock_freq(uint32 clk_freq_hz)
 {
     uint32 i;
     uint32 mpll_clk;
@@ -985,11 +1034,11 @@ void set_mpll_clock_freq(uint32 clk_freq_hz)
     
 }
 
-void emc_clock_select(EMC_CLK_SOURCE_E emc_clk_sel)
+LOCAL void emc_clock_select(EMC_CLK_SOURCE_E emc_clk_sel)
 {
     uint32 i;
     
-	SCI_ASSERT(emc_clk_sel < EMC_CLK_NONE);
+//	SCI_ASSERT(emc_clk_sel < EMC_CLK_NONE);
 	
     i = REG32(AHB_ARM_CLK);
     i &= ~(1 << 3); // clk_emc_async
@@ -999,7 +1048,7 @@ void emc_clock_select(EMC_CLK_SOURCE_E emc_clk_sel)
 	REG32(AHB_ARM_CLK) = i;
 }
 
-void set_emc_clock_div(uint32 emc_div)
+LOCAL void set_emc_clock_div(uint32 emc_div)
 {
     uint32 i;
 
@@ -1010,7 +1059,7 @@ void set_emc_clock_div(uint32 emc_div)
     REG32(AHB_ARM_CLK) = i;
 }
 
-void set_dpll_clock_freq(uint32 clk_freq_hz)
+LOCAL void set_dpll_clock_freq(uint32 clk_freq_hz)
 {
     uint32 i;
 
@@ -1030,7 +1079,7 @@ void set_dpll_clock_freq(uint32 clk_freq_hz)
 }
 
 
-void set_emc_clock_freq(void)
+LOCAL void set_emc_clock_freq(void)
 {
     uint32 emc_div = 0;
     uint32 emc_clk_freq = s_emc_config.emc_clk;
@@ -1042,27 +1091,35 @@ void set_emc_clock_freq(void)
             emc_clk_sel = EMC_CLK_XTL_SOURCE;
             break;
         case EMC_CLK_67MHZ:
-            emc_clk_sel = EMC_CLK_DPLL_SOURCE;
-            emc_div = 2;
-            set_dpll_clock_freq(EMC_CLK_200MHZ);
-            break;
+            emc_div = 1;
+            emc_clk_freq = EMC_CLK_133MHZ;
         case EMC_CLK_133MHZ:
             emc_clk_sel = EMC_CLK_DPLL_SOURCE;
-            emc_div = 1;
-            set_dpll_clock_freq(EMC_CLK_266MHZ);
+            break;
+        case EMC_CLK_266MHZ:
+            emc_clk_sel = EMC_CLK_DPLL_SOURCE;
             break;
         case EMC_CLK_333MHZ:
             emc_clk_sel = EMC_CLK_DPLL_SOURCE;
-            set_dpll_clock_freq(EMC_CLK_333MHZ);
             break;
+        case EMC_CLK_370MHZ:
+            emc_clk_sel = EMC_CLK_DPLL_SOURCE;
+            break;
+        case EMC_CLK_200MHZ:
+            emc_div = 1;
         case EMC_CLK_400MHZ:
         default:
             emc_clk_sel = EMC_CLK_DPLL_SOURCE;
-            set_dpll_clock_freq(EMC_CLK_400MHZ);
+            emc_clk_freq = EMC_CLK_400MHZ;
             break;
     }
 
-    set_emc_clock_div(emc_div);
+    if (emc_clk_sel == EMC_CLK_DPLL_SOURCE)
+    {
+        set_dpll_clock_freq(emc_clk_freq);
+        set_emc_clock_div(emc_div);
+    }
+
 	emc_clock_select(emc_clk_sel);
 	
     if (emc_clk_freq <= EMC_CLK_67MHZ)
@@ -1076,7 +1133,7 @@ void set_emc_clock_freq(void)
 
 }
 
-void set_chip_clock_freq(void)
+LOCAL void set_chip_clock_freq(void)
 {
     uint32 arm_drv = 0;
     uint32 axi_div;
@@ -1116,7 +1173,7 @@ void set_chip_clock_freq(void)
     mcu_clock_select(MCU_CLK_MPLL_SOURCE);
 }
 
-void sdram_init(void)
+LOCAL void sdram_init(void)
 {
     uint32 i;
 
@@ -1143,20 +1200,59 @@ void sdram_init(void)
 
 }
 
-void set_mem_volt(void)
+__inline LOCAL uint16 ADI_reg_read(uint32 adie_reg_addr)
 {
     uint32 reg_temp;
 
-    reg_temp = REG32(ANA_DCDC_MEM_CTL0); //0x8200092C
-    reg_temp &= (~7);
-    reg_temp |= 0x6; // dcdc mem 1.8V
-    REG32(ANA_DCDC_MEM_CTL0) = reg_temp;
+    REG32(0x82000024) = adie_reg_addr;
 
-    delay(10);
+    do{
+        reg_temp = REG32(0x82000028);
+    }
+    while (reg_temp & BIT_31);
 
-//    ANA_REG_AND(ANA_LDO_TRIM9, (~0x1F)); // 0x82000978
-    REG32(ANA_LDO_TRIM9) = (~0x1F); // 0x82000978
+    return (uint16)reg_temp;
+}
+__inline LOCAL void ADI_reg_write(uint32 adie_reg_addr, uint16 reg_val)
+{
+	do {////ADI_wait_fifo_empty
+		if ((REG32(ADI_FIFO_STS) & BIT_10) != 0)
+		{
+			break;
+		}
+	} while (1);
 
+    REG32(adie_reg_addr) = reg_val;
+}
+
+__inline LOCAL void set_XOSC32K_config(void)
+{// from 13.8uA to 7.8uA
+    uint16 reg_read;
+
+    reg_read = ADI_reg_read(0x820008AC);
+
+    reg_read &= (~0xFF);
+    reg_read |= 0x95;
+
+    ADI_reg_write(0x820008AC, reg_read);
+}
+
+__inline LOCAL void set_mem_volt(void)
+{
+    uint16 reg_read;
+
+    reg_read = ADI_reg_read(ANA_DCDC_MEM_CTL0);
+
+    reg_read &= (~7);
+    reg_read |= 0x6; // dcdc mem 1.8V
+
+    ADI_reg_write(ANA_DCDC_MEM_CTL0, reg_read);
+
+    reg_read = ADI_reg_read(ANA_LDO_TRIM9);
+
+    reg_read &= (~0x1F);
+
+    ADI_reg_write(ANA_LDO_TRIM9, reg_read); // 0x82000978
 }
 
 PUBLIC void Chip_Init(void) { /*lint !e765 "Chip_Init" is used by init.s entry.s*/
@@ -1172,8 +1268,10 @@ PUBLIC void Chip_Init(void) { /*lint !e765 "Chip_Init" is used by init.s entry.s
     s_emc_config.clk_wr  = emc_ptr->clk_wr;
     s_emc_config.ddr_drv = emc_ptr->ddr_drv;
 
-    set_chip_clock_freq();
     set_mem_volt();
+    set_XOSC32K_config();
+
+    set_chip_clock_freq();
 
     sdram_init();
 

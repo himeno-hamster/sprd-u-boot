@@ -46,39 +46,39 @@ LOCAL CONST SDRAM_TIMING_PARA_T s_sdram_timing_param =
 //  ms    ns   ns    		ns      ns    	ns     	  ns   	ns  	clk   clk
 // tREF,tRP,tRCD, tWR/tRDL/tDPL,tRFC,	tXSR,     tRAS,	tRRD,	tMRD, tWTR(wtr is only for ddr)
 #if defined(CHIP0_HYNIX_DDR_H8BCS0RJ0MCP)
-{64,   30,  30,   	15,         110, 	140,      50,  	15,  	2,    1   };
+{7800,   30,  30,   	15,         110, 	140,      50,  	15,  	2,    1   };
 #elif defined(CHIP1_TOSHIBA_SDR_TY9000A800JFGP40)
-{64,   23,  23,  2*SDRAM_T,   	80,  	120,      50,  	15,  	2,    0   };
+{7800,   23,  23,  2*SDRAM_T,   	80,  	120,      50,  	15,  	2,    0   };
 #elif defined(CHIP2_ST_SDR_M65K)
-{64,   24,  18,   	15,         80,  	18,       60,  	18,  	2,    0   };
+{7800,   24,  18,   	15,         80,  	18,       60,  	18,  	2,    0   };
 #elif defined(CHIP3_SAMSUNG_SDR_K5D1G13DCA)
-{64,   24,  18,   	15,         80,  	18,       60,  	18,  	2,    0   };
+{7800,   24,  18,   	15,         80,  	18,       60,  	18,  	2,    0   };
 #elif defined(CHIP4_SAMSUNG_SDR_K5D5657DCBD090)
-{64,   24,  18,   	15,         80,  	18,       60,  	18,  	2,    0   };
+{7800,   24,  18,   	15,         80,  	18,       60,  	18,  	2,    0   };
 #elif defined(CHIP5_HYNIX_SDR_HYC0SEH0AF3P)
-{64,   29,  29,  2*SDRAM_T,   	80,  2*SDRAM_T,	  60,  	19,  	2,    0   };
+{7800,   29,  29,  2*SDRAM_T,   	80,  2*SDRAM_T,	  60,  	19,  	2,    0   };
 #elif defined(CHIP6_SAMSUNG_SDR_K5D1257ACFD090)
-{64,   27,  27,   	15,         80,  	120,      50,  	18,  	2,    0   };
+{7800,   27,  27,   	15,         80,  	120,      50,  	18,  	2,    0   };
 #elif defined(CHIP7_HYNIX_SDR_H8ACUOCEOBBR)
-{64,   27,  27,   	15,         80,  	120,      60,  	19,  	2,    0   };
+{7800,   27,  27,   	15,         80,  	120,      60,  	19,  	2,    0   };
 #elif defined(CHIP8_HYNIX_SDR_H8ACS0EJ0MCP)
-{64,   27,  27,   	15,         80,  	120,      60,  	19,  	2,    0   };
+{7800,   27,  27,   	15,         80,  	120,      60,  	19,  	2,    0   };
 #elif defined(CHIP9_HYNIX_SDR_H8AES0SQ0MCP)
-{64,   27,  27,   	15,         80,  	120,      60,  	19,  	2,    0   };
+{7800,   27,  27,   	15,         80,  	120,      60,  	19,  	2,    0   };
 #elif defined(CHIP10_HYNIX_SDR_HYC0SEH0AF3P)
-{64,   27,  27,   	15,         80,  	120,      60,  	19,  	2,    0   };
+{7800,   27,  27,   	15,         80,  	120,      60,  	19,  	2,    0   };
 #elif defined(CHIP11_MICRON_SDR_MT48H)
-{64,   20,  20,   	15,         100, 	120,      60, 2*SDRAM_T,2,    0   };
+{7800,   20,  20,   	15,         100, 	120,      60, 2*SDRAM_T,2,    0   };
 #elif defined(CHIP12_HYNIX_DDR_H9DA4GH4JJAMCR4EM)
-{64,   30,  30,   	15,         90, 	140,      50,  	15,  	2,    2   };
+{7800,   30,  30,   	15,         90, 	140,      50,  	15,  	2,    2   };
 #elif defined(CHIP13_HYNIX_SDR_H8ACS0PH0MCP)
-{64,   27,  27,   	15,         80,  	120,      60,  	19,  	2,    0   };
+{7800,   27,  27,   	15,         80,  	120,      60,  	19,  	2,    0   };
 #elif defined(CHIP14_HYNIX_DDR_H9DA4GH2GJAMCR)
-{64,   30,  30,   	15,         90, 	140,      50,  	15,  	2,    2   };
+{7800,   30,  30,   	15,         90, 	140,      50,  	15,  	2,    2   };
 #elif defined(CHIP15_SAMSUNG_DDR_K522H1HACF)
-{64,   21,  15,   	12,         80, 	120,      40,  	10,  	2,    2   };
+{7800,   21,  15,   	12,         80, 	120,      40,  	10,  	2,    2   };
 #else
-{64,   21,  15,   	12,         80, 	120,      40,  	10,  	2,    2   };
+{7800,   30,  30,   	15,         110, 	140,      50,  	15,  	2,    2   };
 #endif
 
 #ifndef SDRAM_AUTODETECT_SUPPORT
@@ -109,7 +109,7 @@ LOCAL CONST SDRAM_CFG_INFO_T s_sdram_config_info =
 #elif defined(CHIP11_MICRON_SDR_MT48H)
 {ROW_MODE_13, COL_MODE_9,  DATA_WIDTH_32, BURST_LEN_2_WORD, CAS_LATENCY_3, SDRAM_EXT_MODE_REG,     SDR_SDRAM,   EMC_ONE_CS_MAP_256MBIT};
 #elif defined(CHIP12_HYNIX_DDR_H9DA4GH4JJAMCR4EM)
-{ROW_MODE_14, COL_MODE_10, DATA_WIDTH_32, BURST_LEN_4_WORD, CAS_LATENCY_3, SDRAM_EXT_MODE_REG,     DDR_SDRAM,   EMC_ONE_CS_MAP_4GBIT};
+{ROW_MODE_14, COL_MODE_10, DATA_WIDTH_32, BURST_LEN_2_WORD, CAS_LATENCY_3, SDRAM_EXT_MODE_REG,     DDR_SDRAM,   EMC_ONE_CS_MAP_2GBIT};
 #elif defined(CHIP13_HYNIX_SDR_H8ACS0PH0MCP)
 {ROW_MODE_13, COL_MODE_9,  DATA_WIDTH_32, BURST_LEN_2_WORD, CAS_LATENCY_3, SDRAM_EXT_MODE_INVALID, SDR_SDRAM,   EMC_ONE_CS_MAP_512MBIT};
 #elif defined(CHIP14_HYNIX_DDR_H9DA4GH2GJAMCR)
@@ -121,6 +121,8 @@ LOCAL CONST SDRAM_CFG_INFO_T s_sdram_config_info =
 #endif
 
 #endif
+
+#ifndef SDRAM_AUTODETECT_SUPPORT
 
 LOCAL CONST SDRAM_CHIP_FEATURE_T s_sdram_feature =
 #if defined(CHIP0_HYNIX_DDR_H8BCS0RJ0MCP)
@@ -159,11 +161,15 @@ LOCAL CONST SDRAM_CHIP_FEATURE_T s_sdram_feature =
 {SDRAM_FEATURE_CL_2|SDRAM_FEATURE_CL_3,                    SDRAM_FEATURE_BL_2|SDRAM_FEATURE_BL_4|SDRAM_FEATURE_BL_8, CAP_1G_BIT  };
 #endif
 
+#endif
+
 CONST EMC_PHY_L1_TIMING_T EMC_PHY_TIMING_L1_INFO[EMC_PHYL1_TIMING_MATRIX_MAX] =
 {
 //data_ie, data_oe, dqs_pst_gate, dqs_pre_gate, dqs_ie, dqs_oe
+#ifdef SDR_SDRAM_SUPPORT
 	{0x20,		1,		0,				0,			0,		0},		//sdram cas_latency = 2
 	{0x40,		1,		0,				0,			0,		0},  	//sdram cas_latency = 3
+#endif
 	{0xf0,		0xe,	0x10,			0x8,		0xf0,	0xe}, 	//ddram cas_latency = 2
 	{0xf0,		0xe,	0x20,			0x10,		0xf0,	0xe},  	//ddram cas_latency = 3
 };
@@ -217,9 +223,9 @@ LOCAL EMC_CHL_INFO_T s_emc_chl_info[] =
     {EMC_AXI_GPU,       EMC_CHL_PRI_0,  EMC_CHL_PRI_0,  EMC_CHL_NONE},
     {EMC_AXI_DISPC,     EMC_CHL_PRI_0,  EMC_CHL_PRI_3,  EMC_CHL_NONE},
     {EMC_AHB_CP_MTX,    EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_1},
-    {EMC_AHB_MST_MTX,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_2},
+    {EMC_AHB_MST_MTX,   EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_3},
     {EMC_AHB_LCDC,      EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_0},
-    {EMC_AHB_DCAM,      EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_3},
+    {EMC_AHB_DCAM,      EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_2},
     {EMC_AHB_VSP,       EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_PRI_1},
     {EMC_CHL_MAX,       EMC_CHL_NONE,   EMC_CHL_NONE,   EMC_CHL_NONE}
 };
@@ -241,10 +247,13 @@ PUBLIC SDRAM_TIMING_PARA_T_PTR SDRAM_GetTimingPara(void)
     return (SDRAM_TIMING_PARA_T_PTR)&s_sdram_timing_param;
 }
 
+#ifndef SDRAM_AUTODETECT_SUPPORT
+
 PUBLIC SDRAM_CHIP_FEATURE_T_PTR SDRAM_GetFeature(void)
 {
     return (SDRAM_CHIP_FEATURE_T_PTR)&s_sdram_feature;
 }
+#endif
 
 PUBLIC EMC_CHL_INFO_PTR EMC_GetChlInfo(void)
 {
