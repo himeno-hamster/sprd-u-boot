@@ -49,6 +49,10 @@ else
 COBJS	+= sdram.o sdram_prod.o
 endif
 
+ifdef CONFIG_SC7710G2
+COBJS   += misc.o
+endif
+
 #SRCS	:= $(SRCTREE)/nand_spl/nand_boot_fsl_nfc.c
 SRCS	:= $(SRCTREE)/arch/arm/cpu/armv7/start.S
 SRCS	+= $(SRCTREE)/arch/arm/cpu/armv7/sc8810/lowlevel_init.c
@@ -63,7 +67,9 @@ SRCS    += $(SRCTREE)/arch/arm/cpu/armv7/sc8810/remap.c
 SRCS    += $(SRCTREE)/arch/arm/lib/_udivsi3.S
 SRCS    += $(SRCTREE)/arch/arm/lib/_divsi3.S
 SRCS    += $(SRCTREE)/arch/arm/lib/div0.c
-
+ifdef CONFIG_SC7710G2
+SRCS    += $(SRCTREE)/arch/arm/cpu/armv7/sc8810/misc.c
+endif
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
 __OBJS	:= $(SOBJS) $(COBJS)
 LNDIR	:= $(OBJTREE)/nand_spl/board/$(VENDOR)/$(SOC)
