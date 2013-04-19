@@ -252,7 +252,7 @@
 
 #define MTDIDS_DEFAULT "nand0=sprd-nand"
 
-#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),230m(system),190m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),3840k(productinfo),512k(kpanic),15m(firmware)"
+#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),256k(vmjaluna),256k(modem),2560k(fixnv),2560k(backupfixnv),3m(dsp),3840k(runtimenv),10m(boot),10m(recovery),263m(system),180m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),2560k(productinfo),512k(kpanic),10m(firmware)"
 
 /*in sp8810, no enouth uart resource, uart1 will be occupied by ap-cp, so kenrel has to disable console */
 #define CONFIG_BOOTARGS "mem=256M init=/init "MTDPARTS_DEFAULT CONFIG_UART_CONSOLE
