@@ -141,8 +141,12 @@ reset:
 	/* bl  sdram_init */
 	bl  Chip_Init
 #else					//Tiger
+	#if 0
 	LDR R0, =400000000
 	bl  DMC_Dev_Init
+	#else
+	bl  Chip_Init
+	#endif
 #endif
 
 #if defined (CONFIG_SC8825) || defined (CONFIG_SC7710G2) || defined (CONFIG_SC8830)
