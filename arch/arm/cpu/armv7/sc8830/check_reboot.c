@@ -12,7 +12,8 @@
 #define   HWRST_STATUS_NORMAL 			(0X40)
 #define   HWRST_STATUS_ALARM 			(0X50)
 #define   HWRST_STATUS_SLEEP 			(0X60)
-#define   HWRST_STATUS_NORMAL2 			(0Xf0)
+#define   HWRST_STATUS_SPECIAL			(0x70)
+#define   HWRST_STATUS_NORMAL2			(0Xf0)
 
 unsigned check_reboot_mode(void)
 {
@@ -22,7 +23,24 @@ unsigned check_reboot_mode(void)
 	rst_mode &= 0x7FFF;
 	ANA_REG_SET(ANA_REG_GLB_POR_RST_MONITOR, 0); //clear flag
 
-	return NORMAL_MODE;
+	if(rst_mode == HWRST_STATUS_RECOVERY)
+		return RECOVERY_MODE;
+	else if(rst_mode == HWRST_STATUS_FASTBOOT)
+		return FASTBOOT_MODE;
+	else if(rst_mode == HWRST_STATUS_NORMAL)
+		return NORMAL_MODE;
+	else if(rst_mode == HWRST_STATUS_NORMAL2)
+		return WATCHDOG_REBOOT;
+	else if(rst_mode == HWRST_STATUS_ALARM)
+		return ALARM_MODE;
+	else if(rst_mode == HWRST_STATUS_SLEEP)
+		return SLEEP_MODE;
+	else if(rst_mode == HWRST_STATUS_SPECIAL)
+		return SPECIAL_MODE;
+	else{
+		printf(" a boot mode not supported\n");
+		return 0;
+	}
 }
 
 void reboot_devices(unsigned reboot_mode)
@@ -49,30 +67,16 @@ void power_down_devices(unsigned pd_cmd)
 
 int power_button_pressed(void)
 {
-	//ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_EIC_EN); //EIC enable
-	//ANA_REG_OR(ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_EIC_EN); //EIC RTC enable
-	//ANA_REG_SET(ADI_EIC_MASK, 0xff);
-	//sprd_eic_init();
 	sprd_eic_request(162);
 	udelay(3000);
-	//int status = ANA_REG_GET(ADI_EIC_DATA);
-	//printf("eica status %x\n", status);
-	//return !!(status & (1 << 3)/*PBINT*/);//low level if pb hold
 	printf("eica status %x\n", sprd_eic_get(162));
-	return !!sprd_eic_get(162);
+	return !sprd_eic_get(162);
 }
 
 int charger_connected(void)
 {
-	//ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_EIC_EN); //EIC enable
-	//ANA_REG_OR(ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_EIC_EN); //EIC RTC enable
-	//ANA_REG_SET(ADI_EIC_MASK, 0xff);
-	//sprd_eic_init();
 	sprd_eic_request(160);
 	udelay(3000);
-	//int status = ANA_REG_GET(ADI_EIC_DATA);
-	//printf("charger_connected eica status %x\n", status);
-	//return !!(status & (1 << 2));
 	printf("eica status %x\n", sprd_eic_get(160));
 	return !!sprd_eic_get(160);
 }
