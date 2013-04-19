@@ -19,9 +19,9 @@
 
 
 #define SYSDUMP_CORE_NAME_FMT 	"sysdump_%s_.core.%02d" /* time, number */
-#define SYSDUMP_CORE_HDR  		0x8e300000  /* SPRD_IO_MEM_BASE in kernel */
-#define NR_KCORE_MEM			80
-#define SYSDUMP_MAGIC			"SPRD_SYSDUMP_119"
+#define SYSDUMP_CORE_HDR  	0x8e300000  /* SPRD_IO_MEM_BASE in kernel */
+#define NR_KCORE_MEM		80
+#define SYSDUMP_MAGIC		"SPRD_SYSDUMP_119"
 
 
 struct sysdump_mem {
@@ -41,6 +41,37 @@ struct sysdump_info {
 	unsigned long dump_mem_paddr;
 };
 
+void display_writing_sysdump(void)
+{
+	printf("%s\n", __FUNCTION__);
+#ifdef CONFIG_SPLASH_SCREEN
+
+	vibrator_hw_init();
+	set_vibrator(1);
+	//read boot image header
+	size_t size = 1<<19;
+	char * bmp_img = malloc(size);
+	if(!bmp_img){
+		printf("not enough memory for splash image\n");
+		return;
+	}
+	int ret = read_logoimg(bmp_img,size);
+	if(ret == -1)
+		return;
+	extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
+	extern lcd_display(void);
+	extern void set_backlight(uint32_t value);
+	lcd_display_bitmap((ulong)bmp_img, 0, 0);
+	lcd_printf("   -------------------------------  \n"
+		   "   Sysdumpping now, keep power on.  \n"
+		   "   -------------------------------  ");
+	lcd_display();
+	set_backlight(255);
+	set_vibrator(0);
+
+	free(bmp_img);
+#endif
+}
 
 int init_mmc_fat(void)
 {
@@ -116,6 +147,9 @@ void write_sysdump_before_boot(void)
 
 	if(!memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic))) {
 		printf("\n");
+
+		/* display on screen */
+		display_writing_sysdump();
 
 		memset(infop->magic, 0, sizeof(infop->magic));
 
