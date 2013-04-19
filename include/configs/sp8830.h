@@ -197,6 +197,15 @@
 #define CONFIG_ENV_OFFSET_REDUND	(CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
 */
 
+/* DDR */
+#define DDR_CLK 533
+#define DDR_TYPE DRAM_LPDDR2_2CS_8G_X32
+//#define DDR_TYPE DRAM_LPDDR2_1CS_4G_X32
+//#define DDR_TYPE DRAM_LPDDR2_1CS_8G_X32
+//#define DDR_TYPE DRAM_LPDDR2_2CS_16G_X32
+
+
+
 /* NAND */
 #define CONFIG_NAND_SC8830
 #define CONFIG_SPRD_NAND_REGS_BASE	(0x21100000)
@@ -215,10 +224,6 @@
 #define CONFIG_MTD_DEVICE
 #define CONFIG_CMD_UBI
 #define CONFIG_RBTREE
-
-/*DDR*/
-#define DDR_TYPE DRAM_LPDDR2_1CS_4G_X32
-#define DDR_CLK 533
 
 /* U-Boot general configuration */
 #define CONFIG_SYS_PROMPT	"=> "	/* Monitor Command Prompt */
