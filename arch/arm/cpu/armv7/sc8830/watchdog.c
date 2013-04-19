@@ -34,4 +34,8 @@ void hw_watchdog_reset(void)
 {
 
 }
+int fatal_dump_enabled(void)
+{
+        return 0;
+}
 
