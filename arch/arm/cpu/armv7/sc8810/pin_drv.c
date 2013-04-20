@@ -45,6 +45,10 @@ void set_cp_emc_pad(void)
         REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMBA0_REG_OFFS) + i*4) |= (ctl_drv<<8) | 0x4;
     }
 
+    //CKE0
+    REG32(CHIPPIN_CTL_BEGIN + PIN_CP_EMCKE0_REG_OFFS) &= (~0x30F);
+    REG32(CHIPPIN_CTL_BEGIN + PIN_CP_EMCKE0_REG_OFFS) |= (3<<8) | 0x4;
+
     for (i = 0; i < 4; i++) {//dqm
         REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMDQM0_REG_OFFS) + i*4) &= (~0x30F);
         REG32((CHIPPIN_CTL_BEGIN + PIN_CP_EMDQM0_REG_OFFS) + i*4) |= (data_drv<<8) | 0x4;

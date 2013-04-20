@@ -214,7 +214,11 @@ static struct sc8810_nand_page_oob nand_config_table[] =
 	{0x2c, 0xb3, 0x90, 0x66, 0x64, 4096, 224, 512, 8},
 	{0x2c, 0xbc, 0x90, 0x66, 0x54, 4096, 224, 512, 8},
 	{0xec, 0xb3, 0x01, 0x66, 0x5a, 4096, 128, 512, 4},
-    {0xec, 0xbc, 0x00, 0x6a, 0x56, 4096, 256, 512, 8},
+	{0xec, 0xbc, 0x00, 0x6a, 0x56, 4096, 256, 512, 8},
+	{0xad, 0xbc, 0x90, 0x55, 0x56, 2048, 64,  512, 4},
+	{0x2c, 0xbc, 0x90, 0x55, 0x56, 2048, 64,  512, 4},
+	{0x2c, 0xb3, 0xd1, 0x55, 0x56, 2048, 64,  512, 4},
+	{0xc8, 0xbc, 0x90, 0x55, 0x54, 2048, 64,  512, 4}
 };
 
 /* some nand id could not be calculated the pagesize by mtd, replace it with a known id which has the same format. */
@@ -231,9 +235,12 @@ static const struct nand_spec_str nand_spec_table[] = {
     {0x2c, 0xbc, 0x90, 0x55, 0x56, {10, 10, 12, 10, 20, 50}},// KTR0405AS-HHg1, KTR0403AS-HHg1, MT29C4G96MAZAPDJA-5 IT
 
     {0x98, 0xac, 0x90, 0x15, 0x76, {12, 10, 12, 10, 20, 50}},// TYBC0A111392KC
-    {0x98, 0xbc, 0x90, 0x55, 0x76, {12, 10, 12, 10, 20, 50}},// TYBC0A111430KC, KSLCBBL1FB4G3A, KSLCBBL1FB2G3A
+    {0x98, 0xbc, 0x90, 0x55, 0x76, {12, 15, 15, 10, 20, 50}},// TYBC0A111430KC, KSLCBBL1FB4G3A, KSLCBBL1FB2G3A
+    {0x98, 0xbc, 0x90, 0x66, 0x76, {12, 15, 15, 10, 20, 50}},// KSLCCBL1FB2G3A_mvr400
+
     {0xad, 0xbc, 0x90, 0x11, 0x00, {25, 15, 25, 10, 20, 50}},// H9DA4VH4JJMMCR-4EMi, H9DA4VH2GJMMCR-4EM
     {0xad, 0xbc, 0x90, 0x55, 0x54, {25, 15, 25, 10, 20, 50}},//
+    {0xad, 0xbc, 0x90, 0x55, 0x56, {25, 20, 30, 10, 20, 50}},//H9DA4GH2GJBMCR
 
     {0xec, 0xb3, 0x01, 0x66, 0x5a, {21, 10, 21, 10, 20, 50}},// KBY00U00VA-B450
     {0xec, 0xbc, 0x00, 0x55, 0x54, {21, 10, 21, 10, 20, 50}},// KA100O015M-AJTT
@@ -832,12 +839,15 @@ void nand_spl_hardware_config(struct nand_chip *this, u8 id[5])
 		g_info.ecc_mode = nand_config_table[index].eccbit;
 		this->eccbitmode = g_info.ecc_mode;
 		/* 4 bit ecc, per 512 bytes can creat 13 * 4 = 52 bit , 52 / 8 = 7 bytes
-		   8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 14 bytes */
+		   8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 13 bytes, junqiang say use 14 bytes */
 		switch (g_info.ecc_mode) {
 			case 4:
 				/* 4 bit ecc, per 512 bytes can creat 13 * 4 = 52 bit , 52 / 8 = 7 bytes */
 				this->ecc.bytes = 7;
-				this->ecc.layout = &_nand_oob_128;
+				if(nand_config_table[index].oobsize == 64)
+				    this->ecc.layout = &_nand_oob_64_4bit;
+				else
+				    this->ecc.layout = &_nand_oob_128;
 			break;
 			case 8:
 				/* 8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 14 bytes */
@@ -879,9 +889,12 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, unsigned
 		   8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 14 bytes */
 		switch (g_info.ecc_mode) {
 			case 4:
-				/* 4 bit ecc, per 512 bytes can creat 13 * 4 = 52 bit , 52 / 8 = 7 bytes */
+				/* 4 bit ecc, per 512 bytes can creat 14 * 4 = 56 bit , 56 / 8 = 7 bytes */
 				this->ecc.bytes = 7;
-				this->ecc.layout = &_nand_oob_128;
+				if(nand_config_table[index].oobsize == 64)
+				    this->ecc.layout = &_nand_oob_64_4bit;
+				else
+				 this->ecc.layout = &_nand_oob_128;
 			break;
 			case 8:
 				/* 8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 14 bytes */
@@ -895,7 +908,7 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, unsigned
 		}
 		mtdoobsize = nand_config_table[index].oobsize;
 	} else 
-		printk("The type of nand flash is not in table, so use default configuration!\n");
+		printk("The type of nand flash is 2KB page, so use default configuration!\n");
 }
 #endif
 
