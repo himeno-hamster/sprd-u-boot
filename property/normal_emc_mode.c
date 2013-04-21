@@ -460,7 +460,11 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #ifdef CONFIG_SPLASH_SCREEN
 #define SPLASH_PART "boot_logo"
 	//read boot image header
+	#ifdef CONFIG_LCD_720P
+	size = 1<<20;
+	#else
 	size = 1<<19;
+	#endif
 	uint8 * bmp_img = malloc(size);
 	if(!bmp_img){
 	    printf("not enough memory for splash image\n");

@@ -322,6 +322,18 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	__raw_bits_or((1<<1), REG_AP_CLK_DISPC0_DPI_CFG);
 
 	//set DPI divdior
+	#ifdef  CONFIG_LCD_720P
+	__raw_bits_and(~(1<<8), REG_AP_CLK_DISPC0_DPI_CFG);  //div=6, dpi_clk = pll_src/(6+1)
+	__raw_bits_or((1<<9), REG_AP_CLK_DISPC0_DPI_CFG);
+	__raw_bits_or((1<<10), REG_AP_CLK_DISPC0_DPI_CFG);
+	__raw_bits_and(~(1<<11), REG_AP_CLK_DISPC0_DPI_CFG);
+	__raw_bits_and(~(1<<12), REG_AP_CLK_DISPC0_DPI_CFG);
+	__raw_bits_and(~(1<<13), REG_AP_CLK_DISPC0_DPI_CFG);
+	__raw_bits_and(~(1<<14), REG_AP_CLK_DISPC0_DPI_CFG);
+	__raw_bits_and(~(1<<15), REG_AP_CLK_DISPC0_DPI_CFG);
+
+	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC /7;
+	#else
 	__raw_bits_and(~(1<<8), REG_AP_CLK_DISPC0_DPI_CFG);  //div=10, dpi_clk = pll_src/(10+1)
 	__raw_bits_or((1<<9), REG_AP_CLK_DISPC0_DPI_CFG);
 
@@ -332,6 +344,9 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	__raw_bits_and(~(1<<14), REG_AP_CLK_DISPC0_DPI_CFG);
 	__raw_bits_and(~(1<<15), REG_AP_CLK_DISPC0_DPI_CFG);
 
+	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC / 11;
+	#endif
+
 	//enable dispc clock
 	__raw_bits_or(BIT_AP_CKG_EB, REG_AP_APB_APB_EB);  //core_clock_en
 
@@ -340,7 +355,7 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	//enable DISPC
 	__raw_bits_or(BIT_DISPC0_EB, REG_AP_AHB_AHB_EB);
 
-	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC / 11;
+
 
 	printf("0x7120002c = 0x%x\n", __raw_readl(0x7120002c));
 	printf("0x71200030 = 0x%x\n", __raw_readl(0x71200030));
@@ -472,8 +487,6 @@ static int32_t sprdfb_dispc_refresh (struct sprdfb_device *dev)
 	sprdfb_panel_before_refresh(dev);
 
 	if(SPRDFB_PANEL_IF_DPI == dev->panel_if_type){
-		//dispc_write(0x0, DISPC_OSD_CTRL);
-		//dispc_write(0x0, DISPC_BG_COLOR);
 		/*dpi register update*/
 		dispc_set_bits((1<<5), DISPC_DPI_CTRL);
 		if(is_first_frame){
