@@ -2,6 +2,7 @@
 #include <asm/arch/sc_reg.h>
 #include <boot_mode.h>
 #include <asm/arch/sprd_reg.h>
+#include <asm/arch/sprd_eic.h>
 #include <asm/arch/rtc_reg_v3.h>
 #include <asm/arch/regs_adi.h>
 #include <asm/arch/adi_hal_internal.h>
@@ -67,18 +68,18 @@ void power_down_devices(unsigned pd_cmd)
 
 int power_button_pressed(void)
 {
-	sprd_eic_request(162);
+	sprd_eic_request(EIC_PBINT);
 	udelay(3000);
-	printf("eica status %x\n", sprd_eic_get(162));
-	return !sprd_eic_get(162);
+	printf("eica status %x\n", sprd_eic_get(EIC_PBINT));
+	return !sprd_eic_get(EIC_PBINT);
 }
 
 int charger_connected(void)
 {
-	sprd_eic_request(160);
+	sprd_eic_request(EIC_CHG_INT);
 	udelay(3000);
-	printf("eica status %x\n", sprd_eic_get(160));
-	return !!sprd_eic_get(160);
+	printf("eica status %x\n", sprd_eic_get(EIC_CHG_INT));
+	return !!sprd_eic_get(EIC_CHG_INT);
 }
 
 int alarm_triggered(void)
