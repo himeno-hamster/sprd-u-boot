@@ -29,10 +29,6 @@ extern   "C"
 /******************************************************************************
                           Macro define
 ******************************************************************************/
-#define  DMC_CLK 533
-#define VOLTAGE 0x20  //0x22: 1.2V; 0X32:1.3V
-//#define DLL_BYPASS
-
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 #define IS_LPDDR1(x) (((x&0xF00) == 0)? TRUE:FALSE)
@@ -194,76 +190,78 @@ typedef enum
 
 typedef enum
 {
-	DQS_STEP_DLY_MIN  = 0,
-	DQS_STEP_DLY_SUB3 = 0,
-	DQS_STEP_DLY_SUB2 = 1,
-	DQS_STEP_DLY_SUB1 = 2,
-	DQS_STEP_DLY_NOM  = 3,
-	DQS_STEP_DLY_DEF  = 3,
-	DQS_STEP_DLY_ADD1 = 4,
-	DQS_STEP_DLY_ADD2 = 5,
-	DQS_STEP_DLY_ADD3 = 6,
-	DQS_STEP_DLY_ADD4 = 7,
-	DQS_STEP_DLY_MAX  = 7
-}DQS_STEP_DLY_E;
+	PUBL_DQS_STEP_MIN  = 0,
+	PUBL_DQS_STEP_SUB3 = 0,
+	PUBL_DQS_STEP_SUB2 = 1,
+	PUBL_DQS_STEP_SUB1 = 2,
+	PUBL_DQS_STEP_NOM  = 3,
+	PUBL_DQS_STEP_DEF  = 3,
+	PUBL_DQS_STEP_ADD1 = 4,
+	PUBL_DQS_STEP_ADD2 = 5,
+	PUBL_DQS_STEP_ADD3 = 6,
+	PUBL_DQS_STEP_ADD4 = 7,
+	PUBL_DQS_STEP_MAX  = 7
+}PUBL_DQS_STEP_E;
 
 //DQS gating phase select
 typedef enum
 {
-	DQS_PHS_DLY_MIN = 0,
-	DQS_PHS_DLY_90  = 0,
-	DQS_PHS_DLY_180 = 1,
-	DQS_PHS_DLY_DEF = 1,
-	DQS_PHS_DLY_270 = 2,
-	DQS_PHS_DLY_360 = 3,
-	DQS_PHS_DLY_MAX = 3
-}DQS_PHS_DLY_E;
+	PUBL_DQS_PHS_MIN = 0,
+	PUBL_DQS_PHS_90  = 0,
+	PUBL_DQS_PHS_180 = 1,
+	PUBL_DQS_PHS_DEF = 1,
+	PUBL_DQS_PHS_270 = 2,
+	PUBL_DQS_PHS_360 = 3,
+	PUBL_DQS_PHS_MAX = 3
+}PUBL_DQS_PHS_E;
 
 //DQS gating system latency
 typedef enum
 {
-	DQS_CLK_DLY_MIN  = 0,
-	DQS_CLK_DLY_DEF  = 0,
-	DQS_CLK_DLY_1CLK = 1,
-	DQS_CLK_DLY_2CLK = 2,
-	DQS_CLK_DLY_3CLK = 3,
-	DQS_CLK_DLY_4CLK = 4,
-	DQS_CLK_DLY_5CLK = 5,
-	DQS_CLK_DLY_MAX  = 5	
-}DQS_CLK_DLY_E;
+	PUBL_DQS_CLK_MIN  = 0,
+	PUBL_DQS_CLK_DEF  = 0,
+	PUBL_DQS_CLK_1CLK = 1,
+	PUBL_DQS_CLK_2CLK = 2,
+	PUBL_DQS_CLK_3CLK = 3,
+	PUBL_DQS_CLK_4CLK = 4,
+	PUBL_DQS_CLK_5CLK = 5,
+	PUBL_DQS_CLK_MAX  = 5	
+}PUBL_DQS_CLK_E;
 
 //slave dll phase trim
 typedef enum
 {
-	SDLL_PHS_DLY_DEF  = 0x0,
-	SDLL_PHS_DLY_36   = 0x3,
-	SDLL_PHS_DLY_54   = 0x2,
-	SDLL_PHS_DLY_72   = 0x1,
-	SDLL_PHS_DLY_90   = 0x0,
-	SDLL_PHS_DLY_108  = 0x4,
-	SDLL_PHS_DLY_126  = 0x8,
-	SDLL_PHS_DLY_144  = 0x12
-}SDLL_PHS_DLY_E;
+	PUBL_SDLL_PHS_MIN  = 0x0,
+	PUBL_SDLL_PHS_DEF  = 0x0,
+	PUBL_SDLL_PHS_36   = 0x3,
+	PUBL_SDLL_PHS_54   = 0x2,
+	PUBL_SDLL_PHS_72   = 0x1,
+	PUBL_SDLL_PHS_90   = 0x0,
+	PUBL_SDLL_PHS_108  = 0x4,
+	PUBL_SDLL_PHS_126  = 0x8,
+	PUBL_SDLL_PHS_144  = 0x12,
+	PUBL_SDLL_PHS_MAX  = 0x12,	
+}PUBL_SDLL_PHS_E;
 
 typedef enum
 {
-	LPDDR2_DS_34_OHM = 0xd,
-	LPDDR2_DS_40_OHM = 0xb,
-	LPDDR2_DS_48_OHM = 0x9,
-	LPDDR2_DS_60_OHM = 0x7,
-	LPDDR2_DS_80_OHM = 0x5
-}LPDDR2_MEM_DS_T_E;
+	PUBL_LPDDR1_DS_33OHM = 0xa,
+	PUBL_LPDDR1_DS_31OHM = 0xb,
+	PUBL_LPDDR1_DS_48OHM = 0xc,
+	PUBL_LPDDR1_DS_43OHM = 0xd,
+	PUBL_LPDDR1_DS_39OHM = 0xe,
+	PUBL_LPDDR1_DS_55OHM = 0x5,
+	PUBL_LPDDR1_DS_64OHM = 0x4,
 
-typedef enum
-{
-	LPDDR1_DS_33_OHM = 0xa,
-	LPDDR1_DS_31_OHM = 0xb,
-	LPDDR1_DS_48_OHM = 0xc,
-	LPDDR1_DS_43_OHM = 0xd,
-	LPDDR1_DS_39_OHM = 0xe,
-	LPDDR1_DS_55_OHM = 0x5,
-	LPDDR1_DS_64_OHM = 0x4
-}LPDDR1_MEM_DS_T_E;
+	PUBL_LPDDR2_DS_MIN   = 0xd,
+	PUBL_LPDDR2_DS_34OHM = 0xd,
+	PUBL_LPDDR2_DS_40OHM = 0xb,
+	PUBL_LPDDR2_DS_48OHM = 0x9,
+	PUBL_LPDDR2_DS_60OHM = 0x7,
+	PUBL_LPDDR2_DS_80OHM = 0x5,
+	PUBL_LPDDR2_DS_MAX   = 0x5	
+
+}PUBL_DS_E;
 
 typedef enum
 {
