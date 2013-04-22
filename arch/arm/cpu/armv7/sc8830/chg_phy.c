@@ -35,17 +35,17 @@ void CHG_ShutDown (void)
 
 void CHG_SetRecharge (void)
 {
-	ANA_REG_OR (ANA_APB_CHGR_CTL0,CHGR_RECHG_BIT);
+	ANA_REG_OR (ANA_APB_CHGR_CTL2,CHGR_RECHG_BIT);
 }
 
 void CHG_Init (void)
 {
 	unsigned int chip_id = 0;
 
-	ANA_REG_MSK_OR(ANA_APB_CHGR_CTL0,CHGR_CC_EN_BIT,(CHGR_CC_EN_BIT | CHGR_CC_EN_RST_BIT));
 	ANA_REG_MSK_OR(ANA_APB_CHGR_CTL1,
-		    (2 << CHGR_CHG_CUR_SHIFT) & CHGR_CHG_CUR_MSK,CHGR_CHG_CUR_MSK); //set charge current 500mA
+		    (6 << CHGR_CHG_CUR_SHIFT) & CHGR_CHG_CUR_MSK,CHGR_CHG_CUR_MSK); //set charge current 600mA
 	CHG_SetRecharge();
+       ANA_REG_OR (ANA_APB_CHGR_CTL2,CHGR_CC_EN_BIT);
 
 	chip_id = ANA_REG_GET(ANA_APB_CHIP_ID_LOW);
 	chip_id |= (ANA_REG_GET(ANA_APB_CHIP_ID_HIG) << 16);
