@@ -46,6 +46,10 @@ ifdef CONFIG_SC7710G2
 CPU_OBJ_FILE += sdram_sc7710g2.o sdram_prod_sc7710g2.o
 endif
 
+ifdef CONFIG_SC7710G2
+CPU_OBJ_FILE += adi_drv.o misc.o
+endif
+
 CPU_LIB       = $(addprefix $(obj),$(CPU_OBJ_FILE))
 
 UBOOT_LIBS    = $(ARM_LIB) $(COMMON_LIB) $(GENERIC_LIB) $(DRIVERS_LIB)

@@ -69,6 +69,10 @@ ARCH_LIB =
 CPU_OBJ = timer.o chip_cfg.o chip_phy_v3.o boot_mode.o watchdog_hal.o watchdog_phy_v3.o adi_drv.o mmu.o mmu_asm.o rtc-sprd.o sec_boot.o
 CPU_LIB = $(addprefix $(obj),$(CPU_OBJ))
 
+ifdef CONFIG_SC7710G2
+CPU_OBJ += misc.o
+endif
+
 GENERIC_LIB = $(OBJTREE)/lib/libgeneric.o
 ifdef CONFIG_EMMC_BOOT
 UBOOT_LIBS = $(MTD_LIB) $(ARM_LIB) $(NAND_LIB) $(YAFFS2_LIB) $(COMMON_LIB) $(CPU_LIB) $(GENERIC_LIB) $(DRIVERS_LIB) $(ARCH_LIB) $(EMMC_LIB) $(UEFI_LIB) $(EXT4_LIB)
