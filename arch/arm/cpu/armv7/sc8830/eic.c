@@ -14,6 +14,7 @@
 #include <asm/io.h>
 #include <asm/arch/sprd_reg.h>
 #include <asm/arch/sci_types.h>
+#include <asm/arch/sprd_eic.h>
 #include <asm/arch/adi_hal_internal.h>
 #include <asm/arch/chip_drv_common_io.h>
 
@@ -45,8 +46,8 @@ enum eic_die {
 	D_DIE = 1,
 };
 
-#define GPIO_INVALID_ID 0xffff
-#define INVALID_REG		(~(u32)0)
+#define GPIO_INVALID_ID	(0xffff)
+#define INVALID_REG	(~(u32)0)
 
 #define EIC_DATA 0x00
 #define EIC_MASK 0x04
@@ -66,11 +67,6 @@ enum eic_die {
 #define EIC6_CTL 0x58
 #define EIC7_CTL 0x5C
 
-#define SPRD_ADIE_EIC_START 160
-#define SPRD_ADIE_EIC_END   167
-
-#define SPRD_DDIE_EIC_START 0
-#define SPRD_DDIE_EIC_END   4
 
 static void __get_eic_base_info (u32 eic_id, struct eic_info *info)
 {
