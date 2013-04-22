@@ -1424,7 +1424,7 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
     	unsigned long off = * (data + 2);
     	int           ret = EMMC_SUCCESS;
 	unsigned long base_sector;
-
+	int           read_withcheck = 1;
 #if defined(CHIP_ENDIAN_LITTLE)
     	addr = EndianConv_32 (addr);
     	size = EndianConv_32 (size);
@@ -1506,137 +1506,146 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 		is_nv_flag = 0;
 		is_ProdInfo_flag = 0;		
 	  }
-
-	if (is_nv_flag) {
-		if ((read_nv_flag == 0) && (read_bkupnv_flag == 0)) {
+	if (read_withcheck) {
+		if (is_nv_flag) {
+			if ((read_nv_flag == 0) && (read_bkupnv_flag == 0)) {
 #ifdef CONFIG_SC8830
 			//do it later
 #else
-			read_nv_flag = 1;//wrong
-			memset(g_fix_nv_buf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
-			if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
-			 	nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE;
-			else
-			 	nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
-			nSectorOffset = off / EFI_SECTOR_SIZE;
-			g_dl_eMMCStatus.base_sector = efi_GetPartBaseSec(g_dl_eMMCStatus.curUserPartition);
-			if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector + nSectorOffset,  					nSectorCount, (unsigned char *)g_fix_nv_buf)) {
+				read_nv_flag = 1;//wrong
 				memset(g_fix_nv_buf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
-			}
-			if (eMMC_nv_is_correct(g_fix_nv_buf, FIXNV_SIZE) == 1)
-				read_nv_flag = 2;//right				
-
-			read_bkupnv_flag = 1;//wrong
-			memset(g_fixbucknv_buf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
-			if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
-			 	nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE;
-			else
-			 	nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
-			nSectorOffset = off / EFI_SECTOR_SIZE;
-			base_sector = efi_GetPartBaseSec(PARTITION_FIX_NV2);
-			if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea, base_sector + nSectorOffset,  					nSectorCount, (unsigned char *)g_fixbucknv_buf)) {
+				if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
+			 		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE;
+				else
+			 		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
+				nSectorOffset = off / EFI_SECTOR_SIZE;
+				g_dl_eMMCStatus.base_sector = efi_GetPartBaseSec(g_dl_eMMCStatus.curUserPartition);
+				if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector + nSectorOffset, nSectorCount, (unsigned char *)g_fix_nv_buf)) {
+					memset(g_fix_nv_buf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
+				}
+				if (eMMC_nv_is_correct(g_fix_nv_buf, FIXNV_SIZE) == 1)
+					read_nv_flag = 2;//right
+				read_bkupnv_flag = 1;//wrong
 				memset(g_fixbucknv_buf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
-			}
-			if (eMMC_nv_is_correct(g_fixbucknv_buf, FIXNV_SIZE) == 1)
-				read_bkupnv_flag = 2;//right
-
-			if ((read_nv_flag == 2) && (read_bkupnv_flag == 2)) {
-				/* check index */
-				orginal_index = get_nv_index((unsigned char *)g_fix_nv_buf, FIXNV_SIZE);
-				backupfile_index = get_nv_index((unsigned char *)g_fixbucknv_buf, FIXNV_SIZE);
-				if (orginal_index != backupfile_index) {
-					read_nv_flag = 2;
-					read_bkupnv_flag = 1;
-				}
-			}
-
-			if ((read_nv_flag == 2) && (read_bkupnv_flag == 1)) {
-				printf("fixnv is right, but backupfixnv is wrong, so erase and recovery backupfixnv\n");
+				if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
+			 		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE;
+				else
+			 		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
+				nSectorOffset = off / EFI_SECTOR_SIZE;
 				base_sector = efi_GetPartBaseSec(PARTITION_FIX_NV2);
-				if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
-			 		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE;
-				else
-			 		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
-				emmc_real_erase_partition(PARTITION_FIX_NV2);
-				if (!Emmc_Write(PARTITION_USER, base_sector, nSectorCount, (unsigned char *)g_fix_nv_buf)) {
-					//The fixnv checksum is error.
-					SEND_ERROR_RSP (BSL_WRITE_ERROR);
-					return 0;
+				if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea, base_sector + nSectorOffset, nSectorCount, (unsigned char *)g_fixbucknv_buf)) {
+					memset(g_fixbucknv_buf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
 				}
-				printf("write backupfixnv end\n");
-			} else if ((read_nv_flag == 1) && (read_bkupnv_flag == 2)) {
-				printf("backupfixnv is right, but fixnv is wrong, so erase and recovery fixnv\n");
-				base_sector = efi_GetPartBaseSec(PARTITION_FIX_NV1);
-				if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
-			 		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE;
-				else
-			 		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
-				emmc_real_erase_partition(PARTITION_FIX_NV1);
-				if (!Emmc_Write(PARTITION_USER, base_sector, nSectorCount, (unsigned char *)g_fixbucknv_buf)) {
-					//The fixnv checksum is error.
-					SEND_ERROR_RSP (BSL_WRITE_ERROR);
-					return 0;
-				}
-				printf("write fixnv end\n");
-				memcpy((unsigned char *)g_fix_nv_buf, (unsigned char *)g_fixbucknv_buf, (FIXNV_SIZE + 4));
-			} else if ((read_nv_flag == 1) && (read_bkupnv_flag == 1)) {
-				printf("\n\nfixnv and backupfixnv are all wrong.\n\n");
-				memset(g_fix_nv_buf, 0xff, FIXNV_SIZE + 4);
-			} else if ((read_nv_flag == 2) && (read_bkupnv_flag == 2))
-				printf("fixnv and backupfixnv are all right.\n");
+				if (eMMC_nv_is_correct(g_fixbucknv_buf, FIXNV_SIZE) == 1)
+					read_bkupnv_flag = 2;//right
 
-			nv_is_correct(g_fix_nv_buf, FIXNV_SIZE);
-			memset(g_fixbucknv_buf, 0xff, FIXNV_SIZE + 4);
+				if ((read_nv_flag == 2) && (read_bkupnv_flag == 2)) {
+					/* check index */
+					orginal_index = get_nv_index((unsigned char *)g_fix_nv_buf, FIXNV_SIZE);
+					backupfile_index = get_nv_index((unsigned char *)g_fixbucknv_buf, FIXNV_SIZE);
+					if (orginal_index != backupfile_index) {
+						read_nv_flag = 2;
+						read_bkupnv_flag = 1;
+					}
+				}
+
+				if ((read_nv_flag == 2) && (read_bkupnv_flag == 1)) {
+					printf("fixnv is right, but backupfixnv is wrong, so erase and recovery backupfixnv\n");
+					base_sector = efi_GetPartBaseSec(PARTITION_FIX_NV2);
+					if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
+						nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE;
+					else
+						nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
+					emmc_real_erase_partition(PARTITION_FIX_NV2);
+					if (!Emmc_Write(PARTITION_USER, base_sector, nSectorCount, (unsigned char *)g_fix_nv_buf)) {
+						//The fixnv checksum is error.
+						SEND_ERROR_RSP (BSL_WRITE_ERROR);
+						return 0;
+					}
+					printf("write backupfixnv end\n");
+				} else if ((read_nv_flag == 1) && (read_bkupnv_flag == 2)) {
+					printf("backupfixnv is right, but fixnv is wrong, so erase and recovery fixnv\n");
+					base_sector = efi_GetPartBaseSec(PARTITION_FIX_NV1);
+					if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
+						nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE;
+					else
+						nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
+					emmc_real_erase_partition(PARTITION_FIX_NV1);
+					if (!Emmc_Write(PARTITION_USER, base_sector, nSectorCount, (unsigned char *)g_fixbucknv_buf)) {
+						//The fixnv checksum is error.
+						SEND_ERROR_RSP (BSL_WRITE_ERROR);
+						return 0;
+					}
+					printf("write fixnv end\n");
+					memcpy((unsigned char *)g_fix_nv_buf, (unsigned char *)g_fixbucknv_buf, (FIXNV_SIZE + 4));
+				} else if ((read_nv_flag == 1) && (read_bkupnv_flag == 1)) {
+					printf("\n\nfixnv and backupfixnv are all wrong.\n\n");
+					memset(g_fix_nv_buf, 0xff, FIXNV_SIZE + 4);
+				} else if ((read_nv_flag == 2) && (read_bkupnv_flag == 2))
+					printf("fixnv and backupfixnv are all right.\n");
+				nv_is_correct(g_fix_nv_buf, FIXNV_SIZE);
+				memset(g_fixbucknv_buf, 0xff, FIXNV_SIZE + 4);
 #endif
-		} //if ((read_nv_flag == 0) && (read_bkupnv_flag == 0))
+			} //if ((read_nv_flag == 0) && (read_bkupnv_flag == 0))
 
-		ret = EMMC_SUCCESS;
-		if ((read_nv_flag == 2) || (read_bkupnv_flag == 2))
-			memcpy(packet->packet_body.content, (unsigned char *)(g_fix_nv_buf + off), size);
-		else {
-			SEND_ERROR_RSP(BSL_EEROR_CHECKSUM);				
-			return 0;
-		}		
-	} else if (is_ProdInfo_flag) {
-		if (read_prod_info_flag == 0) {
-			memset(g_prod_info_buf, 0xff, PRODUCTINFO_SIZE + EFI_SECTOR_SIZE);
-			if (0 == ((PRODUCTINFO_SIZE + 8) % EFI_SECTOR_SIZE))
-			 	nSectorCount = (PRODUCTINFO_SIZE + 8) / EFI_SECTOR_SIZE;
-			else
-			 	nSectorCount = (PRODUCTINFO_SIZE + 8) / EFI_SECTOR_SIZE + 1;
-			nSectorOffset = off / EFI_SECTOR_SIZE;
-			if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector + nSectorOffset,  					nSectorCount, (unsigned char *)g_prod_info_buf)) {
-				memset(g_prod_info_buf, 0xff, PRODUCTINFO_SIZE + EFI_SECTOR_SIZE);
-				read_prod_info_flag = 0;
-			}
-
-			if (!eMMC_prodinfo_is_correct(g_prod_info_buf, PRODUCTINFO_SIZE)) {
-				memset(g_prod_info_buf, 0xff, PRODUCTINFO_SIZE + EFI_SECTOR_SIZE);
-				read_prod_info_flag = 0;
-			} else
-				read_prod_info_flag = 1;
-
-			read_prod_info_flag = 0;
-			if (!read_prod_info_flag) {
-				memset(g_prod_info_buf, 0xff, PRODUCTINFO_SIZE + EFI_SECTOR_SIZE);
-				base_sector = efi_GetPartBaseSec(PARTITION_PROD_INFO2);
-				if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea, base_sector + nSectorOffset,  						nSectorCount, (unsigned char *)g_prod_info_buf)) {
-					SEND_ERROR_RSP(BSL_WRITE_ERROR);				
-					return 0;
-				}
-				if (!eMMC_prodinfo_is_correct(g_prod_info_buf, PRODUCTINFO_SIZE)) {
-					SEND_ERROR_RSP (BSL_EEROR_CHECKSUM);				
-					return 0;
-				}
-				read_prod_info_flag = 1;
-			}
-		}
-
-		if (read_prod_info_flag) {
-			memcpy(packet->packet_body.content, (unsigned char *)(g_prod_info_buf + off), size);
 			ret = EMMC_SUCCESS;
-		} else
-			ret = EMMC_SYSTEM_ERROR;
+			if ((read_nv_flag == 2) || (read_bkupnv_flag == 2))
+				memcpy(packet->packet_body.content, (unsigned char *)(g_fix_nv_buf + off), size);
+			else {
+				SEND_ERROR_RSP(BSL_EEROR_CHECKSUM);
+				return 0;
+			}
+		} else if (is_ProdInfo_flag) {
+			if (read_prod_info_flag == 0) {
+				memset(g_prod_info_buf, 0xff, PRODUCTINFO_SIZE + EFI_SECTOR_SIZE);
+				if (0 == ((PRODUCTINFO_SIZE + 8) % EFI_SECTOR_SIZE))
+					nSectorCount = (PRODUCTINFO_SIZE + 8) / EFI_SECTOR_SIZE;
+				else
+					nSectorCount = (PRODUCTINFO_SIZE + 8) / EFI_SECTOR_SIZE + 1;
+				nSectorOffset = off / EFI_SECTOR_SIZE;
+				if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector + nSectorOffset, nSectorCount, (unsigned char *)g_prod_info_buf)) {
+					memset(g_prod_info_buf, 0xff, PRODUCTINFO_SIZE + EFI_SECTOR_SIZE);
+					read_prod_info_flag = 0;
+				}
+
+				if (!eMMC_prodinfo_is_correct(g_prod_info_buf, PRODUCTINFO_SIZE)) {
+					memset(g_prod_info_buf, 0xff, PRODUCTINFO_SIZE + EFI_SECTOR_SIZE);
+					read_prod_info_flag = 0;
+				} else
+					read_prod_info_flag = 1;
+
+				read_prod_info_flag = 0;
+				if (!read_prod_info_flag) {
+					memset(g_prod_info_buf, 0xff, PRODUCTINFO_SIZE + EFI_SECTOR_SIZE);
+					base_sector = efi_GetPartBaseSec(PARTITION_PROD_INFO2);
+					if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea, base_sector + nSectorOffset, nSectorCount, (unsigned char *)g_prod_info_buf)) {
+						SEND_ERROR_RSP(BSL_WRITE_ERROR);
+						return 0;
+					}
+					if (!eMMC_prodinfo_is_correct(g_prod_info_buf, PRODUCTINFO_SIZE)) {
+						SEND_ERROR_RSP (BSL_EEROR_CHECKSUM);
+						return 0;
+					}
+					read_prod_info_flag = 1;
+				}
+			}
+
+			if (read_prod_info_flag) {
+				memcpy(packet->packet_body.content, (unsigned char *)(g_prod_info_buf + off), size);
+				ret = EMMC_SUCCESS;
+			} else
+				ret = EMMC_SYSTEM_ERROR;
+		} else {
+			if (0 == (size % EFI_SECTOR_SIZE))
+				 nSectorCount = size / EFI_SECTOR_SIZE;
+			else
+				 nSectorCount = size / EFI_SECTOR_SIZE + 1;
+			nSectorOffset = off / EFI_SECTOR_SIZE;
+			if (Emmc_Read(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector + nSectorOffset,  nSectorCount, (unsigned char *) (packet->packet_body.content)))
+				ret = EMMC_SUCCESS;
+			else
+				ret = EMMC_SYSTEM_ERROR;
+		}
 	} else {
 		if (0 == (size % EFI_SECTOR_SIZE))
 			 nSectorCount = size / EFI_SECTOR_SIZE;
