@@ -1934,11 +1934,22 @@ PUBLIC BOOLEAN SDCARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE
 
 	CARD_SDIO_ASSERT(TRUE == _IsCardHandleValid(cardHandle));	/*assert verified*/
 
-//	CARD_SDIO_PwrCtl(cardHandle,TRUE);
 	cardHandle->bus_width = CARD_WIDTH_1_BIT;
 	cardHandle->BlockLen = 0;
 	cardHandle->vertion = CARD_V_UNKONWN;
-#if 0
+#ifdef CONFIG_SC8830
+#include <asm/arch/pinmap.h>
+	*((volatile unsigned int *)(SPRD_PIN_PHYS+REG_PIN_SD0_D3)) = BIT_PIN_NULL|BITS_PIN_DS(1)|BITS_PIN_AF(3)|BIT_PIN_SLP_NUL|BIT_PIN_SLP_Z;
+
+	sprd_gpio_request(NULL, 100);
+	sprd_gpio_direction_output(NULL, 100, 1);
+	if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD0_GO_IDLE_STATE,0,NULL,rspBuf))
+	{
+		return FALSE;
+	}
+
+	*((volatile unsigned int *)(SPRD_PIN_PHYS+REG_PIN_SD0_D3)) = BIT_PIN_NULL|BITS_PIN_DS(1)|BITS_PIN_AF(0)|BIT_PIN_WPU|BIT_PIN_SLP_NUL|BIT_PIN_SLP_Z;
+#else
 	if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD0_GO_IDLE_STATE,0,NULL,rspBuf))
 	{
 		return FALSE;
