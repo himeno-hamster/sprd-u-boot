@@ -37,12 +37,15 @@
  **---------------------------------------------------------------------------*/
 extern MEM_IODS_E       MEM_IO_DS;
 extern DRAM_BURSTTYPE_E MEM_BURST_TYPE;
+extern DRAM_WC_E        MEM_WC_TYPE;
+
+
 extern uint32 SDRAM_BASE;
 extern uint32 DQS_PDU_RES;	//dqs pull up and pull down resist
 extern uint32 DQS_GATE_EARLY_LATE; 
     
-extern uint32 UMCTL2_LPDDR1_MEM_DS;
-extern uint32 UMCTL2_LPDDR2_MEM_DS;
+extern uint32 PUBL_LPDDR1_DS;
+extern uint32 PUBL_LPDDR2_DS;
     
 extern uint32 B0_SDLL_PHS_DLY;
 extern uint32 B1_SDLL_PHS_DLY;
@@ -125,42 +128,6 @@ static uint32 us_to_x32(uint32 time_us,CLK_TYPE_E clk)
     uint32 clk_num = (clk*time_us);
     return ((clk_num>>5) + 1);
 }
-
-
-/*
- *Read/write mode register in ddr memory.
- *Refer to uMCTL2 databook Chapter2.18 "Mode Register Reads and Writes"
-*/
-static uint32 mr_rw(uint32 dram_type, uint32 mr_ranks, uint32 rw_flag,
-                                     uint32 mr_addr, uint32 mr_data) {
-#if 0
-//changde
-    uint32 mrctrl0=0, mrctrl1=0;
-
-    /* checking that there is no outstanding MR tansacton.MCTL_MRSTAT.[mr_wr_busy] */    
-    while(UMCTL2_REG_GET(UMCTL_MRSTAT)&BIT_0);
-
-    mrctrl0 = (mr_addr << 12) |
-              ((((mr_ranks==MR_RANKS_0ONLY)?0x01:0x00) | 
-                ((mr_ranks==MR_RANKS_1ONLY)?0x02:0x00) |
-                ((mr_ranks==MR_RANKS_0AND2)?0x05:0x00) | 
-                ((mr_ranks==MR_RANKS_1AND3)?0x0A:0x00) |
-                ((mr_ranks==MR_RANKS_ALL)?0x0F:0x00)) << 4) |
-              (((rw_flag==MR_READ)?1:0)<<0); /* Only used for LPDDR2/LPDDR3 */
-    /* mr_addr:Don't care for LPDDR2/LPDDR3 */
-    mrctrl0 &= ~(((IS_LPDDR2(dram_type)||IS_LPDDR3(dram_type))?0x07:0x00)<<12);
-    UMCTL2_REG_SET(UMCTL_MRCTRL0, mrctrl0);
-
-    mrctrl1 = ((IS_LPDDR2(dram_type)||IS_LPDDR3(dram_type))?mr_addr:0x00) << 8) |
-              (mr_data << 0);
-    UMCTL2_REG_SET(UMCTL_MRCTRL1, mrctrl1);
-
-    /* tirger the MR transaction in BIT_31 MRCTRL0.[mr_wr] */
-    reg_bits_set(UMCTL_MRCTRL0, 31, 1, 0x01);
-    /* checking that there is no outstanding MR tansacton.MCTL_MRSTAT.[mr_wr_busy] */    
-    while(UMCTL2_REG_GET(UMCTL_MRSTAT)&BIT_0);
-#endif
-}
 void umctl2_ctl_en(BOOLEAN is_en)
 {
     uint32 reg_value=0,i;
@@ -181,8 +148,8 @@ void umctl2_ctl_en(BOOLEAN is_en)
         for(i = 0; i <= 1000; i++);
     } 
 }
-void umctl2_soft_reset(BOOLEAN is_en) {
-#if 1
+void umctl2_soft_reset(BOOLEAN is_en) 
+{
 	  uint32 reg_value=0, i=0;
     /*soft reset for uMCTL2 in user interface.*/
     if(is_en) 
@@ -201,23 +168,6 @@ void umctl2_soft_reset(BOOLEAN is_en) {
         UMCTL2_REG_SET(0x402b00c8, reg_value);
         for(i = 0; i <= 1000; i++);
     } 
-#else
-	  uint32 reg_value=0, i=0;
-    /*soft reset for uMCTL2 in user interface.*/
-    if(is_en) {
-    // Assert soft reset
-    reg_value =   UMCTL2_REG_GET(0x022b00c8);
-    reg_value &=  ~(0x07 << 8);
-    reg_value |=  0x07 << 8;
-    UMCTL2_REG_SET(0x022b00c8, reg_value);
-    for(i = 0; i <= 1000; i++);
-    } else {
-    reg_value =   UMCTL2_REG_GET(0x022b00c8);
-    reg_value &=  ~(0x07 << 8);
-    UMCTL2_REG_SET(0x022b00c8, reg_value);
-    for(i = 0; i <= 1000; i++);
-    } 
-#endif  
 }
 
 //tempurature derate configuration
@@ -246,15 +196,18 @@ BOOLEAN umctl2_tderate_init(DRAM_INFO* dram,CLK_TYPE_E clk)
 	return;
 }
 
-BOOLEAN umctl2_low_power_init()
+BOOLEAN umctl2_low_power_init(UMCTL_LP_E auto_sf,
+	                          UMCTL_LP_E auto_pd,
+	                          UMCTL_LP_E auto_dpd,
+	                          UMCTL_LP_E auto_ckp)
 {
     //PWRTMG
     //???
     //PWRCTL
-    reg_bits_set(UMCTL_PWRCTL,0, 1, FALSE);//auto self-refresh
-    reg_bits_set(UMCTL_PWRCTL,1, 1, FALSE);//auto power down
-    reg_bits_set(UMCTL_PWRCTL,2, 1, FALSE);//auto deep power down
-    reg_bits_set(UMCTL_PWRCTL,3, 1, FALSE); //en_dfi_dram_clk_disable
+    reg_bits_set(UMCTL_PWRCTL,0, 1, auto_sf);//auto self-refresh
+    reg_bits_set(UMCTL_PWRCTL,1, 1, auto_pd);//auto power down
+    reg_bits_set(UMCTL_PWRCTL,2, 1, auto_dpd);//auto deep power down
+    reg_bits_set(UMCTL_PWRCTL,3, 1, auto_ckp); //en_dfi_dram_clk_disable
 }
 
 void umctl2_basic_mode_init(DRAM_INFO* dram) 
@@ -308,12 +261,13 @@ void umctl2_basic_mode_init(DRAM_INFO* dram)
     *[03:0]:max_rank_rd,This param represents the max number of 64B reads(or 32B in some short read cases)
     *       that can bescheduled consecutively to the same rank.
     */
+    
+	// to be confirm by johnnywang
+	reg_bits_set(UMCTL_DIMMCTL,  0, 1, 1); //stagger_cs_en
 
     // to be confirm by johnnywang
-    reg_bits_set(UMCTL_RANKCTL,  0, 32,(0x06<<8)|
-                                   (0x06<<4)|
-                                   (0x03<<0));
-                                    
+    reg_bits_set(UMCTL_RANKCTL,  0, 32,(0x06<<8)|(0x06<<4)|(0x03<<0));
+//    reg_bits_set(UMCTL_RANKCTL,  0, 32,(0x0f<<8)|(0x0f<<4)|(0x03<<0));                                    
 }
 
 void umctl2_odt_init(DRAM_INFO* dram) 
@@ -564,8 +518,14 @@ void umctl2_refresh_init(DRAM_INFO* dram)
 }
 void umctl2_port_en(UMCTL2_PORT_ID_E port_id,BOOLEAN en)
 {  
-	return; 
-    UMCTL2_REG_SET(UMCTL_PORT_EN_0+port_id*0xb0,en);    //prot enable
+	if(REG32(0x402E00FC) == 0)
+	{
+		return;
+	}
+	else
+	{
+    	UMCTL2_REG_SET(UMCTL_PORT_EN_0+port_id*0xb0,en);    //prot enable
+	}	
 }
 
 void umctl2_allport_en()
@@ -577,6 +537,11 @@ void umctl2_allport_en()
     {
         umctl2_port_en(i,TRUE);
     }
+}
+
+void umctl2_port_auto_gate()
+{
+	REG32(0x402B00F0) |= 0X3FF;
 }
 
 void umctl2_port_init(umctl2_port_info_t* port_info)
@@ -607,135 +572,6 @@ void umctl2_port_init(umctl2_port_info_t* port_info)
         reg_bits_set(UMCTL_PCFGW_0+i*0xb0,12,1,port_info[i].wr_aging);     //wr_port_aging_en
         reg_bits_set(UMCTL_PCFGW_0+i*0xb0,0,10,port_info[i].wr_priority);  //wr_port_priority        
     }
-#if 0    
-    //port0,AP
-    //read
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,0);   //rd_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,11,1,FALSE);//read_reorder_bypass_en
-    reg_bits_set(UMCTL_PCFGR_0,12,1,TRUE); //rd_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,TRUE); //rd_port_urgent_en
-    reg_bits_set(UMCTL_PCFGR_0,14,1,TRUE); //rd_port_pagematch_en
-    reg_bits_set(UMCTL_PCFGR_0,15,1,TRUE); //rd_port_hpr_en    
-    reg_bits_set(UMCTL_PCFGR_0,16,1,TRUE); //rdwr_ordered_en        
-    //write
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,5);   //wr_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,12,1,FALSE);//wr_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,FALSE);//wr_port_urgent_en
-    
-    //port1,Multi Media
-    //read
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,0);   //rd_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,11,1,FALSE);//read_reorder_bypass_en
-    reg_bits_set(UMCTL_PCFGR_0,12,1,TRUE); //rd_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,TRUE); //rd_port_urgent_en
-    reg_bits_set(UMCTL_PCFGR_0,14,1,TRUE); //rd_port_pagematch_en
-    reg_bits_set(UMCTL_PCFGR_0,15,1,TRUE); //rd_port_hpr_en    
-    reg_bits_set(UMCTL_PCFGR_0,16,1,TRUE); //rdwr_ordered_en        
-    //write
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,5);   //wr_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,12,1,FALSE);//wr_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,FALSE);//wr_port_urgent_en
-    
-    //port2,GPU
-    //read
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,0);   //rd_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,11,1,FALSE);//read_reorder_bypass_en
-    reg_bits_set(UMCTL_PCFGR_0,12,1,TRUE); //rd_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,TRUE); //rd_port_urgent_en
-    reg_bits_set(UMCTL_PCFGR_0,14,1,TRUE); //rd_port_pagematch_en
-    reg_bits_set(UMCTL_PCFGR_0,15,1,TRUE); //rd_port_hpr_en    
-    reg_bits_set(UMCTL_PCFGR_0,16,1,TRUE); //rdwr_ordered_en        
-    //write
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,5);   //wr_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,12,1,FALSE);//wr_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,FALSE);//wr_port_urgent_en
-    
-    //port3,CP2-WIFI port0
-    //read
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,0);   //rd_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,11,1,FALSE);//read_reorder_bypass_en
-    reg_bits_set(UMCTL_PCFGR_0,12,1,TRUE); //rd_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,TRUE); //rd_port_urgent_en
-    reg_bits_set(UMCTL_PCFGR_0,14,1,TRUE); //rd_port_pagematch_en
-    reg_bits_set(UMCTL_PCFGR_0,15,1,TRUE); //rd_port_hpr_en    
-    reg_bits_set(UMCTL_PCFGR_0,16,1,TRUE); //rdwr_ordered_en        
-    //write
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,5);   //wr_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,12,1,FALSE);//wr_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,FALSE);//wr_port_urgent_en
-    
-    //port4,CP1-TD
-    //read
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,0);   //rd_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,11,1,FALSE);//read_reorder_bypass_en
-    reg_bits_set(UMCTL_PCFGR_0,12,1,TRUE); //rd_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,TRUE); //rd_port_urgent_en
-    reg_bits_set(UMCTL_PCFGR_0,14,1,TRUE); //rd_port_pagematch_en
-    reg_bits_set(UMCTL_PCFGR_0,15,1,TRUE); //rd_port_hpr_en    
-    reg_bits_set(UMCTL_PCFGR_0,16,1,TRUE); //rdwr_ordered_en        
-    //write
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,5);   //wr_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,12,1,FALSE);//wr_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,FALSE);//wr_port_urgent_en
-    
-    //port5,AP-Matrix,DMA,SDIO,EMMC,NFC,USB
-    //read
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,0);   //rd_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,11,1,FALSE);//read_reorder_bypass_en
-    reg_bits_set(UMCTL_PCFGR_0,12,1,TRUE); //rd_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,TRUE); //rd_port_urgent_en
-    reg_bits_set(UMCTL_PCFGR_0,14,1,TRUE); //rd_port_pagematch_en
-    reg_bits_set(UMCTL_PCFGR_0,15,1,TRUE); //rd_port_hpr_en    
-    reg_bits_set(UMCTL_PCFGR_0,16,1,TRUE); //rdwr_ordered_en        
-    //write
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,5);   //wr_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,12,1,FALSE);//wr_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,FALSE);//wr_port_urgent_en
-    
-    //port6,CP0-WCDMA
-    //read
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,0);   //rd_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,11,1,FALSE);//read_reorder_bypass_en
-    reg_bits_set(UMCTL_PCFGR_0,12,1,TRUE); //rd_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,TRUE); //rd_port_urgent_en
-    reg_bits_set(UMCTL_PCFGR_0,14,1,TRUE); //rd_port_pagematch_en
-    reg_bits_set(UMCTL_PCFGR_0,15,1,TRUE); //rd_port_hpr_en    
-    reg_bits_set(UMCTL_PCFGR_0,16,1,TRUE); //rdwr_ordered_en        
-    //write
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,5);   //wr_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,12,1,FALSE);//wr_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,FALSE);//wr_port_urgent_en
-    
-    //port7,CP2-WIFI port1
-    //read
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,0);   //rd_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,11,1,FALSE);//read_reorder_bypass_en
-    reg_bits_set(UMCTL_PCFGR_0,12,1,TRUE); //rd_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,TRUE); //rd_port_urgent_en
-    reg_bits_set(UMCTL_PCFGR_0,14,1,TRUE); //rd_port_pagematch_en
-    reg_bits_set(UMCTL_PCFGR_0,15,1,TRUE); //rd_port_hpr_en    
-    reg_bits_set(UMCTL_PCFGR_0,16,1,TRUE); //rdwr_ordered_en        
-    //write
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,5);   //wr_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,12,1,FALSE);//wr_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,FALSE);//wr_port_urgent_en
-    
-    //port8,WCDMA CP Matrix
-    //read
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,0);   //rd_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,11,1,FALSE);//read_reorder_bypass_en
-    reg_bits_set(UMCTL_PCFGR_0,12,1,TRUE); //rd_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,TRUE); //rd_port_urgent_en
-    reg_bits_set(UMCTL_PCFGR_0,14,1,TRUE); //rd_port_pagematch_en
-    reg_bits_set(UMCTL_PCFGR_0,15,1,TRUE); //rd_port_hpr_en    
-    reg_bits_set(UMCTL_PCFGR_0,16,1,TRUE); //rdwr_ordered_en        
-    //write
-    reg_bits_set(UMCTL_PCFGR_0, 0,10,5);   //wr_port_priority
-    reg_bits_set(UMCTL_PCFGR_0,12,1,FALSE);//wr_port_aging_en
-    reg_bits_set(UMCTL_PCFGR_0,13,1,FALSE);//wr_port_urgent_en
-    
-    //port9,TD DSP&WCDMA DSP
-#endif    
 }
 /*
  *[2:0]operation mode status
@@ -1028,7 +864,7 @@ void umctl2_poweron_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
              ((MEM_BURST_TYPE==DRAM_BT_INTER)?0x01:0x00)
              )<<3
             )|
-            (0x00<<4)|/*0:Wrap(default);1:No wrap(allow for SDRAM BL4 only)*/
+            (MEM_WC_TYPE<<4)|/*0:Wrap(default);1:No wrap(allow for SDRAM BL4 only)*/
             ((/*WriteRecovery,Default(0x01)*/
               ((tWR==3)?0x01:0x00)|
               ((tWR==4)?0x02:0x00)|
@@ -1183,7 +1019,6 @@ void umctl2_reg_init(CLK_TYPE_E umctl2_clk,umctl2_port_info_t* port_info,DRAM_IN
     umctl2_dfi_init(dram);
     umctl2_odt_init(dram);    
     umctl2_performance_init(dram);    
-    umctl2_low_power_init();
     umctl2_trainctl_init();
     umctl2_tderate_init(dram,umctl2_clk);
     
@@ -1213,15 +1048,15 @@ void publ_basic_mode_init(DRAM_INFO* dram)
     if(IS_LPDDR1(dram_type))
     {
         //when lpddr1,zq power down, override,0xc: 48ohm typical,refer to P155 of multiPHY databook 
-        UMCTL2_REG_SET(PUBL_ZQ0CR0, (1<<31)|(1<<28)|(UMCTL2_LPDDR1_MEM_DS<<5)|(UMCTL2_LPDDR1_MEM_DS)); 
-		UMCTL2_REG_SET(PUBL_ZQ1CR0, (1<<31)|(1<<28)|(UMCTL2_LPDDR1_MEM_DS<<5)|(UMCTL2_LPDDR1_MEM_DS)); 
+        UMCTL2_REG_SET(PUBL_ZQ0CR0, (1<<31)|(1<<28)|(PUBL_LPDDR1_DS<<5)|(PUBL_LPDDR1_DS)); 
+		UMCTL2_REG_SET(PUBL_ZQ1CR0, (1<<31)|(1<<28)|(PUBL_LPDDR1_DS<<5)|(PUBL_LPDDR1_DS)); 
     }
 
     //ZQ0CR1
     //reg_bits_set(PUBL_ZQ0CR1,4,4,0); //on-die termination driver strength, only support in DDR3, to be confirm
-    reg_bits_set(PUBL_ZQ0CR1,0,4,UMCTL2_LPDDR2_MEM_DS); //lpddr2 driver strength
+    reg_bits_set(PUBL_ZQ0CR1,0,4,PUBL_LPDDR2_DS); //lpddr2 driver strength
     //reg_bits_set(PUBL_ZQ1CR1,4,4,0); //on-die termination driver strength, only support in DDR3, to be confirm
-    reg_bits_set(PUBL_ZQ1CR1,0,4,UMCTL2_LPDDR2_MEM_DS); //lpddr2 driver strength
+    reg_bits_set(PUBL_ZQ1CR1,0,4,PUBL_LPDDR2_DS); //lpddr2 driver strength
     
     
     //PGCR
@@ -1391,7 +1226,7 @@ void publ_mdr_init(CLK_TYPE_E umctl2_clk,DRAM_INFO* dram)
 		#if 0
         reg_bits_set(PUBL_MR1,4,1,1);//0:wrap 1:no wrap
 		#else
-		reg_bits_set(PUBL_MR1,4,1,0);//0:wrap 1:no wrap		
+		reg_bits_set(PUBL_MR1,4,1,MEM_WC_TYPE);//0:wrap 1:no wrap		
 		#endif
         reg_bits_set(PUBL_MR1,5,3,((tWR==3)?1:0) |
                                   ((tWR==4)?2:0) |
@@ -1506,6 +1341,15 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 
     //enable all port
     umctl2_allport_en();
+
+#if 0
+    umctl2_low_power_init(UMCTL_AUTO_SF_DIS,
+                          UMCTL_AUTO_PD_DIS,
+                          UMCTL_AUTO_DPD_DIS,
+                          UMCTL_AUTO_CKP_EN);
+
+	umctl2_port_auto_gate();
+#endif
 
     return TRUE;
 }

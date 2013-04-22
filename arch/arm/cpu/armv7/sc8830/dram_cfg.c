@@ -22,22 +22,23 @@
 **----------------------------------------------------------------------------*/
 /*--*/   MEM_IODS_E       MEM_IO_DS          =DS_40R; //DS_34R3(lpddr2 used)                 /*--*--*--*/
 /*--*/   DRAM_BURSTTYPE_E MEM_BURST_TYPE     =DRAM_BT_SEQ;              /*--*--*--*/
+/*--*/   DRAM_WC_E        MEM_WC_TYPE        =DRAM_WRAP;              /*--*--*--*/
 
 /*--*/   uint32 DQS_PDU_RES = DQS_PDU_500OHM;	//dqs pull up and pull down resist
 /*--*/   uint32 DQS_GATE_EARLY_LATE = 2;	                      
     
-/*--*/   uint32 UMCTL2_LPDDR1_MEM_DS = LPDDR1_DS_48_OHM; //lpddr1 driver strength,refer to multiPHY p155
-/*--*/   uint32 UMCTL2_LPDDR2_MEM_DS = LPDDR2_DS_40_OHM; //lpddr2 driver strength,
+/*--*/   uint32 PUBL_LPDDR1_DS = PUBL_LPDDR1_DS_48OHM; //lpddr1 driver strength,refer to multiPHY p155
+/*--*/   uint32 PUBL_LPDDR2_DS = PUBL_LPDDR2_DS_40OHM; //lpddr2 driver strength,
     
-/*--*/   uint32 B0_SDLL_PHS_DLY = SDLL_PHS_DLY_72; //byte0 sll dll phase delay 
-/*--*/   uint32 B1_SDLL_PHS_DLY = SDLL_PHS_DLY_72; //byte1 sll dll phase delay 
-/*--*/   uint32 B2_SDLL_PHS_DLY = SDLL_PHS_DLY_72; //byte2 sll dll phase delay 
-/*--*/   uint32 B3_SDLL_PHS_DLY = SDLL_PHS_DLY_72; //byte3 sll dll phase delay 
+/*--*/   uint32 B0_SDLL_PHS_DLY = PUBL_SDLL_PHS_DEF; //byte0 sll dll phase delay 
+/*--*/   uint32 B1_SDLL_PHS_DLY = PUBL_SDLL_PHS_DEF; //byte1 sll dll phase delay 
+/*--*/   uint32 B2_SDLL_PHS_DLY = PUBL_SDLL_PHS_DEF; //byte2 sll dll phase delay 
+/*--*/   uint32 B3_SDLL_PHS_DLY = PUBL_SDLL_PHS_DEF; //byte3 sll dll phase delay 
     
-/*--*/   uint32 B0_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte0 dqs step delay
-/*--*/   uint32 B1_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte1 dqs step delay
-/*--*/   uint32 B2_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte2 dqs step delay
-/*--*/   uint32 B3_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte3 dqs step delay
+/*--*/   uint32 B0_DQS_STEP_DLY = PUBL_DQS_STEP_DEF; //byte0 dqs step delay
+/*--*/   uint32 B1_DQS_STEP_DLY = PUBL_DQS_STEP_DEF; //byte1 dqs step delay
+/*--*/   uint32 B2_DQS_STEP_DLY = PUBL_DQS_STEP_DEF; //byte2 dqs step delay
+/*--*/   uint32 B3_DQS_STEP_DLY = PUBL_DQS_STEP_DEF; //byte3 dqs step delay
 
 /**---------------------------------------------------------------------------*
  **                            Macro Define
@@ -166,8 +167,8 @@ DRAM_INFO DRAM_INFO_ARRAY[] =
                                                                     //CL=AL+1/2/0 for DDR3
                                                                     //WL=AL+CWL,and CWL is 5~12tCK for DDR3
   //{DRAM_DDR3_1CS_4G_X8_4P,   1,   8,      32,        8,   7,  6, 0, (void *)(&DDR3_ACTIMING)},//DDR3-x8-4die-4gbit_1die-16gbit 
-  {DRAM_LPDDR2_2CS_8G_X32,   2,   8,      32,        4,   6,  3, 0, (void *)(&LPDDR2_ACTIMING)},//NORMAL_LPDDR2_1CS_4G_32BIT  
-  {DRAM_LPDDR2_1CS_4G_X32,   1,   8,      32,        4,   6,  3, 0, (void *)(&LPDDR2_ACTIMING)},//NORMAL_LPDDR2_1CS_4G_32BIT    
+  {DRAM_LPDDR2_2CS_8G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},//NORMAL_LPDDR2_1CS_4G_32BIT  
+  {DRAM_LPDDR2_1CS_4G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},//NORMAL_LPDDR2_1CS_4G_32BIT    
 };
 
 umctl2_port_info_t UMCTL2_PORT_CONFIG[] = 
