@@ -76,8 +76,14 @@ static struct panel_cfg lcd_panel[] = {
 
 #elif defined CONFIG_SC8830
 extern struct panel_spec lcd_nt35516_mipi_spec;
+extern struct panel_spec lcd_ssd2075_mipi_spec;//thomaszhang@20130412
+
 static struct panel_cfg lcd_panel[] = {
     [0]={
+        .lcd_id = 0x2075,
+        .panel = &lcd_ssd2075_mipi_spec ,
+        },
+    [1]={
         .lcd_id = 0x16,
         .panel = &lcd_nt35516_mipi_spec ,
         },
@@ -223,6 +229,15 @@ vidinfo_t panel_info = {
 	.vl_col = 540,
 	.vl_bpix = 4,
 	.vl_row = 960,
+	.cmap = colormap,
+};
+#endif
+
+#ifdef CONFIG_LCD_720P  //thomaszhang@20130412
+vidinfo_t panel_info = {
+	.vl_col = 720,
+	.vl_bpix = 4,
+	.vl_row = 1280,
 	.cmap = colormap,
 };
 #endif

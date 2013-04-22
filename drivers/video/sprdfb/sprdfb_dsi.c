@@ -407,7 +407,18 @@ static int32_t sprdfb_dsi_set_video_mode(void)
 static int32_t sprdfb_dsi_gen_write(uint8_t *param, uint16_t param_length)
 {
 	dsih_error_t result;
+
+#if	 defined(CONFIG_SC8830)&& defined(CONFIG_LCD_720P) //thomaszhang debug for ssd2075 only
+	 dsih_ctrl_t *curInstancePtr = &(dsi_ctx.dsi_inst);
+	 mipi_dsih_eotp_tx(curInstancePtr, 0);
+#endif
+
 	result = mipi_dsih_gen_wr_cmd(&(dsi_ctx.dsi_inst), 0, param, param_length);
+
+#if	 defined(CONFIG_SC8830)&& defined(CONFIG_LCD_720P) //thomaszhang debug for ssd2075 only
+	mipi_dsih_eotp_tx(curInstancePtr, 1);
+#endif
+
 	if(OK != result){
 		FB_PRINT("sprdfb: [%s] error (%d)\n", __FUNCTION__, result);
 		return -1;
@@ -451,7 +462,18 @@ static int32_t sprdfb_dsi_dcs_read(uint8_t command, uint8_t bytes_to_read, uint8
 static int32_t sprd_dsi_force_write(uint8_t data_type, uint8_t *p_params, uint16_t param_length)
 {
 	int32_t iRtn = 0;
+
+#if	 defined(CONFIG_SC8830)&& defined(CONFIG_LCD_720P) //thomaszhang debug for ssd2075 only
+	dsih_ctrl_t *curInstancePtr = &(dsi_ctx.dsi_inst);
+	mipi_dsih_eotp_tx(curInstancePtr, 0);
+#endif
+
 	iRtn = mipi_dsih_gen_wr_packet(&(dsi_ctx.dsi_inst), 0, data_type,  p_params, param_length);
+
+#if	 defined(CONFIG_SC8830)&& defined(CONFIG_LCD_720P) //thomaszhang debug for ssd2075 only
+	mipi_dsih_eotp_tx(curInstancePtr, 1);
+#endif
+
 	return iRtn;
 }
 
@@ -460,7 +482,11 @@ static int32_t sprd_dsi_force_read(uint8_t command, uint8_t bytes_to_read, uint8
 	int32_t iRtn = 0;
 	dsih_ctrl_t *curInstancePtr = &(dsi_ctx.dsi_inst);
 
+#if	 defined(CONFIG_SC8830)&& defined(CONFIG_LCD_720P)//thomaszhang debug for ssd2075 only
+	mipi_dsih_eotp_rx(curInstancePtr, 1);
+#else
 	mipi_dsih_eotp_rx(curInstancePtr, 0);
+#endif
 	mipi_dsih_eotp_tx(curInstancePtr, 0);
 
 	iRtn = mipi_dsih_gen_rd_packet(&(dsi_ctx.dsi_inst),  0,  6,  0, command,  bytes_to_read, read_buffer);

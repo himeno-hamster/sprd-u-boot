@@ -407,7 +407,11 @@ dsih_error_t mipi_dsih_dpi_video(dsih_ctrl_t * instance, dsih_dpi_video_t * vide
         }
         /* BURST by default, returns to LP during ALL empty periods - energy saving */
         mipi_dsih_hal_dpi_lp_during_hfp(instance, 1);
-        mipi_dsih_hal_dpi_lp_during_hbp(instance, 1);
+#if defined(CONFIG_SC8830) && defined(CONFIG_LCD_720P)
+		mipi_dsih_hal_dpi_lp_during_hbp(instance, 0);
+#else
+		mipi_dsih_hal_dpi_lp_during_hbp(instance, 1);
+#endif
         mipi_dsih_hal_dpi_lp_during_vactive(instance, 1);
         mipi_dsih_hal_dpi_lp_during_vfp(instance, 1);
         mipi_dsih_hal_dpi_lp_during_vbp(instance, 1);
