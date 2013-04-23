@@ -67,6 +67,9 @@ DRIVERS_LIB = $(OBJTREE)/drivers/serial/serial_sc8800x.o
 ARCH_LIB =
 
 CPU_OBJ = timer.o chip_cfg.o chip_phy_v3.o boot_mode.o watchdog_hal.o watchdog_phy_v3.o adi_drv.o mmu.o mmu_asm.o rtc-sprd.o sec_boot.o
+ifdef CONFIG_SC8830
+CPU_OBJ+= gpio.o gpio_phy.o
+endif
 CPU_LIB = $(addprefix $(obj),$(CPU_OBJ))
 
 ifdef CONFIG_SC7710G2
