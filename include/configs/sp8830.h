@@ -308,8 +308,8 @@
 #define LCD_BPP LCD_COLOR16
 //#define CONFIG_LCD_HVGA   1
 //#define CONFIG_LCD_QVGA   1
-#define CONFIG_LCD_QHD 1
-//#define CONFIG_LCD_720P 1
+//#define CONFIG_LCD_QHD 1
+#define CONFIG_LCD_720P 1
 //#define CONFIG_LCD_INFO
 //#define LCD_TEST_PATTERN
 //#define CONFIG_LCD_LOGO
