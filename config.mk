@@ -197,6 +197,13 @@ ifeq ($(AUTOBOOT_FLAG), true)
 CFLAGS += -DCONFIG_AUTOBOOT
 endif
 
+ifeq ($(RAM_4G_SUPPORT), true)
+CFLAGS += -DCONFIG_RAM_4G_SUPPORT
+endif
+ifeq ($(ROM_8G_SUPPORT), true)
+CFLAGS += -DCONFIG_ROM_8G_SUPPORT
+endif
+
 ifneq ($(AP_VERSION), )
 CFLAGS += -DCONFIG_AP_VERSION='"$(AP_VERSION)"'
 endif

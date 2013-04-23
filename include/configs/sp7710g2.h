@@ -251,11 +251,19 @@
 #endif
 
 #define MTDIDS_DEFAULT "nand0=sprd-nand"
-
+#ifdef  CONFIG_ROM_8G_SUPPORT
+#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),256k(vmjaluna),256k(modem),2560k(fixnv),2560k(backupfixnv),3m(dsp),3840k(runtimenv),10m(boot),10m(recovery),263m(system),692m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),2560k(productinfo),512k(kpanic),10m(firmware)"
+#else
 #define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),256k(vmjaluna),256k(modem),2560k(fixnv),2560k(backupfixnv),3m(dsp),3840k(runtimenv),10m(boot),10m(recovery),263m(system),180m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),2560k(productinfo),512k(kpanic),10m(firmware)"
+#endif
+
 
 /*in sp8810, no enouth uart resource, uart1 will be occupied by ap-cp, so kenrel has to disable console */
+#ifdef  CONFIG_RAM_4G_SUPPORT
+#define CONFIG_BOOTARGS "mem=512M init=/init "MTDPARTS_DEFAULT CONFIG_UART_CONSOLE
+#else
 #define CONFIG_BOOTARGS "mem=256M init=/init "MTDPARTS_DEFAULT CONFIG_UART_CONSOLE
+#endif
 //for uart console debug only #define CONFIG_BOOTARGS "mem=256M console=ttyS1,115200n8 init=/init "MTDPARTS_DEFAULT
 
 
