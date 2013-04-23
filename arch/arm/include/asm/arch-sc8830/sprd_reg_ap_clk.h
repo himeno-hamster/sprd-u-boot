@@ -59,4 +59,11 @@
 
 /* vars definitions for controller REGS_AP_CLK */
 
+/* vars definitions for REG_AP_CLK_AP_AHB_CFG */
+#define AP_AHB_CLK_SEL_SHIFT		(0)
+#define AP_AHB_CLK_SEL_MASK		(0x3 << AP_AHB_CLK_SEL_SHIFT)
+
+#define AP_APB_CLK_SEL_SHIFT            (0)
+#define AP_APB_CLK_SEL_MASK             (0x3 << AP_AHB_CLK_SEL_SHIFT)
+
 #endif //__REGS_AP_CLK_H__

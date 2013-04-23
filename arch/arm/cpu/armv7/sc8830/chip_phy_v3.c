@@ -18,6 +18,7 @@
 /**---------------------------------------------------------------------------*
  **                         Dependencies                                      *
  **---------------------------------------------------------------------------*/
+#include <asm/io.h>
 #include "asm/arch/sc_reg.h"
 #include "asm/arch/adi_hal_internal.h"
 #include "asm/arch/wdg_drvapi.h"
@@ -255,6 +256,96 @@ PUBLIC BOOLEAN CHIP_PHY_IsResetByWatchDog()
     }
 }
 
+/************************************************************
+*select TDPLL's reference crystal,
+*(1)--RF0---------xtlbuf0-----------
+*                               -?-tdpll_ref_sel-----TDPLL
+*(2)--RF1---------xtlbuf1-----------
+1)rf_id = 0,TDPLL will select (1), or select (2)
+************************************************************/
+PUBLIC uint32 TDPllRefConfig(TDPLL_REF_T rf_id)
+{
+    uint32 pll_reg;
+
+/* before switch reference crystal, it must be sure that no module is using TDPLL */
+    pll_reg = readl(REG_AP_CLK_AP_AHB_CFG);
+    pll_reg &= ~AP_AHB_CLK_SEL_MASK;
+    writel(pll_reg, REG_AP_CLK_AP_AHB_CFG);
+
+    pll_reg = readl(REG_AON_CLK_PUB_AHB_CFG);
+    pll_reg &= ~PUB_AHB_CLK_SEL_MASK;
+    writel(pll_reg, REG_AON_CLK_PUB_AHB_CFG);
+
+    pll_reg = readl(REG_AP_CLK_AP_APB_CFG);
+    pll_reg &= ~AP_APB_CLK_SEL_MASK;
+    writel(pll_reg, REG_AP_CLK_AP_APB_CFG);
+
+    pll_reg = readl(REG_AON_CLK_AON_APB_CFG);
+    pll_reg &= ~PUB_APB_CLK_SEL_MASK;
+    writel(pll_reg, REG_AON_CLK_AON_APB_CFG);
+
+    pll_reg = readl(REG_AON_APB_PLL_SOFT_CNT_DONE);
+    pll_reg &= ~(BIT_TDPLL_SOFT_CNT_DONE);
+    writel(pll_reg, REG_AON_APB_PLL_SOFT_CNT_DONE);
+    udelay(1);
+
+/* switch TDPLL reference crystal */
+    if (rf_id == TDPLL_REF0)
+    {
+        pll_reg = readl(REG_PMU_APB_TDPLL_REL_CFG);
+        pll_reg &= ~(0x1 << 4);
+        writel(pll_reg, REG_PMU_APB_TDPLL_REL_CFG);
+
+        pll_reg = readl(REG_PMU_APB_XTL0_REL_CFG);
+        pll_reg |= BIT_XTL1_AP_SEL;
+        writel(pll_reg, REG_PMU_APB_XTL0_REL_CFG);
+
+        pll_reg = readl(REG_PMU_APB_XTLBUF0_REL_CFG);
+        pll_reg |= BIT_XTLBUF1_AP_SEL;
+        writel(pll_reg, REG_PMU_APB_XTLBUF0_REL_CFG);
+    }
+    else if(rf_id == TDPLL_REF1)
+    {
+        pll_reg = readl(REG_PMU_APB_TDPLL_REL_CFG);
+        pll_reg |= (0x1 << 4);
+        writel(pll_reg, REG_PMU_APB_TDPLL_REL_CFG);
+
+        pll_reg = readl(REG_PMU_APB_XTL1_REL_CFG);
+        pll_reg |= BIT_XTL1_AP_SEL;
+        writel(pll_reg, REG_PMU_APB_XTL1_REL_CFG);
+
+        pll_reg = readl(REG_PMU_APB_XTLBUF1_REL_CFG);
+        pll_reg |= BIT_XTLBUF1_AP_SEL;
+        writel(pll_reg, REG_PMU_APB_XTLBUF1_REL_CFG);
+    }
+    else
+        return 1;
+
+    pll_reg = readl(REG_AON_APB_PLL_SOFT_CNT_DONE);
+    pll_reg |= (BIT_TDPLL_SOFT_CNT_DONE);
+    writel(pll_reg, REG_AON_APB_PLL_SOFT_CNT_DONE);
+
+    udelay(120);
+
+/* after switch, up ahb clock to 128M, APB to 64M */
+    pll_reg = readl(REG_AP_CLK_AP_AHB_CFG);
+    pll_reg |= 0x2;
+    writel(pll_reg, REG_AP_CLK_AP_AHB_CFG);
+
+    pll_reg = readl(REG_AON_CLK_PUB_AHB_CFG);
+    pll_reg |= 0x2;
+    writel(pll_reg, REG_AON_CLK_PUB_AHB_CFG);
+    
+    pll_reg = readl(REG_AP_CLK_AP_APB_CFG);
+    pll_reg |= 0x1;
+    writel(pll_reg, REG_AP_CLK_AP_APB_CFG);
+
+    pll_reg = readl(REG_AON_CLK_AON_APB_CFG);
+    pll_reg |= 0x1;
+    writel(pll_reg, REG_AON_CLK_AON_APB_CFG);
+
+    return 0;
+}
 /**---------------------------------------------------------------------------*
  **                         Compiler Flag                                     *
  **---------------------------------------------------------------------------*/
