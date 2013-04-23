@@ -149,6 +149,7 @@ static uint32_t ssd2075_readid(struct panel_spec *self)
 	mipi_force_read_t mipi_force_read = self->info.mipi->ops->mipi_force_read;
 
 	printk("lcd_ssd2075_mipi read id!\n");
+	return 0x2075;//for no lcd debug
 	mipi_set_cmd_mode();
 
 	for(j = 0; j < 4; j++){
