@@ -40,5 +40,9 @@
 #define REG_AON_CLK_AVS1_CFG            SCI_ADDR(SPRD_AONCKG_PHYS, 0x005c)
 
 /* vars definitions for controller REGS_AON_CLK */
+#define PUB_AHB_CLK_SEL_SHIFT		(0x0)
+#define PUB_AHB_CLK_SEL_MASK		(0x3 << PUB_AHB_CLK_SEL_SHIFT)
 
+#define PUB_APB_CLK_SEL_SHIFT		(0x0)
+#define PUB_APB_CLK_SEL_MASK		(0x3 << PUB_AHB_CLK_SEL_SHIFT)
 #endif //__REGS_AON_CLK_H__
