@@ -302,6 +302,7 @@ static uint32 ap_get_voltage(uint32 channel, MSG_AP_ADC_CNF *pMsgADC)
 	uint32	voltage = 0;
 	uint32  *para=NULL;
         int i = 0;
+	MSG_HEAD_T	*msg;
         adc_channel = channel;
 
         if (adc_channel <= 8)
@@ -318,8 +319,8 @@ static uint32 ap_get_voltage(uint32 channel, MSG_AP_ADC_CNF *pMsgADC)
                 }
                 adc_result >>= 4;
 		voltage = CHGMNG_AdcvalueToVoltage(adc_result);
-                pMsgADC->diag_ap_cnf.status  = 0;
-		para = &pMsgADC->ap_adc_req. parameters;
+                msg = (MSG_HEAD_T *)pMsgADC;
+		para = (msg+1);
                 *para = (voltage/10);
         }
         else
@@ -351,25 +352,17 @@ uint8 ap_adc_process(int flag, char * src, int size, MSG_AP_ADC_CNF * pMsgADC)
 		}
 		break;
 		case AP_ADC_LOAD:
-		{       
 			ap_adc_load(pMsgADC);
-		}
 		break;
 		case AP_ADC_SAVE:
-		{          
 			ap_adc_save(lpApADCReq, pMsgADC);
-		}
 		break;
             	case AP_GET_VOLT:
-		{
-			uint32 channel = lpApADCReq->parameters[0];
-			ap_get_voltage(channel,pMsgADC);
-		}
+			ap_get_voltage(6,pMsgADC);
 		break;
 		default:
 		return 0;                     
 	}
-
 	return 1;
 }
 #endif
