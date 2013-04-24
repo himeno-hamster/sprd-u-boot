@@ -72,9 +72,7 @@ CPU_OBJ+= gpio.o gpio_phy.o
 endif
 CPU_LIB = $(addprefix $(obj),$(CPU_OBJ))
 
-ifdef CONFIG_SC7710G2
-CPU_OBJ += misc.o
-endif
+
 
 GENERIC_LIB = $(OBJTREE)/lib/libgeneric.o
 ifdef CONFIG_EMMC_BOOT

@@ -970,70 +970,6 @@ LOCAL void DMC_Init(void)
     return;
 }
 
-LOCAL void mcu_clock_select(MCU_CLK_SOURCE_E mcu_clk_sel)
-{
-    uint32 i;
-
-//    SCI_ASSERT(mcu_clk_sel < MCU_CLK_NONE);
-
-    i = REG32(AHB_ARM_CLK);
-    i &= ~(0x3 << 23);
-    i |= ((mcu_clk_sel & 0x3) << 23);
-    REG32(AHB_ARM_CLK) = i; 
-}
-
-LOCAL void set_arm_bus_clk_div(uint32 arm_drv, uint32 axi_div, uint32 ahb_div, uint32 dbg_div)
-{
-    uint32 i;
-
-//    SCI_ASSERT(arm_drv < 8);
-//    SCI_ASSERT(axi_div < 4);
-//    SCI_ASSERT(ahb_div < 8);
-//    SCI_ASSERT(dbg_div < 8);
-
-    // A5 AXI DIV
-    i = REG32(CA5_CFG); // 0x20900238
-    i &= ~(0x3 << 12);
-    i |= ((axi_div & 0x3) << 11);
-    REG32(CA5_CFG) = i;
-
-    i = REG32(AHB_ARM_CLK);
-    i &= (~(0x7 | (0x7 << 4) | (0x7 << 14)));
-    i |= (arm_drv & 0x7) | ((ahb_div & 0x7) << 4) | ((dbg_div & 0x7) << 14);
-
-    REG32(AHB_ARM_CLK) = i;
-    
-    for(i = 0; i < 50; i++);
-}
-
-LOCAL void set_gpu_clock_freq(void)
-{
-    // GPU AXI 256M
-    REG32(GR_GEN2) &= ~(0x3);
-}
-
-LOCAL void set_mpll_clock_freq(uint32 clk_freq_hz)
-{
-    uint32 i;
-    uint32 mpll_clk;
-    
-    mpll_clk = (clk_freq_hz / 1000000 / 4);
-
-    SCI_ASSERT(mpll_clk < 0x800);
-    
-    //APB_GEN1_PCLK M_PLL_CTRL_WE
-    REG32(GR_GEN1) |= (1 << 9); // 0x8b000018
-
-    i = REG32(GR_MPLL_MN); //0x8b000024
-    i &= ~ 0x7FF;
-
-	i |= (mpll_clk & 0x7FF);
-	
-    REG32(GR_MPLL_MN) = i;
-    REG32(GR_GEN1) &= ~(1 << 9);
-    
-}
-
 LOCAL void emc_clock_select(EMC_CLK_SOURCE_E emc_clk_sel)
 {
     uint32 i;
@@ -1133,49 +1069,20 @@ LOCAL void set_emc_clock_freq(void)
 
 }
 
-LOCAL void set_chip_clock_freq(void)
-{
-    uint32 arm_drv = 0;
-    uint32 axi_div;
-    uint32 ahb_div;
-    uint32 dbg_div;
-
-    uint32 mpll_clk_freq = s_emc_config.arm_clk;
-
-    if (mpll_clk_freq == CHIP_CLK_26MHZ)
-    {
-        mcu_clock_select(MCU_CLK_XTL_SOURCE);
-        return;
-    }
-    else if ((mpll_clk_freq >= CHIP_CLK_800MHZ) && (mpll_clk_freq <= CHIP_CLK_1200MHZ))
-    {
-        axi_div = 1;
-        ahb_div = 3; // 1/4
-        dbg_div = 7; // 1/8
-    }
-    else if ((mpll_clk_freq > CHIP_CLK_1200MHZ) && (mpll_clk_freq <= CHIP_CLK_1500MHZ))
-    {
-        axi_div = 3; // 1/4
-        ahb_div = 7; // 1/8
-        dbg_div = 7; // 1/8
-    }
-    else
-    {
-        SCI_ASSERT(0);
-    }
-
-    mcu_clock_select(MCU_CLK_XTL_SOURCE);
-
-    set_gpu_clock_freq();
-    set_arm_bus_clk_div(arm_drv, axi_div, ahb_div, dbg_div);
-    set_mpll_clock_freq(mpll_clk_freq);
-
-    mcu_clock_select(MCU_CLK_MPLL_SOURCE);
-}
-
-LOCAL void sdram_init(void)
+void sdram_init(void)
 {
     uint32 i;
+
+    EMC_PARAM_PTR emc_ptr = EMC_GetPara();
+
+//    s_emc_config.arm_clk = emc_ptr->arm_clk;
+    s_emc_config.emc_clk = emc_ptr->emc_clk;
+    s_emc_config.dqs_drv = emc_ptr->dqs_drv;
+    s_emc_config.dat_drv = emc_ptr->dat_drv;
+    s_emc_config.ctl_drv = emc_ptr->ctl_drv;
+    s_emc_config.clk_drv = emc_ptr->clk_drv;
+    s_emc_config.clk_wr  = emc_ptr->clk_wr;
+    s_emc_config.ddr_drv = emc_ptr->ddr_drv;
 
     set_emc_pad(s_emc_config.dqs_drv, s_emc_config.dat_drv, s_emc_config.ctl_drv, s_emc_config.clk_drv);
 
@@ -1200,83 +1107,6 @@ LOCAL void sdram_init(void)
 
 }
 
-__inline LOCAL uint16 ADI_reg_read(uint32 adie_reg_addr)
-{
-    uint32 reg_temp;
-
-    REG32(0x82000024) = adie_reg_addr;
-
-    do{
-        reg_temp = REG32(0x82000028);
-    }
-    while (reg_temp & BIT_31);
-
-    return (uint16)reg_temp;
-}
-__inline LOCAL void ADI_reg_write(uint32 adie_reg_addr, uint16 reg_val)
-{
-	do {////ADI_wait_fifo_empty
-		if ((REG32(ADI_FIFO_STS) & BIT_10) != 0)
-		{
-			break;
-		}
-	} while (1);
-
-    REG32(adie_reg_addr) = reg_val;
-}
-
-__inline LOCAL void set_XOSC32K_config(void)
-{// from 13.8uA to 7.8uA
-    uint16 reg_read;
-
-    reg_read = ADI_reg_read(0x820008AC);
-
-    reg_read &= (~0xFF);
-    reg_read |= 0x95;
-
-    ADI_reg_write(0x820008AC, reg_read);
-}
-
-__inline LOCAL void set_mem_volt(void)
-{
-    uint16 reg_read;
-
-    reg_read = ADI_reg_read(ANA_DCDC_MEM_CTL0);
-
-    reg_read &= (~7);
-    reg_read |= 0x6; // dcdc mem 1.8V
-
-    ADI_reg_write(ANA_DCDC_MEM_CTL0, reg_read);
-
-    reg_read = ADI_reg_read(ANA_LDO_TRIM9);
-
-    reg_read &= (~0x1F);
-
-    ADI_reg_write(ANA_LDO_TRIM9, reg_read); // 0x82000978
-}
-
-PUBLIC void Chip_Init(void) { /*lint !e765 "Chip_Init" is used by init.s entry.s*/
-
-    EMC_PARAM_PTR emc_ptr = EMC_GetPara();
-
-    s_emc_config.arm_clk = emc_ptr->arm_clk;
-    s_emc_config.emc_clk = emc_ptr->emc_clk;
-    s_emc_config.dqs_drv = emc_ptr->dqs_drv;
-    s_emc_config.dat_drv = emc_ptr->dat_drv;
-    s_emc_config.ctl_drv = emc_ptr->ctl_drv;
-    s_emc_config.clk_drv = emc_ptr->clk_drv;
-    s_emc_config.clk_wr  = emc_ptr->clk_wr;
-    s_emc_config.ddr_drv = emc_ptr->ddr_drv;
-
-    set_mem_volt();
-    set_XOSC32K_config();
-
-    set_chip_clock_freq();
-
-    sdram_init();
-
-    return;
-}
 
 
 #ifdef   __cplusplus
