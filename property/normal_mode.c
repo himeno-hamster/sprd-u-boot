@@ -764,7 +764,11 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 	adc_data = malloc(64);
 	memset(adc_data,0,64);
 	if(adc_data){
+#ifndef CONFIG_SC8830
 		ret = read_adc_calibration_data(adc_data,48);
+#else
+		ret = read_adc_cali_data(adc_data,48);
+#endif
 		if(ret > 0){
 			if(((adc_data[2]&0xffff) < 4500 )&&((adc_data[2]&0xffff) > 3000)&&
 			((adc_data[3]&0xffff) < 4500 )&&((adc_data[3]&0xffff) > 3000)){

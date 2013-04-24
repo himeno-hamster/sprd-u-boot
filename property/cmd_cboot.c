@@ -23,6 +23,7 @@ extern int alarm_triggered(void);
 extern void CHG_TurnOn (void);
 extern void CHG_ShutDown (void);
 extern void CHG_Init (void);
+extern int cali_file_check(void);
 
 int boot_pwr_check(void)
 {
@@ -129,6 +130,8 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		sleep_mode();
     }else if(rst_mode == SPECIAL_MODE){
 		special_mode();
+    }else if(rst_mode == CALIBRATION_MODE){
+		calibration_detect(0);
 	}
 #ifdef CONFIG_SC8810
 //    normal_mode();
@@ -137,8 +140,11 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
    if(charger_connected()){
         DBG("%s: charger connected\n", __FUNCTION__);
-#if defined (CONFIG_SP8810W)
-        calibration_detect(1);
+#if defined (CONFIG_SP8810W) || defined (CONFIG_SC8830)
+#ifdef CONFIG_SC8830
+        if(cali_file_check())
+#endif
+        	calibration_detect(1);
 #endif
         charge_mode();
     }
@@ -189,7 +195,10 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 #if BOOT_NATIVE_LINUX_MODEM
         *(volatile u32*)CALIBRATION_FLAG = 0xca;
 #endif
-        calibration_detect(0);
+#ifdef CONFIG_SC8830
+        if(cali_file_check())
+#endif
+                calibration_detect(0);
         //if calibrate success, it will here
         DBG("%s: power done again\n", __FUNCTION__);
         power_down_devices();

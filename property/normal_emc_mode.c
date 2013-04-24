@@ -50,6 +50,21 @@ int nv_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, c
 	return ret;
 }
 
+int Calibration_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, char *buf, int len)
+{
+	disk_partition_t info;
+	unsigned long size = (len +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
+	int ret = 0; /* success */
+
+	if (!get_partition_info(p_block_dev, part, &info)) {
+		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, size / EMMC_SECTOR_SIZE, (uint8*)buf)) {
+			printf("emmc image read error \n");
+			ret = -1; /* fail */
+		}
+	}
+	return ret;
+}
+
 unsigned long char2u32(unsigned char *buf, int offset)
 {
 	unsigned long ret = 0;
