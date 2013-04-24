@@ -308,7 +308,7 @@ static struct ldo_ctl_info ldo_ctl_data[] =
 		.init_level   = LDO_VOLT_LEVEL_FAULT_MAX,
 	},
 	{
-		.id           = LDO_LDO_CAMD1,  //LDO_LDO_CAMMOT
+		.id           = LDO_LDO_CAMM,  //LDO_LDO_CAMMOT
 		.bp_reg       = ANA_REG_GLB_LDO_PD_CTRL,
 		.bp_bits      = BIT_8,
 		.bp_rst_reg   = ANA_REG_GLB_LDO_PD_CTRL,
