@@ -11,7 +11,9 @@
 #include <environment.h>
 #include <jffs2/jffs2.h>
 #include <boot_mode.h>
+#include "../disk/part_uefi.h"
 
+static unsigned int nv_buffer[256]={0};
 static int s_is_calibration_mode = 0;
 /* calibration support uart only */
 #ifdef CONFIG_MODEM_CALI_UART
@@ -36,6 +38,7 @@ typedef  struct tag_cali_command {
 extern int serial_tstc(void);
 static unsigned long long start_time;
 static unsigned long long now_time;
+
 
 static caliberate_device = CALIBERATE_DEVICE_NULL;
 
@@ -226,8 +229,7 @@ extern void usb_in_cal(int flag);
 #define CALIBERATE_COMMOND_T 0xfe
 
 extern int get_cal_enum_ms(void);
-extern int get_cal_io_ms(void);
-extern void calibration_mode(const uint8_t *pcmd, int length);		
+extern int get_cal_io_ms(void);	
 
 unsigned int check_caliberate(uint8_t * buf, int len)
 {
@@ -459,5 +461,52 @@ void calibration_detect(int key)
 int poweron_by_calibration(void)
 {
 	return s_is_calibration_mode;
+}
+
+int cali_file_check(void)
+{
+#ifdef defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8830)
+	int ret = -1;
+	block_dev_desc_t *p_block_dev = NULL;
+
+	p_block_dev = get_dev("mmc", 1);
+	if(NULL == p_block_dev)
+		ret = 0;
+	if (ret == -1) {
+		if(-1 == Calibration_read_partition(p_block_dev, PARTITION_PROD_INFO4, (char *)nv_buffer,sizeof(nv_buffer)))
+			return 0;
+	}else
+		return ret;
+
+	if(nv_buffer[0]== 0xffffffff)
+		return 1;
+	else if((strcmp(nv_buffer[0],"CALI")==0)&&(strcmp(nv_buffer[1],"COMP")!=0))
+		return 1;
+	else 
+		return 0;		
+#endif
+	return 0;	
+}
+
+int read_adc_cali_data(char *buffer,int size)
+{
+#ifdef defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8830)
+	int ret = -1;
+	block_dev_desc_t *p_block_dev = NULL;
+
+	p_block_dev = get_dev("mmc", 1);
+	if(NULL == p_block_dev)
+		ret = 0;
+	if (ret == -1) {
+		if(-1 == Calibration_read_partition(p_block_dev, PARTITION_PROD_INFO4, (char *)nv_buffer,sizeof(nv_buffer)))
+			return 0;
+	}else
+		return 0;
+	if(size>48)
+		size=48;
+	memcpy(buffer,&nv_buffer[2],size);
+	return size;	
+#endif
+	return 0;
 }
 

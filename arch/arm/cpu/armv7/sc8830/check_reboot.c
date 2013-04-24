@@ -14,6 +14,7 @@
 #define   HWRST_STATUS_ALARM 			(0X50)
 #define   HWRST_STATUS_SLEEP 			(0X60)
 #define   HWRST_STATUS_SPECIAL			(0x70)
+#define   HWRST_STATUS_CALIBRATION			(0x80)
 #define   HWRST_STATUS_NORMAL2			(0Xf0)
 
 unsigned check_reboot_mode(void)
@@ -24,6 +25,7 @@ unsigned check_reboot_mode(void)
 	rst_mode &= 0x7FFF;
 	ANA_REG_SET(ANA_REG_GLB_POR_RST_MONITOR, 0); //clear flag
 
+	printf("rst_mode==%x\n",rst_mode);
 	if(rst_mode == HWRST_STATUS_RECOVERY)
 		return RECOVERY_MODE;
 	else if(rst_mode == HWRST_STATUS_FASTBOOT)
@@ -36,6 +38,8 @@ unsigned check_reboot_mode(void)
 		return ALARM_MODE;
 	else if(rst_mode == HWRST_STATUS_SLEEP)
 		return SLEEP_MODE;
+	else if(rst_mode == HWRST_STATUS_CALIBRATION)
+		return CALIBRATION_MODE;
 	else if(rst_mode == HWRST_STATUS_SPECIAL)
 		return SPECIAL_MODE;
 	else{
