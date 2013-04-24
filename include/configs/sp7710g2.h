@@ -252,9 +252,9 @@
 
 #define MTDIDS_DEFAULT "nand0=sprd-nand"
 #ifdef  CONFIG_ROM_8G_SUPPORT
-#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),256k(vmjaluna),256k(modem),2560k(fixnv),2560k(backupfixnv),3m(dsp),3840k(runtimenv),10m(boot),10m(recovery),263m(system),692m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),2560k(productinfo),512k(kpanic),10m(firmware)"
+#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),260m(system),672m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),3840k(productinfo),512k(kpanic),15m(firmware)"
 #else
-#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),256k(vmjaluna),256k(modem),2560k(fixnv),2560k(backupfixnv),3m(dsp),3840k(runtimenv),10m(boot),10m(recovery),263m(system),180m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),2560k(productinfo),512k(kpanic),10m(firmware)"
+#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),260m(system),160m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),3840k(productinfo),512k(kpanic),15m(firmware)" 
 #endif
 
 
