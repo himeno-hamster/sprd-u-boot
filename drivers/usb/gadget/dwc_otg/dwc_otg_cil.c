@@ -922,7 +922,7 @@ void dwc_otg_core_dev_init(dwc_otg_core_if_t * core_if)
 
 #ifdef CONFIG_SC8830
 		/**fisrt 3 txfifos are 0x40 in shark, tooo small, don't use them*/
-		core_if->tx_msk = 3;
+		core_if->tx_msk = 7;
 #else
 		/** Set Tx FIFO Mask all bits 0 */
 		core_if->tx_msk = 0;
