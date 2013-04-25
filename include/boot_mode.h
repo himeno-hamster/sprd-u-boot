@@ -14,7 +14,6 @@ void watchdog_mode(void);
 void unknow_reboot_mode(void);
 void special_mode(void);
 void panic_reboot_mode(void);
-void calibration_mode(void);
 int is_bat_low(void);
 int alarm_flag_check(void);
 int cali_file_check(void);
@@ -28,7 +27,7 @@ int read_adc_cali_data(char *buffer,int size);
 #define SPECIAL_MODE 0x77665507
 #define UNKNOW_REBOOT_MODE 0x77665508
 #define PANIC_REBOOT 0x77665509
-#define CALIBRATION_MODE 0x77665509
+#define CALIBRATION_MODE 0x7766550a
 
 #define BOOT_NORAML 0xf1
 #define BOOT_FASTBOOT 0xf2
