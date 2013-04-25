@@ -1,7 +1,9 @@
 #include <common.h>
+#include <asm/io.h>
 #include <asm/arch/adc_reg_v3.h>
 #include <asm/arch/adc_drvapi.h>
 #include <asm/arch/adi_hal_internal.h>
+#include <asm/arch/sprd_reg.h>
 
 #define pr_err(fmt...) printf(fmt)
 #define pr_warning(fmt...) printf(fmt)
@@ -9,7 +11,9 @@
 void ADC_Init(void)
 {
 	ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_ADC_EN); //ADC enable
-	ANA_REG_OR(ANA_REG_GLB_ARM_CLK_EN,    BIT_CLK_AUXAD_EN); //enable auxad clock
+	ANA_REG_OR(ANA_REG_GLB_ARM_CLK_EN,    BIT_CLK_AUXAD_EN|BIT_CLK_AUXADC_EN); //enable auxad clock
+	ANA_REG_OR(ANA_REG_GLB_XTL_WAIT_CTRL,    BIT_XTL_EN);	//enable clk
+	__raw_writel(__raw_readl(REG_AON_APB_SINDRV_CTRL) |BIT_SINDRV_ENA, REG_AON_APB_SINDRV_CTRL);	//enable ddie to adie clk
 
 	ANA_REG_OR(ADC_CTRL, ADC_EN_BIT);
 	ANA_REG_OR(ADC_CTRL, ADC_MODE_12B);
