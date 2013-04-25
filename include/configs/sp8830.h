@@ -24,7 +24,7 @@
 #define CONFIG_FDL2_PRINT        0
 #define BOOT_NATIVE_LINUX        1
 #define BOOT_NATIVE_LINUX_MODEM  1
-#define CALIBRATION_FLAG         0X81C01000
+#define CALIBRATION_FLAG         0x897FFC00
 
 #define CONFIG_SILENT_CONSOLE
 #define CONFIG_GPIOLIB 1
@@ -144,7 +144,7 @@
 #endif
 
 #define CONFIG_HW_WATCHDOG
-#define CONFIG_AUTOBOOT //used for FPGA test, auto boot other image
+//#define CONFIG_AUTOBOOT //used for FPGA test, auto boot other image
 //#define CONFIG_DISPLAY_CPUINFO
 
 #define CONFIG_CMDLINE_TAG		1	/* enable passing of ATAGs */
