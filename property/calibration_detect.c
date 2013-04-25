@@ -465,22 +465,21 @@ int poweron_by_calibration(void)
 
 int cali_file_check(void)
 {
-#ifdef defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8830)
-	int ret = -1;
+#if defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8830)
+
+#define CALI_MAGIC      (0x49424143) //CALI
+#define CALI_COMP       (0x504D4F43) //COMP
+
 	block_dev_desc_t *p_block_dev = NULL;
 
 	p_block_dev = get_dev("mmc", 1);
 	if(NULL == p_block_dev)
-		ret = 0;
-	if (ret == -1) {
-		if(-1 == Calibration_read_partition(p_block_dev, PARTITION_PROD_INFO4, (char *)nv_buffer,sizeof(nv_buffer)))
-			return 0;
-	}else
-		return ret;
-
-	if(nv_buffer[0]== 0xffffffff)
-		return 1;
-	else if((strcmp(nv_buffer[0],"CALI")==0)&&(strcmp(nv_buffer[1],"COMP")!=0))
+		return 0;
+	if(-1 == Calibration_read_partition(p_block_dev, PARTITION_PROD_INFO4, (char *)nv_buffer,sizeof(nv_buffer))){
+		printf("%s: read PARTITION_PROD_INFO4 error\n", __func__);
+		return 0;
+	}
+	if((nv_buffer[0] != CALI_MAGIC)||(nv_buffer[1]!=CALI_COMP))
 		return 1;
 	else 
 		return 0;		
@@ -490,17 +489,13 @@ int cali_file_check(void)
 
 int read_adc_cali_data(char *buffer,int size)
 {
-#ifdef defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8830)
-	int ret = -1;
+#if defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8830)
 	block_dev_desc_t *p_block_dev = NULL;
 
 	p_block_dev = get_dev("mmc", 1);
 	if(NULL == p_block_dev)
-		ret = 0;
-	if (ret == -1) {
-		if(-1 == Calibration_read_partition(p_block_dev, PARTITION_PROD_INFO4, (char *)nv_buffer,sizeof(nv_buffer)))
-			return 0;
-	}else
+		return 0;
+	if(-1 == Calibration_read_partition(p_block_dev, PARTITION_PROD_INFO4, (char *)nv_buffer,sizeof(nv_buffer)))
 		return 0;
 	if(size>48)
 		size=48;
