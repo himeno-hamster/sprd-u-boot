@@ -109,7 +109,7 @@ static uint32 McuClkConfig()
 {
     uint32 ca7_ckg_cfg;
 
-    //SetMPllClk(ARM_CLK_1500M);
+    SetMPllClk(ARM_CLK_800M);
 
     ca7_ckg_cfg  = REG32(REG_AP_AHB_CA7_CKG_CFG);
     ca7_ckg_cfg &=~(7<<4);  //ap clk div = 0;
