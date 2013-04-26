@@ -138,7 +138,9 @@ static uint32 ArmCoreConfig()
     uint32 dcdc_arm;
     dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_ARM_ADI);
     dcdc_arm &=~(7<<5);
-    dcdc_arm |= (6<<5); //set dcdcarmcore voltage 1.1V->1.2V
+    //dcdc_arm |= (6<<5); //set dcdcarmcore voltage 1.1V->1.2V
+    dcdc_arm |= (4<<5);   //set dcdcarmcore voltage 1.1V->1.0V
+    dcdc_arm |= 14;       //set dcdcarmcore voltage 1.0V->1.042V
     ANA_REG_SET(ANA_REG_GLB_DCDC_ARM_ADI, dcdc_arm);
     REG32(REG_AP_APB_APB_EB) |= BIT_AP_CKG_EB;        // CKG enable
     delay();
