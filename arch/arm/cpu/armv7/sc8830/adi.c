@@ -25,6 +25,11 @@
 #include <asm/sizes.h>
 #include <asm/arch/sprd_reg.h>
 
+#ifdef SPRD_MISC_BASE
+#undef SPRD_MISC_BASE
+#endif
+#define SPRD_MISC_BASE SPRD_MISC_PHYS
+
 /* registers definitions for controller CTL_ADI */
 #define REG_ADI_CTRL0					(SPRD_MISC_BASE + 0x04)
 #define REG_ADI_CHNL_PRI				(SPRD_MISC_PHYS + 0x08)

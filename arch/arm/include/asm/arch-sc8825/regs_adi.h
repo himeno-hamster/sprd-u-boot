@@ -61,7 +61,7 @@
 #define    PD_WR_PRI            14
 
 #define ANA_REG_ADDR_START      (ADI_BASE + 0x40) //0x82000040
-#define ANA_REG_ADDR_END        (ADI_BASE + 0x780) //0x82000780
+#define ANA_REG_ADDR_END        (ADI_BASE + 0x800) //0x82000800
 
 #endif  //_ADI_REG_V3_H_
 

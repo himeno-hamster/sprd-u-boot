@@ -351,4 +351,8 @@
 
 //#define CALIBRATION_FLAG           0x89700000
 
+#define CONFIG_CMD_SOUND 1
+#define CONFIG_CMD_FOR_HTC 1
+#define CONFIG_SOUND_CODEC_SPRD_V3 1
+
 #endif /* __CONFIG_H */

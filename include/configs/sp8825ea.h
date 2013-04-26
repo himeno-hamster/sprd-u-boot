@@ -414,4 +414,8 @@
 #define PWR_KEY_DETECT_CNT 12 /*this should match the count of boot_pwr_check() function */
 #define ALARM_LEAD_SET_MS 0 /* time set for alarm boot in advancd */
 
+#define CONFIG_CMD_SOUND 1
+#define CONFIG_CMD_FOR_HTC 1
+#define CONFIG_SOUND_CODEC_SPRD 1
+
 #endif /* __CONFIG_H */

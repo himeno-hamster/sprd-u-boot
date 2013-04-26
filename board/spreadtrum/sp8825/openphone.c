@@ -17,6 +17,7 @@ DECLARE_GLOBAL_DATA_PTR;
 extern void sprd_gpio_init(struct eic_gpio_resource *r);
 extern void ADI_init (void);
 extern int LDO_Init(void);
+extern int sound_init(void);
 
 #ifdef CONFIG_GENERIC_MMC
 int mv_sdh_init(u32 regbase, u32 max_clk, u32 min_clk, u32 quirks);
@@ -56,6 +57,8 @@ int board_init()
 #endif	
 	pin_init();
 	sprd_gpio_init(sprd_gpio_resource);
+	sound_init();
+
 	return 0;
 }
 

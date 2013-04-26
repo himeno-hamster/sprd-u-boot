@@ -282,9 +282,9 @@ static struct ldo_ctl_info ldo_ctl_data[] =
 	{
 		.id           = LDO_LDO_CLSG,
 		.bp_reg       = ANA_REG_GLB_LDO_PD_CTRL,
-		.bp_bits      = BIT_9,
+		.bp_bits      = BIT_10,
 		.bp_rst_reg   = ANA_REG_GLB_LDO_PD_CTRL,
-		.bp_rst       = BIT_9,
+		.bp_rst       = BIT_10,
 		.level_reg_b0 = ANA_REG_GLB_LDO_V_CTRL2,
 		.b0           = BIT_10,
 		.b0_rst       = BIT_10,
