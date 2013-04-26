@@ -33,7 +33,7 @@
 
 uint32 LPDDR1_MEM_DS = LPDDR1_DS_39_OHM; //lpddr1 driver strength,refer to multiPHY p155
 uint32 LPDDR2_MEM_DS = LPDDR2_DS_40_OHM; //lpddr1 driver strength,
-uint32 B0_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte0 dqs step delay
+PUBL_DS_E PUBL_DS    = PUBL_DS_40OHM;       //publ driver strength,uint32 B0_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte0 dqs step delay
 uint32 B1_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte1 dqs step delay
 uint32 B2_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte2 dqs step delay
 uint32 B3_DQS_STEP_DLY = DQS_STEP_DLY_DEF; //byte3 dqs step delay
@@ -979,7 +979,7 @@ void EMC_PHY_Mode_Set(DRAM_INFO_T_PTR dram_info)
 
 	//ZQ0CR1
 	REG32(PUBL_CFG_ZQ0CR1) &= ~0xff; 	//diable On-die termination impedance calibration
-	REG32(PUBL_CFG_ZQ0CR1) |= LPDDR2_MEM_DS;
+	REG32(PUBL_CFG_ZQ0CR1) |= PUBL_DS;
 	
 	//PGCR
     temp = REG32(PUBL_CFG_PGCR);
@@ -1353,10 +1353,24 @@ DRAM_DENSITY_E __cal_mem_dsy(uint32 dsy_val)
 	}
 }
 
+customer_timing_t* __get_customer_set(LPDDR2_MANUFACTURE_ID_E lpddr2_id)
+{	
+	uint32 i = 0;
+	for(i = 0; i<sizeof(CUSTOMER_TIMING_INFO)/sizeof(customer_timing_t); i++)
+	{
+		if( CUSTOMER_TIMING_INFO[i].cust_lpddr2_id == lpddr2_id)
+		{
+			return &CUSTOMER_TIMING_INFO[i];
+		}
+	} 
+	return &CUSTOMER_TIMING_INFO[0];
+}	
 BOOLEAN __detect_mem_info(DRAM_INFO_T_PTR dram_info)
 {
 	uint32 cs0_mdr_info = 0;
 	uint32 cs1_mdr_info = 0;
+	LPDDR2_MANUFACTURE_ID_E lpddr2_id = LPDDR2_HYNIX;
+	customer_timing_t* customer_set;
 	if(__is_bond_lpddr2())
 	{
 		//read lpddr2 mdr8 to get io_width,density and type
@@ -1412,8 +1426,23 @@ BOOLEAN __detect_mem_info(DRAM_INFO_T_PTR dram_info)
 			dram_info->mode_info->mem_type == DRAM_LPDDR2_S4;
 		}				
 
-        return TRUE;
-	}
+		//read lpddr2 mdr5 to get manufaturer id
+		EMC_CTL_MDR_Issue(dram_info,FIRST_CS, CMD_MRR, 5);
+		lpddr2_id = __reorder_mem_info(REG32(UMCTL_REG_MRRSTAT0));
+		customer_set = __get_customer_set(lpddr2_id);
+		PUBL_DS = customer_set->cust_publ_ds;
+		LPDDR2_MEM_DS = customer_set->cust_lpddr2_mem_ds;
+		B0_SDLL_PHS_DLY = customer_set->cust_b0_sdll_phs;
+		B1_SDLL_PHS_DLY = customer_set->cust_b1_sdll_phs;
+		B2_SDLL_PHS_DLY = customer_set->cust_b2_sdll_phs;
+		B3_SDLL_PHS_DLY = customer_set->cust_b3_sdll_phs;
+		B0_DQS_STEP_DLY = customer_set->cust_b0_dqs_step;
+		B1_DQS_STEP_DLY = customer_set->cust_b1_dqs_step;
+		B2_DQS_STEP_DLY = customer_set->cust_b2_dqs_step;
+		B3_DQS_STEP_DLY = customer_set->cust_b3_dqs_step;
+
+		return TRUE;
+    }
     else//note!!! don't support lpddr1 type detection now
     {
         return FALSE;
@@ -1465,6 +1494,29 @@ PUBLIC void DMC_Dev_Init(CLK_TYPE_E emc_clk)
 	char* dram_chip_name = NULL;
     ADI_init();
     
+	/* set EMC port remapping to protect unsupported area */
+#ifdef CONFIG_RAM768M
+	REG32(0x20900310) = 0xaaaaaa98;
+	REG32(0x20900314) = 0xaaaaaa98;
+	REG32(0x20900318) = 0xaaaaaa98;
+	REG32(0x2090031c) = 0xaaa8aaaa;
+	REG32(0x20900320) = 0xaaa8aaaa;
+	REG32(0x20900324) = 0xaaaaaa98;
+	REG32(0x20900328) = 0xaaaaaa98;
+	REG32(0x2090032c) = 0xaaaaaa98;
+#else
+	REG32(0x20900310) = 0x99999998;
+	REG32(0x20900314) = 0x99999998;
+	REG32(0x20900318) = 0x99999998;
+	REG32(0x2090031c) = 0x99989999;
+	REG32(0x20900320) = 0x99989999;
+	REG32(0x20900324) = 0x99999998;
+	REG32(0x20900328) = 0x99999998;
+	REG32(0x2090032c) = 0x99999998;
+#endif	
+
+	REG32(0x2090030c) = 0xfff;
+
 	if(__is_bond_lpddr2())
 	{
 		dram_chip_name ="NORMAL_LPDDR2_1CS_4G_32BIT";

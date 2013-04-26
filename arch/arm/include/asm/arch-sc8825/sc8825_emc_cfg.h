@@ -302,6 +302,15 @@ typedef enum
 
 typedef enum
 {
+	PUBL_DS_34OHM = 0xd,
+	PUBL_DS_40OHM = 0xb,
+	PUBL_DS_48OHM = 0x9,
+	PUBL_DS_60OHM = 0x7,
+	PUBL_DS_80OHM = 0x5
+}PUBL_DS_E;
+
+typedef enum
+{
 	LPDDR1_DS_33_OHM = 0xa,
 	LPDDR1_DS_31_OHM = 0xb,
 	LPDDR1_DS_48_OHM = 0xc,
@@ -433,6 +442,41 @@ typedef struct
 
 
 
+typedef enum 
+{
+	LPDDR2_DEFAULT = 0x00,
+	LPDDR2_SAMSUNG = 0x01,
+	LPDDR2_QIMONDA = 0x02,
+	LPDDR2_ELPIDA  = 0x03,
+	LPDDR2_ETRON   = 0x04,
+	LPDDR2_NANYA   = 0X05,
+	LPDDR2_HYNIX   = 0x06,	
+	LPDDR2_MOSEL   = 0X07,
+	LPDDR2_WINBOND = 0X08,
+	LPDDR2_ESMT    = 0X09,
+	LPDDR2_SPANSION= 0X0B,
+	LPDDR2_SST     = 0X0C,
+	LPDDR2_ZMOS    = 0X0D,
+	LPDDR2_INTLE   = 0X0E,
+	LPDDR2_NUMONYX = 0XFE,
+	LPDDR2_MiCRON  = 0XFF
+	
+}LPDDR2_MANUFACTURE_ID_E;
+typedef struct
+{
+	LPDDR2_MANUFACTURE_ID_E cust_lpddr2_id;
+	PUBL_DS_E               cust_publ_ds;
+	LPDDR2_MEM_DS_T_E       cust_lpddr2_mem_ds;
+	SDLL_PHS_DLY_E          cust_b0_sdll_phs;
+	SDLL_PHS_DLY_E          cust_b1_sdll_phs;
+	SDLL_PHS_DLY_E          cust_b2_sdll_phs;
+	SDLL_PHS_DLY_E          cust_b3_sdll_phs;	
+	DQS_STEP_DLY_E          cust_b0_dqs_step;
+	DQS_STEP_DLY_E          cust_b1_dqs_step;
+	DQS_STEP_DLY_E          cust_b2_dqs_step;
+	DQS_STEP_DLY_E          cust_b3_dqs_step;	
+}customer_timing_t;
+
 /*******************************************************************************
                            Variable and Array definiation
 *******************************************************************************/                     
@@ -484,6 +528,58 @@ const DRAM_TIMING_INFO_T DRAM_TIMING_INFO_ARRAY[] =
 	{3900, 43, 	65, 130,  	20,  20,    10,  15, 3,   140, 20, 2,  15,	   90,  360} //NORMAL_LPDDR2_2CS_8G_32BIT				
 //	{7800, 50, 	80, 90,  	30,  30,    15,  15, 3,   140, 20, 0,  0, 		0,    0},//HYNIX_LPDDR1_H9DA4GH4JJAMCR4EM
 //	{3900, 50, 	80, 130,  	20,  30,    15,  15, 3,   140, 20, 2,  15,	   90,  360} //SAMSUNG_LPDDR2_KMKJS000VM	
+};
+
+const customer_timing_t CUSTOMER_TIMING_INFO[] = 
+{
+		{LPDDR2_DEFAULT,
+		PUBL_DS_40OHM,
+		LPDDR2_DS_40_OHM,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		DQS_STEP_DLY_ADD3,
+		DQS_STEP_DLY_ADD1,
+		DQS_STEP_DLY_ADD1,
+		DQS_STEP_DLY_ADD2},
+		
+		{LPDDR2_SAMSUNG, //manufacturer 
+		PUBL_DS_40OHM,
+		LPDDR2_DS_40_OHM,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		DQS_STEP_DLY_ADD3,
+		DQS_STEP_DLY_ADD1,
+		DQS_STEP_DLY_ADD1,
+		DQS_STEP_DLY_ADD2},
+		
+		{LPDDR2_MiCRON,	//manufacturer
+		PUBL_DS_40OHM,
+		LPDDR2_DS_40_OHM,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		DQS_STEP_DLY_ADD3,
+		DQS_STEP_DLY_ADD1,
+		DQS_STEP_DLY_ADD1,
+		DQS_STEP_DLY_ADD2},
+		
+		{LPDDR2_HYNIX,	//manufacturer
+		PUBL_DS_48OHM,
+		LPDDR2_DS_34_OHM,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		SDLL_PHS_DLY_72,
+		DQS_STEP_DLY_ADD3,
+		DQS_STEP_DLY_ADD1,
+		DQS_STEP_DLY_ADD1,
+		DQS_STEP_DLY_ADD2},
+
 };
 
 /*******************************************************************************
