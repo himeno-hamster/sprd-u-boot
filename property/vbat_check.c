@@ -42,6 +42,8 @@ int is_bat_low(void)
         comp_vbat = get_bat_low_level();
     }
 
+    ADC_Init();
+
     for(i=0;i<_BUF_SIZE;i++){
 retry_adc:
         adc_value = ADC_GetValue(ADC_CHANNEL_VBAT, false);
