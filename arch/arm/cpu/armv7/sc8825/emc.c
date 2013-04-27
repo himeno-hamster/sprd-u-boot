@@ -1468,6 +1468,8 @@ BOOLEAN EMC_Init(CLK_TYPE_E emc_clk,EMC_CHN_INFO_T_PTR emc_chn_info,DRAM_INFO_T_
         	__detect_mem_info(dram_info);
 
         	EMC_Common_Reg_Set(emc_clk, emc_chn_info, dram_info);
+
+                EMC_MEM_Init(dram_info);
     }
     
 	EMC_CTL_State_Move(CTL_STATE_CONFIG);
