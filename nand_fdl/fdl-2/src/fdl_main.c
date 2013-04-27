@@ -111,7 +111,7 @@ int main(void)
 	mem_malloc_init (_bss_end, CONFIG_SYS_MALLOC_LEN);	   
 #endif	   
 	timer_init();
-#if defined (CONFIG_TIGER) || defined(CONFIG_SC7710G2) || defined (CONFIG_SC8830)
+#if defined (CONFIG_SC8830)
 #else
 	sprd_clean_rtc();
 #endif
