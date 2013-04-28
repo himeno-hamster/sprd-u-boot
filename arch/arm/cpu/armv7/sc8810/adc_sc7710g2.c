@@ -133,7 +133,7 @@ int32_t ADC_GetValue(adc_channel id, bool scale)
 	adc.channel_type = 0;
 	adc.hw_channel_delay = 0;
 	adc.pbuf = &result[0];
-	adc.sample_bits = 0;    /*use 10 bits mode*/
+	adc.sample_bits = 1;    /*use 12 bits mode*/
 	adc.sample_num = 1;
 	adc.sample_speed = 0;
 	adc.scale = scale;
