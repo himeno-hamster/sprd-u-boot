@@ -74,60 +74,40 @@ static uint32 ApbClkConfig()
     return 0;
 }
 
-static uint32 AxiClkConfig()
+static uint32 AxiClkConfig(uint32 arm_clk)
 {
     uint32 ca7_ckg_cfg;
-
     ca7_ckg_cfg  = REG32(REG_AP_AHB_CA7_CKG_CFG);
-    ca7_ckg_cfg &=~(7<<8);
-    ca7_ckg_cfg |= (2<<8); //axi clk = a7 core / 3
+    ca7_ckg_cfg &= ~(7<<8);
+    ca7_ckg_cfg |= ((arm_clk/(ARM_CLK_500M+1))&0x7)<<8;
+    REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
+    delay();
+    return 0;
+}
+
+static uint32 DbgClkConfig(uint32 arm_clk)
+{
+    uint32 ca7_ckg_cfg;
+    ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);
+    ca7_ckg_cfg &= ~(7<<16);
+    ca7_ckg_cfg |=  ((arm_clk/(ARM_CLK_200M+1))&0x7)<<16;
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
 
     delay();
     return 0;
 }
 
-static uint32 ArmClkPeriSet()
-{
-    return 0;
-}
-
-static uint32 DbgClkConfig()
+static uint32 McuClkConfig(uint32 arm_clk)
 {
     uint32 ca7_ckg_cfg;
 
-    ca7_ckg_cfg  = REG32(REG_AP_AHB_CA7_CKG_CFG);
-    ca7_ckg_cfg &=~(7<<12);
-    ca7_ckg_cfg |= (2<<12); //dbg clk = a7 core / 3
+    SetMPllClk(arm_clk);
+
+    ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);
+    ca7_ckg_cfg &= ~(7<<4);  //ap clk div = 0;
+    ca7_ckg_cfg &= ~7;
+    ca7_ckg_cfg |=  6; //a7 core select mcu MPLL       0:26M 1:(DPLL)533M 2:(CPLL)624M 3:(TDPLL)768M 4:(WIFIPLL)880M 5:(WPLL)921M 6:(MPLL)1200M
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
-
-    delay();
-    return 0;
-}
-
-static uint32 McuClkConfig()
-{
-    uint32 ca7_ckg_cfg;
-
-    SetMPllClk(ARM_CLK_800M);
-
-    ca7_ckg_cfg  = REG32(REG_AP_AHB_CA7_CKG_CFG);
-    ca7_ckg_cfg &=~(7<<4);  //ap clk div = 0;
-    ca7_ckg_cfg &=~7;
-    ca7_ckg_cfg |= 6; //a7 core select mcu 900M        0:26M 1:(DPLL)533M 2:(CPLL)624M 3:(TDPLL)768M 4:(WIFIPLL)880M 5:(WPLL)921M 6:(MPLL)900M
-    REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
-
-    delay();
-    return 0;
-}
-
-static uint32 EmcClkConfig()
-{
-    uint32 emc_cfg;
-    emc_cfg  = REG32(REG_AON_CLK_EMC_CFG);
-    emc_cfg &= ~3; 
-    emc_cfg |=  1; //emc select 256M                   0:26M 1:256M 2:384M 3:533M 
-    REG32(REG_AON_CLK_EMC_CFG) = emc_cfg;
 
     delay();
     return 0;
@@ -147,21 +127,20 @@ static uint32 ArmCoreConfig()
     return 0;
 }
 
-static uint32 ClkConfig()
+static uint32 ClkConfig(uint32 arm_clk)
 {
     ArmCoreConfig();
-    AxiClkConfig();
-    DbgClkConfig();
-    McuClkConfig();
+    AxiClkConfig(arm_clk);
+    DbgClkConfig(arm_clk);
+    McuClkConfig(arm_clk);
     AhbClkConfig();
     ApbClkConfig();
-    EmcClkConfig();
     return 0;
 }
 
 uint32 MCU_Init()
 {
-    if (ClkConfig())
+    if (ClkConfig(ARM_CLK_800M))
         while(1);
     return 0;
 }
