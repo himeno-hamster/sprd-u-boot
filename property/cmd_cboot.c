@@ -44,6 +44,10 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     if(argc > 2)
       goto usage;
 
+#ifdef CONFIG_SC8830
+        if(cali_file_check())
+                calibration_detect(2);
+#endif
 #ifdef CONFIG_SC7710G2
     {
 	extern void set_cp_emc_pad(void);
@@ -140,10 +144,7 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
    if(charger_connected()){
         DBG("%s: charger connected\n", __FUNCTION__);
-#if defined (CONFIG_SP8810W) || defined (CONFIG_SC8830)
-#ifdef CONFIG_SC8830
-        if(cali_file_check())
-#endif
+#if defined (CONFIG_SP8810W) 
         	calibration_detect(1);
 #endif
         charge_mode();
@@ -195,10 +196,9 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 #if BOOT_NATIVE_LINUX_MODEM
         *(volatile u32*)CALIBRATION_FLAG = 0xca;
 #endif
-#ifdef CONFIG_SC8830
-        if(cali_file_check())
+#ifndef CONFIG_SC8830
+        calibration_detect(0);
 #endif
-                calibration_detect(0);
         //if calibrate success, it will here
         DBG("%s: power done again\n", __FUNCTION__);
         power_down_devices();
