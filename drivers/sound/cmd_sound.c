@@ -92,6 +92,7 @@ EXPORT_SYMBOL(snd_reg_wirte_f);
 int sound_init(void)
 {
 	sprd_codec_init();
+	vbc_init();
 }
 
 EXPORT_SYMBOL(sound_init);

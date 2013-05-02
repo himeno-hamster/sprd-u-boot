@@ -210,7 +210,8 @@ static int audio_codec(int enable, int loop, int drv_in, int drv_out)
 		} else {
 			mixer_set(ID_FUN(SPRD_CODEC_SPK_DACL, SPRD_CODEC_LEFT),
 				  enable);
-			//mixer_set(ID_FUN(SPRD_CODEC_SPK_DACR, SPRD_CODEC_LEFT), enable);
+			mixer_set(ID_FUN(SPRD_CODEC_SPK_DACR, SPRD_CODEC_LEFT),
+				  enable);
 		}
 		pga_enable(SPRD_CODEC_PGA_SPKL, 0x03, enable);
 		speaker_pa_enable(enable);
@@ -288,7 +289,7 @@ static int audio_codec(int enable, int loop, int drv_in, int drv_out)
 	if (enable == s_enable) {
 		return 0;
 	} else {
-		if (enable) {
+		if (enable && loop) {
 			printf("%s audio loop\n", _2str(enable));
 			if (!is_analog_loop(loop)) {
 				sprd_codec_digital_loop(enable);
@@ -335,6 +336,77 @@ int do_audio_codec(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 	return audio_codec(enable, loop, drv_in, drv_out);
 }
 
+#ifdef CONFIG_SOUND_DAI_VBC_R2P0
+/* audio pin mux function */
+
+static int audio_iis_fm(int enable, int port, int drv_out)
+{
+	int ret = 0;
+	if (ret = arch_audio_pin_func_i2s_port(port, 0)) {
+		printf("error iis port %d\n", port);
+		return ret;
+	}
+	printf("iis port %d\n", port);
+	arch_audio_i2s_port_sys_sel(port, I2S_PORT_SYS_SEL_VBC);
+	/* codec setting */
+	ret = audio_codec(enable, 0, 0, drv_out);
+	sprd_codec_pcm_set_sample_rate(1, 32000);
+	sprd_codec_pcm_set_sample_rate(0, 32000);
+
+	if (enable == 0xA) {
+		enable = 0;
+	} else {
+		enable -= 0xD;
+	}
+	/* vbc setting */
+	if (enable) {
+		vbc_startup(SNDRV_PCM_STREAM_PLAYBACK);
+		vbc_startup(SNDRV_PCM_STREAM_CAPTURE);
+		vbc_adc_sel_iis(2);
+		vbc_dac0_fm_mixer(1);
+		vbc_dac1_fm_mixer(1);
+		vbc_trigger(SNDRV_PCM_STREAM_PLAYBACK, enable);
+		vbc_trigger(SNDRV_PCM_STREAM_CAPTURE, enable);
+	} else {
+		vbc_trigger(SNDRV_PCM_STREAM_PLAYBACK, enable);
+		vbc_trigger(SNDRV_PCM_STREAM_CAPTURE, enable);
+		vbc_dac0_fm_mixer(0);
+		vbc_dac1_fm_mixer(0);
+		vbc_adc_sel_iis(0);
+		vbc_shutdown(SNDRV_PCM_STREAM_PLAYBACK);
+		vbc_shutdown(SNDRV_PCM_STREAM_CAPTURE);
+	}
+
+	return ret;
+}
+
+
+int do_audio_iis_fm(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
+{
+	int enable = 0;
+	int port = 3;
+	int drv_out = SOUND_SPEAKER;
+
+	if (argc < 2)
+		return cmd_usage(cmdtp);
+
+	enable = simple_strtoul(argv[1], NULL, 16);
+
+	if (!((enable == 0xA) || (enable == 0xD) || (enable == 0xE))) {
+		printf("enable or disable? please refer:\n");
+		return cmd_usage(cmdtp);
+	}
+
+	if (argc > 2)
+		port = simple_strtoul(argv[2], NULL, 16);
+	if (argc > 3)
+		drv_out = simple_strtoul(argv[3], NULL, 16);
+
+	printf("\n");
+	return audio_iis_fm(enable, port, drv_out);
+}
+#endif
+
 int do_func(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	return 0;
@@ -363,4 +435,29 @@ U_BOOT_CMD(audio_codec, 5, 1, do_audio_codec,
 	   "	    0x04  - headphone\n"
 	   "	    0x08  - speaker2\n"
 	   "	loop 	  - select loop\n"
-	   "	    0x01  - digital loop\n" "	    0x02  - analog loop\n");
+	   "	    0x01  - digital loop(d)\n"
+	   "	    0x02  - analog loop\n"
+);
+
+#ifdef CONFIG_SOUND_DAI_VBC_R2P0
+U_BOOT_CMD(audio_iis_fm, 4, 1, do_audio_iis_fm,
+	   "select iis port to play fm",
+	   "\n"
+	   "	- select iis port to play fm with vbc fm mixer\n"
+	   "audio_iis_fm enable [port] [driver_out]\n"
+	   "	enable    - enable or diable audio loop\n"
+	   "	    d  	  - disable\n"
+	   "	    e  	  - enable\n"
+	   "	    a  	  - force all disable\n"
+	   "	port 	  - select iis port\n"
+	   "	    0  	  - iis port 0\n"
+	   "	    1  	  - iis port 1\n"
+	   "	    2  	  - iis port 2\n"
+	   "	    3  	  - iis port 3(d)\n"
+	   "	driver_out- select driver out\n"
+	   "	    0x01  - speaker(d)\n"
+	   "	    0x02  - earpiece\n"
+	   "	    0x04  - headphone\n"
+	   "	    0x08  - speaker2\n"
+);
+#endif

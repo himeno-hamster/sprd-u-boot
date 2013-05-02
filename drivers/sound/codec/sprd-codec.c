@@ -153,6 +153,8 @@ struct sprd_codec_priv {
 	atomic_t adc_digital_power_refcount;
 	atomic_t dac_power_refcount;
 	atomic_t dac_digital_power_refcount;
+	atomic_t digital_power_refcount;
+	atomic_t analog_power_refcount;
 	int da_sample_val;
 	int ad_sample_val;
 	struct sprd_codec_mixer mixer[SPRD_CODEC_MIXER_MAX];
@@ -1124,33 +1126,47 @@ static void sprd_codec_power_disable(struct snd_soc_codec *codec)
 	}
 }
 
-static int digital_power_enable(int enable)
+static int analog_power_enable(int enable)
 {
+	struct snd_soc_codec *codec = &s_sprd_codec;
+	struct sprd_codec_priv *sprd_codec = snd_soc_codec_get_drvdata(codec);
 	int ret = 0;
 
 	sprd_codec_dbg("Entering %s is %s\n", __func__, _2str(enable));
 
 	if (enable) {
-		arch_audio_codec_digital_reg_enable();
+		atomic_inc(&sprd_codec->analog_power_refcount);
+		if (atomic_read(&sprd_codec->analog_power_refcount) == 1) {
+			sprd_codec_power_enable(codec);
+		}
 	} else {
-		arch_audio_codec_digital_reg_disable();
+		if (atomic_dec_and_test(&sprd_codec->analog_power_refcount)) {
+			sprd_codec_power_disable(codec);
+		}
 	}
 
 	return ret;
 }
 
-static int analog_power_enable(int enable)
+static int digital_power_enable(int enable)
 {
-	struct snd_soc_codec *codec = &s_sprd_codec;
 	int ret = 0;
+	struct snd_soc_codec *codec = &s_sprd_codec;
+	struct sprd_codec_priv *sprd_codec = snd_soc_codec_get_drvdata(codec);
 
 	sprd_codec_dbg("Entering %s is %s\n", __func__, _2str(enable));
 
 	if (enable) {
-		sprd_codec_power_enable(codec);
+		atomic_inc(&sprd_codec->digital_power_refcount);
+		if (atomic_read(&sprd_codec->digital_power_refcount) == 1) {
+			arch_audio_codec_digital_reg_enable();
+		}
 	} else {
-		sprd_codec_power_disable(codec);
+		if (atomic_dec_and_test(&sprd_codec->digital_power_refcount)) {
+			arch_audio_codec_digital_reg_disable();
+		}
 	}
+	ret = analog_power_enable(enable);
 
 	return ret;
 }
@@ -2099,6 +2115,8 @@ static int sprd_codec_probe(void)
 	atomic_set(&sprd_codec->adc_digital_power_refcount, 0);
 	atomic_set(&sprd_codec->dac_power_refcount, 0);
 	atomic_set(&sprd_codec->dac_digital_power_refcount, 0);
+	atomic_set(&sprd_codec->digital_power_refcount, 0);
+	atomic_set(&sprd_codec->analog_power_refcount, 0);
 
 #ifdef CONFIG_SPRD_CODEC_USE_INT
 	sprd_codec->ap_irq = CODEC_AP_IRQ;

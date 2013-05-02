@@ -426,5 +426,6 @@
 #define CONFIG_CMD_SOUND 1
 #define CONFIG_CMD_FOR_HTC 1
 #define CONFIG_SOUND_CODEC_SPRD 1
+#define CONFIG_SOUND_DAI_VBC 1
 
 #endif /* __CONFIG_H */

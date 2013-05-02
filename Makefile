@@ -284,7 +284,7 @@ LIBS += $(CPUDIR)/s5p-common/libs5p-common.o
 endif
 LIBS += drivers/sound/libsound.o
 LIBS += drivers/sound/codec/libcodec.o
-#LIBS += drivers/sound/dai/libdai.o
+LIBS += drivers/sound/dai/libdai.o
 
 LIBS := $(addprefix $(obj),$(sort $(LIBS)))
 .PHONY : $(LIBS) $(TIMESTAMP_FILE) $(VERSION_FILE)

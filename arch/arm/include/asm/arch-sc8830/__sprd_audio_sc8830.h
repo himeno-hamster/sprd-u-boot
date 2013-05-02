@@ -823,4 +823,111 @@ static inline int arch_audio_i2s_switch(int id, int master)
 #endif
 	return ret;
 }
+
+#include <asm/arch/pinmap.h>
+static inline int audio_reg_write(u32 reg, u32 val, u32 msk)
+{
+	__raw_writel((__raw_readl(reg) & ~msk) | val, reg);
+}
+
+static inline int pin_func_set(u32 reg, u32 func)
+{
+	audio_reg_write(reg, BITS_PIN_AF(func), BITS_PIN_AF(0xFFFFFFFF));
+}
+
+static inline int arch_audio_pin_func_i2s_port(int id, int sel)
+{
+	int ret = 0;
+
+#if FIXED_AUDIO
+	switch (id) {
+	case 0:
+		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS0DI, 0);
+		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS0DO, 0);
+		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS0CLK, 0);
+		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS0LRCK, 0);
+		break;
+	case 1:
+		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS1DI, 0);
+		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS1DO, 0);
+		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS1CLK, 0);
+		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS1LRCK, 0);
+		break;
+	case 2:
+		if (sel) {
+			pin_func_set(CTL_PIN_BASE + REG_PIN_NFD11, 2);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_NFD12, 2);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_NFD13, 2);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_NFD14, 2);
+		} else {
+			pin_func_set(CTL_PIN_BASE + REG_PIN_IIS2DI, 0);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_IIS2DO, 0);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_IIS2CLK, 0);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_IIS2LRCK, 0);
+		}
+		break;
+	case 3:
+		if (sel) {
+			pin_func_set(CTL_PIN_BASE + REG_PIN_NFD5, 2);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_NFD6, 2);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_NFD7, 2);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_NFD8, 2);
+		} else {
+			pin_func_set(CTL_PIN_BASE + REG_PIN_TRACEDAT3, 1);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_TRACEDAT4, 1);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_TRACEDAT5, 1);
+			pin_func_set(CTL_PIN_BASE + REG_PIN_TRACEDAT6, 1);
+		}
+		break;
+	default:
+		ret = -ENODEV;
+		break;
+	}
+#endif
+	return ret;
+}
+
+enum {
+	I2S_PORT_SYS_SEL_AP = 0,
+	I2S_PORT_SYS_SEL_CP0 = 1,
+	I2S_PORT_SYS_SEL_CP1 = 2,
+	I2S_PORT_SYS_SEL_CP2 = 3,
+	I2S_PORT_SYS_SEL_VBC = 4,
+};
+
+static inline int arch_audio_i2s_port_sys_sel(int id, int sel)
+{
+	int ret = 0;
+
+#if FIXED_AUDIO
+	int val;
+	int msk;
+	switch (id) {
+	case 0:
+		msk = BIT(6) | BIT(7) | BIT(8);
+		val = (sel << 6) & msk;
+		break;
+	case 1:
+		msk = BIT(9) | BIT(10) | BIT(11);
+		val = (sel << 9) & msk;
+		break;
+	case 2:
+		msk = BIT(12) | BIT(13) | BIT(14);
+		val = (sel << 12) & msk;
+		break;
+	case 3:
+		msk = BIT(15) | BIT(16) | BIT(17);
+		val = (sel << 15) & msk;
+		break;
+	default:
+		ret = -ENODEV;
+		break;
+	}
+	if (!ret)
+		audio_reg_write(CTL_PIN_BASE + REG_PIN_CTRL3, val, msk);
+#endif
+	return ret;
+
+}
+
 #endif

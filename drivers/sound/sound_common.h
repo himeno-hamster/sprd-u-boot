@@ -39,6 +39,12 @@
 #define ANA_REG_ADDR_END        (SPRD_ADI_PHYS + 0xFFFF)
 #endif
 
+enum {
+        SNDRV_PCM_STREAM_PLAYBACK = 0,
+        SNDRV_PCM_STREAM_CAPTURE,
+        SNDRV_PCM_STREAM_LAST = SNDRV_PCM_STREAM_CAPTURE,
+};
+
 int snd_reg_read(int reg);
 int snd_reg_write(int reg, int value, int mask);
 int snd_reg_wirte_f(int reg, int value);
@@ -51,6 +57,9 @@ int snd_reg_wirte_f(int reg, int value);
 #endif
 #ifdef CONFIG_SOUND_DAI_VBC
 #include "dai/vbc.h"
+#endif
+#ifdef CONFIG_SOUND_DAI_VBC_R2P0
+#include "dai/vbc_r2p0.h"
 #endif
 #ifdef CONFIG_SOUND_DAI_I2S
 #include "dai/i2s.h"
