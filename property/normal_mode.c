@@ -756,7 +756,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 			*(uint32_t*)(harsh_data+8), *(uint32_t*)(harsh_data+12));
 	}
 
-#ifdef CONFIG_AP_ADC_CALIBRATION
+#if defined( CONFIG_AP_ADC_CALIBRATION) || defined(CONFIG_SC8830)
 {
 	extern int read_adc_calibration_data(char *buffer,int size);
 	unsigned int *adc_data;

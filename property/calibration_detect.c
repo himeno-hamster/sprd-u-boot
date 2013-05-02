@@ -305,7 +305,10 @@ void calibration_detect(int key)
    // lcd_printf("   caliberation mode");
    // lcd_display();
    // set_backlight(50);
-
+#ifdef CONFIG_SC8830
+	if(!charger_connected())
+		return;
+#endif
 #ifdef CONFIG_MODEM_CALIBERATE
 	uint8_t buf[20];
 	for(i = 0; i<20; i++)
