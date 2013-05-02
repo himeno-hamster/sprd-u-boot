@@ -332,7 +332,8 @@ void umctl2_dfi_init(DRAM_INFO* dram)
                                             //                      dfi_dram_clk_disable signal on the DFI until the first 
                                             //                      valid rising edge of the clock to the DRAM memory devices
 
-    //DFITMG1
+    //DFILPCFG0
+    #if 0
     reg_bits_set(UMCTL_DFILPCFG0,24,4,7);//dfi_tlp_resp
     reg_bits_set(UMCTL_DFILPCFG0,20,4,8);//dfi_lp_wakeup_dpd
     reg_bits_set(UMCTL_DFILPCFG0,16,1,IS_DDR3(dram_type)?0:1);//dfi_lp_en_dpd
@@ -340,6 +341,8 @@ void umctl2_dfi_init(DRAM_INFO* dram)
     reg_bits_set(UMCTL_DFILPCFG0, 8,1,1);//dfi_lp_en_sr
     reg_bits_set(UMCTL_DFILPCFG0, 4,4,2);//dfi_lp_wakeup_pd
     reg_bits_set(UMCTL_DFILPCFG0, 0,1,0);//dfi_lp_en_pd
+    #endif
+    UMCTL2_REG_SET(UMCTL_DFILPCFG0,0X0700F100);
 
     //DFIUPD0
     UMCTL2_REG_SET(UMCTL_DFIUPD0, 0X00400003);
