@@ -221,6 +221,13 @@ time:	subs	r1,r1,#0x1
 	orr	r1,  r1,r2
 	str	r1,  [r0]
 #endif
+#else
+	/*
+	 * Enable coherent requested to the processor.
+	*/
+	mrc	p15, 0, r0, c1, c0, 1
+	orr r0, r0,#(0x1<<6)
+	mcr p15, 0, r0, c1, c0, 1 @write aux control register
 #endif
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
 	bl	cpu_init_crit
