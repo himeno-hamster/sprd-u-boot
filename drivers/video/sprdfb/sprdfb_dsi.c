@@ -70,13 +70,13 @@ static void dsi_core_write_function(uint32_t addr, uint32_t offset, uint32_t dat
 static void dsi_reset(void)
 {
 #ifdef CONFIG_SC8830
-	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) | (1<<BIT_DSI_SOFT_RST), REG_AP_AHB_AHB_RST);
+	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) | (BIT_DSI_SOFT_RST), REG_AP_AHB_AHB_RST);
 #else
 	__raw_writel(__raw_readl(AHB_SOFT_RST) | (1<<DSI_SOFT_RST), AHB_SOFT_RST);
 #endif
 	udelay(10);
 #ifdef CONFIG_SC8830
-	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) & (~(1<<BIT_DSI_SOFT_RST)),REG_AP_AHB_AHB_RST);
+	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) & (~(BIT_DSI_SOFT_RST)),REG_AP_AHB_AHB_RST);
 #else
 	__raw_writel(__raw_readl(AHB_SOFT_RST) & (~(1<<DSI_SOFT_RST)),AHB_SOFT_RST);
 #endif
