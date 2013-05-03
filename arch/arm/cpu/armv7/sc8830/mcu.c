@@ -119,7 +119,8 @@ static uint32 ArmCoreConfig()
     dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_ARM_ADI);
     dcdc_arm &=~(7<<5);
     //dcdc_arm |= (6<<5); //set dcdcarmcore voltage 1.1V->1.2V
-    dcdc_arm |= (4<<5);   //set dcdcarmcore voltage 1.1V->1.0V
+    //dcdc_arm |= (4<<5);   //set dcdcarmcore voltage 1.1V->1.0V
+    dcdc_arm |= (3<<5);   //set dcdcarmcore voltage 1.1V->0.9V
     dcdc_arm |= 14;       //set dcdcarmcore voltage 1.0V->1.042V
     ANA_REG_SET(ANA_REG_GLB_DCDC_ARM_ADI, dcdc_arm);
     REG32(REG_AP_APB_APB_EB) |= BIT_AP_CKG_EB;        // CKG enable
@@ -127,9 +128,18 @@ static uint32 ArmCoreConfig()
     return 0;
 }
 
+static void AvsEb()
+{
+    REG32(REG_AON_APB_APB_EB1) |= BIT_AVS1_EB | BIT_AVS0_EB;
+    REG32(0x4003003C) |= 0xF<<5; //enable channel5-8
+    REG32(0x40300020)  = 2;
+    REG32(0x4030001C)  = 1;
+}
+
 static uint32 ClkConfig(uint32 arm_clk)
 {
     ArmCoreConfig();
+    //AvsEb();
     AxiClkConfig(arm_clk);
     DbgClkConfig(arm_clk);
     McuClkConfig(arm_clk);
