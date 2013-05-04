@@ -63,9 +63,9 @@ static void dispc_reset(void)
 	udelay(10);
 	__raw_writel(__raw_readl(AHB_SOFT2_RST) & (~(1<<DISPC_SOFT_RST)), AHB_SOFT2_RST);
 #elif defined CONFIG_SC8830
-	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) | (1<<BIT_DISPC0_SOFT_RST), REG_AP_AHB_AHB_RST);
+	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) | (BIT_DISPC0_SOFT_RST), REG_AP_AHB_AHB_RST);
 	udelay(10);
-	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) & (~(1<<BIT_DISPC0_SOFT_RST)), REG_AP_AHB_AHB_RST);
+	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) & (~(BIT_DISPC0_SOFT_RST)), REG_AP_AHB_AHB_RST);
 #else
 	__raw_writel(__raw_readl(AHB_SOFT_RST) | (1<<DISPC_SOFT_RST), AHB_SOFT_RST);
 	udelay(10);
@@ -467,7 +467,7 @@ static int32_t sprdfb_dispc_uninit(struct sprdfb_device *dev)
 	//disable DISPC clock
 	__raw_bits_and(~(1<<0), AHB_CTL6);
 #elif defined CONFIG_SC8830
-	__raw_bits_or(~(1<<BIT_DISPC0_EB), REG_AP_AHB_AHB_EB);
+	__raw_bits_or(~(BIT_DISPC0_EB), REG_AP_AHB_AHB_EB);
 #else
 	//disable DISPC clock
 	__raw_bits_and(~(1<<22), AHB_CTL0);
