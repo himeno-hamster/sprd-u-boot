@@ -19,7 +19,6 @@
 
 
 #define SYSDUMP_CORE_NAME_FMT 	"sysdump_%s_.core.%02d" /* time, number */
-#define SYSDUMP_CORE_HDR  	0x8e300000  /* SPRD_IO_MEM_BASE in kernel */
 #define NR_KCORE_MEM		80
 #define SYSDUMP_MAGIC		"SPRD_SYSDUMP_119"
 
