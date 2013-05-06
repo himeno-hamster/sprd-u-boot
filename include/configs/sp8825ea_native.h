@@ -407,6 +407,7 @@
 #endif
 
 #define CONFIG_SPRD_SYSDUMP
+#define SYSDUMP_CORE_HDR  	0x8e300000  /* SPRD_IO_MEM_BASE in kernel */
 
 #define CALIBRATE_ENUM_MS 15000
 #define CALIBRATE_IO_MS 10000
