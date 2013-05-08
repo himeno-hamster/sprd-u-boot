@@ -765,7 +765,7 @@ PUBLIC SDIO_CARD_PAL_HANDLE SDIO_Card_Pal_Open (SDIO_CARD_PAL_SLOT_E slotNo)
 #ifndef CONFIG_SC8830
    * (volatile uint32 *) AHB_SDIO_CTL = (AHB_SDIO_CTRL_SLOT0); //select master1
 #endif
-    SDHOST_SD_clk_On(s_sdioCardPalHd[slotNo].sdio_port);
+    //SDHOST_SD_clk_On(s_sdioCardPalHd[slotNo].sdio_port);
     return &s_sdioCardPalHd[slotNo];
 }
 
