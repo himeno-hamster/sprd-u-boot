@@ -1509,9 +1509,6 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 	if (read_withcheck) {
 		if (is_nv_flag) {
 			if ((read_nv_flag == 0) && (read_bkupnv_flag == 0)) {
-#ifdef CONFIG_SC8830
-			//do it later
-#else
 				read_nv_flag = 1;//wrong
 				memset(g_fix_nv_buf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
 				if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
@@ -1532,7 +1529,19 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 				else
 			 		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
 				nSectorOffset = off / EFI_SECTOR_SIZE;
+#ifdef CONFIG_SC8830
+				if (PARTITION_TDFIX_NV1 == g_dl_eMMCStatus.curUserPartition)
+					base_sector = efi_GetPartBaseSec(PARTITION_TDFIX_NV2);
+				else if (PARTITION_WFIX_NV1 == g_dl_eMMCStatus.curUserPartition)
+					base_sector = efi_GetPartBaseSec(PARTITION_WFIX_NV2);
+				else {
+					printf("NV parttion not found ,please check NV partition \n");
+					FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
+					return 0;
+					}
+#else
 				base_sector = efi_GetPartBaseSec(PARTITION_FIX_NV2);
+#endif
 				if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea, base_sector + nSectorOffset, nSectorCount, (unsigned char *)g_fixbucknv_buf)) {
 					memset(g_fixbucknv_buf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
 				}
@@ -1551,12 +1560,36 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 
 				if ((read_nv_flag == 2) && (read_bkupnv_flag == 1)) {
 					printf("fixnv is right, but backupfixnv is wrong, so erase and recovery backupfixnv\n");
+#ifdef CONFIG_SC8830
+					if (PARTITION_TDFIX_NV1 == g_dl_eMMCStatus.curUserPartition)
+						base_sector = efi_GetPartBaseSec(PARTITION_TDFIX_NV2);
+					else if (PARTITION_WFIX_NV1 == g_dl_eMMCStatus.curUserPartition)
+						base_sector = efi_GetPartBaseSec(PARTITION_WFIX_NV2);
+					else {
+						printf("NV parttion not found ,please check NV partition \n");
+						FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
+						return 0;
+						}
+#else
 					base_sector = efi_GetPartBaseSec(PARTITION_FIX_NV2);
+#endif
 					if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
 						nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE;
 					else
 						nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
+#ifdef CONFIG_SC8830
+					if (PARTITION_TDFIX_NV1 == g_dl_eMMCStatus.curUserPartition)
+						emmc_real_erase_partition(PARTITION_TDFIX_NV2);
+					else if (PARTITION_WFIX_NV1 == g_dl_eMMCStatus.curUserPartition)
+						emmc_real_erase_partition(PARTITION_WFIX_NV2);
+					else {
+						printf("NV parttion not found ,please check NV partition \n");
+						FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
+						return 0;
+						}
+#else
 					emmc_real_erase_partition(PARTITION_FIX_NV2);
+#endif
 					if (!Emmc_Write(PARTITION_USER, base_sector, nSectorCount, (unsigned char *)g_fix_nv_buf)) {
 						//The fixnv checksum is error.
 						SEND_ERROR_RSP (BSL_WRITE_ERROR);
@@ -1565,12 +1598,36 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 					printf("write backupfixnv end\n");
 				} else if ((read_nv_flag == 1) && (read_bkupnv_flag == 2)) {
 					printf("backupfixnv is right, but fixnv is wrong, so erase and recovery fixnv\n");
-					base_sector = efi_GetPartBaseSec(PARTITION_FIX_NV1);
+#ifdef CONFIG_SC8830
+					if (PARTITION_TDFIX_NV1 == g_dl_eMMCStatus.curUserPartition)
+						base_sector = efi_GetPartBaseSec(PARTITION_TDFIX_NV2);
+					else if (PARTITION_WFIX_NV1 == g_dl_eMMCStatus.curUserPartition)
+						base_sector = efi_GetPartBaseSec(PARTITION_WFIX_NV2);
+					else {
+						printf("NV parttion not found ,please check NV partition \n");
+						FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
+						return 0;
+						}
+#else
+					base_sector = efi_GetPartBaseSec(PARTITION_FIX_NV2);
+#endif
 					if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
 						nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE;
 					else
 						nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
-					emmc_real_erase_partition(PARTITION_FIX_NV1);
+#ifdef CONFIG_SC8830
+					if (PARTITION_TDFIX_NV1 == g_dl_eMMCStatus.curUserPartition)
+						emmc_real_erase_partition(PARTITION_TDFIX_NV2);
+					else if (PARTITION_WFIX_NV1 == g_dl_eMMCStatus.curUserPartition)
+						emmc_real_erase_partition(PARTITION_WFIX_NV2);
+					else {
+						printf("NV parttion not found ,please check NV partition \n");
+						FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
+						return 0;
+						}
+#else
+					emmc_real_erase_partition(PARTITION_FIX_NV2);
+#endif
 					if (!Emmc_Write(PARTITION_USER, base_sector, nSectorCount, (unsigned char *)g_fixbucknv_buf)) {
 						//The fixnv checksum is error.
 						SEND_ERROR_RSP (BSL_WRITE_ERROR);
@@ -1585,7 +1642,6 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 					printf("fixnv and backupfixnv are all right.\n");
 				nv_is_correct(g_fix_nv_buf, FIXNV_SIZE);
 				memset(g_fixbucknv_buf, 0xff, FIXNV_SIZE + 4);
-#endif
 			} //if ((read_nv_flag == 0) && (read_bkupnv_flag == 0))
 
 			ret = EMMC_SUCCESS;
