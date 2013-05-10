@@ -72,10 +72,11 @@ void power_down_devices(unsigned pd_cmd)
 
 int power_button_pressed(void)
 {
-	sprd_eic_request(EIC_PBINT);
-	udelay(3000);
-	printf("eica status %x\n", sprd_eic_get(EIC_PBINT));
-	return !sprd_eic_get(EIC_PBINT);
+	//sprd_eic_request(EIC_PBINT);
+	//udelay(3000);
+	//printf("eica status %x\n", sprd_eic_get(EIC_PBINT));
+	//return !sprd_eic_get(EIC_PBINT);
+	return 0;
 }
 
 int charger_connected(void)
