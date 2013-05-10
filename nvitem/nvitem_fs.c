@@ -255,9 +255,9 @@ void		ramDisk_Close(RAMDISK_HANDLE handle)
 
 static RAM_NV_CONFIG _ramdiskCfg[RAMNV_NUM+1] = 
 {
+	{3,     "/productinfo/productinfo.bin", "/productinfo/productinfobkup.bin",     0x4000  },
 	{1,	 "/fixnv/fixnv.bin",			 "/backupfixnv/fixnv.bin",		0x20000	},
 	{2,	"/runtimenv/runtimenv.bin",	"/runtimenv/runtimenvbkup.bin",	0x40000	},
-	{3,     "/productinfo/productinfo.bin", "/productinfo/productinfobkup.bin",     0x4000  },
         {0,	"",	"",						0		},
 };
 
@@ -332,20 +332,21 @@ BOOLEAN		ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 	_getPath(firstName,path);
 	cmd_yaffs_mount(path);
 	cmd_yaffs_mread_file(firstName, buf);
-	cmd_yaffs_umount(path);
+//	cmd_yaffs_umount(path);
 
 	//check crc
 	if(_chkEcc(buf, size)){
 		printf("NVITEM partId%x:%s read success!\n",_ramdiskCfg[idx].partId,firstName);
 		return 1;
 	}
-	printf("NVITEM partId%x:%s ECC error!\n",_ramdiskCfg[idx].partId,firstName);
+	printf("NVITEM partId%x:%s ECC error......!\n",_ramdiskCfg[idx].partId,firstName);
 // 2 read bakup image
 	memset(buf, 0xFF, size);
 	_getPath(secondName,path);
-	cmd_yaffs_mount(path);
+	printf("secondName : %s path: %s\n",secondName,path);
+//	cmd_yaffs_mount(path);
 	cmd_yaffs_mread_file(secondName, buf);
-	cmd_yaffs_umount(path);
+//	cmd_yaffs_umount(path);
 
 	if(!_chkEcc(buf, size)){
 		printf("NVITEM partId%x:%s ECC error!\n",_ramdiskCfg[idx].partId,secondName);
