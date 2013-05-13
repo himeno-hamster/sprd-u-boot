@@ -36,6 +36,6 @@ void hw_watchdog_reset(void)
 }
 int fatal_dump_enabled(void)
 {
-        return 0;
+	return *(volatile u32 *) (0x1ffc);
 }
 
