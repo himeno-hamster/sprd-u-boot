@@ -2191,7 +2191,8 @@ PUBLIC BOOLEAN SDCARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE
 		return FALSE;     /*lint !e527*/
 	}
 
-	SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd,SDIO_CARD_PAL_25MHz);
+	SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd,SDIO_CARD_PAL_50MHz);
+	//SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd,SDIO_CARD_PAL_25MHz);
 
 	if(FALSE == _SelectCard(cardHandle))
 	{

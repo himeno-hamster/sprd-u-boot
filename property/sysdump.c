@@ -172,7 +172,11 @@ void write_sysdump_before_boot(void)
 						infop->elfhdr_size + mem[i].soff;
 			else
 				waddr = mem[i].paddr;
-			
+
+		#ifdef CONFIG_RAMDUMP_NO_SPLIT
+				sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT"_dump.lst", infop->time, i + 1);
+				write_mem_to_mmc(path, fnbuf, waddr, mem[i].size);
+		#else
 			if (mem[i].size <= SZ_8M) {
 				sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT, infop->time, i + 1);
 				write_mem_to_mmc(path, fnbuf, waddr, mem[i].size);
@@ -190,6 +194,7 @@ void write_sysdump_before_boot(void)
 									(mem[i].size % SZ_8M));
 				}
 			}
+		#endif
 		}
 #else
 		for (i = 0; i < infop->mem_num; i++) {

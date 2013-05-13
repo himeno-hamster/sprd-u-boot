@@ -331,10 +331,13 @@ void sdhci_set_ios(struct mmc *mmc)
 			ctrl &= ~SDHCI_CTRL_4BITBUS;
 	}
 
+	/* high speed config is not supported on sp8830 */
+#ifndef CONFIG_SDHCI_CTRL_NO_HISPD
 	if (mmc->clock > 26000000)
 		ctrl |= SDHCI_CTRL_HISPD;
 	else
 		ctrl &= ~SDHCI_CTRL_HISPD;
+#endif
 
 	sdhci_writeb(host, ctrl, SDHCI_HOST_CONTROL);
 }

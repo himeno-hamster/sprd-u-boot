@@ -10,7 +10,7 @@
 //#include "asm/arch/deep_sleep.h"
 //#include "asm/arch/deepsleep_drvapi.h"
 
-#define DUAL_TCARD_SUPPORT
+//#define DUAL_TCARD_SUPPORT
 #ifndef OS_NONE
 #define CARD_SDIO_EVENT
 #endif
