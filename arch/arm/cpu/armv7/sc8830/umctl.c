@@ -196,7 +196,7 @@ BOOLEAN umctl2_tderate_init(DRAM_INFO* dram,CLK_TYPE_E clk)
 	return;
 }
 
-BOOLEAN umctl2_low_power_init(UMCTL_LP_E auto_sf,
+BOOLEAN umctl2_low_pd_set(UMCTL_LP_E auto_sf,
 	                          UMCTL_LP_E auto_pd,
 	                          UMCTL_LP_E auto_dpd,
 	                          UMCTL_LP_E auto_ckp)
@@ -208,6 +208,32 @@ BOOLEAN umctl2_low_power_init(UMCTL_LP_E auto_sf,
     reg_bits_set(UMCTL_PWRCTL,1, 1, auto_pd);//auto power down
     reg_bits_set(UMCTL_PWRCTL,2, 1, auto_dpd);//auto deep power down
     reg_bits_set(UMCTL_PWRCTL,3, 1, auto_ckp); //en_dfi_dram_clk_disable
+}
+
+void umctl2_low_power_open()
+{
+	wait_pclk(50);
+    umctl2_low_pd_set(UMCTL_AUTO_SF_DIS,
+                      UMCTL_AUTO_PD_DIS,
+                      UMCTL_AUTO_DPD_DIS,
+                      UMCTL_AUTO_CKP_EN);
+	
+	UMCTL2_REG_SET(UMCTL_DFILPCFG0, 0x0700f100); /*DFI LP setting*/
+	wait_pclk(50);
+	
+	UMCTL2_REG_SET(PUBL_PIR, 0x40010);/*auto trigger ITM reset*/
+	wait_pclk(50);
+	
+	umctl2_port_auto_gate();
+	wait_pclk(50);
+	
+    umctl2_low_pd_set(UMCTL_AUTO_SF_DIS,
+                      UMCTL_AUTO_PD_EN,
+                      UMCTL_AUTO_DPD_DIS,
+                      UMCTL_AUTO_CKP_EN);
+	wait_pclk(50);
+	
+
 }
 
 void umctl2_basic_mode_init(DRAM_INFO* dram) 
@@ -544,7 +570,7 @@ void umctl2_allport_en()
 
 void umctl2_port_auto_gate()
 {
-	REG32(0x402B00F0) |= 0X3FF;
+	REG32(0x402B00F0) = 0X3FF;
 }
 
 void umctl2_port_init(umctl2_port_info_t* port_info)
@@ -1345,13 +1371,8 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
     //enable all port
     umctl2_allport_en();
 
-#if 0
-    umctl2_low_power_init(UMCTL_AUTO_SF_DIS,
-                          UMCTL_AUTO_PD_DIS,
-                          UMCTL_AUTO_DPD_DIS,
-                          UMCTL_AUTO_CKP_EN);
-
-	umctl2_port_auto_gate();
+#if 1
+	umctl2_low_power_open();
 #endif
 
     return TRUE;
