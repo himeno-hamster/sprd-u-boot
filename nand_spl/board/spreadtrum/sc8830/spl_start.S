@@ -47,6 +47,21 @@ _start: b	reset
 	ldr	pc, =0xFFFF0018 
 	ldr	pc, =0xFFFF001C 
 
+/* 0x20 */
+	.rept   40 
+	.long   0xABCD1234
+	.endr
+
+/* 0xC0 */
+	.rept   208
+	.long   0xAABBCCDD
+	.endr
+	
+/* 0x200 */
+	.rept   256
+	.long   0x11223344
+	.endr
+
 /*************************************************************************
  *
  * 32 byte jump
@@ -55,6 +70,7 @@ _start: b	reset
  * 0x50000800
  *
  *************************************************************************/
+
 
 _hang:
 	.word	do_hang
@@ -108,20 +124,40 @@ reset:
 	/*set up temp stack*/
 	LDR 	sp, =SVC_STACK_TEMP
 
+	ldr 	r0, _bss_start_ofs
+	ldr 	r1, _bss_end_ofs
+	bl 	clear_bss
+
 	/* the mask ROM code should have PLL and others stable */
 	mrc 	p15, 0, r1, c1, c0, 0
 	bic 	r1, #0x5
 	mcr 	p15, 0, r1, c1, c0, 0
 
 	bl	cpu_init_crit
+	mov 	r10, #0
 
-	ldr 	r0, _bss_start_ofs
-	ldr 	r1, _bss_end_ofs
-	bl 	clear_bss
+	STMDB 	sp!,{lr} 
+	bl 	lowlevel_init
 
-	bl	Chip_Init
-	ldr     sp, =SPL_STACK 
-	b	nand_boot
+	/*Re-set up stack
+	  The sp here must be in the reserved region
+	  */
+	LDMIA 	sp!, {lr}
+	LDR     sp, =SPL_STACK 
+
+
+/*************************************************************************
+ *
+ * We are done. Do not return, instead branch to second part of board
+ * initialization, now running from RAM.
+ *
+ *************************************************************************/
+jump_2_ram:
+	ldr     r0, _nand_boot_ofs
+	mov	pc, r0
+
+_nand_boot_ofs:
+	.word nand_boot
 
 /*************************************************************************
  * void relocate_code (addr_sp, gd, addr_moni)
