@@ -25,36 +25,52 @@ include $(TOPDIR)/config.mk
 include $(TOPDIR)/nand_spl/board/$(VENDOR)/$(SOC)/config.mk
 
 nandobj	:= $(OBJTREE)/nand_spl/
-LDSCRIPT= $(TOPDIR)/nand_spl/board/$(VENDOR)/$(SOC)/u-boot.lds
-LDFLAGS	= -Bstatic -T $(nandobj)u-boot.lds -Ttext $(CONFIG_SYS_TEXT_BASE) $(PLATFORM_LDFLAGS)
-AFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL
-CFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL -g
+SEC_LDSCRIPT	= $(TOPDIR)/nand_spl/board/$(VENDOR)/$(SOC)/u-boot-sec.lds
+SPL_LDSCRIPT	= $(TOPDIR)/nand_spl/board/$(VENDOR)/$(SOC)/u-boot-spl.lds
+SEC_LDFLAGS	= -Bstatic -T $(SEC_LDSCRIPT) $(PLATFORM_LDFLAGS)
+SPL_LDFLAGS	= -Bstatic -T $(SPL_LDSCRIPT) $(PLATFORM_LDFLAGS)
+AFLAGS		+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL
+CFLAGS		+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL -g
 
-SOBJS	= spl_start.o _udivsi3.o _divsi3.o _umodsi3.o
+SPL_SOBJS	= spl_start.o _udivsi3.o _divsi3.o _umodsi3.o
+SEC_SOBJS	= sec_start.o
 ifdef CONFIG_EMMC_BOOT
-COBJS	= emmc_boot.o mmc.o
+SPL_COBJS	= emmc_boot.o mmc.o
 else
-COBJS	= sprd_tiger_nand_boot.o nand_ecc.o sc8830_nand.o
+SPL_COBJS	= sprd_tiger_nand_boot.o nand_ecc.o sc8830_nand.o
 endif
 
-COBJS   += mcu.o dram_cfg.o umctl.o adi_drv.o chip_cfg.o div0.o string.o sec_boot.o lowlevel_init.o
+SPL_COBJS	+= mcu.o dram_cfg.o umctl.o adi_drv.o chip_cfg.o div0.o string.o lowlevel_init.o
+SEC_COBJS	+= sec_mcu.o sec_boot.o
 
-OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
-__OBJS	:= $(SOBJS) $(COBJS)
-LNDIR	:= $(OBJTREE)/nand_spl/board/$(VENDOR)/$(SOC)
+SEC_OBJS	:= $(addprefix $(obj),$(SEC_SOBJS) $(SEC_COBJS))
+SPL_OBJS	:= $(addprefix $(obj),$(SPL_SOBJS) $(SPL_COBJS))
 
-ALL	= $(nandobj)u-boot-spl $(nandobj)u-boot-spl.bin $(nandobj)u-boot-spl-16k.bin
+__SEC_OBJS	:= $(SEC_COBJS) $(SEC_SOBJS)
+__SPL_OBJS	:= $(SPL_COBJS) $(SPL_SOBJS)
 
-all:	$(ALL)
+LNDIR		:= $(OBJTREE)/nand_spl/board/$(VENDOR)/$(SOC)
 
-$(nandobj)u-boot-spl-16k.bin: $(nandobj)u-boot-spl
-	$(OBJCOPY) ${OBJCFLAGS} --pad-to $(PAD_TO) -O binary $< $@
+ALL		= $(nandobj)u-boot-spl $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin $(nandobj)u-boot-spl-16k.bin
+
+all:$(ALL)
+
+$(nandobj)u-boot-spl-16k.bin: $(nandobj)u-boot-spl.bin $(nandobj)u-boot-sec.bin
+	cat $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin >& $@
+
+$(nandobj)u-boot-sec.bin:	$(nandobj)u-boot-sec
+	$(OBJCOPY) ${OBJCFLAGS} --pad-to "0x50005C00" -O binary $< $@
 
 $(nandobj)u-boot-spl.bin:	$(nandobj)u-boot-spl
-	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
+	$(OBJCOPY) ${OBJCFLAGS} --pad-to "0x5000B000" -O binary $< $@
 
-$(nandobj)u-boot-spl:	$(OBJS) $(LDSCRIPT) $(nandobj)u-boot.lds
-	cd $(LNDIR) && $(LD) $(LDFLAGS) $(__OBJS) \
+$(nandobj)u-boot-sec:	$(SEC_OBJS) $(SEC_LDSCRIPT)
+	cd $(LNDIR) && $(LD) $(SEC_LDFLAGS) $(__SEC_OBJS) \
+		-Map $(nandobj)u-boot-sec.map \
+		-o $@
+
+$(nandobj)u-boot-spl:	$(SPL_OBJS) $(SPL_LDSCRIPT)
+	cd $(LNDIR) && $(LD) $(SPL_LDFLAGS) $(__SPL_OBJS) \
 		-Map $(nandobj)u-boot-spl.map \
 		-o $@
 
