@@ -11,7 +11,6 @@
 
 #define SECURE_BOOT_ENABLE
 
-#ifdef CONFIG_NAND_SPL
 void dump_all_buffer(unsigned char *buf, unsigned long len)
 {
 	unsigned long row, col;
@@ -39,7 +38,6 @@ void dump_all_buffer(unsigned char *buf, unsigned long len)
 
 	printf("\n");
 }
-#endif
 
 typedef struct{
 	struct{
