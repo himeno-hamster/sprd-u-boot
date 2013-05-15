@@ -39,36 +39,28 @@
 
 .globl _start
 _start: b	reset
-	ldr	pc, =0xFFFF0004 
-	ldr	pc, =0xFFFF0008 
-	ldr	pc, =0xFFFF000C 
-	ldr	pc, =0xFFFF0010 
-	ldr	pc, =0xFFFF0014 
-	ldr	pc, =0xFFFF0018 
-	ldr	pc, =0xFFFF001C 
+	ldr	pc, =0xFFFF0004
+	ldr	pc, =0xFFFF0008
+	ldr	pc, =0xFFFF000C
+	ldr	pc, =0xFFFF0010
+	ldr	pc, =0xFFFF0014
+	ldr	pc, =0xFFFF0018
+	ldr	pc, =0xFFFF001C
 
-/*************************************************************************
- *
- * 32 byte jump
- * 2048-32 byte
- *
- * 0x50000800
- *
- *************************************************************************/
+/* 0x20 */
+	.rept   40
+	.long   0xABCD1234
+	.endr
 
-_hang:
-	.word	do_hang
+/* 0xC0 */
+	.rept   208
+	.long   0xAABBCCDD
+	.endr
 
-do_hang:
-	b	do_hang
-
-clear_bss:
-	mov	r2, #0x00000000		/* clear                            */
-clbss_l:str	r2, [r0]		/* clear loop...                    */
-	add	r0, r0, #4
-	cmp	r0, r1
-	ble	clbss_l
-	bx	r14
+/* 0x200 */
+#	.rept   256
+#	.long   0x11223344
+#	.endr
 
 /*************************************************************************
  *
@@ -80,17 +72,6 @@ clbss_l:str	r2, [r0]		/* clear loop...                    */
  * setup stack
  *
  *************************************************************************/
-
-/*
- * These are defined in the board-specific linker script.
- */
-.globl _bss_start_ofs
-_bss_start_ofs:
-	.word __bss_start
-
-.globl _bss_end_ofs
-_bss_end_ofs:
-	.word __bss_end
 
 /*
  * the actual reset code
@@ -114,25 +95,15 @@ reset:
 	mcr 	p15, 0, r1, c1, c0, 0
 
 	bl	cpu_init_crit
+	bl	SecClkConfig
 
-	ldr 	r0, _bss_start_ofs
-	ldr 	r1, _bss_end_ofs
-	bl 	clear_bss
+	ldr	r0, =0x50005C00
+	ldr	r1, =0x5000
+	ldr	r2, =0x5000AC00
+	ldr	r3, =0x50005100
+	bl	secure_check
 
-	bl	Chip_Init
-	ldr     sp, =SPL_STACK 
-	b	nand_boot
-
-/*************************************************************************
- * void relocate_code (addr_sp, gd, addr_moni)
- *
- * This "function" does not return, instead it continues in RAM
- * after relocating the monitor code.
- *
- *************************************************************************/
-	.globl	relocate_code
-relocate_code:
-	mov 	pc, lr
+	ldr	pc, =0x50005C00
 
 /*************************************************************************
  *
