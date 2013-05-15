@@ -56,7 +56,7 @@ ALL		= $(nandobj)u-boot-spl $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin $(
 all:$(ALL)
 
 $(nandobj)u-boot-spl-16k.bin: $(nandobj)u-boot-spl.bin $(nandobj)u-boot-sec.bin
-	cat $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin >& $@ 2>&1
+	cat $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin >& $@
 
 $(nandobj)u-boot-sec.bin:	$(nandobj)u-boot-sec
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to "0x50005C00" -O binary $< $@
