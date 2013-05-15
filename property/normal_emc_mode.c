@@ -385,10 +385,12 @@ void addcmdline(char *buf)
 	sprintf(nv_infor, buf);
 	nv_infor[str_len] = '\0';
 	printf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
+#if defined (CONFIG_SC8830)
 	nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG_WCDMA));
 	sprintf(nv_infor, buf);
 	nv_infor[str_len] = '\0';
 	printf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
+#endif
 #endif
 }
 
