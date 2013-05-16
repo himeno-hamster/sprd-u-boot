@@ -27,6 +27,10 @@ unsigned check_reboot_mode(void)
 		return ALARM_MODE;
 	else if(rst_mode == HWRST_STATUS_SLEEP)
 		return SLEEP_MODE;
+	else if(rst_mode == HWRST_STATUS_SPECIAL)
+		return SPECIAL_MODE;
+	else if(rst_mode == HWRST_STATUS_PANIC)
+		return PANIC_REBOOT;
 	else
 		return 0;
 }
