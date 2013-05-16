@@ -349,6 +349,7 @@ void umctl2_dfi_init(DRAM_INFO* dram)
     reg_bits_set(UMCTL_DFITMG0, 8, 5, 1);  //dfi_tphy_wrdata, SDR and HDR mode =1,refer PUBL spec p143
     reg_bits_set(UMCTL_DFITMG0, 0, 5, wl); //dfi_tphy_wrlat, wl,refer PUBL spec p143
 
+
     //DFITMG1
     reg_bits_set(UMCTL_DFITMG1, 16, 5, wl); //dfi_t_wrdata_delay, tphy_wrlat + (delay of DFI write data to the DRAM)???
     reg_bits_set(UMCTL_DFITMG1,  8, 4, 2);  //dfi_t_dram_clk_disable,number of DFI clock cycles from the assertion of the 
@@ -371,7 +372,7 @@ void umctl2_dfi_init(DRAM_INFO* dram)
     UMCTL2_REG_SET(UMCTL_DFILPCFG0,0X0700F100);
 
     //DFIUPD0
-    UMCTL2_REG_SET(UMCTL_DFIUPD0, 0X00400003);
+    UMCTL2_REG_SET(UMCTL_DFIUPD0, 0X80400003);
     UMCTL2_REG_SET(UMCTL_DFIUPD1, 0X001a0021);
     UMCTL2_REG_SET(UMCTL_DFIUPD2, 0X026904c9);
     UMCTL2_REG_SET(UMCTL_DFIUPD3, 0X030e051f);    
