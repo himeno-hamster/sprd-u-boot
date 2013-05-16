@@ -35,7 +35,7 @@ COM_OBJS      = $(addprefix $(obj),$(COM_OBJ_FILE))
 
 CPU_OBJ_FILE  = chip_cfg.o mmu_asm.o mmu.o
 ifdef CONFIG_SC8825
-CPU_OBJ_FILE += sdram.o adi_drv.o emc.o mcu.o
+CPU_OBJ_FILE += sdram.o adi_drv.o emc.o mcu.o efuse_drv.o
 endif
 
 ifdef CONFIG_SC8830
