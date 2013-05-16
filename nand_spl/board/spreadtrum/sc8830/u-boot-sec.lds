@@ -26,18 +26,22 @@ OUTPUT_ARCH(arm)
 ENTRY(_start)
 SECTIONS
 {
-	. = 0x00000000;
+	. = 0x50005000;
 
 	. = ALIGN(4);
-	.text :
+	.text1 :
 	{
-		spl_start.o	(.text)
-		lowlevel_init.o (.text)
-		*(.text)
+		sec_start.o	(.text)
+		sec_boot.o	(.text)
+		sec_mcu.o	(.text)
 	}
 
+	. = 0x5000B000;
 	. = ALIGN(4);
-	.rodata : { *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*))) }
+	.text2 :
+	{
+		*(.text)
+	}
 
 	. = ALIGN(4);
 	.data : {
@@ -45,15 +49,6 @@ SECTIONS
 	}
 
 	. = ALIGN(4);
-
-	. = .;
-	__u_boot_cmd_start = .;
-	.u_boot_cmd : { *(.u_boot_cmd) }
-	__u_boot_cmd_end = .;
-
-	. = CONFIG_SPL_LOAD_LEN+ CONFIG_SYS_TEXT_BASE;
-	. = ALIGN(4);
-
 	.rel.dyn : {
 		__rel_dyn_start = .;
 		*(.rel*)

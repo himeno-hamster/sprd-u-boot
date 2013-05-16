@@ -2,4 +2,7 @@
 /u-boot-spl-16k.bin
 /u-boot-spl.bin
 /u-boot-spl.map
+/u-boot-sec
+/u-boot-sec.bin
+/u-boot-sec.map
 /u-boot.lds
