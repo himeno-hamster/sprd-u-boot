@@ -32,10 +32,10 @@ CFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_NAND_SPL -g
 
 SOBJS	= start.o _udivsi3.o _divsi3.o _umodsi3.o
 ifdef CONFIG_EMMC_BOOT
-COBJS	= emmc_boot.o mmc.o lowlevel_init.o div0.o adi_drv.o chip_cfg.o 
+COBJS	= emmc_boot.o mmc.o lowlevel_init.o div0.o adi_drv.o efuse_drv.o chip_cfg.o
 COBJS += sec_boot.o string.o serial_sc8800x.o
 else
-COBJS	= lowlevel_init.o sprd_tiger_nand_boot.o nand_ecc.o tiger_nand.o div0.o adi_drv.o chip_cfg.o sec_boot.o string.o
+COBJS	= lowlevel_init.o sprd_tiger_nand_boot.o nand_ecc.o tiger_nand.o div0.o adi_drv.o efuse_drv.o chip_cfg.o sec_boot.o string.o
 endif
 
 ifdef CONFIG_SC8825

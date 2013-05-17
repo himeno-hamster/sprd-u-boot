@@ -292,7 +292,10 @@ static uint32 AxiClkConfig()
     uint32 ca5_cfg;
     ca5_cfg = REG32(AHB_CA5_CFG);
     ca5_cfg &= ~(3<<11);
-    ca5_cfg |= (1<<11);
+    if (sci_efuse_overclocking_get())
+        ca5_cfg |= (2 << 11);
+    else
+        ca5_cfg |= (1<<11);
     REG32(AHB_CA5_CFG) = ca5_cfg;
     delay();
     return 0;
@@ -303,7 +306,10 @@ static uint32 ArmClkPeriSet()
     uint32 ahb_arm_clk;
     ahb_arm_clk  = REG32(AHB_ARM_CLK);
     ahb_arm_clk &= ~(7<<20);
-    ahb_arm_clk |= 1<<20;
+    if (sci_efuse_overclocking_get())
+        ahb_arm_clk |= 2 << 20;
+    else
+        ahb_arm_clk |= 1<<20;
     REG32(AHB_ARM_CLK) = ahb_arm_clk;
     return 0;
 }
@@ -313,7 +319,10 @@ static uint32 DbgClkConfig()
     uint32 ahb_arm_clk, dbg_div;
     ahb_arm_clk  = REG32(AHB_ARM_CLK);
     dbg_div = (ahb_arm_clk>>14)&0x3f;
-    dbg_div++;
+    if (sci_efuse_overclocking_get())
+        dbg_div += 2;
+    else
+        dbg_div++;
     ahb_arm_clk |= dbg_div<<14;
     REG32(AHB_ARM_CLK) = ahb_arm_clk;
     return 0;
@@ -336,9 +345,31 @@ static uint32 ClkConfig()
     //uint32 mcu_clk, arm_clk, emc_clk, ahb_clk, ahb_arm_clk, div;
     //if (GetClockCfg(clk_type, &mcu_clk, &arm_clk, &emc_clk, &ahb_clk))
     //    return -1;
+    uint16 reg_data;
 
-    AxiClkConfig();
-    McuClkConfig(1000000000);
+    if (sci_efuse_overclocking_get()) {
+        //DCDC ARM 1.3V
+        reg_data = ADI_Analogdie_reg_read(0x420006AC);
+        reg_data &=  ~(0xff);
+        reg_data |=  7;
+        ADI_Analogdie_reg_write(0x420006AC, reg_data);
+
+#if 0   // default 1.1V regdata = 0;
+        //DCDC CORE 1.2V
+        reg_data = ADI_Analogdie_reg_read(0x42000640);
+        reg_data &=  ~(0xff);
+        reg_data |=  0x6;
+        reg_data |=  (0x1 << 4);
+        ADI_Analogdie_reg_write(0x42000640, reg_data);
+#endif
+
+        AxiClkConfig();
+        McuClkConfig(1200000000);
+    }
+    else {
+        AxiClkConfig();
+        McuClkConfig(1000000000);
+    }
     AhbClkConfig(200000000);
     //EmcClkConfig(emc_clk);
 
