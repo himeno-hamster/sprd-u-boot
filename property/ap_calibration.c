@@ -21,6 +21,8 @@ static unsigned int nv_buffer[256]={0};
 static nv_read_flag = 0;
 #endif
 
+extern int nand_part_write(char *partname,char *buffer, int size);
+extern int nand_part_read(char *partname,char *buffer, int size);
 #ifdef CONFIG_AP_ADC_CALIBRATION
 
 #define AP_ADC_CALIB    1
@@ -71,34 +73,24 @@ static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
     }
     return size;       
 #else
-    char *file_partition = "/productinfo";
-    char *file_name = "/productinfo/adc_data";
+    char *file_partition = "modem";
     int ret = 0;
 
-    cmd_yaffs_mount(file_partition);
     if (flag == 0) // read ADC data
     {
-    	ret = cmd_yaffs_ls_chk(file_name);
-    	if(ret > 0 && ret <= size)
-    	{
-    		printf("\n file: %s exist", file_name);
-    		cmd_yaffs_mread_file(file_name, (unsigned char *)lpBuff);
-    	}
-    	else
-    	{
-    		printf("\n file size error: ret = %d, size = %d", ret, size);
-    	}
+	nand_part_read(file_partition,lpBuff,size);
+	return size;
     }
     else if (flag == 1)  //write ADC data
     {
-    	cmd_yaffs_mwrite_file(file_name, lpBuff, size);
+	
+	nand_part_write(file_partition,lpBuff,size);
     	ret = size;
     }
     else
     {
     	ret = 0;
     }			
-    cmd_yaffs_umount(file_partition);
     return ret;
 #endif
 }
