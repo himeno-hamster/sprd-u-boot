@@ -58,10 +58,18 @@ __OBJS	:= $(SOBJS) $(COBJS)
 LNDIR	:= $(OBJTREE)/nand_spl/board/$(VENDOR)/$(SOC)
 
 
-ALL	= $(nandobj)u-boot-spl $(nandobj)u-boot-spl.bin $(nandobj)u-boot-spl-16k.bin
+ALL	= $(nandobj)u-boot-spl $(nandobj)u-boot-spl.bin $(nandobj)u-boot-spl-16k.bin file_size_check
 
 #all:	$(obj).depend $(ALL)
 all:	$(ALL)
+
+ifdef CONFIG_EMMC_BOOT
+file_size_check: $(nandobj)u-boot-spl.bin
+	./file_size_check.sh 24576 $< $(nandobj)u-boot-spl-16k.bin $(nandobj)u-boot-spl
+else
+file_size_check: $(nandobj)u-boot-spl.bin
+	./file_size_check.sh 16384 $< $(nandobj)u-boot-spl-16k.bin $(nandobj)u-boot-spl
+endif
 
 $(nandobj)u-boot-spl-16k.bin: $(nandobj)u-boot-spl
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to $(PAD_TO) -O binary $< $@

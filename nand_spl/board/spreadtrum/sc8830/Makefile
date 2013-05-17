@@ -51,9 +51,12 @@ __SPL_OBJS	:= $(SPL_COBJS) $(SPL_SOBJS)
 
 LNDIR		:= $(OBJTREE)/nand_spl/board/$(VENDOR)/$(SOC)
 
-ALL		= $(nandobj)u-boot-spl $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin $(nandobj)u-boot-spl-16k.bin
+ALL		= $(nandobj)u-boot-spl $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin $(nandobj)u-boot-spl-16k.bin file_size_check
 
 all:$(ALL)
+
+file_size_check: $(nandobj)u-boot-spl-16k.bin
+	./file_size_check.sh 24576 $< $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin $(nandobj)u-boot-spl $(nandobj)u-boot-sec
 
 $(nandobj)u-boot-spl-16k.bin: $(nandobj)u-boot-spl.bin $(nandobj)u-boot-sec.bin
 	cat $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin > $@
