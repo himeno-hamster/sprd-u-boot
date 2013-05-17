@@ -408,16 +408,7 @@ static int32_t sprdfb_dsi_gen_write(uint8_t *param, uint16_t param_length)
 {
 	dsih_error_t result;
 
-#if	 defined(CONFIG_SC8830)&& defined(CONFIG_LCD_720P) //thomaszhang debug for ssd2075 only
-	 dsih_ctrl_t *curInstancePtr = &(dsi_ctx.dsi_inst);
-	 mipi_dsih_eotp_tx(curInstancePtr, 0);
-#endif
-
 	result = mipi_dsih_gen_wr_cmd(&(dsi_ctx.dsi_inst), 0, param, param_length);
-
-#if	 defined(CONFIG_SC8830)&& defined(CONFIG_LCD_720P) //thomaszhang debug for ssd2075 only
-	mipi_dsih_eotp_tx(curInstancePtr, 1);
-#endif
 
 	if(OK != result){
 		FB_PRINT("sprdfb: [%s] error (%d)\n", __FUNCTION__, result);
@@ -463,16 +454,7 @@ static int32_t sprd_dsi_force_write(uint8_t data_type, uint8_t *p_params, uint16
 {
 	int32_t iRtn = 0;
 
-#if	 defined(CONFIG_SC8830)&& defined(CONFIG_LCD_720P) //thomaszhang debug for ssd2075 only
-	dsih_ctrl_t *curInstancePtr = &(dsi_ctx.dsi_inst);
-	mipi_dsih_eotp_tx(curInstancePtr, 0);
-#endif
-
 	iRtn = mipi_dsih_gen_wr_packet(&(dsi_ctx.dsi_inst), 0, data_type,  p_params, param_length);
-
-#if	 defined(CONFIG_SC8830)&& defined(CONFIG_LCD_720P) //thomaszhang debug for ssd2075 only
-	mipi_dsih_eotp_tx(curInstancePtr, 1);
-#endif
 
 	return iRtn;
 }
@@ -480,21 +462,23 @@ static int32_t sprd_dsi_force_write(uint8_t data_type, uint8_t *p_params, uint16
 static int32_t sprd_dsi_force_read(uint8_t command, uint8_t bytes_to_read, uint8_t * read_buffer)
 {
 	int32_t iRtn = 0;
-	dsih_ctrl_t *curInstancePtr = &(dsi_ctx.dsi_inst);
-
-#if	 defined(CONFIG_SC8830)&& defined(CONFIG_LCD_720P)//thomaszhang debug for ssd2075 only
-	mipi_dsih_eotp_rx(curInstancePtr, 1);
-#else
-	mipi_dsih_eotp_rx(curInstancePtr, 0);
-#endif
-	mipi_dsih_eotp_tx(curInstancePtr, 0);
 
 	iRtn = mipi_dsih_gen_rd_packet(&(dsi_ctx.dsi_inst),  0,  6,  0, command,  bytes_to_read, read_buffer);
 
-	mipi_dsih_eotp_rx(curInstancePtr, 1);
-	mipi_dsih_eotp_tx(curInstancePtr, 1);
-
 	return iRtn;
+}
+
+static int32_t sprd_dsi_eotp_set(uint8_t rx_en, uint8_t tx_en)
+{
+	dsih_ctrl_t *curInstancePtr = &(dsi_ctx.dsi_inst);
+	if(0 == rx_en)
+		mipi_dsih_eotp_rx(curInstancePtr, 0);
+	else if(1 == rx_en)
+		mipi_dsih_eotp_rx(curInstancePtr, 1);
+	if(0 == tx_en)
+		mipi_dsih_eotp_tx(curInstancePtr, 0);
+	else if(1 == tx_en)
+		mipi_dsih_eotp_tx(curInstancePtr, 1);
 }
 
 struct ops_mipi sprdfb_mipi_ops = {
@@ -506,5 +490,5 @@ struct ops_mipi sprdfb_mipi_ops = {
 	.mipi_dcs_read = sprdfb_dsi_dcs_read,
 	.mipi_force_write = sprd_dsi_force_write,
 	.mipi_force_read = sprd_dsi_force_read,
-
+	.mipi_eotp_set = sprd_dsi_eotp_set,
 };

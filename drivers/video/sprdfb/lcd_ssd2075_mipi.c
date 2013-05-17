@@ -119,10 +119,12 @@ static int32_t ssd2075_mipi_init(struct panel_spec *self)
 
 	mipi_set_cmd_mode_t mipi_set_cmd_mode = self->info.mipi->ops->mipi_set_cmd_mode;
 	mipi_gen_write_t mipi_gen_write = self->info.mipi->ops->mipi_gen_write;
+	mipi_eotp_set_t mipi_eotp_set = self->info.mipi->ops->mipi_eotp_set;
 
 	printk("lcd_ssd2075_init\n");
 
 	mipi_set_cmd_mode();
+	mipi_eotp_set(1,0);
 
 	for(i = 0; i < ARRAY_SIZE(init_data); i++){
 		tag = (init->tag >>24);
@@ -133,6 +135,7 @@ static int32_t ssd2075_mipi_init(struct panel_spec *self)
 		}
 		init++;
 	}
+	mipi_eotp_set(1,1);
 
 	return 0;
 }
@@ -147,10 +150,11 @@ static uint32_t ssd2075_readid(struct panel_spec *self)
 	mipi_set_cmd_mode_t mipi_set_cmd_mode = self->info.mipi->ops->mipi_set_cmd_mode;
 	mipi_force_write_t mipi_force_write = self->info.mipi->ops->mipi_force_write;
 	mipi_force_read_t mipi_force_read = self->info.mipi->ops->mipi_force_read;
+	mipi_eotp_set_t mipi_eotp_set = self->info.mipi->ops->mipi_eotp_set;
 
 	printk("lcd_ssd2075_mipi read id!\n");
-	return 0x2075;//for no lcd debug
 	mipi_set_cmd_mode();
+	mipi_eotp_set(1,0);
 
 	for(j = 0; j < 4; j++){
 		param[0] = 0x0a;
@@ -165,6 +169,7 @@ static uint32_t ssd2075_readid(struct panel_spec *self)
 			return 0x2075;
 		}
 	}
+	mipi_eotp_set(1,1);
 
 	return 0;
 }
