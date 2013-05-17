@@ -22,6 +22,7 @@
 extern int prodinfo_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, int offset, char *buf, int len);
 extern unsigned long char2u32(unsigned char *buf, int offset);
 
+
 int move2timebuf(unsigned char *src, unsigned char *dst)
 {
 	int len = 0;
@@ -37,6 +38,25 @@ int move2timebuf(unsigned char *src, unsigned char *dst)
 	memcpy(dst, src, len);
 	return 1;
 }
+#ifdef CONFIG_FS_EXT4
+int alarm_partition = PARTITION_PROD_INFO3;
+int alarm_file_check(char *time_buf)
+{
+	if ( !ext4_read_content(1,alarm_partition,"/alarm_flag",time_buf,0,200))	{
+		return 0;
+	}else{
+		return -1;
+	}
+}
+int poweron_file_check(char *time_buf)
+{
+	if ( !ext4_read_content(1,alarm_partition,"/poweron_timeinmillis",time_buf,0,200))	{
+		return 0;
+	}else{
+		return -1;
+	}
+}
+#else
 int alarm_file_check(char *time_buf)
 {
 	int ret = -1;
@@ -112,6 +132,6 @@ int poweron_file_check(char *time_buf)
 	}
 	return ret;
 }
-
+#endif
 
 

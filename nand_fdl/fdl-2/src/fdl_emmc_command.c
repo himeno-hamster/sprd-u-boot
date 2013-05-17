@@ -12,6 +12,10 @@
 #include <malloc.h>
 #include <asm/arch/secure_boot.h>
 
+#ifdef CONFIG_FS_EXT4
+#include <ext4fs.h>
+#endif
+
 #define EFI_SECTOR_SIZE 		(512)
 #define ERASE_SECTOR_SIZE		((64 * 1024) / EFI_SECTOR_SIZE)
 #define EMMC_BUF_SIZE			(((216 * 1024 * 1024) / EFI_SECTOR_SIZE) * EFI_SECTOR_SIZE)
@@ -839,6 +843,7 @@ int FDL2_eMMC_DataStart (PACKET_T *packet, void *arg)
 	is_ProdInfo_flag = 0;
 	is_nv_flag = 0;
 	g_dl_eMMCStatus.curUserPartition = addr2part(start_addr);
+
 #ifdef FPGA_TRACE_DOWNLOAD
 	printf("pkt_state:0x%x, data_size:0x%x, ack_flag=0x%x,packet_body.type:0x%x, packet_body.size:0x%x,packet_body.content[0]:%02x,[1]:%02x,[2]:%02x,[3]:%02x,[4]:%02x,[5]:%02x,[6]:%02x,[7]:%02x\r\n",
 		packet->pkt_state, packet->data_size, packet->ack_flag,
@@ -909,7 +914,9 @@ int FDL2_eMMC_DataStart (PACKET_T *packet, void *arg)
 			return 0;
 		}
 		g_dl_eMMCStatus.base_sector = efi_GetPartBaseSec(g_dl_eMMCStatus.curUserPartition);
+#ifndef CONFIG_FS_EXT4
 		emmc_real_erase_partition(g_dl_eMMCStatus.curUserPartition);
+#endif
 		memset(g_eMMCBuf, 0xff, PRODUCTINFO_SIZE + EFI_SECTOR_SIZE);
 		g_sram_addr = (unsigned long)g_eMMCBuf;	
 		is_ProdInfo_flag = 1;
@@ -943,8 +950,13 @@ int FDL2_eMMC_DataStart (PACKET_T *packet, void *arg)
 
 		if (!((g_dl_eMMCStatus.curUserPartition == PARTITION_SYSTEM) \
 			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_USER_DAT) \
-			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)))
+			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)
+#ifdef CONFIG_FS_EXT4
+			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3)
+#endif
+			)){
 			emmc_real_erase_partition(g_dl_eMMCStatus.curUserPartition);
+		}
 		else
 			memset(g_eMMCBuf, 0, EMMC_BUF_SIZE);
 
@@ -1066,7 +1078,12 @@ int FDL2_eMMC_DataMidst(PACKET_T *packet, void *arg)
 #else
 			if ((g_dl_eMMCStatus.curUserPartition == PARTITION_SYSTEM) \
 				|| (g_dl_eMMCStatus.curUserPartition == PARTITION_USER_DAT) \
-				|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)) {
+				|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)
+#ifdef CONFIG_FS_EXT4
+				|| (g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3)
+#endif
+				) {
+				printf("write image1 %d\n",g_dl_eMMCStatus.curUserPartition);
 				retval = write_simg2emmc("mmc", 1, g_dl_eMMCStatus.curUserPartition, 
 					g_eMMCBuf, EMMC_BUF_SIZE);
 				if (retval == -1) {
@@ -1083,7 +1100,11 @@ int FDL2_eMMC_DataMidst(PACKET_T *packet, void *arg)
 
 			if ((g_dl_eMMCStatus.curUserPartition == PARTITION_SYSTEM) \
 				|| (g_dl_eMMCStatus.curUserPartition == PARTITION_USER_DAT) \
-				|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)) {
+				|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)
+#ifdef CONFIG_FS_EXT4
+				|| (g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3)
+#endif
+				) {
 				if (retval > 0) {
 					g_status.unsave_recv_size = EMMC_BUF_SIZE - retval;
 					movebuf2buf(g_eMMCBuf, g_eMMCBuf + retval, EMMC_BUF_SIZE - retval);
@@ -1166,7 +1187,11 @@ int FDL2_eMMC_DataMidst(PACKET_T *packet, void *arg)
 #else
 				if ((g_dl_eMMCStatus.curUserPartition == PARTITION_SYSTEM) \
 					|| (g_dl_eMMCStatus.curUserPartition == PARTITION_USER_DAT) \
-					|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)) {
+					|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)
+#ifdef CONFIG_FS_EXT4
+					|| (g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3)
+#endif
+					) {
 					retval = write_simg2emmc("mmc", 1, g_dl_eMMCStatus.curUserPartition, 
 						g_eMMCBuf, g_status.unsave_recv_size);
 					if (retval == -1) {
@@ -1183,7 +1208,11 @@ int FDL2_eMMC_DataMidst(PACKET_T *packet, void *arg)
 
 				if ((g_dl_eMMCStatus.curUserPartition == PARTITION_SYSTEM) \
 					|| (g_dl_eMMCStatus.curUserPartition == PARTITION_USER_DAT) \
-					|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)) {
+					|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)
+#ifdef CONFIG_FS_EXT4
+					|| (g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3)
+#endif
+					) {
 					if (retval > 0) {
 						movebuf2buf(g_eMMCBuf, g_eMMCBuf + retval, g_status.unsave_recv_size - retval);
 						g_status.unsave_recv_size -= retval;
@@ -1245,7 +1274,11 @@ int FDL2_eMMC_DataMidst(PACKET_T *packet, void *arg)
 #else
 		if ((g_dl_eMMCStatus.curUserPartition == PARTITION_SYSTEM) \
 			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_USER_DAT) \
-			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)) {
+			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)
+#ifdef CONFIG_FS_EXT4
+			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3)
+#endif
+			) {
 			retval = write_simg2emmc("mmc", 1, g_dl_eMMCStatus.curUserPartition, g_eMMCBuf, EMMC_BUF_SIZE);
 			if (retval == -1) {
 				g_status.unsave_recv_size = 0;
@@ -1260,7 +1293,11 @@ int FDL2_eMMC_DataMidst(PACKET_T *packet, void *arg)
 
 		if ((g_dl_eMMCStatus.curUserPartition == PARTITION_SYSTEM) \
 			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_USER_DAT) \
-			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)) {
+			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE)
+#ifdef CONFIG_FS_EXT4
+			|| (g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3)
+#endif
+			) {
 			if (retval > 0) {
 				g_status.unsave_recv_size = EMMC_BUF_SIZE - retval;
 				movebuf2buf(g_eMMCBuf, g_eMMCBuf + retval, EMMC_BUF_SIZE - retval);
@@ -1383,6 +1420,7 @@ int FDL2_eMMC_DataEnd (PACKET_T *packet, void *arg)
 		}
 #endif
 	} else if (is_ProdInfo_flag) {
+#ifndef CONFIG_FS_EXT4
 		is_factorydownload_flag = 1;
 		/* 5a is defined by raw data */
 		g_eMMCBuf[PRODUCTINFO_SIZE + 0] = g_eMMCBuf[PRODUCTINFO_SIZE + 1] = 0x5a;
@@ -1416,6 +1454,19 @@ int FDL2_eMMC_DataEnd (PACKET_T *packet, void *arg)
 			SEND_ERROR_RSP (BSL_WRITE_ERROR);
 			return 0;
 		}
+#else
+		printf("ext4f write %d\n",g_status.total_recv_size);
+		if( 0 != ext4_write_content(1,PARTITION_PROD_INFO3,"/productinfo.bin",
+					g_eMMCBuf,g_status.total_recv_size)){
+			SEND_ERROR_RSP (BSL_WRITE_ERROR);
+			return 0;
+		}
+		//{
+		//char buf[50];
+		//memset(buf,0,50);
+		//ext4_read_content(1,PARTITION_PROD_INFO3,"/productinfo.bin",buf,0,50);
+		//}
+#endif
 	}
 	
 	g_dl_eMMCStatus.isLastPakFlag = 0;
@@ -1662,6 +1713,7 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 				return 0;
 			}
 		} else if (is_ProdInfo_flag) {
+#ifndef CONFIG_FS_EXT4
 			if (read_prod_info_flag == 0) {
 				memset(g_prod_info_buf, 0xff, PRODUCTINFO_SIZE + EFI_SECTOR_SIZE);
 				if (0 == ((PRODUCTINFO_SIZE + 8) % EFI_SECTOR_SIZE))
@@ -1695,7 +1747,11 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 					read_prod_info_flag = 1;
 				}
 			}
-
+#else
+			printf("read productinfo fixme!!!!\n");
+			off = 0;
+			read_prod_info_flag = 1;
+#endif
 			if (read_prod_info_flag) {
 				memcpy(packet->packet_body.content, (unsigned char *)(g_prod_info_buf + off), size);
 				ret = EMMC_SUCCESS;
@@ -1781,8 +1837,11 @@ int FDL2_eMMC_Erase(PACKET_T *packet, void *arg)
 			}
 		}
 #endif
+/*we format productinfo ext4 by uboot image array. if formart ext4 with image download,enable the line ifndef*/
+//#ifndef CONFIG_FS_EXT4
 		if (g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3) {
 			part_size = efi_GetPartSize(PARTITION_PROD_INFO3);
+			printf("ext4fs file productinfo partition format\n");
 			make_ext4fs_main(g_eMMCBuf, part_size);
 
 			retval = write_simg2emmc("mmc", 1, PARTITION_PROD_INFO3, g_eMMCBuf, EMMC_BUF_SIZE);
@@ -1791,6 +1850,7 @@ int FDL2_eMMC_Erase(PACKET_T *packet, void *arg)
 				return 0;
 			}
 		}
+//#endif
 		printf("has_sd=%d\n",has_sd);
 		if ((g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3) && (has_sd == 1) && (done_format_sd == 0)) {
 			has_sd = 0;

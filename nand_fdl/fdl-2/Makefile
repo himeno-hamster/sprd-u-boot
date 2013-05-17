@@ -81,6 +81,11 @@ else
 UBOOT_LIBS = $(MTD_LIB) $(ARM_LIB) $(NAND_LIB) $(YAFFS2_LIB) $(COMMON_LIB) $(CPU_LIB) $(GENERIC_LIB) $(DRIVERS_LIB) $(ARCH_LIB)
 endif
 
+ifdef CONFIG_FS_EXT4
+EXT4FS_LIB = $(OBJTREE)/fs/ext4/libext4fs.o
+UBOOT_LIBS += $(EXT4FS_LIB)
+endif
+
 FDL2_LNDIR	:= $(OBJTREE)/nand_fdl/fdl-2
 
 fdlobj	:= $(OBJTREE)/nand_fdl/

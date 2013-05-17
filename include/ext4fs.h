@@ -94,7 +94,7 @@ struct ext_filesystem {
 	/* Superblock */
 	struct ext2_sblock *sb;
 	/* Block group descritpor table */
-	struct ext2_block_group *gd;
+	struct ext2_block_group *bgd;
 	char *gdtable;
 
 	/* Block Bitmap Related */
@@ -113,11 +113,10 @@ struct ext_filesystem {
 	block_dev_desc_t *dev_desc;
 };
 
-extern block_dev_desc_t *ext4_dev_desc;
 extern struct ext2_data *ext4fs_root;
 extern struct ext2fs_node *ext4fs_file;
 
-#if defined(CONFIG_CMD_EXT4_WRITE)
+#if defined(CONFIG_EXT4_WRITE)
 extern struct ext2_inode *g_parent_inode;
 extern int gd_index;
 extern int gindex;
@@ -125,29 +124,21 @@ extern int gindex;
 int ext4fs_init(void);
 void ext4fs_deinit(void);
 int ext4fs_filename_check(char *filename);
-int ext4fs_write(const char *fname, unsigned char *buffer, unsigned long sizebytes);
-int ext4fs_format(char *interface, int dev, int part);
+int ext4fs_write(const char *fname, unsigned char *buffer,
+				unsigned long sizebytes);
 #endif
 
 struct ext_filesystem *get_fs(void);
-int init_fs(block_dev_desc_t *dev_desc);
-void deinit_fs(block_dev_desc_t *dev_desc);
 int ext4fs_open(const char *filename);
 int ext4fs_read(char *buf, unsigned len);
-int ext4fs_mount(char *interface, int dev, int part);
+int ext4fs_mount(unsigned part_length);
 void ext4fs_close(void);
 int ext4fs_ls(const char *dirname);
-int get_free_inode(void);
-int get_free_block(void);
-int creat_inode_meta(int ino, int iblk, int sizebytes);
-int ext4fs_read_file_from_disk(unsigned int len, char *uf);
-int ext4fs_write_file2disk(unsigned int len, char *buf);
-int ext4fs_update_meta2disk(void);
 void ext4fs_free_node(struct ext2fs_node *node, struct ext2fs_node *currroot);
-int ext4fs_read_block(int sector, int byte_offset, int byte_len, char *buf);
-int ext4fs_write_block(int sector, int byte_offset, int byte_len, char *buf);
 int ext4fs_devread(int sector, int byte_offset, int byte_len, char *buf);
-int ext4fs_set_blk_dev(block_dev_desc_t *rbdd, int part, disk_partition_t *pInfo);
-int ext4fs_format_blk_dev(block_dev_desc_t *rbdd, int part);
+void ext4fs_set_blk_dev(block_dev_desc_t *rbdd, disk_partition_t *info);
 long int read_allocated_block(struct ext2_inode *inode, int fileblock);
+int ext4fs_probe(block_dev_desc_t *fs_dev_desc,
+		 disk_partition_t *fs_partition);
+int ext4_read_file(const char *filename, void *buf, int offset, int len);
 #endif

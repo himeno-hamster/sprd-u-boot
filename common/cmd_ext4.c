@@ -47,141 +47,103 @@
 #include <image.h>
 #include <linux/ctype.h>
 #include <asm/byteorder.h>
-#include <ext_common.h>
 #include <ext4fs.h>
 #include <linux/stat.h>
 #include <malloc.h>
+//#include <fs.h>
 
 #if defined(CONFIG_CMD_USB) && defined(CONFIG_USB_STORAGE)
 #include <usb.h>
 #endif
 
-#if !defined(CONFIG_DOS_PARTITION) && !defined(CONFIG_EFI_PARTITION)
-#error DOS or EFI partition support must be selected
-#endif
-
-static int do_ext4_load(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+int do_ext4_load(cmd_tbl_t *cmdtp, int flag, int argc,
+						char *const argv[])
 {
-	char *interface = "mmc";
-	int dev = 0;
-	char *partname = "/fixnv";
-	char *filename = "/fixnv/fixnv.bin";
-	unsigned long ramaddress = 0x500000;
-	unsigned long filesize ;
-
-	printf("mount %s %d %s as ext4 filesystem\n", interface, dev, partname);
-	/* mmc is interface; 0 is device in mmc slot */
-	if (ext4fs_mount(interface, dev, partname) == -1) {
-		printf("Bad ext4 partition %s %d:%lu\n", interface, dev, partname);
-		goto fail;
-	}
-
-	filesize = ext4fs_open(filename);
-	if (filesize < 0) {
-		printf("File not found %s\n", filename);
-		goto fail;
-	}
-	
-	if (ext4fs_read((char *)ramaddress, filesize) != filesize) {
-		printf("Unable to read %s from %s %d\n", filename, interface, dev);
-		goto fail;
-	}
-
-	printf("%d bytes read\n", filesize);
-	ext4fs_close();
 	return 0;
-fail:
-	ext4fs_close();
-	return 1;
+/*
+	return do_load(cmdtp, flag, argc, argv, FS_TYPE_EXT, 16);
+*/
 }
 
-static int do_ext4_ls(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+int do_ext4_ls(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	char *interface = "mmc";
-	int dev = 0;
-	char *partname = "/fixnv";
-	char *filename = "/fixnv/fixnv.bin";
-
-	printf("mount %s %d %s as ext4 filesystem\n", interface, dev, partname);
-	/* mmc is interface; 0 is device in mmc slot */
-	if (ext4fs_mount(interface, dev, partname) == -1) {
-		printf("Bad ext4 partition %s %d:%lu\n", interface, dev, partname);
-		ext4fs_close();
-	}
-
-	ext4fs_ls(filename);
-	ext4fs_close();
-
 	return 0;
+/*
+	return do_ls(cmdtp, flag, argc, argv, FS_TYPE_EXT);
+*/
 }
 
 #if defined(CONFIG_CMD_EXT4_WRITE)
-static int do_ext4_write(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+int do_ext4_write(cmd_tbl_t *cmdtp, int flag, int argc,
+				char *const argv[])
 {
-	char *interface = "mmc";
-	int dev = 0;
-	char *partname = "/fixnv";
-	char *filename = "/fixnv/fixnv.bin";
-	unsigned long ramaddress = 0x500000;
-	unsigned long filesize = 65540;
+#if 0
+	const char *filename = "/";
+	int dev, part;
+	unsigned long ram_address;
+	unsigned long file_size;
+	disk_partition_t info;
+	block_dev_desc_t *dev_desc;
 
-	printf("mount %s %d %s as ext4 filesystem\n", interface, dev, partname);
-	/* mmc is interface; 0 is device in mmc slot */
-	if (ext4fs_mount(interface, dev, partname) == -1) {
-		printf("Bad ext4 partition %s %d:%lu\n", interface, dev, partname);
+	if (argc < 6)
+		return cmd_usage(cmdtp);
+
+	part = get_device_and_partition(argv[1], argv[2], &dev_desc, &info, 1);
+	if (part < 0)
+		return 1;
+
+	dev = dev_desc->dev;
+
+	/* get the filename */
+	filename = argv[4];
+
+	/* get the address in hexadecimal format (string to int) */
+	ram_address = simple_strtoul(argv[3], NULL, 16);
+
+	/* get the filesize in base 10 format */
+	file_size = simple_strtoul(argv[5], NULL, 10);
+
+	/* set the device as block device */
+	ext4fs_set_blk_dev(dev_desc, &info);
+
+	/* mount the filesystem */
+	if (!ext4fs_mount(info.size)) {
+		printf("Bad ext4 partition %s %d:%d\n", argv[1], dev, part);
 		goto fail;
 	}
-	
-	if (ext4fs_write(filename, (unsigned char *)ramaddress, filesize) == -1) {
-		printf("Error ext4fs_write()\n");
+
+	/* start write */
+	if (ext4fs_write(filename, (unsigned char *)ram_address, file_size)) {
+		printf("** Error ext4fs_write() **\n");
 		goto fail;
 	}
-
 	ext4fs_close();
+
 	return 0;
 
 fail:
 	ext4fs_close();
+
 	return 1;
-}
-
-static int do_ext4_format(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
-{
-	char *interface = "mmc";
-	int dev = 0;
-	char *partname = "/fixnv";
-
-	printf("Formating %s %d %s to ext4 filesystem\n", interface, dev, partname);
-	/* mmc is interface; 0 is device in mmc slot */
-	if (ext4fs_format(interface, dev, partname) == -1) {
-		printf("Format failed!\n");
-		goto fail;
-	}
-
-	printf("Format finished!\n");
+#endif
 	return 0;
-fail:
-	return 1;
 }
 
 U_BOOT_CMD(ext4write, 6, 1, do_ext4_write,
 	"create a file in the root directory",
-	"<interface> <dev[:part]> [Absolute filename path] [Address] [sizebytes]\n"
-	"	  - create a file in / directory");
-U_BOOT_CMD(ext4format, 6, 1, do_ext4_format,
-	"format a partition to ext4 filesystem",
-	"<interface> <dev[:part]>\n"
-	"	  - format partition to ext4 filesystem");
+	"<interface> <dev[:part]> <addr> <absolute filename path> [sizebytes]\n"
+	"    - create a file in / directory");
 
 #endif
 
 U_BOOT_CMD(ext4ls, 4, 1, do_ext4_ls,
 	   "list files in a directory (default /)",
 	   "<interface> <dev[:part]> [directory]\n"
-	   "	  - list files from 'dev' on 'interface' in a 'directory'");
+	   "    - list files from 'dev' on 'interface' in a 'directory'");
+
 U_BOOT_CMD(ext4load, 6, 0, do_ext4_load,
-	   "load binary file from a Ext2 filesystem",
+	   "load binary file from a Ext4 filesystem",
 	   "<interface> <dev[:part]> [addr] [filename] [bytes]\n"
-	   "	  - load binary file 'filename' from 'dev' on 'interface'\n"
-	   "		 to address 'addr' from ext2 filesystem"
-);
+	   "    - load binary file 'filename' from 'dev' on 'interface'\n"
+	   "      to address 'addr' from ext4 filesystem.\n"
+	   "      All numeric parameters are assumed to be hex.");

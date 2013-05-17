@@ -927,6 +927,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #endif
 	//array_value((unsigned char *)FIXNV_ADR, FIXNV_SIZE);
 
+#ifndef CONFIG_FS_EXT4
 	///////////////////////////////////////////////////////////////////////
 	/* PRODUCTINFO_PART */
 	orginal_right = 0;
@@ -981,7 +982,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	}
 	//array_value((unsigned char *)PRODUCTINFO_ADR, PRODUCTINFO_SIZE);
 	eng_phasechecktest((unsigned char *)PRODUCTINFO_ADR, SP09_MAX_PHASE_BUFF_SIZE);
-
+#endif
 	/* RUNTIMEVN_PART */
 #if defined(CONFIG_SC8830)
 	orginal_right = 0;

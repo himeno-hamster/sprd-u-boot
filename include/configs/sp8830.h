@@ -62,6 +62,12 @@
 #define EMMC_SECTOR_SIZE 512
 #define	CONFIG_MMC
 
+#define CONFIG_FS_EXT4
+#define CONFIG_EXT4_WRITE
+#define CONFIG_CMD_EXT4
+#define CONFIG_CMD_EXT4_WRITE
+
+//#define CONFIG_TIGER_MMC
 #define CONFIG_UEFI_PARTITION
 #define CONFIG_EFI_PARTITION
 #define CONFIG_EXT4_SPARSE_DOWNLOAD
@@ -122,7 +128,7 @@
 #define DYNAMIC_CRC_TABLE
 /* Start copying real U-boot from the second page */
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x40000
-#define CONFIG_SYS_NAND_U_BOOT_SIZE	0x80000
+#define CONFIG_SYS_NAND_U_BOOT_SIZE	0x8A000
 #define RAM_TYPPE_IS_SDRAM	0
 //#define FPGA_TRACE_DOWNLOAD //for download image from trace
 
