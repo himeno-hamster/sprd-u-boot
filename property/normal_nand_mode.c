@@ -798,3 +798,71 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	vlx_entry();
 }
 
+int nand_part_read(char *partname,char *buffer, int size)
+{
+        struct mtd_info *nand;
+        struct mtd_device *dev;
+        struct part_info *part;
+        u8 pnum;
+        int ret;
+        loff_t off = 0;
+	
+	ret = mtdparts_init();
+	if(ret != 0){
+		printf("No nand device ... %d\n",ret);
+		return -1;
+	}
+
+	ret = find_dev_and_part(partname,&dev,&pnum,&part);
+        if(ret){
+		printf("No partition named %s\n",partname);
+		return -1;
+	} else if(dev->id->type != MTD_DEV_TYPE_NAND){
+		printf("No partition  %s is not NAND device\n",partname);
+		return -1;
+	}
+	nand = &nand_info[dev->id->num];
+	off = part->offset;
+	ret = nand_read_skip_bad(nand,off,&size,(void *)buffer);
+	return ret;
+}
+
+int nand_part_write(char *partname,char *buffer, int size)
+{
+        struct mtd_info *nand;
+        struct mtd_device *dev;
+        struct part_info *part;
+	nand_erase_options_t opts;
+        u8 pnum;
+        int ret;
+        loff_t off = 0;
+
+        ret = mtdparts_init();
+        if(ret != 0){
+                printf("No nand device ... %d\n",ret);
+                return -1;
+        }
+
+        ret = find_dev_and_part(partname,&dev,&pnum,&part);
+        if(ret){
+                printf("No partition named %s\n",partname);
+                return -1;
+        } else if(dev->id->type != MTD_DEV_TYPE_NAND){
+                printf("No partition  %s is not NAND device\n",partname);
+                return -1;
+        }
+        nand = &nand_info[dev->id->num];
+        off = part->offset;
+        memset(&opts, 0, sizeof(opts));
+        opts.offset = off;
+        opts.length = part->size;
+        opts.quiet  = 1;
+        ret = nand_erase_opts(nand, &opts);
+        if(ret){
+               printf("nand erase bad %d\n", ret);
+               return -1;
+        }
+
+        ret = nand_write_skip_bad(nand,off,&size,(void *)buffer);
+	return ret;
+}
