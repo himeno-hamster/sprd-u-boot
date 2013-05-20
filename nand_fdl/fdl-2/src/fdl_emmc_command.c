@@ -66,6 +66,16 @@ static DL_EMMC_FILE_STATUS g_status;
 static int g_prevstatus;
 static int read_nv_check = 0;
 
+int get_end_write_pos(void)
+{
+}
+void set_current_write_pos(int pos)
+{
+}
+void move2goodblk(void)
+{
+}
+
 static __inline void FDL2_eMMC_SendRep (unsigned long err)
 {
 	FDL_SendAckPacket (convert_err (err));

@@ -157,8 +157,20 @@ int nand_do_write_oob(struct mtd_info *mtd, loff_t to,
                              struct mtd_oob_ops *ops);
 
 #define GFP_ATOMIC ((gfp_t) 0)
+static int current_write_position;
 
-
+int get_end_write_pos(void)
+{
+	return current_write_position;
+}
+void set_current_write_pos(int pos)
+{
+	current_write_position = pos;
+}
+void move2goodblk(void)
+{
+	while(1) fb_printf("suspend in move2goodblk\n");
+}
 /* todo: give lk strtoul and nuke this */
 static unsigned hex2unsigned(const char *x)
 {
@@ -677,6 +689,7 @@ void cmd_erase(const char *arg, void *data, unsigned sz)
 }
 
 #else
+char tempBuf[9*1024]={0};
 void cmd_flash(const char *arg, void *data, unsigned sz)
 {
 	struct mtd_info *nand;
@@ -737,11 +750,11 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 		sz = ROUND_TO_PAGE(sz, nand->writesize -1);
 
 	size = sz;
-
-	fb_printf("writing 0x%x bytes to '%s' offset: 0x%08x\n", size, part->name, part->offset);
+	fb_printf("writing 0x%x bytes to '%s' offset: 0x%08x nand_curr_device=%d\n", size, part->name, part->offset,nand_curr_device);
     if(!extra){ // boot or recovery partition write
         ret = nand_write_skip_bad(nand, (loff_t)part->offset, &size, data);
     }else{
+#ifndef CONFIG_SC7710G2
         struct nand_chip *chip = nand->priv;
         chip->ops.mode = MTD_OOB_AUTO;
         chip->ops.len = nand->writesize;
@@ -766,6 +779,18 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
             }
 			part_off += nand->writesize;
         }
+#else
+
+	int part_off = part->offset;
+	int copy_size = 12 * 1024;
+	set_current_write_pos(part_off);
+	init_yaffs_convert_variables(nand->writesize,nand->oobsize,1);
+
+	set_convert_buffer(data,size);
+	if (convert_buffer_is_full())
+		yaffs2_convertAndWrite(0,nand->writesize,nand->oobsize,tempBuf);
+	yaffs2_convertAndWrite(1,nand->writesize,nand->oobsize,tempBuf);
+#endif
     }
 
 	if(!ret)

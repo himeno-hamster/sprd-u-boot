@@ -50,7 +50,10 @@ static unsigned int is_system_write;
 static unsigned char *backupblk = NULL;
 static unsigned long backupblk_len = 0;
 static unsigned long backupblk_flag = 0;
-
+void set_current_write_pos(unsigned int pos)
+{
+	cur_write_pos = pos;
+}
 int nand_flash_init(void)
 {
 	nand_init();
@@ -800,6 +803,7 @@ int nand_write_spl(u8 *buf, struct mtd_info *mtd)
 	return ret;	
 }
 #endif
+
 
 int nand_write_fdl(unsigned int size, unsigned char *buf)
 {
