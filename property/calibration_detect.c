@@ -490,7 +490,8 @@ int cali_file_check(void)
 	return 0;	
 }
 
-int read_adc_cali_data(char *buffer,int size)
+#ifndef CONFIG_AP_ADC_CALIBRATION
+int read_adc_calibration_data(char *buffer,int size)
 {
 #if defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8830)
 	block_dev_desc_t *p_block_dev = NULL;
@@ -507,4 +508,4 @@ int read_adc_cali_data(char *buffer,int size)
 #endif
 	return 0;
 }
-
+#endif

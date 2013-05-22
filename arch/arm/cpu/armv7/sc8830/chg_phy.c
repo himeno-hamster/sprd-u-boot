@@ -53,7 +53,7 @@ void CHG_Init (void)
 		adc_voltage_table[0][0] = 3329;
 		adc_voltage_table[1][0] = 2855;
 	}
-#ifdef CONFIG_AP_ADC_CALIBRATION
+#if defined (CONFIG_AP_ADC_CALIBRATION) || defined(CONFIG_SC8830)
         {
                 extern int read_adc_calibration_data(char *buffer,int size);
                 unsigned int *adc_data;

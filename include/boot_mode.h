@@ -17,7 +17,7 @@ void panic_reboot_mode(void);
 int is_bat_low(void);
 int alarm_flag_check(void);
 int cali_file_check(void);
-int read_adc_cali_data(char *buffer,int size);
+int read_adc_calibration_data(char *buffer,int size);
 #define RECOVERY_MODE   0x77665502
 #define FASTBOOT_MODE   0x77665500
 #define NORMAL_MODE   0x77665503
