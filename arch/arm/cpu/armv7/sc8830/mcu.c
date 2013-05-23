@@ -113,15 +113,22 @@ static uint32 McuClkConfig(uint32 arm_clk)
     return 0;
 }
 
-static uint32 ArmCoreConfig()
+static uint32 ArmCoreConfig(uint32 arm_clk)
 {
     uint32 dcdc_arm;
     dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_ARM_ADI);
-    dcdc_arm &=~(7<<5);
-    //dcdc_arm |= (6<<5); //set dcdcarmcore voltage 1.1V->1.2V
-    //dcdc_arm |= (4<<5);   //set dcdcarmcore voltage 1.1V->1.0V
-    dcdc_arm |= (3<<5);   //set dcdcarmcore voltage 1.1V->0.9V
-    dcdc_arm |= 14;       //set dcdcarmcore voltage 1.0V->1.042V
+    dcdc_arm &= ~0xFF;
+    //1.0V  800M
+    //1.1V  1100M
+    //1.2V  1200M
+    if (arm_clk < ARM_CLK_1000M)
+    {
+        dcdc_arm |= (4<<5); //set dcdcarmcore voltage 1.1V->1.0V
+    }
+    else if (arm_clk >= ARM_CLK_1200M)
+    {
+        dcdc_arm |= (6<<5); //set dcdcarmcore voltage 1.1V->1.2V
+    }
     ANA_REG_SET(ANA_REG_GLB_DCDC_ARM_ADI, dcdc_arm);
     REG32(REG_AP_APB_APB_EB) |= BIT_AP_CKG_EB;        // CKG enable
     delay();
@@ -138,7 +145,7 @@ static void AvsEb()
 
 static uint32 ClkConfig(uint32 arm_clk)
 {
-    ArmCoreConfig();
+    ArmCoreConfig(arm_clk);
     //AvsEb();
     AxiClkConfig(arm_clk);
     DbgClkConfig(arm_clk);
