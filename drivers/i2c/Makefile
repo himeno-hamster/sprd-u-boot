@@ -25,6 +25,8 @@ include $(TOPDIR)/config.mk
 
 LIB	:= $(obj)libi2c.o
 
+PHYDIR  = v0
+$(shell mkdir -p $(obj)$(PHYDIR))
 COBJS-$(CONFIG_BFIN_TWI_I2C) += bfin-twi_i2c.o
 COBJS-$(CONFIG_DRIVER_DAVINCI_I2C) += davinci_i2c.o
 COBJS-$(CONFIG_FSL_I2C) += fsl_i2c.o
@@ -42,6 +44,10 @@ COBJS-$(CONFIG_SPEAR_I2C) += spr_i2c.o
 COBJS-$(CONFIG_TSI108_I2C) += tsi108_i2c.o
 COBJS-$(CONFIG_SC8825_I2C) += sc8825_i2c.o
 COBJS-$(CONFIG_SPRD_I2C) += sprd_i2c.o
+COBJS-$(CONFIG_SC8830_I2C) += i2c_hal.o
+COBJS-$(CONFIG_SC8830_I2C) += sc8830_i2c_cfg.o
+COBJS-$(CONFIG_SC8830_I2C) += $(PHYDIR)/i2c_phy_v0.o
+
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
