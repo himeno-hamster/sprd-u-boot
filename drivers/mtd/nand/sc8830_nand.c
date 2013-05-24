@@ -503,10 +503,18 @@ unsigned int sprd_ecc_encode(struct sprd_ecc_param *param)
 	d_param.dir = 1;
 	d_param.m_size = param->m_size;
 	d_param.s_size = param->sp_size;
+
+	Dcache_CleanRegion((unsigned int)d_param.m_buf, d_param.m_sct*d_param.m_size);
+	Dcache_CleanRegion((unsigned int)d_param.s_buf, d_param.s_sct*d_param.s_size);
+
 	sprd_tiger_data_trans(&d_param);
 	sprd_ecc_ctrl(param, 1);
 	d_param.dir = 0;
 	d_param.m_sct = 0;
+
+	Dcache_InvalRegion((unsigned int)d_param.m_buf , d_param.m_sct*d_param.m_size);
+	Dcache_InvalRegion((unsigned int)d_param.s_buf , d_param.s_sct*d_param.s_size);
+
 	sprd_tiger_data_trans(&d_param); //read the ecc value from nfc buffer
 	return 0;
 }
