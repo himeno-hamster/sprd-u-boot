@@ -134,7 +134,7 @@ LOCAL void set_chip_clock_freq(void)
     uint32 arm_drv = 0;
     uint32 axi_div;
     uint32 ahb_div;
-    uint32 dbg_div;
+    uint32 dbg_div = 0;
 
     uint32 mpll_clk_freq = EMC_GetPara()->arm_clk;
 
