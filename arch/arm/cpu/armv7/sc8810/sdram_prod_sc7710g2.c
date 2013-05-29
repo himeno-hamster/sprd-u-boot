@@ -40,7 +40,10 @@ extern   "C"
 LOCAL CONST EMC_PARAM_T s_emc_parm = 
 // arm_clk          emc_clk        ddr driver strength   dqs_drv / dat_drv / ctl_drv / clk_drv / clk_wr
 //{CHIP_CLK_1000MHZ, EMC_CLK_133MHZ, DDR_DRV_STR_TR_Q,        2,		1,          0,      3,          15};    //EVB
-{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        2,		2,          0,      2,          15};  // PCB_V1.0.0
+//{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        2,		2,          0,      2,          15};  // PCB_V1.0.0
+{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        2,		3,          1,      2,          12};  // 4+2 nandmcp
+//{CHIP_CLK_1000MHZ, EMC_CLK_333MHZ, DDR_DRV_STR_TR_Q,        1,		1,          1,      2,          19};  // openphone
+
 
 
 LOCAL CONST SDRAM_TIMING_PARA_T s_sdram_timing_param =

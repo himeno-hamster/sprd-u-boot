@@ -132,7 +132,7 @@ extern   "C"
 #define   ANA_AFUSE_OUT3        (ANA_REG_BASE + 0x1b0)
 #define   ANA_SLP_AUD_PD_EN     (ANA_REG_BASE + 0x1c0)
 #define   ANA_MF                (ANA_REG_BASE + 0x1f4)
-#define   ANA_CHIP_ID_LOW       (ANA_REG_BASE + 0x1FB)
+#define   ANA_CHIP_ID_LOW       (ANA_REG_BASE + 0x1F8)
 #define   ANA_CHIP_ID_HIGH      (ANA_REG_BASE + 0x1FC)
 #else
 #define   ANA_APB_CLK_EN        (ANA_REG_BASE + 0x00)
@@ -175,7 +175,7 @@ extern   "C"
 #define   ANA_INT_GPI_DEBUG     (ANA_REG_BASE + 0x94)
 #define   ANA_HWRST_RTC         (ANA_REG_BASE + 0x98)
 #define   ANA_IF_SPR_CTRL       (ANA_REG_BASE + 0x9C)
-#define   ANA_CHIP_ID_LOW       (ANA_REG_BASE + 0xFB)
+#define   ANA_CHIP_ID_LOW       (ANA_REG_BASE + 0xF8)
 #define   ANA_CHIP_ID_HIGH      (ANA_REG_BASE + 0xFC)
 #endif
 /*

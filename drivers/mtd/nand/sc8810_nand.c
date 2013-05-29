@@ -365,6 +365,11 @@ static int sc8810_nfc_wait_command_finish(unsigned int flag)
 	nfc_reg_write(NFC_CLR_RAW, 0xffff0000); //clear all interrupt status
 	if(counter > NFC_TIMEOUT_VAL)
 	{
+	    int i;
+	    for (i=0; i<40; i++)
+	    {
+            printk("\r\nnfc cmd reg addr:0x%x, value:0x%xx!\r\n", NFC_CMD+i);
+        }
 		while (1);
 		return -1;
 	}
@@ -730,6 +735,7 @@ static void sc8810_nand_hwcontrol(struct mtd_info *mtd, int cmd,
 			break;	
 		case NAND_CMD_READSTART:
 			nfc_mcr_inst_add(cmd, NF_MC_CMD_ID);
+			nfc_mcr_inst_add(0x10, NF_MC_NOP_ID); /* add nop clk */
 			nfc_mcr_inst_add(0, NF_MC_WAIT_ID);			
 			if((!g_info.addr_array[0]) && (!g_info.addr_array[1]) )//main part
 				size = mtd->writesize +mtd->oobsize;
@@ -942,7 +948,8 @@ int board_nand_init(struct nand_chip *this)
 	if (ptr_nand_spec != NULL)
 		set_nfc_timing(&ptr_nand_spec->timing_cfg, 153);
 	else
-		nfc_reg_write(NFC_TIMING, ((6 << 0) | (6 << 5) | (10 << 10) | (6 << 16) | (5 << 21) | (5 << 26)));
+		//nfc_reg_write(NFC_TIMING, ((6 << 0) | (6 << 5) | (10 << 10) | (6 << 16) | (5 << 21) | (5 << 26)));
+		nfc_reg_write(NFC_TIMING, ((12 << 0) | (7 << 5) | (10 << 10) | (6 << 16) | (5 << 21) | (7 << 26)));
 #endif
 
 	extid = io_wr_port[3];
