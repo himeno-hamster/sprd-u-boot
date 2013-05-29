@@ -157,7 +157,11 @@ static uint32 ClkConfig(uint32 arm_clk)
 
 uint32 MCU_Init()
 {
+#ifdef CONFIG_SP8830EB
+    if (ClkConfig(ARM_CLK_1200M))
+#else
     if (ClkConfig(ARM_CLK_800M))
+#endif
         while(1);
     return 0;
 }
