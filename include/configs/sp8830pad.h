@@ -183,6 +183,7 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 #define CONFIG_SPRD_SPI
 #define CONFIG_SPRD_I2C
+#define CONFIG_SC8830_I2C
 /*
  * Flash & Environment
  */

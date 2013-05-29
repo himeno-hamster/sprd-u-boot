@@ -163,8 +163,7 @@ void ms_delay(uint32 ticks)
  **---------------------------------------------------------------------------*/
 volatile BOOLEAN    g_wait_i2c_int_flag;
 volatile BOOLEAN    g_i2c_open_flag=FALSE;
-volatile uint32     g_i2c_timeout = 10; //unit is ms
-
+LOCAL volatile uint32     g_i2c_timeout = 10; //unit is ms
 /**---------------------------------------------------------------------------*
  **                      Function  Definitions
  **---------------------------------------------------------------------------*/
