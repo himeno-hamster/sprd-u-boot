@@ -33,7 +33,7 @@
 #define CHIP_REG_GET(reg_addr)          (*(volatile unsigned int *)(reg_addr))
 #define CHIP_REG_SET(reg_addr, value)   (*(volatile unsigned int *)(reg_addr)  = (unsigned int)(value))
 
-#define SCI_ASSERT(condition) BUG_ON(!(condition))  
+#define SCI_ASSERT(condition) BUG_ON(!(condition))
 #define SCI_PASSERT(condition, format...)  \
 	do {		\
 		if(!(condition)) { \
@@ -41,9 +41,14 @@
 			BUG();	\
 		} \
 	}while(0)
-	
+
 #define ADI_PHYS	ADI_BASE
 #define __adi_virt_to_phys(x) ((x) - SPRD_ADI_BASE + ADI_PHYS)
+
+#ifdef CONFIG_SC7710G2
+#define ADI_GSSI_CFG0           (ADI_BASE + 0x1C)
+#define ADI_CLK_ALWAYS_ON       BIT_30
+#endif
 
 /*****************************************************************************
  *  Description:    this function performs read operation to the analog die reg .   *
@@ -71,11 +76,11 @@ unsigned short ADI_Analogdie_reg_read (unsigned int addr)
 
     //wait read operation complete, RD_data[31] will be cleared after the read operation complete
 	do {
-		adi_rd_data = CHIP_REG_GET (ADI_RD_DATA);		
+		adi_rd_data = CHIP_REG_GET (ADI_RD_DATA);
 		if (!timeout--)
 			break;
 	} while (adi_rd_data & BIT_31);
-	
+
     //rd_data high part should be the address of the last read operation
     //SCI_ASSERT ( (adi_rd_data & 0xFFFF0000) == ((addr) <<16));
 
@@ -83,7 +88,7 @@ unsigned short ADI_Analogdie_reg_read (unsigned int addr)
     //SCI_RestoreFIQ();
     //SCI_RestoreIRQ();
 	local_irq_restore(flags);
-	
+
     return ( (unsigned short) (adi_rd_data & 0x0000FFFF));
 
 }
@@ -98,7 +103,7 @@ unsigned short ADI_Analogdie_reg_read (unsigned int addr)
 ******************************************************************************/
 void ADI_Analogdie_reg_write (unsigned int addr, unsigned short data)
 {
-	
+
 	int timeout = TIMEOUT_ADI;
 	do {////ADI_wait_fifo_empty
 		if ( ( (CHIP_REG_GET (ADI_FIFO_STS) & ( (unsigned int) ADI_FIFO_EMPTY)) != 0))
@@ -146,3 +151,13 @@ void ADI_init (void)
                                      | (1<<RFT_WR_PRI) | (1<<PD_WR_PRI)));
 
 }
+
+#ifdef CONFIG_SC7710G2
+void ADI_ClkAlwaysOn(unsigned long en)
+{
+	if (en)
+		CHIP_REG_OR(ADI_GSSI_CFG0, ADI_CLK_ALWAYS_ON);
+	else
+		CHIP_REG_AND(ADI_GSSI_CFG0, (~ADI_CLK_ALWAYS_ON));
+}
+#endif

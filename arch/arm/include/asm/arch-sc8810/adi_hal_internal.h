@@ -22,7 +22,7 @@
 
 #include "sci_types.h"
 
-    
+
 unsigned short ADI_Analogdie_reg_read (unsigned int addr);
 
 void ADI_Analogdie_reg_write (unsigned int addr, unsigned short data);
@@ -62,5 +62,8 @@ void ADI_init (void);
 
 #define ANA_REG_GET(reg_addr)           ADI_Analogdie_reg_read(reg_addr)
 
+#ifdef CONFIG_SC7710G2
+void ADI_ClkAlwaysOn(unsigned long en);
+#endif
 
 #endif  //_ADI_HAL_INTERNAL_H_

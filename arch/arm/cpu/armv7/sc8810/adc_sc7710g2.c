@@ -26,6 +26,12 @@ void ADC_Init(void)
 {
     ANA_REG_OR(ANA_REG_GLB_ANA_APB_CLK_EN,
 		    BIT_ANA_ADC_EB | BIT_ANA_CLK_AUXADC_EN | BIT_ANA_CLK_AUXAD_EN);
+
+#ifdef CONFIG_SC7710G2
+	ADI_ClkAlwaysOn(1);
+
+	ANA_REG_OR((ADC_REG_BASE + ADC_CTL), BIT_ADC_EN);
+#endif
 }
 
 static int sci_adc_config(struct adc_sample_data *adc)
@@ -86,17 +92,16 @@ static int sci_adc_get_values(struct adc_sample_data *adc)
 
 	addr = ADC_REG_BASE + ADC_CTL;
 	val = adc_read(addr);
-	val &= ~(BIT_ADC_EN | BIT_SW_CH_ON | BIT_ADC_BIT_MODE_MASK);
+	val &= ~(BIT_SW_CH_ON | BIT_ADC_BIT_MODE_MASK);
 	adc_write(val, addr);
 
 	adc_clear_irq();
 
 	val = BIT_SW_CH_RUN_NUM(num);
-	val |= BIT_ADC_EN;
 	val |= BIT_ADC_BIT_MODE(adc->sample_bits);
 	val |= BIT_SW_CH_ON;
 
-	adc_write(val, addr);
+	adc_write((adc_read(addr)|val), addr);
 
 	while ((!adc_raw_irqstatus()) && cnt--) {
 		udelay(50);
@@ -107,6 +112,8 @@ static int sci_adc_get_values(struct adc_sample_data *adc)
 		goto Exit;
 	}
 
+	adc_clear_irq();
+
 	if (adc->sample_bits)
 		sample_bits_msk = ((1 << 12) - 1);	//12
 	else
@@ -115,9 +122,11 @@ static int sci_adc_get_values(struct adc_sample_data *adc)
 	while (num--)
 		*pbuf++ = adc_get_data(sample_bits_msk);
 
+	return ret;
+
 Exit:
 	val = adc_read(addr);
-	val &= ~BIT_ADC_EN;
+	val &= ~BIT_SW_CH_ON;
 	adc_write(val, addr);
 
 	return ret;
