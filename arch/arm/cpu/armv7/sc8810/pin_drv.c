@@ -75,7 +75,7 @@ void set_cp_emc_pad(void)
 void set_cp_jtag_pad(void)
 {
     u32 i = 0;
-    
+#if 1    
     /*CP Jtag pin config*/
     CHIP_REG_OR(GR_GEN0, BIT_13);//pin eb
     
@@ -84,12 +84,12 @@ void set_cp_jtag_pad(void)
     for (i = 0; i < 4; i++) {
         CHIP_REG_SET(((CHIPPIN_CTL_BEGIN + PIN_TRACEDAT4_REG_OFFS) + i*4), 0x10188);
     }
-#if 0    
-    CHIP_REG_SET(0x8C000588, 0x10108);
-    CHIP_REG_SET(0x8C00058C, 0x10188);
-    CHIP_REG_SET(0x8C000590, 0x10188);
-    CHIP_REG_SET(0x8C000594, 0x10188);
-    CHIP_REG_SET(0x8C000598, 0x10188);
+#else
+    REG32(0x8B0000B0) &= ~(BIT_22|BIT_21|BIT_20|BIT_19);
+    REG32(0x8C00043C) |= 0X10;
+    REG32(0x8C000440) |= 0X10;
+    REG32(0x8C000448) |= 0X10;
+    REG32(0x8C00044C) |= 0X10;
 #endif
 }
 

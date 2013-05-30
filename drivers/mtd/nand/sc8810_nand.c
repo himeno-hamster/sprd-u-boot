@@ -881,9 +881,14 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, unsigned
 	for (index = 0; index < 5; index ++)
 		this->nandid[index] = id[index];
 
-	array = sizeof(nand_config_table) / sizeof(struct sc8810_nand_page_oob);
+	array = sizeof(nand_config_table) / sizeof(nand_config_table[0]);
 	for (index = 0; index < array; index ++) {
-		if ((nand_config_table[index].m_c == id[0]) && (nand_config_table[index].d_c == id[1]) && (nand_config_table[index].cyc_3 == id[2]) && (nand_config_table[index].cyc_4 == id[3]) && (nand_config_table[index].cyc_5 == id[4]))
+		if ((nand_config_table[index].m_c == id[0])
+		        && (nand_config_table[index].d_c == id[1])
+		        && (nand_config_table[index].cyc_3 == id[2])
+		        && (nand_config_table[index].cyc_4 == id[3])
+		        && (nand_config_table[index].cyc_5 == id[4])
+		    )
 			break;
 	}
 
