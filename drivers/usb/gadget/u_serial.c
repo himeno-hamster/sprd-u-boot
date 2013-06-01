@@ -1399,6 +1399,7 @@ int __init gserial_setup(struct usb_gadget *g, unsigned count)
 	tty_set_operations(gs_tty_driver, &gs_tty_ops);
 #endif
 
+	memset(&coding,0,sizeof(struct usb_cdc_line_coding));
 	/* make devices be openable */
 	for (i = 0; i < count; i++) {
 		mutex_init(&ports[i].lock);
