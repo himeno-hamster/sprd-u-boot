@@ -1131,7 +1131,7 @@ void publ_basic_mode_init(DRAM_INFO* dram)
     reg_bits_set(PUBL_DSGCR,1,1,1);//Byte Disable Enable
     reg_bits_set(PUBL_DSGCR,2,1,0);//Impedance Update Enable
     reg_bits_set(PUBL_DSGCR,3,1,1);//Low Power I/O Power Down
-    reg_bits_set(PUBL_DSGCR,4,1,1);//Low Power DLL Power Down
+    reg_bits_set(PUBL_DSGCR,4,1,0);//Low Power DLL Power Down
     reg_bits_set(PUBL_DSGCR,5,3,DQS_GATE_EARLY_LATE);//DQS Gate Extension
     reg_bits_set(PUBL_DSGCR,8,3,DQS_GATE_EARLY_LATE);//DQS Gate Early
        
