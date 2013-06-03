@@ -30,7 +30,9 @@ extern int prodinfo_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_
 #undef dprintf
 #endif
 #define dprintf(fmt, args...) printf(fmt, ##args)
-
+#define MAGIC_DATA_SAVE_OFFSET	(0x20/4)
+#define CHECKSUM_SAVE_OFFSET	(0x24/4)
+#define CHECKSUM_START_OFFSET	0x28
 static char buf[8192];
 
 
@@ -78,12 +80,72 @@ int set_recovery_message(const struct recovery_message *in)
 	}
 	return 0;
 }
+unsigned short eMMCCheckSum(const unsigned int *src, int len)
+{
+    unsigned int   sum = 0;
+    unsigned short *src_short_ptr = PNULL;
+
+    while (len > 3)
+    {
+        sum += *src++;
+        len -= 4;
+    }
+
+    src_short_ptr = (unsigned short *) src;
+
+    if (0 != (len&0x2))
+    {
+        sum += * (src_short_ptr);
+        src_short_ptr++;
+    }
+
+    if (0 != (len&0x1))
+    {
+        sum += * ( (unsigned char *) (src_short_ptr));
+    }
+
+    sum  = (sum >> 16) + (sum & 0x0FFFF);
+    sum += (sum >> 16);
+
+    return (unsigned short) (~sum);
+}
+#if defined(CONFIG_TIGER) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
+#define BOOTLOADER_HEADER_OFFSET 0x20
+typedef struct{
+	uint32 version;
+	uint32 magicData;
+	uint32 checkSum;
+	uint32 hashLen;
+}EMMC_BootHeader;
+#endif
+#define MAGIC_DATA	0xAA55A5A5
+void splFillCheckData(unsigned int * splBuf,  int len)
+{
+#if defined(CONFIG_TIGER) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
+	EMMC_BootHeader *header;
+	header = (EMMC_BootHeader *)((unsigned char*)splBuf+BOOTLOADER_HEADER_OFFSET);
+	header->version  = 0;
+	header->magicData= MAGIC_DATA;
+	header->checkSum = (unsigned int)eMMCCheckSum((unsigned char*)splBuf+BOOTLOADER_HEADER_OFFSET+sizeof(*header), CONFIG_SPL_LOAD_LEN-(BOOTLOADER_HEADER_OFFSET+sizeof(*header)));
+	header->hashLen  = 0;
+#else
+	*(splBuf + MAGIC_DATA_SAVE_OFFSET) = MAGIC_DATA;
+	*(splBuf + CHECKSUM_SAVE_OFFSET) = (unsigned int)eMMCCheckSum((unsigned int *)&splBuf[CHECKSUM_START_OFFSET/4], CONFIG_SPL_LOAD_LEN - CHECKSUM_START_OFFSET);
+//	*(splBuf + CHECKSUM_SAVE_OFFSET) = splCheckSum(splBuf);
+#endif
+}
+#if defined (CONFIG_SC8825) || defined (CONFIG_TIGER)
+unsigned char *spl_eMMCBuf = (unsigned char*)0x82000000;
+#else
+unsigned char *spl_eMMCBuf = (unsigned char*)0x2000000;
+#endif
 #ifdef CONFIG_GENERIC_MMC
 #define BUF_ADDR CONFIG_SYS_SDRAM_BASE+0x1000000
 #define SD_NV_NAME "nvitem.bin"
 #define NAND_NV_NAME " "
 #define MODEM_PART "modem"
 #define SD_MODEM_NAME "modem.bin"
+#define SD_SPL_NAME "u-boot-spl-16k.bin"
 #define DSP_PART "dsp"
 #define SD_DSP_NAME "dsp.bin"
 #define VM_PART "vmjaluna"
@@ -279,7 +341,25 @@ SKIP:
 #endif
 		file_fat_rm(SD_NV_NAME);
 	}while(0);
-
+#ifndef CONFIG_SC8830
+	do{
+		printf("reading %s\n", SD_SPL_NAME);
+		ret = do_fat_read(SD_SPL_NAME, spl_eMMCBuf, 0, LS_NO);
+		if(ret <= 0){
+			printf("sd file read error %d\n", ret);
+			break;
+		}
+		size = ret;
+		splFillCheckData((unsigned int *) spl_eMMCBuf, (int)size);
+		//nv_write_partition(p_block_dev, PARTITION_MODEM, (char *)BUF_ADDR, size);
+		if (TRUE !=  Emmc_Write(PARTITION_BOOT1, 0, CONFIG_SPL_LOAD_LEN / EMMC_SECTOR_SIZE, (uint8*)spl_eMMCBuf)) {
+			printf("emmc image read error \n");
+			ret = 1; /* fail */
+		}
+		printf("spl update done\n");
+		file_fat_rm(SD_SPL_NAME);
+	}while(0);
+#endif
 	do{
 		printf("reading %s\n", SD_MODEM_NAME);
 		ret = do_fat_read(SD_MODEM_NAME, BUF_ADDR, 0, LS_NO);
