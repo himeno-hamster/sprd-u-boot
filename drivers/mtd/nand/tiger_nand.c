@@ -194,6 +194,7 @@ static struct sprd_tiger_nand_param sprd_tiger_nand_param_tb[] = {
 	{{0xad, 0xbc, 0x90,0x55, 0x54}, 	1, 	5, 	4, 	16, 	12, 	11, 	1, 	2, 	512, 10, 25, 15},
 };
 
+#ifndef CONFIG_NAND_SPL
 static void tiger_set_timing_config(struct sprd_tiger_nand_info * tiger, uint32_t nfc_clk_MHz){
 	int index, array;
 	uint8_t id_buf[8];
@@ -257,7 +258,7 @@ static void tiger_set_timing_config(struct sprd_tiger_nand_info * tiger, uint32_
 		sprd_tiger_reg_write(NFC_TIMING_REG, reg_val);
 	}
 }
-
+#endif
 
 #ifdef CONFIG_NAND_SPL
 struct sprd_tiger_boot_header_info {
@@ -507,8 +508,7 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *chip, u8 id[5]
 	}
 	tiger->mtd = mtd;
 }
-#endif
-#ifndef CONFIG_NAND_SPL
+
 typedef struct {
 	uint8_t *m_buf;
 	uint8_t *s_buf;
@@ -588,10 +588,18 @@ unsigned int sprd_ecc_encode(struct sprd_ecc_param *param)
 	d_param.dir = 1;
 	d_param.m_size = param->m_size;
 	d_param.s_size = param->sp_size;
+
+	Dcache_CleanRegion((unsigned int)d_param.m_buf, d_param.m_sct*d_param.m_size);
+	Dcache_CleanRegion((unsigned int)d_param.s_buf, d_param.s_sct*d_param.s_size);
+
 	sprd_tiger_data_trans(&d_param);
 	sprd_ecc_ctrl(param, 1);
 	d_param.dir = 0;
 	d_param.m_sct = 0;
+
+	Dcache_InvalRegion((unsigned int)d_param.m_buf , d_param.m_sct*d_param.m_size);
+	Dcache_InvalRegion((unsigned int)d_param.s_buf , d_param.s_sct*d_param.s_size);
+
 	sprd_tiger_data_trans(&d_param); //read the ecc value from nfc buffer
 	return 0;
 }
@@ -886,6 +894,7 @@ static int sprd_tiger_nand_read_sp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t *
 {
 	return 0;
 }
+#ifndef CONFIG_NAND_SPL
 static int sprd_tiger_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
 {
 	struct sprd_tiger_nand_info *tiger = mtd_to_tiger(mtd);
@@ -944,7 +953,6 @@ static int sprd_tiger_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, ui
 	cfg1 = ((tiger->info_size - 1) << SPAR_INFO_SIZE_OFFSET);
 	cfg2 = (tiger->ecc_mode << ECC_MODE_OFFSET) | (tiger->info_pos << SPAR_INFO_POS_OFFSET) | ((tiger->sct_pg - 1) << SPAR_SECTOR_NUM_OFFSET) | tiger->ecc_pos;
 
-#ifndef CONFIG_NAND_SPL
 	if (mbuf)
 	{
 		Dcache_CleanRegion((unsigned int)mbuf, tiger->m_size*tiger->sct_pg);
@@ -956,7 +964,6 @@ static int sprd_tiger_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, ui
 		Dcache_CleanRegion((unsigned int)sbuf, tiger->s_size*tiger->sct_pg);
 		Dcache_InvalRegion((unsigned int)sbuf, tiger->s_size*tiger->sct_pg);
 	}
-#endif
 	if(mbuf && sbuf)
 	{
 		cfg0 |= MAIN_USE | SPAR_USE;
@@ -989,6 +996,7 @@ static int sprd_tiger_nand_write_sp(struct mtd_info *mtd,const uint8_t *mbuf, ui
 {
 	return 0;
 }
+#endif
 static void sprd_tiger_erase(struct mtd_info *mtd, int page_addr)
 {
 	struct sprd_tiger_nand_info *tiger = mtd_to_tiger(mtd);
@@ -1094,6 +1102,7 @@ static int sprd_tiger_read_oob(struct mtd_info *mtd, struct nand_chip *chip,
 	}
 	return 0;
 }
+#ifndef CONFIG_NAND_SPL
 static void sprd_tiger_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 				const uint8_t *buf)
 {
@@ -1134,7 +1143,7 @@ static int sprd_tiger_write_oob(struct mtd_info *mtd, struct nand_chip *chip,
 	}
 	return 0;
 }
-
+#endif
 /**
  * nand_block_bad - [DEFAULT] Read bad block marker from the chip
  * @mtd:	MTD device structure
@@ -1262,10 +1271,12 @@ int board_nand_init(struct nand_chip *chip)
 	chip->ecc.correct = sprd_tiger_ecc_correct;
 	chip->ecc.read_page = sprd_tiger_read_page;
 	chip->ecc.read_page_raw = sprd_tiger_read_page_raw;
+#ifndef CONFIG_NAND_SPL
 	chip->ecc.write_page = sprd_tiger_write_page;
 	chip->ecc.write_page_raw = sprd_tiger_write_page_raw;
-	chip->ecc.read_oob = sprd_tiger_read_oob;
 	chip->ecc.write_oob = sprd_tiger_write_oob;
+#endif
+	chip->ecc.read_oob = sprd_tiger_read_oob;
 	chip->erase_cmd = sprd_tiger_erase;
 
 	chip->ecc.bytes = CONFIG_SYS_NAND_ECCBYTES;
@@ -1281,13 +1292,6 @@ int board_nand_init(struct nand_chip *chip)
 
 	return 0;
 }
-
-#ifndef CONFIG_NAND_SPL
-void McuReadNandType(unsigned char *array)
-{
-
-}
-#endif
 
 static unsigned long nfc_read_status(void)
 {
@@ -1337,10 +1341,7 @@ static unsigned long nand_ctl_erase_block(int blk, int erasesize, int writesize)
 
 	return status;
 }
-#endif
 
-
-#ifndef CONFIG_NAND_SPL
 void nand_scan_patition(int blocks, int erasesize, int writesize)
 {
 	int blk;
