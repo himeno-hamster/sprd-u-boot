@@ -354,7 +354,7 @@ static uint32 ClkConfig()
         reg_data |=  7;
         ADI_Analogdie_reg_write(0x420006AC, reg_data);
 
-#if 0   // default 1.1V regdata = 0;
+#if 1   // default 1.1V regdata = 0;
         //DCDC CORE 1.2V
         reg_data = ADI_Analogdie_reg_read(0x42000640);
         reg_data &=  ~(0xff);
