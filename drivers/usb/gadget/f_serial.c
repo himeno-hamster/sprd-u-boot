@@ -146,6 +146,8 @@ static int gser_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl
 				value = 0;
 				if ((w_value & 0xff) == 1)
 					usb_port_open = true;
+				else
+					usb_port_open = false;
 				break;
 		}
 	}

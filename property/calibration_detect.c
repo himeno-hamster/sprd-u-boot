@@ -190,6 +190,7 @@ extern int usb_fastboot_initialize(void);
 extern int usb_serial_init(void);
 extern void  usb_serial_cleanup(void);
 extern int usb_serial_configed;
+extern int usb_port_open;
 extern int usb_read_done;
 extern int usb_write_done;
 extern int usb_trans_status;
@@ -430,6 +431,13 @@ void calibration_detect(int key)
 		if(usb_trans_status)
 			printf("func: %s line %d usb trans with error %d\n", __func__, __LINE__, usb_trans_status);
 		usb_wait_trans_done(1);
+		start_time = get_timer_masked();
+		while(usb_port_open){
+			usb_gadget_handle_interrupts();
+			now_time = get_timer_masked();
+			if(now_time - start_time > 500)
+				break;
+		}
 		udc_power_off();
         cmd_buf=malloc(1024);
         if(cmd_buf==NULL){
