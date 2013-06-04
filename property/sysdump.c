@@ -174,7 +174,7 @@ void write_sysdump_before_boot(void)
 				waddr = mem[i].paddr;
 
 		#ifdef CONFIG_RAMDUMP_NO_SPLIT
-				sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT"_dump.lst", infop->time, i + 1);
+				sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT"_0x%8.8x-0x%8.8x_dump.lst", infop->time, i + 1, mem[i].paddr, mem[i].paddr + mem[i].size -1);
 				write_mem_to_mmc(path, fnbuf, waddr, mem[i].size);
 		#else
 			if (mem[i].size <= SZ_8M) {
