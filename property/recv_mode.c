@@ -139,7 +139,9 @@ void recovery_mode(void)
 #if BOOT_NATIVE_LINUX
     vlx_nand_boot(RECOVERY_PART, CONFIG_BOOTARGS, BACKLIGHT_ON);
 #else
+#ifndef CONFIG_SC8830
     try_update_modem(); //update img from mmc
+#endif
     vlx_nand_boot(RECOVERY_PART, NULL, BACKLIGHT_ON);
 #endif
 }

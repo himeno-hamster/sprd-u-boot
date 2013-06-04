@@ -108,7 +108,9 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
         DBG("func: %s line: %d\n", __func__, __LINE__);
         recovery_mode_without_update();
     }else if(ret == 2){
+#ifndef CONFIG_SC8830
 	    try_update_modem(); //update img from mmc
+#endif
 	    normal_mode();
     }
 
