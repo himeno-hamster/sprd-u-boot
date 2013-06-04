@@ -352,7 +352,7 @@
 //#define CONFIG_SP8810_MMC             
 //#define CONFIG_SYS_MMC_MAX_BLK_COUNT	0x1000
 #define CONFIG_MMC_SDMA              1
-#define CONFIG_MV_SDHCI              0
+#define CONFIG_MV_SDHCI              1
 #define CONFIG_DOS_PARTITION         1
 #define CONFIG_EFI_PARTITION         1
 #define CONFIG_SYS_MMC_NUM           1
