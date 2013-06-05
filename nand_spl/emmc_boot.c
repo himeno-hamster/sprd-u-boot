@@ -70,7 +70,14 @@ void nand_boot(void)
 	SPRD_EVM_TAG(3);
 #endif
 	uboot = (void *)CONFIG_SYS_NAND_U_BOOT_START;
-#ifndef CONFIG_SC8830
+#ifdef CONFIG_SC8830
+	typedef sec_callback_func_t* (*get_secure_checkfunc_t) (sec_callback_func_t*);
+	sec_callback_func_t     sec_callfunc;
+	vlr_info_t*             vlr_info        = (vlr_info_t*)(VLR_INFO_OFF);
+	get_secure_checkfunc_t* get_secure_func = (get_secure_checkfunc_t*)(INTER_RAM_BEGIN+0x1C);
+	(*get_secure_func)(&sec_callfunc);
+	sec_callfunc.secure_check(CONFIG_SYS_NAND_U_BOOT_START, vlr_info->length, VLR_INFO_OFF, KEY_INFO_OFF);
+#else
 	secure_check(CONFIG_SYS_NAND_U_BOOT_START, 0, CONFIG_SYS_NAND_U_BOOT_START + CONFIG_SYS_NAND_U_BOOT_SIZE - VLR_INFO_OFF, INTER_RAM_BEGIN + CONFIG_SPL_LOAD_LEN - KEY_INFO_SIZ - CUSTOM_DATA_SIZ);
 #endif
 	(*uboot)();

@@ -45,7 +45,8 @@ _start: b	reset
 	ldr	pc, =0xFFFF0010
 	ldr	pc, =0xFFFF0014
 	ldr	pc, =0xFFFF0018
-	ldr	pc, =0xFFFF001C
+	/*ldr	pc, =0xFFFF001C*/
+	.word	get_sec_callback
 
 /* 0x20 */
 	.rept   40
@@ -53,10 +54,10 @@ _start: b	reset
 	.endr
 
 /* 0xC0 */
-	.rept   208
+/*	.rept   208
 	.long   0xAABBCCDD
 	.endr
-
+*/
 /* 0x200 */
 #	.rept   256
 #	.long   0x11223344
@@ -97,10 +98,10 @@ reset:
 	bl	cpu_init_crit
 	bl	SecClkConfig
 
-	ldr	r0, =0x50005C00
-	ldr	r1, =0x5000
-	ldr	r2, =0x5000AC00
-	ldr	r3, =0x50005100
+	ldr	r0, =0x50005C00 /* spl start */
+	ldr	r1, =0x5200     /* spl check length */
+	ldr	r2, =0x5000AE00 /* spl vlr info */
+	ldr	r3, =0x50005A00 /* spl key info */
 	bl	secure_check
 
 	ldr	pc, =0x50005C00

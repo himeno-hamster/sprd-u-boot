@@ -101,6 +101,11 @@ static uint32 McuClkConfig(uint32 arm_clk)
 {
     uint32 ca7_ckg_cfg;
 
+    ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);
+    ca7_ckg_cfg &= ~7; //a7 core select 26M
+    REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
+    delay();
+
     SetMPllClk(arm_clk);
 
     ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);

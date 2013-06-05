@@ -42,6 +42,40 @@ static void ApbClkConfig()
     for (i=0; i<0x100; i++);
 }
 
+static void SetMPllClk (uint32 clk)
+{
+    uint32 mpll_cfg, pll_sft_cnt, i;
+
+    REG32(REG_AON_APB_PLL_SOFT_CNT_DONE) &= ~1;
+
+    mpll_cfg  = REG32(REG_AON_APB_MPLL_CFG);
+    mpll_cfg &=~(3<<24);
+    mpll_cfg |= (1<<24);
+    clk /= 4000000;
+    mpll_cfg &=~(0x7ff);
+    mpll_cfg |= clk&0x7ff;
+    REG32(REG_AON_APB_MPLL_CFG) = mpll_cfg;
+
+    for (i=0; i<0x1000; i++){}
+
+    REG32(REG_AON_APB_PLL_SOFT_CNT_DONE) |=  1;
+}
+
+static void McuClkConfig(uint32 arm_clk)
+{
+    uint32 ca7_ckg_cfg, i;
+
+    SetMPllClk(arm_clk);
+
+    ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);
+    ca7_ckg_cfg &= ~(7<<4);  //ap clk div = 0;
+    ca7_ckg_cfg &= ~7;
+    ca7_ckg_cfg |=  6; //a7 core select mcu MPLL       0:26M 1:(DPLL)533M 2:(CPLL)624M 3:(TDPLL)768M 4:(WIFIPLL)880M 5:(WPLL)921M 6:(MPLL)1200M
+    REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
+
+    for (i=0; i<0x100; i++){}
+}
+
 void SecClkConfig()
 {
     uint32 ca7_ckg_cfg, i;
@@ -60,11 +94,7 @@ void SecClkConfig()
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
     for (i=0; i<0x100; i++){}
 
-    ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);
-    ca7_ckg_cfg &= ~7;
-    ca7_ckg_cfg |= 3;								//ARM 768M
-    REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
-    for (i=0; i<0x100; i++){}
+    McuClkConfig(ARM_CLK_1000M);
 
     AhbClkConfig();
     ApbClkConfig();
