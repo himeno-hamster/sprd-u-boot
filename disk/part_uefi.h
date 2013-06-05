@@ -142,6 +142,12 @@ typedef struct _PARTITION_CFG
 	unsigned int partition_size;  //
 	unsigned int partition_attr;
 	unsigned int partition_offset;
+/*
+ In kernel #define PARTITION_META_INFO_VOLNAMELTH	64
+ In u-boot disk_partition name 32
+	   gpt entry efi_char16_t partition_name[72 / sizeof(efi_char16_t)];
+*/
+	char*             partition_name;
 } __attribute__ ((packed)) PARTITION_CFG,*PPARTITION_CFG;
 
 

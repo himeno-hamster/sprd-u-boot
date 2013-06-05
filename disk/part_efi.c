@@ -30,6 +30,7 @@
  *
  * This limits the maximum size of addressable storage to < 2 Terra Bytes
  */
+ #include <linux/ctype.h>
 #include <common.h>
 #include <command.h>
 #include <ide.h>
@@ -101,6 +102,22 @@ static gpt_entry *alloc_read_gpt_entries(block_dev_desc_t * dev_desc,
 				gpt_header * pgpt_head);
 
 static int is_pte_valid(gpt_entry * pte);
+
+#define PARTNAME_SZ	(72 / sizeof(efi_char16_t))
+static char *print_efiname(gpt_entry *pte)
+{
+        static char name[PARTNAME_SZ + 1];
+        int i;
+        for (i = 0; i < PARTNAME_SZ; i++) {
+                u8 c;
+                c = pte->partition_name[i] & 0xff;
+                c = (c && !isprint(c)) ? '.' : c;
+                name[i] = c;
+        }
+        name[PARTNAME_SZ] = 0;
+        return name;
+}
+
 
 /*
  * Public Functions (include/part.h)
@@ -176,7 +193,7 @@ int get_partition_info_efi(block_dev_desc_t * dev_desc, int part,
 		     - info->start;
 	info->blksz = GPT_BLOCK_SIZE;
 
-	sprintf((char *)info->name, "%s%d", GPT_ENTRY_NAME, part);
+	sprintf((char *)info->name, "%s", print_efiname(&((pgpt_pte)[part - 1])));
 	sprintf((char *)info->type, "U-Boot");
 
 	debug("%s: start 0x%lX, size 0x%lX, name %s", __FUNCTION__,
@@ -220,10 +237,11 @@ int get_partition_info_efi_with_partnum(block_dev_desc_t * dev_desc, int part,
 		     - info->start;
 	info->blksz = GPT_BLOCK_SIZE;
 
-	sprintf((char *)info->name, "%s%d", GPT_ENTRY_NAME, part);
+	sprintf((char *)info->name, "%s",
+			print_efiname(&((pgpt_pte)[part - 1])));
 	sprintf((char *)info->type, "U-Boot");
 
-	debug("%s: start 0x%lX, size 0x%lX, name %s", __FUNCTION__,
+	debug("%s: start 0x%lX, size 0x%lX, name %s\n", __FUNCTION__,
 		info->start, info->size, info->name);
 
 	/* copy sd info */
