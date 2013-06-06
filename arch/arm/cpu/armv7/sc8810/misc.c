@@ -205,8 +205,25 @@ __inline LOCAL void set_mem_volt(void)
 #endif
 }
 
+
+__inline LOCAL void Chip_Workaround(void)
+{
+#if defined(CONFIG_SC7710G2)
+	/* FIXME: disable otp for a-die internal bug */
+	ANA_REG_OR(ANA_MIXED_CTRL, BIT_1/*BIT_OTP_EN_RST*/);
+	ANA_REG_OR(ANA_DCDC_OPT_CTL, BIT_0/*BIT_DCDC_OTP_PD*/);
+
+	/* FIXME: enable dcdc wpa current limit
+	 * in order to prevent vbat drop when high load
+	 */
+	ANA_REG_OR(ANA_WPA_DCDC_AP_CTL2, BIT_6/*BIT_WPA_DCDC_CL_CTRL_AP*/);
+#endif
+}
+
 PUBLIC void Chip_Init(void)
 {
+	Chip_Workaround();
+
     if (CHIP_PHY_GetANAChipID() == ANA_CHIP_ID_AA)
     {
         set_mem_volt();
