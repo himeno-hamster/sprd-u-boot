@@ -16,29 +16,12 @@
 #include <fat.h>
 #include <rtc.h>
 #include <asm/sizes.h>
+#include <boot_mode.h>
+#include <common.h>
 
+#include "sysdump.h"
 
-#define SYSDUMP_CORE_NAME_FMT 	"sysdump_%s_.core.%02d" /* time, number */
-#define NR_KCORE_MEM		80
-#define SYSDUMP_MAGIC		"SPRD_SYSDUMP_119"
-
-
-struct sysdump_mem {
-	unsigned long paddr;
-	unsigned long vaddr;
-	unsigned long soff;
-	size_t size;
-	int type;
-};
-
-struct sysdump_info {
-	char magic[16];
-	char time[32];
-	char dump_path[128];
-	int elfhdr_size;
-	int mem_num;
-	unsigned long dump_mem_paddr;
-};
+#define MEM_TOTAL_SIZE 0x40000000
 
 void display_writing_sysdump(void)
 {
@@ -131,6 +114,183 @@ void write_mem_to_mmc(char *path, char *filename,
 	return;
 }
 
+extern unsigned check_reboot_mode(void);
+
+
+static size_t get_elfhdr_size(int nphdr)
+{
+	size_t elfhdr_len;
+
+	elfhdr_len = sizeof(struct elfhdr) +
+		(nphdr + 1) * sizeof(struct elf_phdr);
+#if SETUP_NOTE
+	elfhdr_len += ((sizeof(struct elf_note)) +
+		roundup(sizeof(CORE_STR), 4)) * 3 +
+		roundup(sizeof(struct elf_prstatus), 4) +
+		roundup(sizeof(struct elf_prpsinfo), 4) +
+		roundup(sizeof(struct task_struct), 4);
+#endif
+	elfhdr_len = PAGE_ALIGN(elfhdr_len); //why?
+
+	return elfhdr_len;
+}
+
+#if SETUP_NOTE
+static int notesize(struct memelfnote *en)
+{
+	int sz;
+
+	sz = sizeof(struct elf_note);
+	sz += roundup((strlen(en->name) + 1), 4);
+	sz += roundup(en->datasz, 4);
+
+	return sz;
+}
+
+static char *storenote(struct memelfnote *men, char *bufp)
+{
+	struct elf_note en;
+
+#define DUMP_WRITE(addr,nr) do { memcpy(bufp,addr,nr); bufp += nr; } while(0)
+
+	en.n_namesz = strlen(men->name) + 1;
+	en.n_descsz = men->datasz;
+	en.n_type = men->type;
+
+	DUMP_WRITE(&en, sizeof(en));
+	DUMP_WRITE(men->name, en.n_namesz);
+
+	/* XXX - cast from long long to long to avoid need for libgcc.a */
+	bufp = (char*) roundup((unsigned long)bufp,4);
+	DUMP_WRITE(men->data, men->datasz);
+	bufp = (char*) roundup((unsigned long)bufp,4);
+
+#undef DUMP_WRITE
+
+	return bufp;
+}
+
+#endif
+
+static void sysdump_fill_core_hdr(struct pt_regs *regs,
+						struct sysdump_mem *sysmem, int mem_num,
+						char *bufp, int nphdr, int dataoff)
+{
+#if 0
+	struct elf_prstatus prstatus;	/* NT_PRSTATUS */
+	struct elf_prpsinfo prpsinfo;	/* NT_PRPSINFO */
+#endif
+	struct elf_phdr *nhdr, *phdr;
+	struct elfhdr *elf;
+	struct memelfnote notes[3];
+	off_t offset = 0;
+	int i;
+
+	/* setup ELF header */
+	elf = (struct elfhdr *) bufp;
+	bufp += sizeof(struct elfhdr); //printk("sizeof(struct elfhdr): %d\n");
+	offset += sizeof(struct elfhdr); //printk("sizeof(struct elfhdr): %d\n");
+	memcpy(elf->e_ident, ELFMAG, SELFMAG); //printk("ELFMAG: %s, SELFMAG:%d\n", ELFMAG, SELFMAG);
+	elf->e_ident[EI_CLASS]	= ELF_CLASS;//printk("EI_CLASS:%d, ELF_CLASS: %d", EI_CLASS, ELF_CLASS);
+	elf->e_ident[EI_DATA]	= ELF_DATA;//printk("EI_DATA:%");
+	elf->e_ident[EI_VERSION]= EV_CURRENT;
+	elf->e_ident[EI_OSABI] = ELF_OSABI;
+	memset(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
+	elf->e_type	= ET_CORE;
+	elf->e_machine	= ELF_ARCH;
+	elf->e_version	= EV_CURRENT;
+	elf->e_entry	= 0;
+	elf->e_phoff	= sizeof(struct elfhdr);
+	elf->e_shoff	= 0;
+	elf->e_flags	= ELF_CORE_EFLAGS;
+	elf->e_ehsize	= sizeof(struct elfhdr);
+	elf->e_phentsize= sizeof(struct elf_phdr);
+	elf->e_phnum	= nphdr;
+	elf->e_shentsize= 0;
+	elf->e_shnum	= 0;
+	elf->e_shstrndx	= 0;
+
+	/* setup ELF PT_NOTE program header */
+	nhdr = (struct elf_phdr *) bufp;
+	bufp += sizeof(struct elf_phdr);
+	offset += sizeof(struct elf_phdr);
+	nhdr->p_type	= PT_NOTE;
+	nhdr->p_offset	= 0;
+	nhdr->p_vaddr	= 0;
+	nhdr->p_paddr	= 0;
+	nhdr->p_filesz	= 0;
+	nhdr->p_memsz	= 0;
+	nhdr->p_flags	= 0;
+	nhdr->p_align	= 0;
+
+	/* setup ELF PT_LOAD program header for every area */
+	for (i = 0; i < mem_num; i++) {
+		phdr = (struct elf_phdr *) bufp;
+		bufp += sizeof(struct elf_phdr);
+		offset += sizeof(struct elf_phdr);
+
+		phdr->p_type	= PT_LOAD;
+		phdr->p_flags	= PF_R|PF_W|PF_X;
+		phdr->p_offset	= dataoff;
+		phdr->p_vaddr	= sysmem[i].vaddr;
+		phdr->p_paddr	= sysmem[i].paddr;
+		phdr->p_filesz	= phdr->p_memsz	= sysmem[i].size;
+		phdr->p_align	= 0;//PAGE_SIZE;
+		dataoff += sysmem[i].size;
+	}
+#if SETUP_NOTE
+	/*
+	 * Set up the notes in similar form to SVR4 core dumps made
+	 * with info from their /proc.
+	 */
+	nhdr->p_offset	= offset;
+
+	/* set up the process status */
+	notes[0].name = CORE_STR;
+	notes[0].type = NT_PRSTATUS;
+	notes[0].datasz = sizeof(struct elf_prstatus);
+	notes[0].data = &prstatus;
+
+	memset(&prstatus, 0, sizeof(struct elf_prstatus));
+	//fill_prstatus(&prstatus, current, 0);
+	//if (regs)
+	//	memcpy(&prstatus.pr_reg, regs, sizeof(*regs));
+	//else
+	//	crash_setup_regs((struct pt_regs *)&prstatus.pr_reg, NULL);
+
+	nhdr->p_filesz	= notesize(&notes[0]);
+	bufp = storenote(&notes[0], bufp);
+
+	/* set up the process info */
+	notes[1].name	= CORE_STR;
+	notes[1].type	= NT_PRPSINFO;
+	notes[1].datasz	= sizeof(struct elf_prpsinfo);
+	notes[1].data	= &prpsinfo;
+
+	memset(&prpsinfo, 0, sizeof(struct elf_prpsinfo));
+	//fill_psinfo(&prpsinfo, current, current->mm);
+
+	strcpy(prpsinfo.pr_fname, "vmlinux");
+	//strncpy(prpsinfo.pr_psargs, saved_command_line, ELF_PRARGSZ);
+
+	nhdr->p_filesz	+= notesize(&notes[1]);
+	bufp = storenote(&notes[1], bufp);
+
+	/* set up the task structure */
+	notes[2].name	= CORE_STR;
+	notes[2].type	= NT_TASKSTRUCT;
+	notes[2].datasz	= sizeof(struct task_struct);
+	notes[2].data	= current;
+
+	printk("%s: data size is %d, data addr is %p",__func__,notes[2].datasz,notes[2].data);
+
+	nhdr->p_filesz	+= notesize(&notes[2]);
+	bufp = storenote(&notes[2], bufp);
+#endif
+	return;
+} /* end elf_kcore_store_hdr() */
+
+
 void write_sysdump_before_boot(void)
 {
 	int i, j, len;
@@ -138,13 +298,26 @@ void write_sysdump_before_boot(void)
 	struct rtc_time rtc;
 	char *waddr;
 	struct sysdump_mem *mem;
-
+	unsigned int rst_mode;
 	struct sysdump_info *infop = (struct sysdump_info *)SYSDUMP_CORE_HDR;
+
+	struct sysdump_mem sprd_dump_mem[] = {
+		{
+			.paddr = CONFIG_PHYS_OFFSET,
+			.vaddr = PAGE_OFFSET,
+			.soff = 0xffffffff,
+			.size = MEM_TOTAL_SIZE,
+			.type = SYSDUMP_RAM,
+		},
+	};
+
+	int sprd_dump_mem_num = 1;
 
 	printf("check if need to write sysdump info of 0x%08lx to file...\t",
 		SYSDUMP_CORE_HDR);
 
-	if(!memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic))) {
+	rst_mode = check_reboot_mode();
+	if ((rst_mode == WATCHDOG_REBOOT) || ((rst_mode == PANIC_REBOOT) && !memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic)))) {
 		printf("\n");
 
 		/* display on screen */
@@ -154,6 +327,21 @@ void write_sysdump_before_boot(void)
 
 		if (init_mmc_fat())
 			goto FINISH;
+
+		if (rst_mode == WATCHDOG_REBOOT) {
+			infop->dump_path[0] = '\0';
+			infop->mem_num = sprd_dump_mem_num;
+			infop->dump_mem_paddr = (unsigned long)sprd_dump_mem;
+			strcpy(infop->time, "hw_watchdog");
+			infop->elfhdr_size = get_elfhdr_size(infop->mem_num);
+
+			sysdump_fill_core_hdr(NULL,
+					sprd_dump_mem,
+					sprd_dump_mem_num,
+					(char *)infop + sizeof(*infop),
+					infop->mem_num + 1,
+					infop->elfhdr_size);
+		}
 
 		if (strlen(infop->dump_path))
 			path = infop->dump_path;
@@ -210,3 +398,7 @@ void write_sysdump_before_boot(void)
 FINISH:
 	return;
 }
+
+
+
+
