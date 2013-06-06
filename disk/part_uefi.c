@@ -103,31 +103,31 @@ unsigned long long int all_used_size = 0;
 
 #ifndef CONFIG_SC8830
 PARTITION_CFG g_partition_cfg[]={
-	{PARTITION_VM, 512, PARTITION_RAW},		/* 512KB */
-	{PARTITION_MODEM, 10 * 1024, PARTITION_RAW},	/* 10 * 1024KB */
-	{PARTITION_DSP, 5 * 1024, PARTITION_RAW},
-	{PARTITION_FIX_NV1, 3840, PARTITION_RAW},
-	{PARTITION_FIX_NV2, 3840, PARTITION_RAW},
-	{PARTITION_RUNTIME_NV1, 3840, PARTITION_RAW},
-	{PARTITION_RUNTIME_NV2, 3840, PARTITION_RAW},
-	{PARTITION_PROD_INFO1, 3840, PARTITION_RAW},
-	{PARTITION_PROD_INFO2, 3840, PARTITION_RAW},
-	{PARTITION_PROD_INFO3, 5 * 1024, PARTITION_RAW}, /* must be large or equal than 5MB */
-	{PARTITION_KERNEL, 10 * 1024, PARTITION_RAW},
-	{PARTITION_SYSTEM, 250 * 1024, PARTITION_RAW},
-	{PARTITION_USER_DAT, MAX_SIZE_FLAG, PARTITION_RAW},
-	{PARTITION_CACHE, 20 * 1024, PARTITION_RAW},
-	{PARTITION_LOGO, 1 * 1024, PARTITION_RAW},
-	{PARTITION_RECOVERY, 10 * 1024, PARTITION_RAW},
-	{PARTITION_FASTBOOT_LOGO, 1 * 1024, PARTITION_RAW},
-	{PARTITION_MISC, 256, PARTITION_RAW},
+	{PARTITION_VM, 		512, 		PARTITION_RAW,	0,	"vm"		},/* 512KB */
+	{PARTITION_MODEM, 	10 * 1024, 	PARTITION_RAW,	0,	"modem"		},/* 10 * 1024KB */
+	{PARTITION_DSP, 	5 * 1024, 	PARTITION_RAW,	0,	"dsp"		},
+	{PARTITION_FIX_NV1, 	3840, 		PARTITION_RAW,	0,	"fixnv1"	},
+	{PARTITION_FIX_NV2, 	3840, 		PARTITION_RAW,	0,	"fixnv2"	},
+	{PARTITION_RUNTIME_NV1, 3840, 		PARTITION_RAW,	0,	"runtimenv1"	},
+	{PARTITION_RUNTIME_NV2, 3840, 		PARTITION_RAW,	0,	"runtimenv2"	},
+	{PARTITION_PROD_INFO1, 	3840, 		PARTITION_RAW,	0,	"prodinfo1"	},
+	{PARTITION_PROD_INFO2, 	3840, 		PARTITION_RAW,	0,	"prodinfo2"	},
+	{PARTITION_PROD_INFO3, 	5 * 1024, 	PARTITION_RAW,	0,	"prodinfo3"	}, /*must be large or equal than 5MB*/
+	{PARTITION_KERNEL, 	10 * 1024, 	PARTITION_RAW,	0,	"kernel"	},
+	{PARTITION_SYSTEM, 	250 * 1024, 	PARTITION_RAW,	0,	"system"	},
+	{PARTITION_USER_DAT, 	MAX_SIZE_FLAG, 	PARTITION_RAW,	0,	"userdata"	},
+	{PARTITION_CACHE, 	20 * 1024, 	PARTITION_RAW,	0,	"cache"		},
+	{PARTITION_LOGO, 	1 * 1024, 	PARTITION_RAW,	0,	"logo"		},
+	{PARTITION_RECOVERY, 	10 * 1024, 	PARTITION_RAW,	0,	"recovery"	},
+	{PARTITION_FASTBOOT_LOGO, 1 * 1024, 	PARTITION_RAW,	0,	"fbootlogo"	},
+	{PARTITION_MISC, 	256, 		PARTITION_RAW,	0,	"misc"		},
 #if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined (CONFIG_SC7710G2)
-	{PARTITION_FIRMWARE, 10*1024, PARTITION_RAW},	/*save modem image in samsung stingray0*/
+	{PARTITION_FIRMWARE, 	10*1024, 	PARTITION_RAW,	0,	"firmware"	},/*save modem image in samsung stingray0*/
 #else
-	{PARTITION_SD, 1000 * 1024, PARTITION_RAW},
+	{PARTITION_SD, 		1000 * 1024, 	PARTITION_RAW	0,	"sd"		},
 #endif
 #ifdef CONFIG_AP_ADC_CALIBRATION
-	{PARTITION_PROD_INFO4, 256, PARTITION_RAW},   /*save modem image in samsung stingray0*/
+	{PARTITION_PROD_INFO4, 	256, 		PARTITION_RAW,	0,	"prodinfo4"	},/*save modem image in samsung stingray0*/
 #endif
 	{0,0,0}
 };
@@ -227,6 +227,7 @@ efi_guid_t _gen_guid(int part_index)
 unsigned int _gen_gpt_entry(int part_index , gpt_entry *g_entry,PARTITION_CFG *p_partition_cfg)
 {
 	int i = 0;
+	size_t name_len;
 
 	//maybe
 	if( PARTITION_RAW == p_partition_cfg[part_index].partition_attr)
@@ -255,11 +256,12 @@ unsigned int _gen_gpt_entry(int part_index , gpt_entry *g_entry,PARTITION_CFG *p
 
 	memset (&g_entry->attributes, 0, sizeof (gpt_entry_attributes));
 
-  	//for (i = 0; i < 72 / sizeof (efi_char16_t); i++)
-	for(i=0;i<sizeof(default_name)/2;i++)
-    		g_entry->partition_name[i] = (efi_char16_t) PED_CPU_TO_LE16 ((unsigned short int*) default_name[i]);
-
-
+	/* partition name */
+	name_len = min(sizeof(g_entry->partition_name)/sizeof(efi_char16_t),
+			strlen(p_partition_cfg[part_index].partition_name));
+	for (i = 0; i < name_len; i++)
+		g_entry->partition_name[i] =
+			(efi_char16_t)(p_partition_cfg[part_index].partition_name[i]);
 	return 1;
 }
 

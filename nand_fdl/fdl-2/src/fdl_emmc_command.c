@@ -341,7 +341,9 @@ int uefi_get_part_info(unsigned long part_total)
 		uefi_part_info[i].partition_index = g_sprd_emmc_partition_cfg[i].partition_index;
 		uefi_part_info[i].partition_size = info.size;
 		uefi_part_info[i].partition_offset = info.start;
-		printf("uefi_part_info[i].partition_index =%d,size=%d,offset=%d\n",uefi_part_info[i].partition_index,info.size,info.start);
+		if (memcmp(info.name,"NONAME",strlen(info.name)) == 0) /*fixme!!! if noname,force update gpt*/
+			return 0;
+		printf("partition_index =%d,size=%d,offset=%d,name=%s\n",uefi_part_info[i].partition_index,info.size,info.start,info.name);
 	}
 	#endif
 	uefi_part_info_ok_flag = 1;
