@@ -124,7 +124,7 @@ PARTITION_CFG g_partition_cfg[]={
 #if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined (CONFIG_SC7710G2)
 	{PARTITION_FIRMWARE, 	10*1024, 	PARTITION_RAW,	0,	"firmware"	},/*save modem image in samsung stingray0*/
 #else
-	{PARTITION_SD, 		1000 * 1024, 	PARTITION_RAW	0,	"sd"		},
+	{PARTITION_SD, 		1000 * 1024, 	PARTITION_RAW,	0,	"sd"		},
 #endif
 #ifdef CONFIG_AP_ADC_CALIBRATION
 	{PARTITION_PROD_INFO4, 	256, 		PARTITION_RAW,	0,	"prodinfo4"	},/*save modem image in samsung stingray0*/
