@@ -249,7 +249,9 @@ static int sdhci_set_clock(struct mmc *mmc, unsigned int clock)
 	struct sdhci_host *host = (struct sdhci_host *)mmc->priv;
 	unsigned int div, clk, timeout;
 
-	sdhci_writew(host, 0, SDHCI_CLOCK_CONTROL);
+	clk = sdhci_readw(host, SDHCI_CLOCK_CONTROL);
+	clk &= ~SDHCI_CLOCK_CARD_EN;
+	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
 
 	if (clock == 0)
 		return 0;
