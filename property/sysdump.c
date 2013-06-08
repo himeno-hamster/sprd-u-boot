@@ -19,9 +19,15 @@
 #include <boot_mode.h>
 #include <common.h>
 
+#include <linux/keypad.h>
+#include <linux/key_code.h>
 #include "sysdump.h"
 
 #define MEM_TOTAL_SIZE 0x40000000
+
+extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
+extern lcd_display(void);
+extern void set_backlight(uint32_t value);
 
 void display_writing_sysdump(void)
 {
@@ -40,19 +46,30 @@ void display_writing_sysdump(void)
 	int ret = read_logoimg(bmp_img,size);
 	if(ret == -1)
 		return;
-	extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
-	extern lcd_display(void);
-	extern void set_backlight(uint32_t value);
 	lcd_display_bitmap((ulong)bmp_img, 0, 0);
 	lcd_printf("   -------------------------------  \n"
 		   "   Sysdumpping now, keep power on.  \n"
-		   "   -------------------------------  ");
+		   "   -------------------------------  \n");
 	lcd_display();
 	set_backlight(255);
 	set_vibrator(0);
 
 	free(bmp_img);
 #endif
+}
+
+static void wait_for_keypress()
+{
+	int key_code;
+
+	do {
+		udelay(50*1000);
+		key_code = board_key_scan();
+		//printf("key_code: %d, (vd:%d,vu:%d,p:%d)\n", key_code, KEY_VOLUMEDOWN, KEY_VOLUMEUP, KEY_POWER);
+		if (key_code == KEY_VOLUMEDOWN || key_code == KEY_VOLUMEUP || key_code == KEY_HOME)
+			break;
+	} while (1);
+	printf("Pressed key: %d\n", key_code);
 }
 
 int init_mmc_fat(void)
@@ -106,6 +123,8 @@ void write_mem_to_mmc(char *path, char *filename,
 
 	printf("writing 0x%lx bytes sysdump info from 0x%p to sd file %s\n",
 		memsize, memaddr, filename);
+	lcd_printf("writing 0x%lx bytes sysdump info from 0x%p to sd file %s\n", memsize, memaddr, filename);
+	lcd_display();
 	ret = file_fat_write(filename, memaddr, memsize);
 	if (ret <= 0) {
 		printf("sd file write error %d\n", ret);
@@ -291,14 +310,13 @@ static void sysdump_fill_core_hdr(struct pt_regs *regs,
 } /* end elf_kcore_store_hdr() */
 
 
-void write_sysdump_before_boot(void)
+void write_sysdump_before_boot(int rst_mode)
 {
 	int i, j, len;
 	char fnbuf[72], *path;
 	struct rtc_time rtc;
 	char *waddr;
 	struct sysdump_mem *mem;
-	unsigned int rst_mode;
 	struct sysdump_info *infop = (struct sysdump_info *)SYSDUMP_CORE_HDR;
 
 	struct sysdump_mem sprd_dump_mem[] = {
@@ -313,11 +331,10 @@ void write_sysdump_before_boot(void)
 
 	int sprd_dump_mem_num = 1;
 
-	printf("check if need to write sysdump info of 0x%08lx to file...\t",
+	printf("rst_mode:0x%x, Check if need to write sysdump info of 0x%08lx to file...\t", rst_mode,
 		SYSDUMP_CORE_HDR);
 
-	rst_mode = check_reboot_mode();
-	if ((rst_mode == WATCHDOG_REBOOT) || ((rst_mode == PANIC_REBOOT) && !memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic)))) {
+	if (/*(rst_mode == WATCHDOG_REBOOT) ||*/ ((rst_mode == PANIC_REBOOT) && !memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic)))) {
 		printf("\n");
 
 		/* display on screen */
@@ -391,7 +408,10 @@ void write_sysdump_before_boot(void)
 		}
 #endif
 
-		printf("\nwriting done.\n");
+		printf("\nwriting done.\nPress any key to continue...");
+		lcd_printf("\nWriting done.\nPress any key (Exp power key) to continue...");
+		lcd_display();
+		wait_for_keypress();
 	} else
 		printf("no need.\n");
 

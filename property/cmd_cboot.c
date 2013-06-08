@@ -97,8 +97,11 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     board_keypad_init();
     boot_pwr_check();
 
+    unsigned check_reboot_mode(void);
+    unsigned rst_mode= check_reboot_mode();
+
 #ifdef CONFIG_SPRD_SYSDUMP
-	write_sysdump_before_boot();
+    write_sysdump_before_boot(rst_mode);
 #endif
 
     int recovery_init(void);
@@ -114,8 +117,6 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	    normal_mode();
     }
 
-    unsigned check_reboot_mode(void);
-    unsigned rst_mode= check_reboot_mode();
     if(rst_mode == RECOVERY_MODE){
         DBG("func: %s line: %d\n", __func__, __LINE__);
         recovery_mode();

@@ -9,10 +9,12 @@ static unsigned char board_key_map[]={
     0x42, KEY_BACK,
     0x41, KEY_VOLUMEUP,
 #else
-    0x00, KEY_BACK,//DOWN
+//  0x00, KEY_BACK,//DOWN
     0x01, KEY_HOME,//CAM
-    0x10, KEY_MENU,//UP
+//  0x10, KEY_MENU,//UP
 #endif
+    0x10, KEY_VOLUMEUP,
+    0x00, KEY_VOLUMEDOWN,
 };
 
 #define CONFIG_KEYPAD_ROW_CNT 5
