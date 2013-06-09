@@ -19,6 +19,7 @@ extern void ADI_init (void);
 extern int LDO_Init(void);
 extern void ADC_Init(void);
 extern int sound_init(void);
+extern void init_ldo_sleep_gr(void);
 
 #ifdef CONFIG_GENERIC_MMC
 int mv_sdh_init(u32 regbase, u32 max_clk, u32 min_clk, u32 quirks);
@@ -49,7 +50,7 @@ int board_init()
 	sprd_eic_init();
 	sprd_gpio_init();
 	sound_init();
-
+	init_ldo_sleep_gr();
 	TDPllRefConfig(1);
 
 	return 0;
