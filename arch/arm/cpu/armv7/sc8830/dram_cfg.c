@@ -76,10 +76,10 @@ const lpddr2_timing_t LPDDR2_ACTIMING =
     NS2CLK(20),     //tRCD      unite : tCK
     NS2CLK(20),     //tRP       unite : tCK
     NS2CLK(20),     //tRRD      unite : tCK
-    NS2CLK(15),     //tWR       unite : tCK
-    NS2CLK(8),     //tWTR      unite : tCK    
-	//6, 			    //tWR       unite : tCK
-    //3,              //tWTR      unite : tCK
+    //NS2CLK(15),     //tWR       unite : tCK
+    //NS2CLK(8),     //tWTR      unite : tCK    
+	8, 			    //tWR       unite : tCK
+    5,              //tWTR      unite : tCK
     NS2CLK(20),     //tXP       unite : tCK
     NS2CLK(140),     //tXSR      unite : tCK  
     NS2CLK(15),      //tCKESR 	unite : tCK
@@ -175,16 +175,16 @@ DRAM_INFO DRAM_INFO_ARRAY[] =
 umctl2_port_info_t UMCTL2_PORT_CONFIG[] = 
 {
 //rw_order r_hpr r_pg  r_ugent r_age r_rord_bp r_age_cnt, w_pg  w_ugent w_age  w_age_cnt
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port0,AP
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port1,Multi Media
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port2,GPU
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port3,CP2-WIFI channel0
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port4,CP1-TD
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port5,AP-Matrix,DMA,SDIO,EMMC,NFC,USB
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port6,CP0-WCDMA
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port7,CP2-WIFI port1    
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5},//port8,WCDMA CP Matrix        
-    {TRUE, TRUE, TRUE, TRUE,   TRUE, FALSE,     0,        TRUE, FALSE,  FALSE, 5}, //port9,TD DSP&WCDMA DSP
+    {TRUE, FALSE,TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port0,mm/dcam/vsp
+    {TRUE, FALSE,TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port1,GPU
+    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port2,display/gsp
+    {TRUE, FALSE,TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port3,CA7
+    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port4,CPx DSP
+    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port5,CP0W
+    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port6,CP0 ARM
+    {TRUE, FALSE,TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port7,AP matrix    
+    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port8,CP1 ARM
+    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10}, //port9,CP2
     {0xff},
 };
 /**---------------------------------------------------------------------------*

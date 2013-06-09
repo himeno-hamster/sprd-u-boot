@@ -14,7 +14,7 @@
  ******************************************************************************/
 #include "asm/arch/dram_phy.h"
 #include "asm/arch/umctl2_reg.h"
-
+#include "asm/arch/sprd_reg_base.h"
 
 /**---------------------------------------------------------------------------*
  **                            Macro Define
@@ -202,7 +202,7 @@ BOOLEAN umctl2_low_pd_set(UMCTL_LP_E auto_sf,
 	                          UMCTL_LP_E auto_ckp)
 {
     //PWRTMG
-    //???
+    //REG32(UMCTL_PWRTMG) = 0x1f;
     //PWRCTL
     reg_bits_set(UMCTL_PWRCTL,0, 1, auto_sf);//auto self-refresh
     reg_bits_set(UMCTL_PWRCTL,1, 1, auto_pd);//auto power down
@@ -213,15 +213,18 @@ BOOLEAN umctl2_low_pd_set(UMCTL_LP_E auto_sf,
 void umctl2_low_power_open()
 {
 	wait_pclk(50);
+	/*
     umctl2_low_pd_set(UMCTL_AUTO_SF_DIS,
                       UMCTL_AUTO_PD_DIS,
                       UMCTL_AUTO_DPD_DIS,
                       UMCTL_AUTO_CKP_EN);
+	*/
 	
 	UMCTL2_REG_SET(UMCTL_DFILPCFG0, 0x0700f100); /*DFI LP setting*/
 	wait_pclk(50);
 	
-	UMCTL2_REG_SET(PUBL_PIR, 0x40010);/*auto trigger ITM reset*/
+	//UMCTL2_REG_SET(PUBL_PIR, 0x40010);/*auto trigger ITM reset*/
+	reg_bits_set(PUBL_PIR,4,1,1);/*auto trigger ITM reset*/
 	wait_pclk(50);
 	
 	umctl2_port_auto_gate();
@@ -279,7 +282,7 @@ void umctl2_basic_mode_init(DRAM_INFO* dram)
                                     (IS_LPDDR2(dram_type)?0x04:0x00)|
                                     (IS_LPDDR3(dram_type)?0x08:0x00));
 
-    UMCTL2_REG_SET(UMCTL_SCHED,0x00070C01);
+    UMCTL2_REG_SET(UMCTL_SCHED,0x00070b01);
 
     /*Only present for multi-rank configurations.
     *[11:8]:rank_wr_gap,clks of gap in data responses when performing consecutive writes to different ranks.
@@ -517,12 +520,12 @@ void umctl2_addrmap_init(DRAM_INFO* dram)
 void umctl2_performance_init(DRAM_INFO* dram)
 {
     //to be confirm by johnnywang, is these the best configuration???
-    UMCTL2_REG_SET(UMCTL_PERFHPR0, 0x00000000);
-    UMCTL2_REG_SET(UMCTL_PERFHPR1, 0x10000000);
+    UMCTL2_REG_SET(UMCTL_PERFHPR0, 0x00000001);
+    UMCTL2_REG_SET(UMCTL_PERFHPR1, 0x10000001);
     UMCTL2_REG_SET(UMCTL_PERFLPR0, 0x00000100);
-    UMCTL2_REG_SET(UMCTL_PERFLPR1, 0x40000100);
-    UMCTL2_REG_SET(UMCTL_PERFWR0,  0x00000000);
-    UMCTL2_REG_SET(UMCTL_PERFWR1,  0x10000000);
+    UMCTL2_REG_SET(UMCTL_PERFLPR1, 0x10000100);
+    UMCTL2_REG_SET(UMCTL_PERFWR0,  0x00000020);
+    UMCTL2_REG_SET(UMCTL_PERFWR1,  0x10000020);
 }
 void umctl2_refresh_init(DRAM_INFO* dram)
 {
@@ -578,7 +581,7 @@ void umctl2_port_init(umctl2_port_info_t* port_info)
 {
     uint32 i = 0;
     reg_bits_set(UMCTL_PCCFG,4,1,TRUE);//pagematch_limit
-    reg_bits_set(UMCTL_PCCFG,0,1,TRUE);//go2critical_en
+    reg_bits_set(UMCTL_PCCFG,0,1,FALSE);//go2critical_en
 
 
     for(i = 0; ;i++)
@@ -698,7 +701,7 @@ void umctl2_dramtiming_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
 #if 1
     reg_bits_set(UMCTL_DRAMTMG0, 24, 6, ((WL+(BL>>1)+tWR)+1));/*wr2pre*/
     reg_bits_set(UMCTL_DRAMTMG0, 16, 6, tFAW);    /*t_FAW*/
-    reg_bits_set(UMCTL_DRAMTMG0,  8, 6, tRAS+ns_to_xclock(70000,umctl2_clk));/*t_ras_max,Maxinum time of tRAS,clocks*/
+    reg_bits_set(UMCTL_DRAMTMG0,  8, 6, tRAS+ns_to_x1024(70000,umctl2_clk));/*t_ras_max,Maxinum time of tRAS,clocks*/
     reg_bits_set(UMCTL_DRAMTMG0,  0, 6, tRAS);/*t_ras_min,Mininum time of tRAS,clocks*/
 
     reg_bits_set(UMCTL_DRAMTMG1, 16, 6, tXP);
@@ -1113,8 +1116,10 @@ void publ_basic_mode_init(DRAM_INFO* dram)
     reg_bits_set(PUBL_DX3DQSTR,23,3,B3_DQS_STEP_DLY);        
     
     //DLLGCR
-    //???don't need to set
-
+    REG32(PUBL_DLLGCR) |= BIT_23; //this bit can't find in publ spec,
+                                  //if 200MHz dllbypass, this bit23 must be set
+                                  //if 100MHZ dllbypass, this bit23 must be clear
+ 
     //ACDLLCR
     
     //ACIOCR
@@ -1163,8 +1168,7 @@ void publ_basic_mode_init(DRAM_INFO* dram)
         while((temp&0x1) == 0);
     }   
 
-//#ifdef DLL_BYPASS
-#if 0
+#ifdef DLL_BYPASS
 	//dll bypass mode
 	wait_pclk(50); 
     UMCTL2_REG_SET(PUBL_PIR,0x60001); 
@@ -1191,8 +1195,8 @@ void publ_timing_init(CLK_TYPE_E umctl2_clk,DRAM_INFO* dram)
     
     DRAM_TYPE_E dram_type = dram->dram_type;
     //PTR0
-    reg_bits_set(PUBL_PTR0,0,6, ns_to_xclock(50, umctl2_clk));//tDLLSRST
-    reg_bits_set(PUBL_PTR0,6,12,ns_to_xclock(5120, umctl2_clk));//tDLLLOCK
+    reg_bits_set(PUBL_PTR0,0,6, ns_to_xclock(50,   DDR_APB_CLK));//tDLLSRST,reg apb clk,will change
+    reg_bits_set(PUBL_PTR0,6,12,ns_to_xclock(5120, DDR_APB_CLK));//tDLLLOCK, reg apb clk, will change
 
     //PTR1
     reg_bits_set(PUBL_PTR1,0,19,IS_DDR3(dram_type)?us_to_xclock(500, umctl2_clk):us_to_xclock(200, umctl2_clk));//tDINIT0
@@ -1315,6 +1319,46 @@ BOOLEAN publ_do_training()
 	}		
 }
 
+void ddr_external_qos_set()
+{   //*** the ddr controller channel external priority setting***//
+    //priority value: 0x0~0xf
+    //description: 0xf is highest priority, 0x0 is lowest priority
+    //priority setting: port4 wr&rd (CPx DSP)      =
+    //                  port5 wr&rd (CP0W)         =
+    //                  port6 wr&rd (CP0 ARM)      =
+    //                  port8 wr&rd (CP1 ARM)      = 
+    //                  port9 wr&rd (CP2)          =
+    //                  port2 rd    (display/gsp)  >
+    //                  port0 wr    (mm/dcam/vsp)  >
+    //                  port3 wr&rd (CA7)          >
+    //                  port0 rd    (mm/dcam/vsp)  =
+    //                  port2 wr    (display/gsp)  =
+    //                  port7 wr&rd (AP matrix)    >
+    //                  port1 wr&rd (GPU)
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  0,4,0x8); //chanel 0 wr qos, mm/dcam/vsp
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  4,4,0x2); //chanel 0 rd qos, mm/dcam/vsp
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  8,4,0x0); //chanel 1 wr qos, GPU
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 12,4,0x0); //chanel 1 rd qos, GPU
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 16,4,0x2); //chanel 2 wr qos, display/gsp
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 20,4,0xf); //chanel 2 rd qos, display/gsp
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 24,4,0x4); //chanel 3 wr qos	, CA7
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 28,4,0x4); //chanel 3 rd qos, CA7		
+
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0,  0,4,0xf); //chanel 4 wr qos, CPx DSP
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0,  4,4,0xf); //chanel 4 rd qos, CPx DSP
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0,  8,4,0xf); //chanel 5 wr qos, CP0W
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 12,4,0xf); //chanel 5 rd qos, CP0W
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 16,4,0xf); //chanel 6 wr qos, CP0 ARM
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 20,4,0xf); //chanel 6 rd qos, CP0 ARM
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 24,4,0x2); //chanel 7 wr qos, AP matrix 
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 28,4,0x2); //chanel 7 rd qos, AP matrix 	
+
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA4,  0,4,0xf); //chanel 8 wr qos, CP1 ARM
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA4,  4,4,0xf); //chanel 8 rd qos, CP1 ARM
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA4,  8,4,0xf); //chanel 9 wr qos, CP2
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA4, 12,4,0xf); //chanel 9 rd qos, CP2
+	
+}
 /**---------------------------------------------------------------------------*
  **                            PUBLIC Functions
  **---------------------------------------------------------------------------*/
@@ -1328,8 +1372,9 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 /*NOTE:
  *Ensure that initializing all APB registers in reset mode,except for Dynamic Registers.
  */
-
+#if 0
 	sdram_vddmem_set(VDDMEM_1V20);
+#endif
 
     sdram_clk_set(dmc_clk);
 
@@ -1376,11 +1421,15 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 	umctl2_low_power_open();
 #endif
 
+#if 1
+	ddr_external_qos_set();
+#endif
+
     return TRUE;
 }
 extern umctl2_port_info_t UMCTL2_PORT_CONFIG[];
 
 void sdram_init()
 {
-		__sdram_init(DDR_CLK, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
+	__sdram_init(DDR_CLK, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
 }
