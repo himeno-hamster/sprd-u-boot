@@ -1,5 +1,6 @@
 #include <common.h>
 #include <asm/io.h>
+#include <asm/arch/adc_drvapi.h>
 #include <asm/arch/adi_hal_internal.h>
 #include <asm/arch/sprd_reg.h>
 
@@ -44,66 +45,6 @@ static inline int fls(int x)
 
 #define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
 
-#define ANA_REGS_ADC_BASE			SPRD_ANA_ADC_PHYS 
-
-/* registers definitions for controller ANA_REGS_ADC */
-#define ANA_REG_ADC_CTRL			SCI_ADDR(ANA_REGS_ADC_BASE, 0x0000)
-#define ANA_REG_ADC_SW_CH_CFG		SCI_ADDR(ANA_REGS_ADC_BASE, 0x0004)
-#define ANA_REG_ADC_HW_CH_DELAY	SCI_ADDR(ANA_REGS_ADC_BASE, 0x0048)
-#define ANA_REG_ADC_DAT				SCI_ADDR(ANA_REGS_ADC_BASE, 0x004c)
-#define ANA_REG_ADC_IRQ_EN			SCI_ADDR(ANA_REGS_ADC_BASE, 0x0050)
-#define ANA_REG_ADC_IRQ_CLR			SCI_ADDR(ANA_REGS_ADC_BASE, 0x0054)
-#define ANA_REG_ADC_IRQ_STS			SCI_ADDR(ANA_REGS_ADC_BASE, 0x0058)
-#define ANA_REG_ADC_IRQ_RAW		SCI_ADDR(ANA_REGS_ADC_BASE, 0x005c)
-
-/* bits definitions for register ANA_REG_ADC_CTRL			*/
-/* The number of SW channel accessing, it is N+1			*/
-#define BITS_SW_CH_RUN_NUM(_x_)		( (_x_) << 4 & (BIT(4) | BIT(5) | BIT(6) | BIT(7)) )
-/* 0: 10bits mode, 1: 12bits mode */
-#define BIT_ADC_12B					( BIT(2) )
-/* Write 1 to run a SW channel accessing, it is cleared by HW	*/
-#define BIT_ADC_SW_CH_RUN			( BIT(1) )
-#define BIT_ADC_EN					( BIT(0) )
-
-/* bits definitions for register ANA_REG_ADC_SW_CH_CFG 	*/
-/* 0: Resistance path, 1: Capacitance path 					*/
-#define BIT_CH_IN_MODE				( BIT(8) )
-/* it is only for HW channels 							*/
-#define BIT_CH_DLY_EN				( BIT(7) )
-/* 0: quick mode, coversion initial includes 10 ADC clocks;
- * 1: slow mode, coversion initial includes 26 ADC clocks.
- * NOTE: it is only for TPC channels						*/
-#define BIT_ADC_CH_SLOW				( BIT(6) )
-/* 0: little scale, 0~1.2V~;
- * 1: big scale, 0~3.0V~ */
-#define BIT_ADC_CH_SCALE				( BIT(5) )
-#define BITS_ADC_CH_ID(_x_)			((_x_) << 0 & (BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4)))
-
-#define SHFT_ADC_CH_ID				( 0 )
-#define MASK_ADC_CH_ID				( BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4) )
-
-/* bits definitions for register ANA_REG_ADC_HW_CH_DELAY 	*/
-/* accessing delay, its unit is ADC clock, It can be use for signal without enough setup time. */
-#define BITS_HW_CH_DELAY(_x_)		( (_x_) << 0 & (BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4)|BIT(5)|BIT(6)|BIT(7)) )
-
-/* bits definitions for register ANA_REG_ADC_DAT 			*/
-#define BITS_ADC_DAT(_x_)				( (_x_) << 0 & (BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4)|BIT(5)|BIT(6)|BIT(7)|BIT(8)|BIT(9)|BIT(10)|BIT(11)) )
-
-#define SHFT_ADC_DAT				( 0 )
-#define MASK_ADC_DAT				( BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4)|BIT(5)|BIT(6)|BIT(7)|BIT(8)|BIT(9)|BIT(10)|BIT(11) )
-
-/* bits definitions for register ANA_REG_ADC_IRQ_EN		*/
-#define BIT_ADC_IRQ_EN				( BIT(0) )
-
-/* bits definitions for register ANA_REG_ADC_IRQ_CLR		*/
-#define BIT_ADC_IRQ_CLR				( BIT(0) )
-
-/* bits definitions for register ANA_REG_ADC_IRQ_STS 		*/
-#define BIT_ADC_IRQ_STS				( BIT(0) )
-
-/* bits definitions for register ANA_REG_ADC_IRQ_RAW 		*/
-#define BIT_ADC_IRQ_RAW				( BIT(0) )
-
 #define MEASURE_TIMES				(15)
 
 static void bubble_sort(int a[], int N)
@@ -122,29 +63,11 @@ static void bubble_sort(int a[], int N)
 
 int sci_adc_request(int channel)
 {
-	int timeout = 1000;
-	int i, results[MEASURE_TIMES];
+	int i;
+	int results[MEASURE_TIMES];
 
-	/* config adc sample */
-	ANA_REG_SET(ANA_REG_ADC_SW_CH_CFG, 
-		BIT_ADC_CH_SCALE | BITS_ADC_CH_ID(channel));
-
-	/* clear irq pending before run */
-	ANA_REG_BIC(ANA_REG_ADC_CTRL, BIT_ADC_EN);	/* FIXME: */
-	ANA_REG_OR(ANA_REG_ADC_IRQ_CLR, BIT_ADC_IRQ_CLR);
-
-	/* sw channel run */
-	ANA_REG_SET(ANA_REG_ADC_CTRL,
-			  BIT_ADC_12B | BITS_SW_CH_RUN_NUM(MEASURE_TIMES) |
-			  BIT_ADC_EN | BIT_ADC_SW_CH_RUN);
-
-	/* wait for results */
-	while (!((ANA_REG_GET(ANA_REG_ADC_IRQ_RAW)& BIT_ADC_IRQ_RAW) && timeout--)) {
-		udelay(1);
-	}
-
-	for (i = 0; i < MEASURE_TIMES; i++) {
-		results[i] = ANA_REG_GET(ANA_REG_ADC_DAT) & BITS_ADC_DAT(-1);
+	if (-1 == ADC_GetValues(channel, 1, MEASURE_TIMES, results)) {
+		return 0;
 	}
 
 	bubble_sort(results, MEASURE_TIMES);
