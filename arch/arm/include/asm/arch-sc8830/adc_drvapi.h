@@ -38,6 +38,16 @@ typedef enum
     ADIN_13,
     ADIN_14,
     ADIN_15,
+    ADIN_16,
+    ADIN_17,
+    ADIN_18,
+    ADIN_19,
+    ADIN_20,
+    ADIN_21,
+    ADIN_22,
+    ADIN_23,
+    ADIN_24,
+    ADIN_25,
     ADC_MAX
 } adc_channel;
 typedef enum{false, true} bool;
@@ -57,6 +67,7 @@ extern   "C"
 #endif
 
 void ADC_Init (void);
+int32_t ADC_GetValues(adc_channel id, bool scale, uint8_t num, int32_t *p_buf);
 int32_t ADC_GetValue(adc_channel adcSource, bool scale);
 
 #ifdef __cplusplus

@@ -45,40 +45,54 @@ void ADC_SetScale(bool scale)
     }
 }
 
+int32_t ADC_GetValues(adc_channel id, bool scale, uint8_t num, int32_t *p_buf)
+{
+	uint32_t count;
+
+	/* clear int */
+	ANA_REG_OR(ADC_INT_CLR, ADC_IRQ_CLR_BIT);
+
+	/* choose channel */
+	ADC_SetCs(id);
+
+	/* set ADC scale */
+	ADC_SetScale(scale);
+
+	/* set read numbers run ADC soft channel */
+	if (num < 1) {
+		return -1;
+	}
+	ANA_REG_MSK_OR(ADC_CTRL, BIT_SW_CH_RUN_NUM(num), SW_CH_NUM_MSK);
+	ANA_REG_OR(ADC_CTRL, SW_CH_ON_BIT);
+
+	/* wait adc complete */
+	count = 24;
+	while(!(ANA_REG_GET(ADC_INT_SRC)&ADC_IRQ_RAW_BIT) && count--) {
+		udelay(50);
+	}
+	if (count == 0) {
+		pr_warning("WARNING: ADC_GetValue timeout....\n");
+		return -1;
+	}
+
+	for (count = 0; count < num; count++) {
+		p_buf[count] = ANA_REG_GET(ADC_DAT) & ADC_DATA_MSK;
+	}
+
+	ANA_REG_AND(ADC_CTRL, ~SW_CH_ON_BIT);			// turn off adc soft channel
+	ANA_REG_MSK_OR(ADC_CTRL, BIT_SW_CH_RUN_NUM(1), SW_CH_NUM_MSK);
+	ADC_SetCs(TPC_CHANNEL_X);						// set tpc channel x back
+	ANA_REG_OR(ADC_INT_CLR, ADC_IRQ_CLR_BIT);		// clear irq of this time
+
+	return 0;
+}
 int32_t ADC_GetValue(adc_channel id, bool scale)
 {
-    uint32_t result;
-    unsigned long irq_flag;
-    uint32_t count;
+	int32_t result;
 
-    // clear int 
-    ANA_REG_OR(ADC_INT_CLR, ADC_IRQ_CLR_BIT);
+	if (-1 == ADC_GetValues(id, scale, 1, &result)) {
+		return -1;
+	}
 
-    //choose channel
-    ADC_SetCs(id);
-
-    //set ADC scale
-    ADC_SetScale(scale);
-
-    //run ADC soft channel
-    ANA_REG_OR(ADC_CTRL, SW_CH_ON_BIT);
-
-    count = 12;
-
-    //wait adc complete
-    while(!(ANA_REG_GET(ADC_INT_SRC)&ADC_IRQ_RAW_BIT) && count){
-        udelay(50);
-        count--;
-    }
-    if (count == 0) {
-        pr_warning("WARNING: ADC_GetValue timeout....\n");
-        return -1;
-    }
-
-    result = ANA_REG_GET(ADC_DAT) & ADC_DATA_MSK; // get adc value
-    ANA_REG_AND(ADC_CTRL, ~SW_CH_ON_BIT); // turn off adc soft channel
-    ADC_SetCs(TPC_CHANNEL_X);             // set tpc channel x back
-    ANA_REG_OR(ADC_INT_CLR, ADC_IRQ_CLR_BIT); // clear irq of this time
-
-    return result;
+	return result;
 }
