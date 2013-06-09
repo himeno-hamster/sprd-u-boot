@@ -1052,13 +1052,14 @@ int mmc_legacy_init(int dev)
 #ifdef CONFIG_GENERIC_MMC
 int mmc_sdcard_init()
 {
+#ifdef CONFIG_SC8830
 	if (TRUE == SDCARD_Init()) {
 		printf("mmc_sdcard_init finished");
 	}
 	else {
 		printf("mmc_sdcard_init failed");
 	}
-
+#endif
 	return 0;
 }
 
