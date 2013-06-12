@@ -41,7 +41,7 @@ int board_init()
 {
 	gd->bd->bi_arch_number = MACH_TYPE_OPENPHONE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
-
+	misc_init();
 	ADI_init();
 	LDO_Init();
 	ADC_Init();

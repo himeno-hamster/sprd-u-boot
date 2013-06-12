@@ -49,3 +49,19 @@ int sprd_jtag_disable()
 	}
 }
 
+static void ap_slp_cp_dbg_cfg()
+{
+	*((volatile unsigned int *)(REG_AP_AHB_MCU_PAUSE)) |= BIT_MCU_SLEEP_FOLLOW_CA7_EN; //when ap sleep, cp can continue debug
+}
+
+static void ap_cpll_rel_cfg()
+{
+	*((volatile unsigned int *)(REG_PMU_APB_CPLL_REL_CFG)) |= BIT_CPLL_AP_SEL;
+}
+
+void misc_init()
+{
+	ap_slp_cp_dbg_cfg();
+	ap_cpll_rel_cfg();
+}
+
