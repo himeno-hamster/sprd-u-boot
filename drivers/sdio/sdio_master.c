@@ -421,7 +421,6 @@ int SDIO_SetBusClock(CARD_SDIO_HANDLE cardHandle,int clock)
 	}
 
 	if(ret == TRUE){
-        	SDHOST_internalClk_OnOff(cardHandle->sdioPalHd->sdio_port,CLK_OFF);
         	SDHOST_SD_clk_OnOff(cardHandle->sdioPalHd->sdio_port,CLK_OFF);
 		SDHOST_SD_Clk_Freq_Set(cardHandle->sdioPalHd->sdio_port,clock);
         	SDHOST_internalClk_OnOff(cardHandle->sdioPalHd->sdio_port,CLK_ON);

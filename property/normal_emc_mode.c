@@ -1475,7 +1475,9 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	// start modem CP
 	modem_entry();
 #endif
-
+#ifdef CONFIG_SC8830
+	Emmc_DisSdClk();
+#endif
 	vlx_entry();
 }
 

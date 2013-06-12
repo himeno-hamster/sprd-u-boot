@@ -202,7 +202,7 @@ PUBLIC BOOLEAN Emmc_Read(CARD_EMMC_PARTITION_TPYE  cardPartiton, uint32 startBlo
 
 PUBLIC uint32 Emmc_GetCapacity(CARD_EMMC_PARTITION_TPYE cardPartiton);
 
-
+PUBLIC void Emmc_DisSdClk();
 
 #endif
 

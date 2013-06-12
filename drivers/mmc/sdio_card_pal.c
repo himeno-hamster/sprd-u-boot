@@ -519,10 +519,8 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
 
                 SDHOST_SD_POWER (handle->sdio_port,POWR_ON);
                 SDHOST_SD_Clk_Freq_Set (handle->sdio_port,400000);
+		 SDHOST_internalClk_OnOff (handle->sdio_port,CLK_ON);
                 SDHOST_SD_clk_OnOff (handle->sdio_port,CLK_ON);
-                udelay(1000);
-                SDHOST_internalClk_OnOff (handle->sdio_port,CLK_ON);
-                udelay(1000);
             }
             break;
 
@@ -532,9 +530,6 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
                 SDHOST_RST (handle->sdio_port,RST_ALL);
                 SDHOST_SD_clk_OnOff (handle->sdio_port,CLK_OFF);
                 SDHOST_internalClk_OnOff (handle->sdio_port,CLK_OFF);
-                udelay(1000);
-                SDHOST_SD_clk_OnOff (handle->sdio_port,CLK_OFF);
-                udelay(1000);
             }
             break;
 
@@ -577,10 +572,7 @@ PUBLIC BOOLEAN SDIO_Card_Pal_SetClk (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_C
     }
 #endif
 
-    SDHOST_internalClk_OnOff (handle->sdio_port,CLK_OFF);
-    udelay(1000);
     SDHOST_SD_clk_OnOff (handle->sdio_port,CLK_OFF);
-    udelay(1000);
 
     switch (clkType)
     {
@@ -632,10 +624,9 @@ PUBLIC BOOLEAN SDIO_Card_Pal_SetClk (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_C
 
     }
 
-    SDHOST_SD_clk_OnOff (handle->sdio_port,CLK_ON);
-    udelay(1000);
     SDHOST_internalClk_OnOff (handle->sdio_port,CLK_ON);
-    udelay(1000);
+    SDHOST_SD_clk_OnOff (handle->sdio_port,CLK_ON);
+
     return TRUE;
 
 }
@@ -1047,3 +1038,7 @@ uint32 SCI_GetTickCount(void)
 #endif
 #endif
 
+void SDIO_Card_Pal_DisSdClk(SDIO_CARD_PAL_HANDLE handle)
+{
+	SDHOST_SD_clk_OnOff (handle->sdio_port,CLK_OFF);
+}

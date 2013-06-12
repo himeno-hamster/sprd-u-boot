@@ -257,11 +257,21 @@ static int sdhci_set_clock(struct mmc *mmc, unsigned int clock)
 		return 0;
 
 		/* Version 2.00 divisors must be a power of 2. */
-		for (div = 1; div < 256; div *= 2) {
+	#if defined(CONFIG_TIGER) || defined (CONFIG_SC8830)
+		for (div = 1; div < 2046; div *= 2)
+	#else
+		for (div = 1; div < 256; div *= 2)
+	#endif
+		{
 			if ((mmc->f_max / div) <= clock)
 				break;
 		}
 	div >>= 1;
+
+#if defined(CONFIG_TIGER) || defined (CONFIG_SC8830)
+	if (div > 1)
+		div--;
+#endif
 
 	clk = (div & SDHCI_DIV_MASK) << SDHCI_DIVIDER_SHIFT;
 	clk |= SDHCI_CLOCK_INT_EN;

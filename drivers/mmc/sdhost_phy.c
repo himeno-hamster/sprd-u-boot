@@ -653,14 +653,22 @@ PUBLIC void SDHOST_internalClk_OnOff (SDHOST_HANDLE sdhost_handler,SDHOST_CLK_ON
     {
         case CLK_ON:
             {
+                uint32 timeout;
                 //Enable internal clock
                 sdhost_handler->host_cfg->HOST_CTL1 |= BIT_0;
+                timeout = 30;
+                while ((0 == (sdhost_handler->host_cfg->HOST_CTL1 & BIT_1)) && timeout)
+                {
+                    udelay(100);
+                    timeout--;
+                }
             }
             break;
 
         case CLK_OFF:
             {
                 sdhost_handler->host_cfg->HOST_CTL1 &= (~BIT_0);
+                udelay(1000);
             }
             break;
 
