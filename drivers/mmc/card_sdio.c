@@ -2864,3 +2864,7 @@ PUBLIC uint32 Emmc_GetCapacity(CARD_EMMC_PARTITION_TPYE cardPartiton)
 	}	
 }
 
+PUBLIC void Emmc_DisSdClk()
+{
+	SDIO_Card_Pal_DisSdClk(emmc_handle->sdioPalHd);
+}

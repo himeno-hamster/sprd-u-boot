@@ -427,6 +427,33 @@ CARD_SDIO_HANDLE  emmc_handle = NULL;
 LOCAL volatile uint32 s_CardEvent = 0;
 LOCAL SDIO_CARD_PAL_Struct_T s_sdioCardPalHd[SDHOST_SLOT_MAX_NUM] = {{0,0},{0,0}};
 
+uint32 SCI_GetTickCount(void)
+{
+	volatile uint32 tmp_tick1;
+	volatile uint32 tmp_tick2;
+
+	tmp_tick1 = SYSTEM_CURRENT_CLOCK;
+	tmp_tick2 = SYSTEM_CURRENT_CLOCK;
+
+	while (tmp_tick1 != tmp_tick2)
+                   {
+	  tmp_tick1 = tmp_tick2;
+	  tmp_tick2 = SYSTEM_CURRENT_CLOCK;
+	  }
+
+	return tmp_tick1;
+}
+
+void delayMs(uint32 val)
+{
+	uint32 pre_tick, cur_tick;
+	pre_tick = SCI_GetTickCount(); /*set start tick value*/
+	cur_tick = pre_tick;
+	while(cur_tick  - pre_tick < val)
+	{
+		cur_tick = SCI_GetTickCount();
+	}
+}
 PUBLIC uint32 SDHOST_GetDmaAddr (SDHOST_HANDLE sdhost_handler)
 {
     uint32 dmaAddr;
@@ -636,12 +663,16 @@ LOCAL void  _irqCardProc (uint32 msg, uint32 errCode, SDHOST_SLOT_NO slotNum)
     }
 }
 
+PUBLIC void SDHOST_SD_clk_Off (SDHOST_HANDLE sdhost_handler)
+{
+    sdhost_handler->host_cfg->HOST_CTL1 &= ~BIT_2;
+}
+
 PUBLIC void SDHOST_SD_clk_On (SDHOST_HANDLE sdhost_handler)
 {
     sdhost_handler->host_cfg->HOST_CTL1 |= BIT_0;
     while (0 == (sdhost_handler->host_cfg->HOST_CTL1 & BIT_1)) {}
     sdhost_handler->host_cfg->HOST_CTL1 |= BIT_2;
-    while (0 == (sdhost_handler->host_cfg->HOST_CTL1 & BIT_1)) {} //maybe it is not nessarry
 }
 
 PUBLIC uint32 SDHOST_BaseClk_Set (uint32 sdio_base_clk)
@@ -765,7 +796,6 @@ PUBLIC SDIO_CARD_PAL_HANDLE SDIO_Card_Pal_Open (SDIO_CARD_PAL_SLOT_E slotNo)
 #ifndef CONFIG_SC8830
    * (volatile uint32 *) AHB_SDIO_CTL = (AHB_SDIO_CTRL_SLOT0); //select master1
 #endif
-    //SDHOST_SD_clk_On(s_sdioCardPalHd[slotNo].sdio_port);
     return &s_sdioCardPalHd[slotNo];
 }
 
@@ -793,8 +823,6 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 {
     uint32 tmpIntFilter;
     uint32  isr_status;
-	
-   SDHOST_SD_clk_On(handle->sdio_port);
 
     SDHOST_NML_IntSig_Dis (handle->sdio_port, SIG_ALL);
     SDHOST_NML_IntStatus_Dis (handle->sdio_port, SIG_ALL); // ???
@@ -1734,7 +1762,9 @@ PUBLIC BOOLEAN SDIO_Card_Pal_SetClk (SDIO_CARD_PAL_HANDLE handle)
 #ifndef CONFIG_SC8830
 	* (volatile uint32 *) AHB_SDIO_CTL = (AHB_SDIO_CTRL_SLOT0); //select master1
 #endif
+	SDHOST_SD_clk_Off(handle->sdio_port);
 	SDHOST_SD_Clk_Freq_Set (handle->sdio_port,25000000);
+	delayMs(10);
 	SDHOST_SD_clk_On (handle->sdio_port);
 
 	return TRUE;
@@ -1766,23 +1796,6 @@ BOOLEAN CARD_SDIO_Select_CurPartition(CARD_SDIO_HANDLE cardHandle, CARD_EMMC_PAR
 		return FALSE;
 	}
 	return TRUE;
-}
-
-uint32 SCI_GetTickCount(void)
-{
-	volatile uint32 tmp_tick1;
-	volatile uint32 tmp_tick2;
-
-	tmp_tick1 = SYSTEM_CURRENT_CLOCK;
-	tmp_tick2 = SYSTEM_CURRENT_CLOCK;
-
-	while (tmp_tick1 != tmp_tick2)
-                   {
-	  tmp_tick1 = tmp_tick2;
-	  tmp_tick2 = SYSTEM_CURRENT_CLOCK;
-	  }
-
-	return tmp_tick1;
 }
 
 LOCAL BOOLEAN MMC_SWITCH(CARD_SDIO_HANDLE cardHandle, uint8 index, uint8 value)
@@ -1947,12 +1960,7 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
                //SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd,SDIO_CARD_PAL_25MHz);
                
 	SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd);
-	pre_tick = SCI_GetTickCount(); /*set start tick value*/  
- 	cur_tick = pre_tick;
-	while(cur_tick  -pre_tick < 100)
- 	{
- 	cur_tick = SCI_GetTickCount();
-	}
+
         busWidth = CARD_WIDTH_4_BIT;
 	if(FALSE == _SetBusWidth(cardHandle,CARD_WIDTH_4_BIT))
 	{
@@ -2120,16 +2128,11 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
             LDO_TurnOnLDO(LDO_LDO_SIM2);
 #endif
 #endif
-             
+            SDHOST_SD_clk_Off(handle->sdio_port);
             SDHOST_SD_Clk_Freq_Set (handle->sdio_port,400000);
             SDHOST_internalClk_On(handle->sdio_port);
+            delayMs(100);
             SDHOST_SD_clk_On(handle->sdio_port);
-            pre_tick = SCI_GetTickCount(); /*set start tick value*/  
-            cur_tick = pre_tick;
-            while(cur_tick  -pre_tick < 100)
-                {
-                        cur_tick = SCI_GetTickCount();
-                }
             //__udelay (100*1000);
         }
     break;
@@ -2147,13 +2150,11 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
             //SDHOST_SD_clk_Off(handle->sdio_port,CLK_OFF);
             handle->sdio_port->host_cfg->HOST_CTL1 &= (~BIT_2);
             //SDHOST_internalClk_On(handle->sdio_port,CLK_OFF);
+            /*
             handle->sdio_port->host_cfg->HOST_CTL1 &= (~BIT_0);
-            pre_tick = SCI_GetTickCount(); /*set start tick value*/  
-            cur_tick = pre_tick;
-            while(cur_tick  -pre_tick < 100)
-                {
-                        cur_tick = SCI_GetTickCount();
-                }
+            */
+           delayMs(10);
+
             //__udelay (250*1000);
             break;
         }
@@ -2219,7 +2220,7 @@ PUBLIC BOOLEAN Emmc_Init()
 #else	
 	emmc_handle->sdioPalHd = SDIO_Card_Pal_Open(SDIO_CARD_PAL_SLOT_1);
 #endif	
-         //CARD_SDIO_PwrCtl(emmc_handle, FALSE);
+       CARD_SDIO_PwrCtl(emmc_handle, FALSE);
 	CARD_SDIO_PwrCtl(emmc_handle, TRUE);
 	emmc_handle->BlockLen = 0;
 	emmc_handle->RCA = 1;
@@ -2269,6 +2270,9 @@ PUBLIC BOOLEAN Emmc_Read(CARD_EMMC_PARTITION_TPYE  cardPartiton, uint32 startBlo
 
 }
 
-
+PUBLIC void Emmc_DisSdClk()
+{
+	SDHOST_SD_clk_Off(emmc_handle->sdioPalHd->sdio_port);
+}
 
 

@@ -80,5 +80,8 @@ void nand_boot(void)
 #else
 	secure_check(CONFIG_SYS_NAND_U_BOOT_START, 0, CONFIG_SYS_NAND_U_BOOT_START + CONFIG_SYS_NAND_U_BOOT_SIZE - VLR_INFO_OFF, INTER_RAM_BEGIN + CONFIG_SPL_LOAD_LEN - KEY_INFO_SIZ - CUSTOM_DATA_SIZ);
 #endif
+
+	/* disable emmc sd_clk */
+	Emmc_DisSdClk();
 	(*uboot)();
 }

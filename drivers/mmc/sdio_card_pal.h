@@ -201,7 +201,7 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Close(SDIO_CARD_PAL_HANDLE handle);
 
 
 uint32 SCI_GetTickCount(void);
-
+void SDIO_Card_Pal_DisSdClk(SDIO_CARD_PAL_HANDLE handle);
 
 
 #endif
