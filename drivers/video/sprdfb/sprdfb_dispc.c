@@ -14,24 +14,8 @@
 
 #include <common.h>
 
-#include <asm/arch/dispc_reg.h>
-#include <asm/arch/sprd_lcd.h>
-#ifdef CONFIG_SC8830
-#include <asm/arch/sprd_reg.h>
-#else
-#include <asm/arch/sc8810_reg_ahb.h>
-#include <asm/arch/sc8810_reg_global.h>
-#endif
-#include <asm/arch/regs_global.h>
-
 #include "sprdfb.h"
-
-
-#ifdef CONFIG_SC7710G2
-#define DISPC_SOFT_RST (20)
-#else
-#define DISPC_SOFT_RST (2)
-#endif
+#include "sprdfb_chip_common.h"
 
 #define SPRDFB_DPI_CLOCK_SRC (384000000)
 
@@ -49,28 +33,17 @@ static void __raw_bits_and(unsigned int v, unsigned int a)
 	__raw_writel((__raw_readl(a) & v), a);
 }
 
-static void __raw_bits_or(unsigned int v, unsigned int a)
-{
-	__raw_writel((__raw_readl(a) | v), a);
-}
-
 /* dispc soft reset */
 static void dispc_reset(void)
 {
 	FB_PRINT("sprdfb:[%s]\n",__FUNCTION__);
-#if   defined CONFIG_SC7710G2
-	__raw_writel(__raw_readl(AHB_SOFT2_RST) | (1<<DISPC_SOFT_RST), AHB_SOFT2_RST);
+	printk("zcf:dispc_reset-DISPC_AHB_SOFT_RST:%x,BIT_DISPC_SOFT_RST:%x \n",DISPC_AHB_SOFT_RST,BIT_DISPC_SOFT_RST);
+	printk("zcf:dispc_reset-DISPC_AHB_SOFT_RST:%x \n",__raw_readl(DISPC_AHB_SOFT_RST));
+	__raw_writel(__raw_readl(DISPC_AHB_SOFT_RST) | (BIT_DISPC_SOFT_RST), DISPC_AHB_SOFT_RST);
+	printk("zcf:dispc_reset-DISPC_AHB_SOFT_RST:%x \n",__raw_readl(DISPC_AHB_SOFT_RST));
 	udelay(10);
-	__raw_writel(__raw_readl(AHB_SOFT2_RST) & (~(1<<DISPC_SOFT_RST)), AHB_SOFT2_RST);
-#elif defined CONFIG_SC8830
-	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) | (BIT_DISPC0_SOFT_RST), REG_AP_AHB_AHB_RST);
-	udelay(10);
-	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) & (~(BIT_DISPC0_SOFT_RST)), REG_AP_AHB_AHB_RST);
-#else
-	__raw_writel(__raw_readl(AHB_SOFT_RST) | (1<<DISPC_SOFT_RST), AHB_SOFT_RST);
-	udelay(10);
-	__raw_writel(__raw_readl(AHB_SOFT_RST) & (~(1<<DISPC_SOFT_RST)), AHB_SOFT_RST);
-#endif
+	__raw_writel(__raw_readl(DISPC_AHB_SOFT_RST) & (~(BIT_DISPC_SOFT_RST)), DISPC_AHB_SOFT_RST);
+	printk("zcf:dispc_reset-DISPC_AHB_SOFT_RST:%x \n",__raw_readl(DISPC_AHB_SOFT_RST));
 }
 
 static inline void dispc_set_bg_color(uint32_t bg_color)
@@ -232,25 +205,11 @@ static void dispc_update_clock(struct sprdfb_device *dev)
 		}
 
 		dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC / dividor;
-#ifdef CONFIG_SC7710G2
-		reg_val = __raw_readl(AHB_CTL6);
-		reg_val  &= 0xFFF00FFF; /*ckear bit 12~bit 19 */
-		reg_val |= (dividor-1) << 12;
-		__raw_writel(reg_val, AHB_CTL6);
-#elif defined CONFIG_SC8830
-		reg_val = __raw_readl(REG_AP_CLK_DISPC0_DPI_CFG);
-		reg_val  &= 0xFFFF00FF; /*ckear bit 8~bit 15 */
-		reg_val |= (dividor-1) << 8;
-		__raw_writel(reg_val, REG_AP_CLK_DISPC0_DPI_CFG);
-#else
-		reg_val = __raw_readl(AHB_DISPC_CLK);
-		reg_val  &= 0xF807FFFF; /*ckear bit 19~bit 26 */
-		reg_val |= (dividor-1) << 19;
-		__raw_writel(reg_val, AHB_DISPC_CLK);
-#endif
+		dispc_print_clk();
+		dispc_dpi_clk_set(DISPC_DPI_SEL_384M, (dividor-1));
+		dispc_print_clk();
 
 		printf("sprdfb:[%s] need_clock = %d, dividor = %d, reg_val = 0x%x, dpi_clock = %d\n", __FUNCTION__, need_clock, dividor, reg_val, dev->dpi_clock);
-		printf("0x20900220 = 0x%x\n", __raw_readl(0x20900220));
 	}
 
 }
@@ -258,158 +217,30 @@ static void dispc_update_clock(struct sprdfb_device *dev)
 static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 {
 	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
-#ifdef CONFIG_SC7710G2
-	//select DISPC clock source
-	__raw_bits_and(~(1<<31), AHB_CTL6);    //pll_src=256M
-	__raw_bits_and(~(1<<30), AHB_CTL6);
 
-	//set DISPC divdior
-	__raw_bits_and(~(1<<29), AHB_CTL6);  //div=0
-	__raw_bits_and(~(1<<28), AHB_CTL6);
-	__raw_bits_and(~(1<<27), AHB_CTL6);
+        dispc_print_clk();
 
-	//select DBI clock source
-	__raw_bits_and(~(1<<26), AHB_CTL6);    //pll_src=256M
-	__raw_bits_and(~(1<<25), AHB_CTL6);
+	dispc_pll_clk_set(DISPC_PLL_SEL_256M, 0);
+	dispc_dbi_clk_set(DISPC_DBI_SEL_256M, 0);
+	dispc_dpi_clk_set(DISPC_DPI_SEL_384M, DISPC_DPI_DIV_DEFAULT);
+	
+ 	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC /(DISPC_DPI_DIV_DEFAULT + 1);
 
-	//set DBI divdior
-	__raw_bits_and(~(1<<24), AHB_CTL6);  //div=0
-	__raw_bits_and(~(1<<23), AHB_CTL6);
-	__raw_bits_and(~(1<<22), AHB_CTL6);
+	printf("zcf:DISPC_CORE_EN:%x,BIT_DISPC_CORE_EN:%x \n",DISPC_CORE_EN,BIT_DISPC_CORE_EN);
+	printf("zcf:BIT_DISPC_EMC_EN:%x,DISPC_EMC_EN:%x \n",BIT_DISPC_EMC_EN,DISPC_EMC_EN);
+	printf("zcf:BIT_DISPC_AHB_EN:%x,DISPC_AHB_EN:%x \n",BIT_DISPC_AHB_EN,DISPC_AHB_EN);
+	printf("zcf:DISPC_CORE_EN:%x \n",__raw_readl(DISPC_CORE_EN));
+	printf("zcf:DISPC_EMC_EN:%x \n",__raw_readl(DISPC_EMC_EN));
+	printf("zcf:DISPC_AHB_EN:%x \n",__raw_readl(DISPC_AHB_EN));
+	__raw_bits_or(BIT_DISPC_CORE_EN, DISPC_CORE_EN);  //core_clock_en
+	__raw_bits_or(BIT_DISPC_EMC_EN, DISPC_EMC_EN);  //matrix clock en
 
-	//select DPI clock source
-	__raw_bits_and(~(1<<21), AHB_CTL6);    //pll_src=384M
-	__raw_bits_and(~(1<<20), AHB_CTL6);
+	__raw_bits_or(BIT_DISPC_AHB_EN, DISPC_AHB_EN);//enable DISPC clock
+	printf("zcf:DISPC_CORE_EN:%x \n",__raw_readl(DISPC_CORE_EN));
+	printf("zcf:DISPC_EMC_EN:%x \n",__raw_readl(DISPC_EMC_EN));
+	printf("zcf:DISPC_AHB_EN:%x \n",__raw_readl(DISPC_AHB_EN));
 
-	//set DPI divdior
-	__raw_bits_and(~(1<<19), AHB_CTL6);  //div=10, dpi_clk = pll_src/(10+1)
-	__raw_bits_and(~(1<<18), AHB_CTL6);
-	__raw_bits_and(~(1<<17), AHB_CTL6);
-	__raw_bits_and(~(1<<16), AHB_CTL6);
-	__raw_bits_or((1<<15), AHB_CTL6);
-	__raw_bits_and(~(1<<14), AHB_CTL6);
-	__raw_bits_or((1<<13), AHB_CTL6);
-	__raw_bits_and(~(1<<12), AHB_CTL6);
-
-	//enable DISPC clock
-	__raw_bits_or(1<<0, AHB_CTL6);
-
-	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC / 11;
-
-	printf("0x2090023c = 0x%x\n", __raw_readl(0x2090023c));
-#elif defined CONFIG_SC8830
-	// to do
-	//select DISPC clock source
-	__raw_bits_and(~(1<<0), REG_AP_CLK_DISPC0_CFG);    //pll_src=256M
-	__raw_bits_or((1<<1), REG_AP_CLK_DISPC0_CFG);
-
-	//set DISPC divdior
-	__raw_bits_and(~(1<<8), REG_AP_CLK_DISPC0_CFG);  //div=0
-	__raw_bits_and(~(1<<9), REG_AP_CLK_DISPC0_CFG);
-	__raw_bits_and(~(1<<10), REG_AP_CLK_DISPC0_CFG);
-
-	//select DBI clock source
-	__raw_bits_or((1<<0), REG_AP_CLK_DISPC0_DBI_CFG);    //pll_src=256M
-	__raw_bits_or((1<<1), REG_AP_CLK_DISPC0_DBI_CFG);
-
-	//set DBI divdior
-	__raw_bits_and(~(1<<8), REG_AP_CLK_DISPC0_DBI_CFG);  //div=0
-	__raw_bits_and(~(1<<9), REG_AP_CLK_DISPC0_DBI_CFG);
-	__raw_bits_and(~(1<<10), REG_AP_CLK_DISPC0_DBI_CFG);
-
-	//select DPI clock source
-	__raw_bits_or((1<<0), REG_AP_CLK_DISPC0_DPI_CFG);    //pll_src=384M
-	__raw_bits_or((1<<1), REG_AP_CLK_DISPC0_DPI_CFG);
-
-	//set DPI divdior
-	#ifdef  CONFIG_LCD_720P
-	__raw_bits_and(~(1<<8), REG_AP_CLK_DISPC0_DPI_CFG);  //div=6, dpi_clk = pll_src/(6+1)
-	__raw_bits_or((1<<9), REG_AP_CLK_DISPC0_DPI_CFG);
-	__raw_bits_or((1<<10), REG_AP_CLK_DISPC0_DPI_CFG);
-	__raw_bits_and(~(1<<11), REG_AP_CLK_DISPC0_DPI_CFG);
-	__raw_bits_and(~(1<<12), REG_AP_CLK_DISPC0_DPI_CFG);
-	__raw_bits_and(~(1<<13), REG_AP_CLK_DISPC0_DPI_CFG);
-	__raw_bits_and(~(1<<14), REG_AP_CLK_DISPC0_DPI_CFG);
-	__raw_bits_and(~(1<<15), REG_AP_CLK_DISPC0_DPI_CFG);
-
-	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC /7;
-	#else
-	__raw_bits_and(~(1<<8), REG_AP_CLK_DISPC0_DPI_CFG);  //div=10, dpi_clk = pll_src/(10+1)
-	__raw_bits_or((1<<9), REG_AP_CLK_DISPC0_DPI_CFG);
-
-	__raw_bits_and(~(1<<10), REG_AP_CLK_DISPC0_DPI_CFG);
-	__raw_bits_or((1<<11), REG_AP_CLK_DISPC0_DPI_CFG);
-	__raw_bits_and(~(1<<12), REG_AP_CLK_DISPC0_DPI_CFG);
-	__raw_bits_and(~(1<<13), REG_AP_CLK_DISPC0_DPI_CFG);
-	__raw_bits_and(~(1<<14), REG_AP_CLK_DISPC0_DPI_CFG);
-	__raw_bits_and(~(1<<15), REG_AP_CLK_DISPC0_DPI_CFG);
-
-	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC / 11;
-	#endif
-
-	//enable dispc clock
-	__raw_bits_or(BIT_AP_CKG_EB, REG_AP_APB_APB_EB);  //core_clock_en
-
-	__raw_bits_or(BIT_DISP_EMC_EB, REG_AON_APB_APB_EB1);  //matrix clock_en
-
-	//enable DISPC
-	__raw_bits_or(BIT_DISPC0_EB, REG_AP_AHB_AHB_EB);
-
-
-
-	printf("0x7120002c = 0x%x\n", __raw_readl(0x7120002c));
-	printf("0x71200030 = 0x%x\n", __raw_readl(0x71200030));
-	printf("0x71200034 = 0x%x\n", __raw_readl(0x71200034));
-	printf("0x20d00000 = 0x%x\n", __raw_readl(0x20d00000));
-	printf("0x71300000 = 0x%x\n", __raw_readl(0x71300000));
-	printf("0x402e0004 = 0x%x\n", __raw_readl(0x402e0004));
-
-#else
-	//select DISPC clock source
-	__raw_bits_and(~(1<<1), AHB_DISPC_CLK);    //pll_src=256M
-	__raw_bits_and(~(1<<2), AHB_DISPC_CLK);
-
-	//set DISPC divdior
-	__raw_bits_and(~(1<<3), AHB_DISPC_CLK);  //div=0
-	__raw_bits_and(~(1<<4), AHB_DISPC_CLK);
-	__raw_bits_and(~(1<<5), AHB_DISPC_CLK);
-
-	//select DBI clock source
-	__raw_bits_and(~(1<<9), AHB_DISPC_CLK);    //pll_src=256M
-	__raw_bits_and(~(1<<10), AHB_DISPC_CLK);
-
-	//set DBI divdior
-	__raw_bits_and(~(1<<11), AHB_DISPC_CLK);  //div=0
-	__raw_bits_and(~(1<<12), AHB_DISPC_CLK);
-	__raw_bits_and(~(1<<13), AHB_DISPC_CLK);
-
-	//select DPI clock source
-	__raw_bits_and(~(1<<17), AHB_DISPC_CLK);    //pll_src=384M
-	__raw_bits_and(~(1<<18), AHB_DISPC_CLK);
-
-	//set DPI divdior
-	__raw_bits_and(~(1<<19), AHB_DISPC_CLK);  //div=10, dpi_clk = pll_src/(10+1)
-	__raw_bits_or((1<<20), AHB_DISPC_CLK);
-	__raw_bits_and(~(1<<21), AHB_DISPC_CLK);
-	__raw_bits_or((1<<22), AHB_DISPC_CLK);
-	__raw_bits_and(~(1<<23), AHB_DISPC_CLK);
-	__raw_bits_and(~(1<<24), AHB_DISPC_CLK);
-	__raw_bits_and(~(1<<25), AHB_DISPC_CLK);
-	__raw_bits_and(~(1<<26), AHB_DISPC_CLK);
-
-	//enable dispc matric clock
-	__raw_bits_or((1<<9), AHB_CTL2);  //core_clock_en
-	__raw_bits_or((1<<11), AHB_CTL2);  //matrix clock en
-
-	//enable DISPC clock
-	__raw_bits_or(1<<22, AHB_CTL0);
-
-	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC / 11;
-
-	printf("0x20900200 = 0x%x\n", __raw_readl(0x20900200));
-	printf("0x20900208 = 0x%x\n", __raw_readl(0x20900208));
-	printf("0x20900220 = 0x%x\n", __raw_readl(0x20900220));
-#endif
+        dispc_print_clk();
 
 	dispc_reset();
 	dispc_module_enable();
@@ -463,15 +294,9 @@ static int32_t sprdfb_dispc_init(struct sprdfb_device *dev)
 static int32_t sprdfb_dispc_uninit(struct sprdfb_device *dev)
 {
 	FB_PRINT("sprdfb:[%s]\n",__FUNCTION__);
-#ifdef CONFIG_SC7710G2
-	//disable DISPC clock
-	__raw_bits_and(~(1<<0), AHB_CTL6);
-#elif defined CONFIG_SC8830
-	__raw_bits_or(~(BIT_DISPC0_EB), REG_AP_AHB_AHB_EB);
-#else
-	//disable DISPC clock
-	__raw_bits_and(~(1<<22), AHB_CTL0);
-#endif
+
+	__raw_bits_and(~(BIT_DISPC_AHB_EN), DISPC_AHB_EN);
+
 	return 0;
 }
 
