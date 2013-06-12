@@ -27,9 +27,9 @@ include $(TOPDIR)/config.mk
 LIB	:= $(obj)libsprdfb.o
 
 #ifdef CONFIG_LCD
-COBJS-$(CONFIG_TIGER) += sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_mipi.o sprdfb_i2c.o sprdfb_spi.o sprdfb_dsi.o mipi_dsih_api.o mipi_dsih_dphy.o mipi_dsih_hal.o
-COBJS-$(CONFIG_SC8830)+= sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_mipi.o sprdfb_i2c.o sprdfb_spi.o sprdfb_dsi.o mipi_dsih_api.o mipi_dsih_dphy.o mipi_dsih_hal.o
-COBJS-$(CONFIG_SC7710G2) += sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_i2c.o sprdfb_spi.o
+COBJS-$(CONFIG_TIGER) += sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_mipi.o sprdfb_i2c.o sprdfb_spi.o sprdfb_dsi.o mipi_dsih_api.o mipi_dsih_dphy.o mipi_dsih_hal.o sprdfb_chip_common.o sprdfb_chip_8825.o
+COBJS-$(CONFIG_SC8830)+= sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_mipi.o sprdfb_i2c.o sprdfb_spi.o sprdfb_dsi.o mipi_dsih_api.o mipi_dsih_dphy.o mipi_dsih_hal.o sprdfb_chip_common.o sprdfb_chip_8830.o
+COBJS-$(CONFIG_SC7710G2) += sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_i2c.o sprdfb_spi.o sprdfb_chip_common.o sprdfb_chip_7710.o
 
 COBJS-$(CONFIG_FB_LCD_HX8363_RGB_SPI) += lcd_hx8363_rgb_spi.o
 COBJS-$(CONFIG_FB_LCD_HX8363_MCU) += lcd_hx8363_mcu.o

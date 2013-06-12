@@ -12,26 +12,17 @@
  */
 #include <common.h>
 
-#include <asm/arch/sprd_lcd.h>
 
 #include <asm/io.h>
-#ifdef CONFIG_SC8830
-#include <asm/arch/sprd_reg.h>
-#include <asm/arch/sprd_reg_base.h>
-#define 	DSI_CTL_BEGIN	CTL_BASE_DSI
-#else
-#include <asm/arch/sc8810_reg_ahb.h>
-#include <asm/arch/sc8810_reg_base.h>
-#endif
 
 #include "sprdfb.h"
+#include "sprdfb_chip_common.h"
 
 #include "mipi_dsih_local.h"
 #include "mipi_dsih_dphy.h"
 #include "mipi_dsih_hal.h"
 #include "mipi_dsih_api.h"
 
-#define DSI_SOFT_RST (26)
 #define DSI_PHY_REF_CLOCK (26*1000)
 
 #define DSI_EDPI_CFG (0x6c)
@@ -50,12 +41,6 @@ static void __raw_bits_and(unsigned int v, unsigned int a)
 	__raw_writel((__raw_readl(a) & v), a);
 }
 
-static void __raw_bits_or(unsigned int v, unsigned int a)
-{
-	__raw_writel((__raw_readl(a) | v), a);
-}
-
-
 static uint32_t dsi_core_read_function(uint32_t addr, uint32_t offset)
 {
 	return __raw_readl(addr + offset);
@@ -69,17 +54,13 @@ static void dsi_core_write_function(uint32_t addr, uint32_t offset, uint32_t dat
 
 static void dsi_reset(void)
 {
-#ifdef CONFIG_SC8830
-	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) | (BIT_DSI_SOFT_RST), REG_AP_AHB_AHB_RST);
-#else
-	__raw_writel(__raw_readl(AHB_SOFT_RST) | (1<<DSI_SOFT_RST), AHB_SOFT_RST);
-#endif
+	printk("DSI_AHB_SOFT_RST:%x,BIT_DSI_SOFT_RST:%x \n",DSI_AHB_SOFT_RST,BIT_DSI_SOFT_RST);
+	printk("DSI_AHB_SOFT_RST:%x \n",__raw_readl(DSI_AHB_SOFT_RST));
+	__raw_writel(__raw_readl(DSI_AHB_SOFT_RST) | (BIT_DSI_SOFT_RST), DSI_AHB_SOFT_RST);
+	printk("DSI_AHB_SOFT_RST:%x \n",__raw_readl(DSI_AHB_SOFT_RST));
 	udelay(10);
-#ifdef CONFIG_SC8830
-	__raw_writel(__raw_readl(REG_AP_AHB_AHB_RST) & (~(BIT_DSI_SOFT_RST)),REG_AP_AHB_AHB_RST);
-#else
-	__raw_writel(__raw_readl(AHB_SOFT_RST) & (~(1<<DSI_SOFT_RST)),AHB_SOFT_RST);
-#endif
+	__raw_writel(__raw_readl(DSI_AHB_SOFT_RST) & (~(BIT_DSI_SOFT_RST)),DSI_AHB_SOFT_RST);
+	printk("DSI_AHB_SOFT_RST:%x \n",__raw_readl(DSI_AHB_SOFT_RST));
 }
 
 int32_t dsi_early_int(void)
@@ -91,10 +72,6 @@ int32_t dsi_early_int(void)
 		return 0;
 	}
 
-#ifdef CONFIG_SC8830
-	//Enable DSI clock
-	__raw_writel(__raw_readl(REG_AP_AHB_MISC_CKG_EN) | (BIT_DPHY_REF_CKG_EN) | (BIT_DPHY_CFG_CKG_EN) , REG_AP_AHB_MISC_CKG_EN);
-#endif
 	dsi_reset();
 
 	memset(&(dsi_ctx.dsi_inst), 0, sizeof(dsi_ctx.dsi_inst));
@@ -121,22 +98,14 @@ static int32_t dsi_edpi_setbuswidth(struct info_mipi * mipi)
 		FB_PRINT("sprdfb:[%s] fail, invalid video_bus_width\n", __FUNCTION__);
 		break;
 	}
-#ifdef CONFIG_SC8830
 	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_DPI_CFG, (uint32_t)(color_coding<<2));
-#else
-	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_DPI_CFG, (uint32_t)(color_coding<<2));
-#endif
 	return 0;
 }
 
 
 static int32_t dsi_edpi_init(void)
 {
-#ifdef CONFIG_SC8830
 	dsi_core_write_function((uint32_t)DSI_CTL_BEGIN,  (uint32_t)DSI_EDPI_CFG, 0x10500);
-#else
-	dsi_core_write_function((uint32_t)DSI_CTL_BEGIN,  (uint32_t)DSI_EDPI_CFG, 0x10500);
-#endif
 	return 0;
 }
 
@@ -215,30 +184,18 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 	dphy_t *phy = &(dsi_instance->phy_instance);
 	struct info_mipi * mipi = dev->panel->info.mipi;
 
-#ifdef CONFIG_SC8830
-	__raw_bits_or((BIT_DSI_EB), REG_AP_AHB_AHB_EB);  //enable DSI
-#else
-	__raw_bits_or((1<<0), 0x2090021c);  //enable dphy
-#endif
+	dsi_enable();
 
 	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
 
 	dsi_early_int();
-#ifdef CONFIG_SC8830
 	phy->address = DSI_CTL_BEGIN;
-#else
-	phy->address = DSI_CTL_BEGIN;
-#endif
 	phy->core_read_function = dsi_core_read_function;
 	phy->core_write_function = dsi_core_write_function;
 	phy->log_error = dsi_log_error;
 	phy->log_info = NULL;
 	phy->reference_freq = DSI_PHY_REF_CLOCK;
-#ifdef CONFIG_SC8830
 	dsi_instance->address = DSI_CTL_BEGIN;
-#else
-	dsi_instance->address = DSI_CTL_BEGIN;
-#endif
 	dsi_instance->color_mode_polarity =mipi->color_mode_pol;
 	dsi_instance->shut_down_polarity = mipi->shut_down_pol;
 	dsi_instance->core_read_function = dsi_core_read_function;
@@ -264,13 +221,8 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 		return -1;
 	}
 */
-#ifdef CONFIG_SC8830
 	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_ERROR_MSK0, 0x1fffff);
 	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_ERROR_MSK1, 0x3ffff);
-#else
-	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_ERROR_MSK0, 0x1fffff);
-	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_ERROR_MSK1, 0x3ffff);
-#endif
 	result = mipi_dsih_open(dsi_instance);
 	if(OK != result){
 		FB_PRINT("sprdfb: [%s]: mipi_dsih_open fail (%d)!\n", __FUNCTION__, result);
@@ -282,22 +234,8 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 		FB_PRINT("sprdfb: [%s]: mipi_dsih_dphy_configure fail (%d)!\n", __FUNCTION__, result);
 		return -1;
 	}
-#ifdef CONFIG_SC8830
-		{/*for debug*/
-			int32_t i;
-			for(i=0x21800000;i<0x21800080;i+=16){
-				printk("sprdfb: %x: 0x%x, 0x%x, 0x%x, 0x%x\n", i, __raw_readl(i), __raw_readl(i+4), __raw_readl(i+8), __raw_readl(i+12));
-			}
-			printk("**************************************\n");
-			printk("0x20d00014:%x\n",__raw_readl(0x20d00014));
-		}
-#endif
 
-#ifdef CONFIG_SC8830
 	while(5 != (dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_STATUS) & 5));
-#else
-	while(5 != (dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_STATUS) & 5));
-#endif
 	if(SPRDFB_MIPI_MODE_CMD == mipi->work_mode){
 		dsi_edpi_setbuswidth(mipi);
 	}
@@ -344,11 +282,7 @@ int32_t sprdfb_dsi_uninit(struct sprdfb_device *dev)
 		dsi_ctx.is_inited = 0;
 	}
 
-#ifdef CONFIG_SC8830
 	dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL, 0);
-#else
-	dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL, 0);
-#endif
 	mdelay(3);
 
 	return 0;
@@ -360,34 +294,16 @@ int32_t sprdfb_dsi_ready(struct sprdfb_device *dev)
 
 	if(SPRDFB_MIPI_MODE_CMD == mipi->work_mode){
 		mipi_dsih_cmd_mode(&(dsi_ctx.dsi_inst), 1);
-#ifdef CONFIG_SC8830
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_CMD_MODE_CFG, 0x1);
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL, 0x1);
-#else		
-		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_CMD_MODE_CFG, 0x1);
-		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL, 0x1);
-#endif
 	}else{
 		mipi_dsih_video_mode(&(dsi_ctx.dsi_inst), 1);
-#ifdef CONFIG_SC8830
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PWR_UP, 0);
-#else
-		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PWR_UP, 0);
-#endif
 		udelay(100);
-#ifdef CONFIG_SC8830
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PWR_UP, 1);
-#else
-		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PWR_UP, 1);
-#endif
 		udelay(10*1000);
-#ifdef CONFIG_SC8830
 		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST0);
 		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST1);
-#else
-		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST0);
-		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST1);
-#endif
 	}
 	return 0;
 }

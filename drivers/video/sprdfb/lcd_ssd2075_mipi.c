@@ -207,6 +207,7 @@ static struct info_mipi lcd_ssd2075_mipi_info = {
 struct panel_spec lcd_ssd2075_mipi_spec = {
 	.width = 720,
 	.height = 1280,
+	.fps = 62,
 	.type = LCD_MODE_DSI,
 	.direction = LCD_DIRECT_NORMAL,
 	.info = {
