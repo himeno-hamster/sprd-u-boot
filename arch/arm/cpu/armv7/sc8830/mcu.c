@@ -126,6 +126,16 @@ static uint32 ArmCoreConfig(uint32 arm_clk)
     //1.0V  800M
     //1.1V  1100M
     //1.2V  1200M
+#ifdef CONFIG_SP8830EB
+	if (arm_clk < ARM_CLK_1100M)
+	{
+        dcdc_arm |= (6<<5); //set dcdcarmcore voltage 1.1V->1.2V
+	}	
+    else
+    {
+        dcdc_arm |= (7<<5); //set dcdcarmcore voltage 1.1V->1.3V
+    }	
+#else   
     if (arm_clk < ARM_CLK_1000M)
     {
         dcdc_arm |= (4<<5); //set dcdcarmcore voltage 1.1V->1.0V
@@ -134,6 +144,7 @@ static uint32 ArmCoreConfig(uint32 arm_clk)
     {
         dcdc_arm |= (6<<5); //set dcdcarmcore voltage 1.1V->1.2V
     }
+#endif
     ANA_REG_SET(ANA_REG_GLB_DCDC_ARM_ADI, dcdc_arm);
     REG32(REG_AP_APB_APB_EB) |= BIT_AP_CKG_EB;        // CKG enable
     delay();
@@ -163,7 +174,7 @@ static uint32 ClkConfig(uint32 arm_clk)
 uint32 MCU_Init()
 {
 #ifdef CONFIG_SP8830EB
-    if (ClkConfig(ARM_CLK_800M))
+    if (ClkConfig(ARM_CLK_1000M))
 #else
     if (ClkConfig(ARM_CLK_800M))
 #endif
