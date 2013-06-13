@@ -44,8 +44,10 @@ void display_writing_sysdump(void)
 		return;
 	}
 	int ret = read_logoimg(bmp_img,size);
-	if(ret == -1)
+	if(ret == -1) {
+		free(bmp_img);
 		return;
+	}
 	lcd_display_bitmap((ulong)bmp_img, 0, 0);
 	lcd_printf("   -------------------------------  \n"
 		   "   Sysdumpping now, keep power on.  \n"
@@ -337,13 +339,13 @@ void write_sysdump_before_boot(int rst_mode)
 	if (/*(rst_mode == WATCHDOG_REBOOT) ||*/ ((rst_mode == PANIC_REBOOT) && !memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic)))) {
 		printf("\n");
 
-		/* display on screen */
-		display_writing_sysdump();
-
 		memset(infop->magic, 0, sizeof(infop->magic));
 
 		if (init_mmc_fat())
 			goto FINISH;
+
+		/* display on screen */
+		display_writing_sysdump();
 
 		if (rst_mode == WATCHDOG_REBOOT) {
 			infop->dump_path[0] = '\0';
