@@ -336,7 +336,7 @@ void write_sysdump_before_boot(int rst_mode)
 	printf("rst_mode:0x%x, Check if need to write sysdump info of 0x%08lx to file...\t", rst_mode,
 		SYSDUMP_CORE_HDR);
 
-	if (/*(rst_mode == WATCHDOG_REBOOT) ||*/ ((rst_mode == PANIC_REBOOT) && !memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic)))) {
+	if ((rst_mode == WATCHDOG_REBOOT) || ((rst_mode == PANIC_REBOOT) && !memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic)))) {
 		printf("\n");
 
 		memset(infop->magic, 0, sizeof(infop->magic));

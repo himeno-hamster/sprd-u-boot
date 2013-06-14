@@ -76,6 +76,7 @@ PUBLIC int32 WDG_PHY_CONFIG (WDG_CONFIG_T *cfg);
 //  Note:
 /*****************************************************************************/
 PUBLIC int32 WDG_PHY_INT_CLR (void);
+PUBLIC uint32 WDG_PHY_RST_RAW_INT(void);
 
 /**----------------------------------------------------------------------------*
 **                         Compiler Flag                                      **

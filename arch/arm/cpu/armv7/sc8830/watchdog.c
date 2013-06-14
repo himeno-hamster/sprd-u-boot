@@ -34,6 +34,13 @@ void hw_watchdog_reset(void)
 {
 
 }
+
+int hw_watchdog_rst_pending(void)
+{
+    WDG_ClockOn();
+	return WDG_PHY_RST_INT_ON();
+}
+
 int fatal_dump_enabled(void)
 {
 	return *(volatile u32 *) (0x1ffc);

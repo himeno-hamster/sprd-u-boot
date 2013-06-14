@@ -18,6 +18,7 @@
 #define   HWRST_STATUS_PANIC			(0x80)
 #define   HWRST_STATUS_NORMAL2			(0Xf0)
 
+extern int hw_watchdog_rst_pending(void);
 unsigned check_reboot_mode(void)
 {
 	unsigned rst_mode= 0;
@@ -27,27 +28,36 @@ unsigned check_reboot_mode(void)
 	ANA_REG_SET(ANA_REG_GLB_POR_RST_MONITOR, 0); //clear flag
 
 	printf("rst_mode==%x\n",rst_mode);
-	if(rst_mode == HWRST_STATUS_RECOVERY)
-		return RECOVERY_MODE;
-	else if(rst_mode == HWRST_STATUS_FASTBOOT)
-		return FASTBOOT_MODE;
-	else if(rst_mode == HWRST_STATUS_NORMAL)
-		return NORMAL_MODE;
-	else if(rst_mode == HWRST_STATUS_NORMAL2)
-		return WATCHDOG_REBOOT;
-	else if(rst_mode == HWRST_STATUS_ALARM)
-		return ALARM_MODE;
-	else if(rst_mode == HWRST_STATUS_SLEEP)
-		return SLEEP_MODE;
-	else if(rst_mode == HWRST_STATUS_CALIBRATION)
-		return CALIBRATION_MODE;
-	else if(rst_mode == HWRST_STATUS_PANIC)
-		return PANIC_REBOOT;
-	else if(rst_mode == HWRST_STATUS_SPECIAL)
-		return SPECIAL_MODE;
-	else{
-		printf(" a boot mode not supported\n");
-		return 0;
+	if(hw_watchdog_rst_pending()){
+		printf("hw watchdog rst int pending\n");
+		if(rst_mode == HWRST_STATUS_RECOVERY)
+			return RECOVERY_MODE;
+		else if(rst_mode == HWRST_STATUS_FASTBOOT)
+			return FASTBOOT_MODE;
+		else if(rst_mode == HWRST_STATUS_NORMAL)
+			return NORMAL_MODE;
+		else if(rst_mode == HWRST_STATUS_NORMAL2)
+			return WATCHDOG_REBOOT;
+		else if(rst_mode == HWRST_STATUS_ALARM)
+			return ALARM_MODE;
+		else if(rst_mode == HWRST_STATUS_SLEEP)
+			return SLEEP_MODE;
+		else if(rst_mode == HWRST_STATUS_CALIBRATION)
+			return CALIBRATION_MODE;
+		else if(rst_mode == HWRST_STATUS_PANIC)
+			return PANIC_REBOOT;
+		else if(rst_mode == HWRST_STATUS_SPECIAL)
+			return SPECIAL_MODE;
+		else{
+			printf(" a boot mode not supported\n");
+			return 0;
+		}
+	}else{
+		printf("no hw watchdog rst int pending\n");
+		if(rst_mode == HWRST_STATUS_NORMAL2)
+			return UNKNOW_REBOOT_MODE;
+		else
+			return 0;
 	}
 }
 
