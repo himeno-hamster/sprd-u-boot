@@ -1363,6 +1363,16 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 			printf("ramdisk nand read error \n");
 			return;
 		}
+#ifdef CONFIG_SDRAMDISK
+		{
+		int sd_ramdisk_size = 0;
+		size = TDDSP_ADR - RAMDISK_ADR;
+		if (size>0)
+			sd_ramdisk_size = load_sd_ramdisk((uint8*)RAMDISK_ADR,size);
+		if (sd_ramdisk_size>0)
+			hdr->ramdisk_size=sd_ramdisk_size;
+		}
+#endif
 	}
 
 #if((!BOOT_NATIVE_LINUX)||(BOOT_NATIVE_LINUX_MODEM))
