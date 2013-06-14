@@ -213,6 +213,8 @@
 //#define DDR_TYPE DRAM_LPDDR2_2CS_16G_X32
 //#define DLL_BYPASS
 #define DDR_APB_CLK 128
+#define DDR_DFS_SUPPORT
+#define DDR_DFS_VAL_BASE 0X1c00
 
 
 

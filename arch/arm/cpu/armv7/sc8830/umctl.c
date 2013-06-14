@@ -30,6 +30,7 @@
 #define OPERATION_MODE_PD 0x03
 #define OPERATION_MODE_SR 0x04
 #define OPERATION_MODE_DPD 0x05
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 
 /**---------------------------------------------------------------------------*
@@ -56,7 +57,7 @@ extern uint32 B0_DQS_STEP_DLY;
 extern uint32 B1_DQS_STEP_DLY;
 extern uint32 B2_DQS_STEP_DLY;
 extern uint32 B3_DQS_STEP_DLY;
-
+extern lpddr2_timing_t LPDDR2_ACTIMING_NATIVE;
 
 /**---------------------------------------------------------------------------*
  **                            Local Variables
@@ -156,18 +157,26 @@ void umctl2_soft_reset(BOOLEAN is_en)
     {
         // Assert soft reset
         reg_value =   UMCTL2_REG_GET(0x402b00c8);
-        //reg_value |=  (0x700 << 8);
-		reg_value &=  ~(0x1800);
+		reg_value |=   (0x1f00);
         UMCTL2_REG_SET(0x402b00c8, reg_value);
         for(i = 0; i <= 1000; i++);
     } 
     else 
     {
         reg_value =   UMCTL2_REG_GET(0x402b00c8);
-        reg_value &=  ~(0x700);
+        reg_value &=  ~(0x1f00);
         UMCTL2_REG_SET(0x402b00c8, reg_value);
         for(i = 0; i <= 1000; i++);
     } 
+}
+
+void umctl2_publ_reg_open()
+{
+	uint32 reg_val = 0;
+
+	reg_val   = UMCTL2_REG_GET(0x402b00c8);
+	reg_val  &= ~(0x1d00);
+	UMCTL2_REG_SET(0x402b00c8, reg_val);
 }
 
 //tempurature derate configuration
@@ -1016,6 +1025,10 @@ void sdram_clk_set(CLK_TYPE_E clock)
 {
 
     uint32 reg_val = 0;
+	uint32 volatile i = 0;
+
+	//disable ddr_phy_eb
+	reg_bits_set(0x402b00c8,2,1,0);
 
     //set divide
     reg_val = UMCTL2_REG_GET(0x402E0018);
@@ -1031,6 +1044,13 @@ void sdram_clk_set(CLK_TYPE_E clock)
 //    reg_val |= 2; //TDPLL_384M
     reg_val |= 3; //DPLL_533M
     UMCTL2_REG_SET(0x402D0024,reg_val);
+
+	wait_pclk(5263);//publ apb clk=26m-38ns, 5263*38ns = 200us
+
+	//enable ddr_phy_eb
+	reg_bits_set(0x402b00c8,2,1,1);
+	
+	
 }
 
 void sdram_vddmem_set(VDDMEM_TYPE_E vddmem)
@@ -1069,7 +1089,7 @@ void wait_pclk(uint32 n_pclk)
     value = value;
 }
 
-void publ_basic_mode_init(DRAM_INFO* dram)
+void publ_basic_mode_init(CLK_TYPE_E clk,DRAM_INFO* dram)
 {
     
     volatile uint32 temp = 0;
@@ -1116,9 +1136,14 @@ void publ_basic_mode_init(DRAM_INFO* dram)
     reg_bits_set(PUBL_DX3DQSTR,23,3,B3_DQS_STEP_DLY);        
     
     //DLLGCR
-    REG32(PUBL_DLLGCR) |= BIT_23; //this bit can't find in publ spec,
-                                  //if 200MHz dllbypass, this bit23 must be set
-                                  //if 100MHZ dllbypass, this bit23 must be clear
+    if(clk >= CLK_200MHZ)
+    {
+    	reg_bits_set(PUBL_DLLGCR,23,1,1) ; //this bit can't find in publ spec,if 200MHz dllbypass, this bit23 must be set
+    }
+	else
+	{
+    	reg_bits_set(PUBL_DLLGCR,23,1,0) ; //this bit can't find in publ spec,if 100MHZ dllbypass, this bit23 must be clear
+	}
  
     //ACDLLCR
     
@@ -1177,10 +1202,18 @@ void publ_basic_mode_init(DRAM_INFO* dram)
     do temp = UMCTL2_REG_GET(PUBL_PGSR);
     while((temp&0x1) == 0);
 #else	
+
     //select use umctl2 to issue mode register, not publ
     wait_pclk(50);
-    UMCTL2_REG_SET(PUBL_PIR,0x40001); 
-    wait_pclk(50);    
+	if(clk > CLK_200MHZ)
+	{
+	    UMCTL2_REG_SET(PUBL_PIR,0x40001);     
+	}
+	else
+	{
+		UMCTL2_REG_SET(PUBL_PIR,0x60001); 
+	}
+	wait_pclk(50);    	
     //wait done
     do temp = UMCTL2_REG_GET(PUBL_PGSR);
     while((temp&0x1) == 0);
@@ -1288,11 +1321,20 @@ void publ_mdr_init(CLK_TYPE_E umctl2_clk,DRAM_INFO* dram)
     }	
 }
 
-void publ_reg_init(CLK_TYPE_E umctl2_clk,DRAM_INFO* dram)
+void publ_poll_dllock()
 {
-    publ_basic_mode_init(dram);
-    publ_timing_init(umctl2_clk,dram);
-    publ_mdr_init(umctl2_clk, dram);
+	uint32 volatile temp = 0;
+	
+    do temp = UMCTL2_REG_GET(PUBL_PGSR);
+    while((temp&0x2) == 0);
+
+}
+void publ_reg_init(CLK_TYPE_E clk,DRAM_INFO* dram)
+{
+	publ_poll_dllock();
+    publ_basic_mode_init(clk,dram);
+    publ_timing_init(clk,dram);
+    publ_mdr_init(clk, dram);
 }
 
 BOOLEAN publ_do_training()
@@ -1359,6 +1401,58 @@ void ddr_external_qos_set()
 	reg_bits_set(CTL_BASE_PUB_APB + 0xA4, 12,4,0xf); //chanel 9 rd qos, CP2
 	
 }
+
+#ifdef DDR_DFS_SUPPORT
+void record_dfs_val(CLK_TYPE_E ddr_clk,uint32 record_base)
+{
+	ddr_dfs_val_t dfs_val = {NULL};
+	uint32 i = 0;
+	
+	dfs_val.ddr_clk  = ddr_clk;
+	dfs_val.umctl2_rfshtmg    = REG32(UMCTL_RFSHTMG);
+	dfs_val.umctl2_init0      = REG32(UMCTL_INIT0);
+	dfs_val.umctl2_init1      = REG32(UMCTL_INIT1);
+	dfs_val.umctl2_init2      = REG32(UMCTL_INIT2);
+	dfs_val.umctl2_init3      = REG32(UMCTL_INIT3);
+	dfs_val.umctl2_init4      = REG32(UMCTL_INIT4);
+	dfs_val.umctl2_init5      = REG32(UMCTL_INIT5);
+	dfs_val.umctl2_dramtmg0   = REG32(UMCTL_DRAMTMG0);
+	dfs_val.umctl2_dramtmg1   = REG32(UMCTL_DRAMTMG1);
+	dfs_val.umctl2_dramtmg2   = REG32(UMCTL_DRAMTMG2);
+	dfs_val.umctl2_dramtmg3   = REG32(UMCTL_DRAMTMG3);
+	dfs_val.umctl2_dramtmg4   = REG32(UMCTL_DRAMTMG4);
+	dfs_val.umctl2_dramtmg5   = REG32(UMCTL_DRAMTMG5);
+	dfs_val.umctl2_dramtmg6   = REG32(UMCTL_DRAMTMG6);
+	dfs_val.umctl2_dramtmg7   = REG32(UMCTL_DRAMTMG7);
+	dfs_val.umctl2_dramtmg8   = REG32(UMCTL_DRAMTMG8);
+	dfs_val.umctl2_dfitmg0    = REG32(UMCTL_DFITMG0);
+	dfs_val.umctl2_dfitmg1    = REG32(UMCTL_DFITMG1);
+	
+	dfs_val.publ_ptr0         = REG32(PUBL_PTR0);
+	dfs_val.publ_ptr1         = REG32(PUBL_PTR1);
+	dfs_val.publ_dtpr0        = REG32(PUBL_DTPR0);
+	dfs_val.publ_dtpr1        = REG32(PUBL_DTPR1);
+	dfs_val.publ_dtpr2        = REG32(PUBL_DTPR2);
+	dfs_val.publ_mr0          = REG32(PUBL_MR0);
+	dfs_val.publ_mr1          = REG32(PUBL_MR1);
+	dfs_val.publ_mr2          = REG32(PUBL_MR2);
+	dfs_val.publ_mr3          = REG32(PUBL_MR3);	
+	dfs_val.publ_dx0gcr       = REG32(PUBL_DX0GCR);
+	dfs_val.publ_dx1gcr       = REG32(PUBL_DX1GCR);
+	dfs_val.publ_dx2gcr       = REG32(PUBL_DX2GCR);
+	dfs_val.publ_dx3gcr       = REG32(PUBL_DX3GCR);
+	dfs_val.publ_dx0dqstr     = REG32(PUBL_DX0DQSTR);
+	dfs_val.publ_dx1dqstr     = REG32(PUBL_DX1DQSTR);
+	dfs_val.publ_dx2dqstr     = REG32(PUBL_DX2DQSTR);
+	dfs_val.publ_dx3dqstr     = REG32(PUBL_DX3DQSTR);
+
+	for(i = 0; i<(sizeof(dfs_val)/4);i++)
+	{
+		REG32(record_base + i*4) = REG32((uint32)(&dfs_val)+i*4);
+	}
+	
+}
+#endif
 /**---------------------------------------------------------------------------*
  **                            PUBLIC Functions
  **---------------------------------------------------------------------------*/
@@ -1383,6 +1477,9 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
     
     //to assert umctl reset,in order to prevent umctl issue mode register cmd to SDRAM automatically
     umctl2_soft_reset(TRUE);
+
+	//open umctl and publ reg
+	umctl2_publ_reg_open();
 
     //to dis-assert to not prevent sdram init
     UMCTL2_REG_SET(UMCTL_DFIMISC, 0x0);
@@ -1417,7 +1514,7 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
     //enable all port
     umctl2_allport_en();
 
-#if 1
+#if 0
 	umctl2_low_power_open();
 #endif
 
@@ -1427,9 +1524,84 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 
     return TRUE;
 }
-extern umctl2_port_info_t UMCTL2_PORT_CONFIG[];
+
+
+#ifdef DDR_DFS_SUPPORT
+CLK_TYPE_E DDR_DFS_POINT[] = 
+{
+	CLK_100MHZ,
+	CLK_200MHZ,
+	CLK_333MHZ,
+	CLK_400MHZ, 
+	CLK_533MHZ,
+};
+#define NS2CLK_T(x_ns,clk) ((clk*x_ns)/1000 + 1)
+
+void  __cal_actiming(lpddr2_timing_t *cal_timing,lpddr2_timing_t *native_timing,CLK_TYPE_E clk)
+{
+	cal_timing->tREFI = NS2CLK_T(native_timing->tREFI,clk);
+	cal_timing->tRAS  = NS2CLK_T(native_timing->tRAS,clk);
+	cal_timing->tRC   = NS2CLK_T(native_timing->tRC,clk);
+	cal_timing->tRFCab= NS2CLK_T(native_timing->tRFCab,clk);
+	cal_timing->tRFCpb= NS2CLK_T(native_timing->tRFCpb,clk);	
+	cal_timing->tRCD  = NS2CLK_T(native_timing->tRCD,clk);
+	cal_timing->tRP   = NS2CLK_T(native_timing->tRP,clk);
+	cal_timing->tRRD  = NS2CLK_T(native_timing->tRRD,clk);	
+	cal_timing->tXP   = NS2CLK_T(native_timing->tXP,clk);
+	cal_timing->tXSR  = NS2CLK_T(native_timing->tXSR,clk);
+	cal_timing->tCKESR= NS2CLK_T(native_timing->tCKESR,clk);	
+	cal_timing->tRTP  = NS2CLK_T(native_timing->tRTP,clk);
+	cal_timing->tFAW  = NS2CLK_T(native_timing->tFAW,clk);
+	cal_timing->tDPD  = NS2CLK_T(native_timing->tDPD,clk);	
+	cal_timing->tZQINIT= NS2CLK_T(native_timing->tZQINIT,clk);
+	cal_timing->tZQCL   = NS2CLK_T(native_timing->tZQCL,clk);
+	cal_timing->tZQCS   = NS2CLK_T(native_timing->tZQCS,clk);
+	cal_timing->tZQreset= NS2CLK_T(native_timing->tZQreset,clk);
+	cal_timing->tDQSCK  = NS2CLK_T(native_timing->tDQSCK,clk);
+	cal_timing->tDQSCKmax= NS2CLK_T(native_timing->tDQSCKmax,clk);	
+	
+}
+#endif
 
 void sdram_init()
 {
+	#ifdef DDR_DFS_SUPPORT
+	uint32 i = 0;
+	DRAM_INFO * dram_info = NULL;
+
+	//clear dfs value space
+	for(i = 0; i < 256; i++)
+	{
+		REG32(DDR_DFS_VAL_BASE+i*4) = 0;
+	}
+	
+	for(i = 0; i <ARRAY_SIZE(DDR_DFS_POINT); i++)
+	{
+		dram_info = get_dram_cfg(DDR_TYPE);	
+
+		if(DDR_DFS_POINT[i] >= DDR_CLK)		
+		{
+			DDR_DFS_POINT[i] = DDR_CLK;
+		}
+		__cal_actiming(dram_info->ac_timing,&LPDDR2_ACTIMING_NATIVE,DDR_DFS_POINT[i]);
+		
+		__sdram_init(DDR_DFS_POINT[i], UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
+		
+		record_dfs_val(DDR_DFS_POINT[i], DDR_DFS_VAL_BASE+sizeof(ddr_dfs_val_t)*i);
+		
+		if(DDR_DFS_POINT[i] >= DDR_CLK)		
+		{
+			REG32(DDR_DFS_VAL_BASE+sizeof(ddr_dfs_val_t)*(i+1)) = 0x12345678;
+			break;
+		}
+	}
+	
+	REG32(DDR_DFS_VAL_BASE+sizeof(ddr_dfs_val_t)*ARRAY_SIZE(DDR_DFS_POINT)) = 0x12345678;
+	
+	#else
 	__sdram_init(DDR_CLK, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
+	#endif;
+
+	umctl2_low_power_open();
+	
 }
