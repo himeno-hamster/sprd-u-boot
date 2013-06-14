@@ -50,6 +50,7 @@ extern   "C"
 #define WDG_RST_EN_BIT          BIT_3
 
 
+#define WDG_INT_RST_BIT           BIT_3
 #define WDG_INT_CLEAR_BIT       BIT_0
 
 #define WDG_LD_BUSY_BIT         BIT_4

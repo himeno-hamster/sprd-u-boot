@@ -117,7 +117,7 @@ PUBLIC int32 WDG_PHY_CONFIG (WDG_CONFIG_T *cfg)
 PUBLIC int32 WDG_PHY_INT_CLR (void)
 {
     ANA_REG_SET (WDG_LOCK, WDG_UNLOCK_KEY);
-    CLEAR_WDG_INT (WDG_INT_CLEAR_BIT);
+    CLEAR_WDG_INT (WDG_INT_CLEAR_BIT | WDG_INT_RST_BIT);
     ANA_REG_SET (WDG_LOCK, (~WDG_UNLOCK_KEY));
     return 0;
 }
@@ -127,6 +127,10 @@ PUBLIC void WDG_ClockOn(void)
 	ANA_REG_OR (ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_WDG_EN); //WDG Rtc enable
 }
 
+PUBLIC uint32 WDG_PHY_RST_RAW_INT(void)
+{
+	return ANA_REG_GET(WDG_INT_RAW);
+}
 
 /**---------------------------------------------------------------------------*
  **                         Compiler Flag                                     *
