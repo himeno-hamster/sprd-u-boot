@@ -79,6 +79,7 @@ extern   "C"
 #define ARM_CLK_500M       500000000
 #define ARM_CLK_512M       512000000
 #define ARM_CLK_600M       600000000
+#define ARM_CLK_750M       750000000
 #define ARM_CLK_800M       800000000
 #define ARM_CLK_870M       870000000
 #define ARM_CLK_900M       900000000
