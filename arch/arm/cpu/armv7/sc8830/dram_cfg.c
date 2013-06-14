@@ -126,7 +126,37 @@ const lpddr2_timing_t LPDDR2_ACTIMING =
 	5				//tMRR		unite : tCK
 #endif
 };
-
+#ifdef DDR_DFS_SUPPORT
+const lpddr2_timing_t LPDDR2_ACTIMING_NATIVE = 
+{
+    (3900),   //tREFI     uinte : ns
+    (43),     //tRAS 	unite : ns    
+    (65),	  //tRC 		unite : ns
+    (130),    //tRFCab    unite : ns
+    (60),     //tRFCpb    unite : ns
+    (20),     //tRCD      unite : ns
+    (20),     //tRP       unite : ns
+    (20),     //tRRD      unite : ns
+	8, 		  //tWR       unite : tCK
+    5,        //tWTR      unite : tCK
+    (20),     //tXP       unite : ns
+    (140),    //tXSR      unite : ns  
+    (15),     //tCKESR 	unite : ns
+    2,        //tCCD 	unite : tCK
+    (8),      //tRTP 	unite : ns
+    (60),     //tFAW 	unite : ns
+    (500000), //tDPD 	unite : ns
+    (1000),   //tZQINIT	unite : ns    
+    (360),    //tZQCL	unite : ns    
+    (90),     //tZQCS	unite : ns    
+    (50),     //tZQreset  unite : ns        
+    3,        //tCKE 	unite : tCK     
+    (6),      //tDQSCK 	unite : ns   
+    (6),      //tDQSCKmax unite : ns
+    5,        //tMRW 	unite : tCK
+    2         //tMRR 	unite : tCK
+};
+#endif
 const ddr3_timing_t DDR3_ACTIMING = 
 {
     NS2CLK(7800),//tREFI	    unit : tCK
@@ -187,6 +217,7 @@ umctl2_port_info_t UMCTL2_PORT_CONFIG[] =
     {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10}, //port9,CP2
     {0xff},
 };
+
 /**---------------------------------------------------------------------------*
  **                            PUBLIC Functions
  **---------------------------------------------------------------------------*/

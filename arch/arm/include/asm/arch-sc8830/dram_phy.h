@@ -500,6 +500,56 @@ typedef struct
     uint8 wr_aging;
     uint32 wr_priority;    
 }umctl2_port_info_t;
+
+#ifdef DDR_DFS_SUPPORT
+typedef struct
+{
+	uint32 ddr_clk;
+	//umctl reg
+	uint32 umctl2_rfshtmg;
+	uint32 umctl2_init0;
+	uint32 umctl2_init1;
+	uint32 umctl2_init2;
+	uint32 umctl2_init3;
+	uint32 umctl2_init4;
+	uint32 umctl2_init5;
+	uint32 umctl2_dramtmg0;
+	uint32 umctl2_dramtmg1;
+	uint32 umctl2_dramtmg2;
+	uint32 umctl2_dramtmg3;
+	uint32 umctl2_dramtmg4;
+	uint32 umctl2_dramtmg5;
+	uint32 umctl2_dramtmg6;
+	uint32 umctl2_dramtmg7;
+	uint32 umctl2_dramtmg8;
+	uint32 umctl2_dfitmg0;
+	uint32 umctl2_dfitmg1;
+	
+	//publ reg
+	uint32 publ_ptr0;
+	uint32 publ_ptr1;
+	uint32 publ_dtpr0;
+	uint32 publ_dtpr1;
+	uint32 publ_dtpr2;
+	uint32 publ_mr0;
+	uint32 publ_mr1;
+	uint32 publ_mr2;
+	uint32 publ_mr3;
+	uint32 publ_dx0gcr;
+	uint32 publ_dx1gcr;
+	uint32 publ_dx2gcr;
+	uint32 publ_dx3gcr;
+	uint32 publ_dx0dqstr;
+	uint32 publ_dx1dqstr;
+	uint32 publ_dx2dqstr;
+	uint32 publ_dx3dqstr;
+}ddr_dfs_val_t;
+#endif
+
+
+extern umctl2_port_info_t UMCTL2_PORT_CONFIG[];
+
+
 /**----------------------------------------------------------------------------*
 **                         Compiler Flag                                      **
 **----------------------------------------------------------------------------*/
