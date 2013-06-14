@@ -174,6 +174,87 @@ unsigned short CheckSum(const unsigned int *src, int len)
     return (unsigned short) (~sum);
 }
 #ifdef CONFIG_NAND_SC8810
+
+#ifdef CONFIG_NAND_SC7710G2
+struct bootloader_header
+{
+	uint32_t version; //version, fot tiger this member must be 0
+	uint32_t magic_num; //0xaa55a5a5
+	uint32_t sct_size; //
+	uint32_t hash_len;//word length, only used when secure boot enable
+	uint32_t acycle; // 3, 4, 5
+	uint32_t bus_width; //0 ,1
+	uint32_t spare_size; //spare part sise for one sector
+	uint32_t ecc_mode; //0--1bit, 1--2bit,2--4bit,3--8bit,4--12bit, 5--16bit, 6--24bit
+	uint32_t ecc_pos; // ecc postion at spare part
+	uint32_t sct_per_page; //sector per page
+	uint32_t info_pos;
+	uint32_t info_size;
+	uint32_t ecc_value[27];
+};
+
+/*
+ * spare info data is don't used at the romcode, so the fdl only set the s_info size to 1, and the data value 0xff
+ */
+void set_header_info(u8 *bl_data, struct mtd_info *nand, int ecc_pos)
+{
+	struct bootloader_header *header;
+	struct nand_chip *chip = nand->priv;
+	struct sc8810_ecc_param param;
+	u8 ecc[44];
+	header = (struct bootloader_header *)(bl_data + BOOTLOADER_HEADER_OFFSET);
+	memset(header, 0, sizeof(struct bootloader_header));
+	memset(ecc, 0xff, sizeof(ecc));
+
+	header->version = 0x1;
+	header->sct_size = chip->ecc.size;
+	header->hash_len = 0x400;
+	if (chip->options & NAND_BUSWIDTH_16){
+		header->bus_width = 1;
+	}
+	if(nand->writesize > 512) {
+		if (chip->chipsize > (128 << 20)){
+			header->acycle = 5;
+		}
+		else{
+			header->acycle = 4;
+		}
+	}
+	else{
+		/* One more address cycle for devices > 32MiB */
+		if (chip->chipsize > (32 << 20)){
+			header->acycle = 3;
+		}
+		else{
+			header->acycle = 3;
+		}
+	}
+
+	header->acycle -= 3;
+
+	header->magic_num = 0xaa55a5a5;
+	header->spare_size = (nand->oobsize/chip->ecc.steps);
+	header->ecc_mode = ecc_mode_convert(chip->eccbitmode);
+	header->ecc_pos = ecc_pos;
+	header->sct_size = (nand->writesize/chip->ecc.steps);
+
+	header->sct_per_page = chip->ecc.steps;
+
+	param.mode = 24;
+	param.ecc_num = 1;
+	param.sp_size = sizeof(ecc);
+	param.ecc_pos = 0;
+	param.m_size = chip->ecc.size;
+	param.p_mbuf = (u8 *)bl_data;
+	param.p_sbuf = ecc;
+
+	sc8810_ecc_encode(&param);
+	memcpy(header->ecc_value, ecc, sizeof(ecc));
+
+}
+
+#else
+
 struct bootloader_header
 {
 	u32 check_sum;
@@ -269,6 +350,8 @@ void set_header_info(u8 *bl_data, struct mtd_info *nand, int ecc_pos)
 	memcpy(header->ecc_value, ecc, sizeof(ecc));
 #endif	
 }
+
+#endif
 int nand_write_spl_page(u8 *buf, struct mtd_info *mtd, u32 pg, u32 ecc_pos)
 {
 	int eccsteps;
