@@ -55,6 +55,7 @@ unsigned char *g_eMMCBuf = (unsigned char*)0x82000000;
 #else
 unsigned char *g_eMMCBuf = (unsigned char*)0x2000000;
 #endif
+unsigned int  g_fix_buf_partition = 0xffffffff;
 unsigned char g_fix_nv_buf[FIXNV_SIZE + EFI_SECTOR_SIZE];
 unsigned char g_fixbucknv_buf[FIXNV_SIZE + EFI_SECTOR_SIZE];
 unsigned char g_prod_info_buf[PRODUCTINFO_SIZE + EFI_SECTOR_SIZE];
@@ -1505,6 +1506,10 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 #else
     	if (PARTITION_FIX_NV1 == g_dl_eMMCStatus.curUserPartition) {
 #endif
+		if(g_fix_buf_partition != g_dl_eMMCStatus.curUserPartition){
+			read_bkupnv_flag = 0;
+			read_nv_flag = 0;
+		}
 		g_dl_eMMCStatus.curEMMCArea = PARTITION_USER;
 		if ((g_dl_eMMCStatus.curUserPartition < 0) || (g_dl_eMMCStatus.curUserPartition >= MAX_PARTITION_INFO)) {
 			FDL2_eMMC_SendRep (EMMC_SYSTEM_ERROR);
@@ -1583,6 +1588,7 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 				if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector + nSectorOffset, nSectorCount, (unsigned char *)g_fix_nv_buf)) {
 					memset(g_fix_nv_buf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
 				}
+				g_fix_buf_partition = g_dl_eMMCStatus.curUserPartition;
 				if (eMMC_nv_is_correct(g_fix_nv_buf, FIXNV_SIZE) == 1)
 					read_nv_flag = 2;//right
 				read_bkupnv_flag = 1;//wrong
