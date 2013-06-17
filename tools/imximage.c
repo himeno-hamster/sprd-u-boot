@@ -209,6 +209,7 @@ static uint32_t imximage_parse_cfg_file(struct imx_header *imxhdr, char *name)
 					dcd->addr_data[dcd_len].type = value;
 					break;
 				}
+                                break;
 
 			case CFG_REG_ADDRESS:
 				if (cmd == CMD_DATA)
