@@ -1,4 +1,8 @@
 #include "normal_mode.h"
+#ifdef CONFIG_SC7710G2
+#include "special_loading.h"
+#endif
+
 
 extern void cmd_yaffs_mount(char *mp);
 extern void cmd_yaffs_umount(char *mp);
@@ -504,8 +508,32 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		printf("dsp nand read ok1 %d\n", ret);
 #endif	
 
+#ifdef CONFIG_SC7710G2
+	ret = try_update_spl();
+	if(ret == -1){
+		printf("try update spl faild!\n");
+		return -1;
+	}
+
+	ret =  try_load_fixnv();
+	if(ret == -1){
+		printf("try load fixnv faild!\n");
+		return -1;
+	}
+
+	ret =  try_load_runtimenv();
+	if(ret == -1){
+		printf("try load runtimenv faild!\n");
+	}
+
+	ret =  try_load_productinfo();
+	if(ret == -1){
+		printf("try load productinfo faild!\n");
+	}
+#endif
 	if(poweron_by_calibration())
 	{
+#ifndef CONFIG_SC7710G2
 		// ---------------------fix nv--------------------------------
 		// 1 read orighin fixNv
 		memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE);
@@ -583,7 +611,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 			printf("productinfo: %c %c %c %c\n",product_data[0],product_data[1],product_data[2],product_data[3]);
 			printf("Read origin productinfo pass\n");
 		}
-
+#endif
 		// ---------------------DSP ----------------------------
 		printf("Reading dsp to 0x%08x\n", DSP_ADR);
 		ret = find_dev_and_part(DSP_PART, &dev, &pnum, &part);
@@ -607,7 +635,17 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		        printf("dsp nand read error %d\n", ret);
 		        return;
 		}
-
+#ifdef CONFIG_SC7710G2
+		printf("Reading modem to 0x%08x\n", FIRMWARE_ADR);
+		ret = find_dev_and_part(MODEM_PART, &dev, &pnum, &part);
+		if (ret) {
+		        printf("No partition named %s\n", MODEM_PART);
+		        return;
+		} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
+		        printf("Partition %s not a NAND device\n", MODEM_PART);
+		        return;
+		}
+#else
 		printf("Reading firmware to 0x%08x\n", FIRMWARE_ADR);
 		ret = find_dev_and_part(FIRMWARE_PART, &dev, &pnum, &part);
 		if (ret) {
@@ -617,6 +655,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		        printf("Partition %s not a NAND device\n", FIRMWARE_PART);
 		        return;
 		}
+#endif
 		off = part->offset;
 		nand = &nand_info[dev->id->num];
 		size = (FIRMWARE_SIZE +(flash_page_size - 1)) & (~(flash_page_size - 1));

@@ -94,6 +94,7 @@ int recovery_init (void)
 		return 1;
 	}
 
+#if 0//ota process modified.
 	if (!strcmp("boot-update",msg.command)) {
 		valid_command = 1;
 		strcpy(msg.command, "");	// to safe against multiple reboot into recovery
@@ -102,6 +103,7 @@ int recovery_init (void)
 		// Boot in update mode
 		return 2;
 	}
+#endif
 
 	if (!strcmp("update-radio",msg.command)) {
 		valid_command = 1;
@@ -136,12 +138,12 @@ SEND_RECOVERY_MSG:
 void recovery_mode(void)
 {
     printf("%s\n", __func__);
-#ifndef CONFIG_SC8830
-    try_update_modem(); //update img from mmc
-#endif
 #if BOOT_NATIVE_LINUX
     vlx_nand_boot(RECOVERY_PART, CONFIG_BOOTARGS, BACKLIGHT_ON);
 #else
+    #if 0//ota process modified.
+    try_update_modem(); //update img from mmc
+    #endif
     vlx_nand_boot(RECOVERY_PART, NULL, BACKLIGHT_ON);
 #endif
 }

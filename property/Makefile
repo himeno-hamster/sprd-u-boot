@@ -58,6 +58,9 @@ COBJS-$(CONFIG_SP8810W) += ap_calibration.o
 COBJS-$(CONFIG_SC7710G2) += calibration_mode.o
 COBJS-$(CONFIG_SC7710G2) += ap_calibration.o
 
+COBJS-$(CONFIG_SC7710G2) += spl_writer.o
+COBJS-$(CONFIG_SC7710G2) += special_loading.o 
+
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c) $(XCOBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))

@@ -17,6 +17,9 @@
 #include <jffs2/jffs2.h>
 #include <malloc.h>
 #include "yaffs_format_data_translate.h"
+#ifdef CONFIG_SC7710G2
+#include "special_downloading.h"
+#endif
 
 extern void cmd_yaffs_mount(char *mp);
 extern void cmd_yaffs_umount(char *mp);
@@ -295,8 +298,11 @@ void phy_partition_info(struct real_mtd_partition phy, int line)
 
 	return;
 }
-
+#ifdef CONFIG_SC7710G2
+unsigned short calc_checksum(unsigned char *dat, unsigned long len)
+#else
 static unsigned short calc_checksum(unsigned char *dat, unsigned long len)
+#endif
 {
 	unsigned long checksum = 0;
 	unsigned short *pstart, *pend;
@@ -1243,6 +1249,46 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 	set_dl_op_val(0, 0, ENDDATA, FAIL, 1);
 
     if (CHECKSUM_OTHER_DATA != g_checksum) {
+#ifdef CONFIG_SC7710G2
+        /* erase fixnv partition */
+        memset(&phy_partition, 0, sizeof(struct real_mtd_partition));
+        strcpy(phy_partition.name, "fixnv");
+        ret = log2phy_table(&phy_partition);
+        phy_partition_info(phy_partition, __LINE__);
+        g_prevstatus = ret;
+        if (ret == NAND_SUCCESS) {
+            printf("erase fixnv start\n");
+            ret = nand_start_write (&phy_partition, 0, &nand_page_oob_info, 0);
+            printf("\nerase fixnv end\n");
+            g_prevstatus = ret;
+            if (ret == NAND_SUCCESS) {
+                printf("write fixnv start\n");
+                fdl_download_fixnv(g_fixnv_buf,1);
+                printf("write fixnv end\n");
+                g_prevstatus = NAND_SUCCESS;
+            }
+        }
+        /* erase backup fixnv partition */
+        memset(&phy_partition, 0, sizeof(struct real_mtd_partition));
+        strcpy(phy_partition.name, "backupfixnv");
+        ret = log2phy_table(&phy_partition);
+        phy_partition_info(phy_partition, __LINE__);
+        g_prevstatus = ret;
+        if (ret == NAND_SUCCESS) {
+            printf("erase backupfixnv start\n");
+            ret = nand_start_write (&phy_partition, fix_nv_size, &nand_page_oob_info, 0);
+            printf("\nerase backupfixnv end\n");
+            g_prevstatus = ret;
+            if (ret == NAND_SUCCESS) {
+                printf("write backupfixnv start\n");
+                fdl_download_fixnv(g_fixnv_buf,0);
+                printf("write backupfixnv end\n");
+                g_prevstatus = NAND_SUCCESS;
+            }
+        }
+
+#else
+
 	/* It's fixnv data */
         fix_nv_size = g_sram_addr - (unsigned long) g_fixnv_buf;
         fix_nv_checksum = Get_CheckSum ( (unsigned char *) g_fixnv_buf, fix_nv_size);
@@ -1469,6 +1515,7 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 					}
 				}
 			}
+#endif
     	} else if (is_nbl_write == 1) {
 #if (defined(CONFIG_NAND_SC8810) || defined(CONFIG_NAND_TIGER) || defined(CONFIG_NAND_SC8830))//only for sc8810 to write spl
 		g_prevstatus = nand_write_fdl(0x0, g_FixNBLBuf);
@@ -1501,6 +1548,10 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 		char *factfilename = "/productinfo/fact";
 
 		if (file_in_productinfo_partition == 0x90000002) {
+#ifdef CONFIG_SC7710G2
+            fdl_download_productinfo(g_PhasecheckBUF);
+#else
+
 			/* g_PhasecheckBUF : (PRODUCTINFO_SIZE + 4) instead of g_PhasecheckBUFDataSize */
 			sum = calc_checksum(g_PhasecheckBUF, PRODUCTINFO_SIZE);
 			dataaddr = (unsigned short *)(g_PhasecheckBUF + PRODUCTINFO_SIZE);
@@ -1528,6 +1579,7 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 				get_Dl_Erase_Address_Table(&Dl_Erase_Address);
 				get_Dl_Data_Address_Table(&Dl_Data_Address);
 			}
+#endif
 		} else if (file_in_productinfo_partition == 0x90000022) {
 			cmd_yaffs_mount(productinfopoint);
     			cmd_yaffs_mwrite_file(nvramfilename, g_PhasecheckBUF, PRODUCTINFO_SIZE);

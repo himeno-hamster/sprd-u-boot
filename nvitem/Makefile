@@ -16,6 +16,9 @@ COBJS-y += nvitem_os.o
 COBJS-y += nvitem_fs.o
 COBJS-y += nvitem_channel.o
 COBJS-y += nvitem_buf.o
+ifdef CONFIG_SC7710G2
+COBJS-y += special_nvitemd.o
+endif
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

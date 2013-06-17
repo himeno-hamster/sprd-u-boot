@@ -173,7 +173,7 @@ unsigned short CheckSum(const unsigned int *src, int len)
 
     return (unsigned short) (~sum);
 }
-#ifdef CONFIG_NAND_SC8810
+#if defined CONFIG_NAND_SC8810 && !defined CONFIG_NAND_SC7710G2
 struct bootloader_header
 {
 	u32 check_sum;

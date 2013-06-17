@@ -2,6 +2,9 @@
 #include "nvitem_common.h"
 #include "nvitem_fs.h"
 #include "nvitem_config.h"
+#ifdef CONFIG_SC7710G2
+#include "special_nvitemd.h"
+#endif
 
 #define CRC_16_L_SEED			0x80
 #define CRC_16_L_POLYNOMIAL	0x8000
@@ -65,6 +68,15 @@ static unsigned short calc_checksum(unsigned char *dat, unsigned long len)
 */
 BOOLEAN _chkEcc(uint8* buf, uint32 size)
 {
+#ifdef CONFIG_SC7710G2
+	int ret = 0;
+	ret = file_check(buf,size);
+	if(ret == -1){
+		return 0;
+	}else{
+		return 1;
+	}
+#else
 	uint16 crc,crcOri;
 //	crc = __crc_16_l_calc(buf, size-2);
 //	crcOri = (uint16)((((uint16)buf[size-2])<<8) | ((uint16)buf[size-1]) );
@@ -73,6 +85,7 @@ BOOLEAN _chkEcc(uint8* buf, uint32 size)
 	crcOri = (uint16)((((uint16)buf[size-3])<<8) | ((uint16)buf[size-4]) );
 
 	return (crc == crcOri);
+#endif
 }
 
 
@@ -255,9 +268,15 @@ void		ramDisk_Close(RAMDISK_HANDLE handle)
 
 static RAM_NV_CONFIG _ramdiskCfg[RAMNV_NUM+1] = 
 {
+#ifdef CONFIG_SC7710G2
+	{1,	 "/fixnv/fixnv.bin",			 "/fixnv/fixnvbkup.bin",		0x20000	},
+	{2,	"/runtimenv/runtimenv.bin",	"/runtimenv/runtimenvbkup.bin",	0x40000	},
+	{3,     "/productinfo/productinfo.bin", "/productinfo/productinfobkup.bin",     0x4000  },
+#else
 	{3,     "/productinfo/productinfo.bin", "/productinfo/productinfobkup.bin",     0x4000  },
 	{1,	 "/fixnv/fixnv.bin",			 "/backupfixnv/fixnv.bin",		0x20000	},
 	{2,	"/runtimenv/runtimenv.bin",	"/runtimenv/runtimenvbkup.bin",	0x40000	},
+#endif
         {0,	"",	"",						0		},
 };
 
@@ -382,7 +401,15 @@ BOOLEAN		ramDisk_Write(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 		return 0;
 	}
 // 1 get Ecc
+#ifdef CONFIG_SC7710G2
+	if(handle == RAMBSD_FIXNV_ID){
+		nvitemd_add_fixnv_len(buf,size);
+	}
+#endif
 	_makEcc( buf, size);
+#ifdef CONFIG_SC7710G2
+	nvitemd_add_crc16(buf,size);	
+#endif
 // 2 write bakup image
 	_getPath(_ramdiskCfg[idx].imageBak_path,path);
 	cmd_yaffs_mount(path);

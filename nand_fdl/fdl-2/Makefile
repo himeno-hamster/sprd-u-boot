@@ -54,6 +54,10 @@ else
 FDL2_COBJS_LIST += fdl_nand.o flash_command.o parsemtdparts.o fdl_yaffs2.o
 endif
 
+ifdef CONFIG_SC7710G2
+FDL2_COBJS_LIST += special_downloading.o
+endif
+
 FDL2_COBJS = $(addprefix $(obj),$(FDL2_COBJS_LIST))
 FDL2_SOBJS = $(addprefix $(obj),$(FDL2_SOBJS_LIST))
 FDL2_OBJS = $(FDL2_COBJS) $(FDL2_SOBJS)

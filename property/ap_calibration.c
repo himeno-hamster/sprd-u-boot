@@ -73,6 +73,37 @@ static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
     }
     return size;       
 #else
+#ifdef CONFIG_SC7710G2
+    char *file_partition = "/productinfo";
+    char *file_name = "/productinfo/adc_data";
+    int ret = 0;
+
+    cmd_yaffs_mount(file_partition);
+    if (flag == 0) // read ADC data
+    {
+    	ret = cmd_yaffs_ls_chk(file_name);
+    	if(ret > 0 && ret <= size)
+    	{
+    		printf("\n file: %s exist", file_name);
+    		cmd_yaffs_mread_file(file_name, (unsigned char *)lpBuff);
+    	}
+    	else
+    	{
+    		printf("\n file size error: ret = %d, size = %d", ret, size);
+    	}
+    }
+    else if (flag == 1)  //write ADC data
+    {
+    	cmd_yaffs_mwrite_file(file_name, lpBuff, size);
+    	ret = size;
+    }
+    else
+    {
+    	ret = 0;
+    }			
+    cmd_yaffs_umount(file_partition);
+    return ret;
+#else
     char *file_partition = "modem";
     int ret = 0;
 
@@ -92,6 +123,7 @@ static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
     	ret = 0;
     }			
     return ret;
+#endif
 #endif
 }
 
@@ -219,7 +251,45 @@ static uint8 is_adc_calibration(char *dest, int destSize, char *src,int srcSize)
 			}
 		} else if(DIAG_POWER_SUPPLY_F  == lpHeader->type){
 			return AP_GET_VOLT;
-		}
+		} else if(DIAG_CURRENT_TEST_F == lpHeader->type){
+            printf("DIAG_CURRENT_TEST_F command is received! sub_command is: 0x%02x\n\n",lpHeader->subtype);
+            switch(lpHeader->subtype){
+                case 0://CURRENT_TEST_STOP
+                    break;
+                case 1://CURRENT_TEST_RF_CLOSED
+                    break;
+                case 2://CURRENT_TEST_DEEP_SLEEP
+                    break;
+                case 3://CURRENT_TEST_LED_ON
+                    break;
+                case 4://CURRENT_TEST_VIBRATOR_ON
+                    break;
+                case 5://CURRENT_TEST_RX_MIN_PEAK_VALUE
+                    break;
+                case 6://CURRENT_TEST_TX_MAX_PEAK_VALUE
+                    break;
+                case 7://CURRENT_TEST_CHARGING
+                    break;
+                case 8://CURRENT_TEST_LED_OFF
+                    break;
+                case 9://CURRENT_TEST_VIBRATOR_OFF
+                    break;
+                case 10://CURRENT_TEST_DEEP_GET_SLEEP_FLAG
+                    break;
+                case 11://CURRENT_TEST_DEEP_SLEEP_FLAG_ENABLE
+                    break;
+                case 12://CURRENT_TEST_DEEP_SLEEP_FLAG_DISABLE
+                    break;
+                case 13://CURRENT_TEST_UART_ENABLESLEEP
+                    break;
+                case 14://CURRENT_TEST_POWER_OFF
+                    break;
+                case 15://CURRENT_TEST_DEEP_SLEEP_WAKEUP
+                    break;
+                default:
+                    break;
+            }
+        }
 	}					
 
 	return 0;
