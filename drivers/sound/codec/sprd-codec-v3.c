@@ -722,6 +722,7 @@ int sprd_codec_digital_loop(int enable)
 		snd_soc_update_bits(codec, SOC_REG(AUDIF_ENB), mask, 0);
 		arch_audio_codec_loop_disable();
 	}
+	return 0;
 }
 
 /* DO NOT USE THIS FUNCTION */

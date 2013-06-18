@@ -2705,9 +2705,9 @@ PUBLIC BOOLEAN SDCARD_Write(uint32 startBlcok, uint32 blkCnt, uint8* buf)
 
 LOCAL BOOLEAN SDCARD_SDIO_ReadMultiBlock(CARD_SDIO_HANDLE cardHandle, uint32 startBlock, uint32 num, uint8 *buf)
 {
-    uint8 rspBuf[16];
-    uint32 address;
-    CARD_DATA_PARAM_T data;
+    uint8 rspBuf[16] = {0};
+    uint32 address = 0;
+    CARD_DATA_PARAM_T data = {0};
 
     CARD_SDIO_ASSERT(TRUE == _IsCardHandleValid(cardHandle));
 

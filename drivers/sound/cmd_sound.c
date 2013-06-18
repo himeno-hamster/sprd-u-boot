@@ -93,6 +93,7 @@ int sound_init(void)
 {
 	sprd_codec_init();
 	vbc_init();
+	return 0;
 }
 
 EXPORT_SYMBOL(sound_init);

@@ -69,6 +69,7 @@ static inline int is_analog_loop(int loop)
 static int speaker_pa_enable(int on)
 {
 	sprd_inter_speaker_pa(on);
+	return 0;
 }
 
 static int hp_pa_enable(int on)
@@ -76,6 +77,7 @@ static int hp_pa_enable(int on)
 #ifdef CONFIG_SOUND_CODEC_SPRD_V3
 	sprd_inter_headphone_pa(on);
 #endif
+	return 0;
 }
 
 static int audio_codec(int enable, int loop, int drv_in, int drv_out)

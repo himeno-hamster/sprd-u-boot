@@ -395,6 +395,7 @@ static int32_t sprd_dsi_eotp_set(uint8_t rx_en, uint8_t tx_en)
 		mipi_dsih_eotp_tx(curInstancePtr, 0);
 	else if(1 == tx_en)
 		mipi_dsih_eotp_tx(curInstancePtr, 1);
+	return 0;
 }
 
 struct ops_mipi sprdfb_mipi_ops = {

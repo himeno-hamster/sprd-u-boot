@@ -463,6 +463,7 @@ static unsigned int sprd_tiger_data_trans(sprd_tiger_nand_data_param *param)
 	sprd_tiger_nand_int_clr(INT_STSMCH_CLR | INT_WP_CLR | INT_TO_CLR | INT_DONE_CLR);//clear all interrupt
 	sprd_tiger_reg_write(NFC_START_REG, NFC_START);
 	sprd_tiger_nand_wait_finish(&g_tiger);
+	return 0;
 }
 void sprd_ecc_ctrl(struct sprd_ecc_param *param, uint32_t dir)
 {
