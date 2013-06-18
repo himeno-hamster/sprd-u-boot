@@ -195,12 +195,12 @@ int sprd_eic_get(unsigned offset)
 
 int sprd_eic_irq_set_type(unsigned offset, unsigned flow_type)
 {
-	
+        return 0;
 }
 
 int sprd_eic_irq_sts(unsigned offset)
 {
-
+	return 0;
 }
 
 int sprd_eic_request(unsigned offset)
