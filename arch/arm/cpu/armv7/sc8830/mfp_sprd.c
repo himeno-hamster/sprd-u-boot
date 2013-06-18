@@ -56,7 +56,6 @@ static unsigned long __mfp_get_pin_reg(int pin_offset)
 //		pin_offset &= ~A_DIE_PIN;
 //		return (unsigned long)ANA_PIN_CTL_BASE + pin_offset;
 	}
-	return 0;
 }
 
 #ifdef DEBUG

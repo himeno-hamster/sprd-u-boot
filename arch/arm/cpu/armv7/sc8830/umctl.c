@@ -80,7 +80,6 @@ static uint32 reg_bits_set(uint32 addr,
     reg_data |= ((value&bit_mask)<<start_bitpos);
     
     *((volatile uint32*)(addr)) = reg_data;
-    return 0;
 }
 
 static uint32 ns_to_xclock(uint32 time_ns,CLK_TYPE_E clk) 
@@ -203,7 +202,7 @@ BOOLEAN umctl2_tderate_init(DRAM_INFO* dram,CLK_TYPE_E clk)
         UMCTL2_REG_SET(UMCTL_DERATEINT, clk);
     }
 	*/
-	return false;
+	return;
 }
 
 BOOLEAN umctl2_low_pd_set(UMCTL_LP_E auto_sf,
@@ -218,7 +217,6 @@ BOOLEAN umctl2_low_pd_set(UMCTL_LP_E auto_sf,
     reg_bits_set(UMCTL_PWRCTL,1, 1, auto_pd);//auto power down
     reg_bits_set(UMCTL_PWRCTL,2, 1, auto_dpd);//auto deep power down
     reg_bits_set(UMCTL_PWRCTL,3, 1, auto_ckp); //en_dfi_dram_clk_disable
-    return false;
 }
 
 void umctl2_low_power_open()
@@ -633,7 +631,6 @@ uint32 umctl2_wait_status(uint32 state) {
                        ((state==OPERATION_MODE_DPD)?0x04:0x00);
 
     while((UMCTL2_REG_GET(UMCTL_STAT)&0x07) != poll_data);
-    return 0;
 }
 
 /*
