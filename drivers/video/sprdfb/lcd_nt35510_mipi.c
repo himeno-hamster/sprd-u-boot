@@ -15,6 +15,8 @@
  */
 
 #include <asm/arch/sprd_lcd.h>
+#include "sprdfb.h"
+
 
 #define printk printf
 
@@ -135,7 +137,7 @@ static int32_t nt35510_mipi_init(struct panel_spec *self)
 		if(tag & LCM_TAG_SEND){
 			mipi_gen_write(init->data, (init->tag & LCM_TAG_MASK));
 		}else if(tag & LCM_TAG_SLEEP){
-			udelay((init->tag & LCM_TAG_MASK) * 1000);
+			mdelay((init->tag & LCM_TAG_MASK));
 		}
 		init++;
 	}

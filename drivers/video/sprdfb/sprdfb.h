@@ -22,8 +22,7 @@
 #define FB_PRINT(...)
 #endif
 
-#define mdelay(a) udelay(a * 1000)
-
+#define mdelay(t)	({unsigned long msec=(t); while (msec--) { udelay(1000);}})
 
 enum{
 	SPRDFB_PANEL_IF_DBI = 0,

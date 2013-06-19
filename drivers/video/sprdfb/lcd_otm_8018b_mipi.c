@@ -15,6 +15,7 @@
  */
 
 #include <asm/arch/sprd_lcd.h>
+#include "sprdfb.h"
 
 #define printk printf
 
@@ -197,7 +198,7 @@ static int32_t otm8018b_mipi_init(struct panel_spec *self)
 		if(tag & LCM_TAG_SEND){
 			mipi_gen_write(init->data, (init->tag & LCM_TAG_MASK));
 		}else if(tag & LCM_TAG_SLEEP){
-			udelay((init->tag & LCM_TAG_MASK) * 1000);
+			mdelay((init->tag & LCM_TAG_MASK));
 		}
 		init++;
 	}
@@ -227,7 +228,7 @@ static uint32_t otm8018b_readid(struct panel_spec *self)
 			if(tag & LCM_TAG_SEND){
 				mipi_force_write(rd_prepare->datatype, rd_prepare->real_cmd_code.data, (rd_prepare->real_cmd_code.tag & LCM_TAG_MASK));
 			}else if(tag & LCM_TAG_SLEEP){
-				udelay((rd_prepare->real_cmd_code.tag & LCM_TAG_MASK) * 1000);
+				mdelay((rd_prepare->real_cmd_code.tag & LCM_TAG_MASK));
 			}
 			rd_prepare++;
 		}
