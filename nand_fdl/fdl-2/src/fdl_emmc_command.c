@@ -42,12 +42,8 @@ static int read_bkupnv_flag = 0;
 static int is_ProdInfo_flag = 0;
 static unsigned long is_factorydownload_flag = 0;
 static int read_prod_info_flag = 0;
-
 static unsigned long orginal_index, backupfile_index;
 
-static unsigned long has_sd = 0;
-static unsigned long point_sd = 0xffff;
-static unsigned long done_format_sd = 0;
 disk_partition_t sd_info;
 
 #if defined (CONFIG_SC8825) || defined (CONFIG_TIGER) || defined (CONFIG_SC8830)
@@ -331,11 +327,8 @@ int uefi_get_part_info(unsigned long part_total)
 	for(i=0; i < MAX_PARTITION_INFO; i++) {
 		if(g_sprd_emmc_partition_cfg[i].partition_index == 0)
 			break;
-		if (part_total > 0) {
-			if (get_partition_info_with_partnum(dev_desc, g_sprd_emmc_partition_cfg[i].partition_index,&info, part_total, point_sd, g_sprd_emmc_partition_cfg[point_sd].partition_index, &sd_info)) {
-				return 0;
-			}
-		} else if (get_partition_info(dev_desc, g_sprd_emmc_partition_cfg[i].partition_index, &info))
+
+		if (get_partition_info(dev_desc, g_sprd_emmc_partition_cfg[i].partition_index, &info))
 			return 0;
 
 		if(info.size <= 0 )
@@ -360,7 +353,7 @@ unsigned long efi_covert_index(unsigned long npart)
 	for(i=0; i<MAX_PARTITION_INFO; i++) {
 		if(g_sprd_emmc_partition_cfg[i].partition_index == npart){
 				printf("Partition =%d--------g_sprd_emmc_partition_cfg[i]=%d\n",npart,i);
-			return i;
+				return i;
 			}
 	}
 	return MAX_PARTITION_INFO;
@@ -413,20 +406,10 @@ int FDL_Check_Partition_Table(void)
 {
 	printf("FDL Check Partition Table -----\n");
 	int i = 0;
-	unsigned long parttotal = 0;
 
 	uefi_part_info_ok_flag = 0;
 
-	while (g_sprd_emmc_partition_cfg[parttotal].partition_index > 0) {
-		if (g_sprd_emmc_partition_cfg[parttotal].partition_index == PARTITION_SD) {
-			has_sd = 1;
-			point_sd = parttotal;
-			memset(&sd_info, 0, sizeof(disk_partition_t));
-		}
-		parttotal ++;
-	}
-
-	if (!uefi_get_part_info(parttotal))
+	if (!uefi_get_part_info(0))
 	{
 		return 0;
 	}
@@ -1328,14 +1311,7 @@ int FDL2_eMMC_DataMidst(PACKET_T *packet, void *arg)
 	//set_dl_op_val(0, 0, MIDSTDATA, FAIL, 4);
 	g_prevstatus = EMMC_SUCCESS;
 	FDL2_eMMC_SendRep (g_prevstatus);
-#if 0
-	if ((g_dl_eMMCStatus.curUserPartition == PARTITION_CACHE) && (has_sd == 1) &&(done_format_sd == 0)) {
-		has_sd = 0;
-		if (format_sd_partition() == -1)
-			printf("format sd partition failed\n");
-		done_format_sd = 1;
-	}
-#endif
+
 	return  1; 
 }
 #ifdef FPGA_TRACE_DOWNLOAD
@@ -1860,13 +1836,12 @@ int FDL2_eMMC_Erase(PACKET_T *packet, void *arg)
 			}
 		}
 //#endif
-		printf("has_sd=%d\n",has_sd);
-		if ((g_dl_eMMCStatus.curUserPartition == PARTITION_PROD_INFO3) && (has_sd == 1) && (done_format_sd == 0)) {
-			has_sd = 0;
+		if (g_dl_eMMCStatus.curUserPartition == PARTITION_SD) {
 			printf("formating sd partition, waiting for a while!\n");
 			if (format_sd_partition() == -1)
 				printf("format sd partition failed\n");
-			done_format_sd = 1;
+			else
+				printf("format sd partition success\n");
 		}
 		ret = EMMC_SUCCESS;
 	}
