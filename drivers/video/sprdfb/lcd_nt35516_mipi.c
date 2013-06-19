@@ -15,6 +15,7 @@
  */
 
 #include <asm/arch/sprd_lcd.h>
+#include "sprdfb.h"
 
 #define printk printf
 
@@ -206,7 +207,7 @@ static int32_t nt35516_mipi_init(struct panel_spec *self)
 		if(tag & LCM_TAG_SEND){
 			mipi_gen_write(init->data, (init->tag & LCM_TAG_MASK));
 		}else if(tag & LCM_TAG_SLEEP){
-			udelay((init->tag & LCM_TAG_MASK) * 1000);
+			mdelay((init->tag & LCM_TAG_MASK));
 		}
 		init++;
 	}
@@ -225,11 +226,12 @@ static uint32_t nt35516_readid(struct panel_spec *self)
 	mipi_set_cmd_mode_t mipi_set_cmd_mode = self->info.mipi->ops->mipi_set_cmd_mode;
 	mipi_force_write_t mipi_force_write = self->info.mipi->ops->mipi_force_write;
 	mipi_force_read_t mipi_force_read = self->info.mipi->ops->mipi_force_read;
+	mipi_eotp_set_t mipi_eotp_set = self->info.mipi->ops->mipi_eotp_set;
 
 	printk("lcd_nt35516_mipi read id!\n");
-#ifdef CONFIG_SC8830
-	return 0x16;	//debug
-#endif
+//#ifdef CONFIG_SC8830
+//	return 0x16;	//debug
+//#endif
 	mipi_set_cmd_mode();
 	for(j = 0; j < 4; j++){
 		rd_prepare = rd_prep_code;
@@ -238,12 +240,13 @@ static uint32_t nt35516_readid(struct panel_spec *self)
 			if(tag & LCM_TAG_SEND){
 				mipi_force_write(rd_prepare->datatype, rd_prepare->real_cmd_code.data, (rd_prepare->real_cmd_code.tag & LCM_TAG_MASK));
 			}else if(tag & LCM_TAG_SLEEP){
-				udelay((rd_prepare->real_cmd_code.tag & LCM_TAG_MASK) * 1000);
+				mdelay((rd_prepare->real_cmd_code.tag & LCM_TAG_MASK));
 			}
 			rd_prepare++;
 		}
-
+		mipi_eotp_set(0,0);
 		read_rtn = mipi_force_read(0xc5, 3,(uint8_t *)read_data);
+		mipi_eotp_set(1,1);
 		printk("lcd_nt35516_mipi read id 0xc5 value is 0x%x, 0x%x, 0x%x!\n", read_data[0], read_data[1], read_data[2]);
 
 		if((0x55 == read_data[0])&&(0x16 == read_data[1])&&(0x00 == read_data[2])){
@@ -287,7 +290,7 @@ struct panel_spec lcd_nt35516_mipi_spec = {
 	//.cap = PANEL_CAP_NOT_TEAR_SYNC,
 	.width = 540,
 	.height = 960,
-	//.fps = 60,
+	.fps = 60,
 	.type = LCD_MODE_DSI,
 	.direction = LCD_DIRECT_NORMAL,
 	.info = {
