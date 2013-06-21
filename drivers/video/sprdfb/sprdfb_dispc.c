@@ -169,7 +169,6 @@ static void dispc_layer_init(struct sprdfb_device *dev)
 static void dispc_update_clock(struct sprdfb_device *dev)
 {
 	uint32_t hpixels, vlines, need_clock, dividor;
-	uint32_t reg_val;
 
 	struct panel_spec* panel = dev->panel;
 	struct info_mipi * mipi = panel->info.mipi;
@@ -209,7 +208,7 @@ static void dispc_update_clock(struct sprdfb_device *dev)
 		dispc_dpi_clk_set(DISPC_DPI_SEL_384M, (dividor-1));
 		dispc_print_clk();
 
-		printf("sprdfb:[%s] need_clock = %d, dividor = %d, reg_val = 0x%x, dpi_clock = %d\n", __FUNCTION__, need_clock, dividor, reg_val, dev->dpi_clock);
+		printf("sprdfb:[%s] need_clock = %d, dividor = %d, dpi_clock = %d\n", __FUNCTION__, need_clock, dividor, dev->dpi_clock);
 	}
 
 }
