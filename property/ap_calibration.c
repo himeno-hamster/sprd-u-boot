@@ -44,6 +44,7 @@ typedef struct
     TOOLS_AP_ADC_REQ_T ap_adc_req;
 }MSG_AP_ADC_CNF;
 static unsigned char g_usb_buf_dest[8*1024];
+static int power_off_Flag = 0;  //add by kenyliu in 2013 06 20 for bug 146310
 
 static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
 {
@@ -220,8 +221,12 @@ static uint8 is_adc_calibration(char *dest, int destSize, char *src,int srcSize)
 		} else if(DIAG_POWER_SUPPLY_F  == lpHeader->type){
 			return AP_GET_VOLT;
 		}
-	}					
-
+		//add by kenyliu in 2013 06 20 for bug 146310
+		else if((DIAG_CURRENT_TEST_F == lpHeader->type) && (0xE == lpHeader->subtype)){
+				power_off_Flag =0xE;
+			}
+		//end kenyliu
+		}
 	return 0;
 }
 
@@ -402,4 +407,11 @@ uint32 ap_calibration_proc(uint8 *data,uint32 count,uint8 *out_msg)
 #endif
 	return 0;
 }
-
+//add by kenyliu in 2013 06 20 for bug 146310
+int get_adc_flag()
+{
+  #ifdef CONFIG_AP_ADC_CALIBRATION
+	return power_off_Flag;
+  #endif
+}
+//end kenyliu

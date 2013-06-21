@@ -64,6 +64,7 @@ extern void gs_reset_usb_param(void);
 extern void calibration_reset_composite(void);
 extern void init_calibration_mode(void);
 extern uint32 ap_calibration_proc(uint8 *data,uint32 count,uint8 *out_msg);
+extern uint32 get_adc_flag(); //add by kenyliu in 2013 06 20 for bug 146310
 extern int poweron_by_calibration(void);
 unsigned short EndianConv_16 (unsigned short value)
 {
@@ -328,7 +329,12 @@ void calibration_mode(const uint8_t *pcmd, int length)
 			tool_channel_write(g_uart_buf, index);
 		}
 		nvitem_sync();
-		
+		//add by kenyliu in 2013 06 20 for bug 146310
+		if(0xE == get_adc_flag())
+		{
+			power_down_devices();
+		}
+		//end kenyliu
 	}
 #ifndef __DL_UART0__
 		__dl_log_share__ = 0;
