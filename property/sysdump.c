@@ -90,7 +90,7 @@ int init_mmc_fat(void)
 		}
 	} else {
 		printf("no mmc card found\n");
-		return;
+		return -1;
 	}
 
 	dev_desc = &mmc->block_dev;

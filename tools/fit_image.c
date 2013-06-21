@@ -105,6 +105,7 @@ static int fit_handle_file (struct mkimage_params *params)
 		fprintf (stderr, "%s: Can't stat %s: %s\n",
 				params->cmdname, tmpfile, strerror(errno));
 		unlink (tmpfile);
+		close (tfd);
 		return (EXIT_FAILURE);
 	}
 
@@ -114,6 +115,7 @@ static int fit_handle_file (struct mkimage_params *params)
 		fprintf (stderr, "%s: Can't read %s: %s\n",
 				params->cmdname, tmpfile, strerror(errno));
 		unlink (tmpfile);
+		close (tfd);
 		return (EXIT_FAILURE);
 	}
 
@@ -121,6 +123,7 @@ static int fit_handle_file (struct mkimage_params *params)
 	if (fdt_check_header (ptr)) {
 		fprintf (stderr, "%s: Invalid FIT blob\n", params->cmdname);
 		unlink (tmpfile);
+		close (tfd);
 		return (EXIT_FAILURE);
 	}
 

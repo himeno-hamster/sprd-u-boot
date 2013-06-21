@@ -742,10 +742,11 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 	ret =read_spldata();
 	if(ret != 0){
 		free(buf);
-		return;
+		return NULL;
 	}
 	if(harsh_data == NULL){
 		printf("harsh_data malloc failed\n");
+		free(buf);
 		return;
 	}
 	printf("spl_data adr 0x%x harsh_data adr 0x%x\n", spl_data, harsh_data);
@@ -762,8 +763,8 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 	unsigned int *adc_data;
 	ret=0;
 	adc_data = malloc(64);
-	memset(adc_data,0,64);
 	if(adc_data){
+		memset(adc_data,0,64);
 		ret = read_adc_calibration_data(adc_data,48);
 		if(ret > 0){
 			if(((adc_data[2]&0xffff) < 4500 )&&((adc_data[2]&0xffff) > 3000)&&
@@ -772,6 +773,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 				sprintf(&buf[str_len], " adc_cal=%d,%d",adc_data[2],adc_data[3]);
 			}
 		}
+		free(adc_data);
 	}
 }
 #endif

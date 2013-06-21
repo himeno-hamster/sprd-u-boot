@@ -73,6 +73,7 @@ static int read_nv_check = 0;
 
 int get_end_write_pos(void)
 {
+	return 0;
 }
 void set_current_write_pos(int pos)
 {

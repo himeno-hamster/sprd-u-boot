@@ -267,7 +267,7 @@ static void kwdimage_set_ext_header (struct kwb_header *kwbhdr, char* name) {
 					goto INVL_CMD;
 
 
-				if (datacmd_cnt > KWBIMAGE_MAX_CONFIG ) {
+				if (datacmd_cnt >= KWBIMAGE_MAX_CONFIG ) {
 					printf ("Error:%s[%d] - Found more "
 						"than max(%zd) allowed "
 						"data configurations\n",
