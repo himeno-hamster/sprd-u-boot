@@ -747,7 +747,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 	if(harsh_data == NULL){
 		printf("harsh_data malloc failed\n");
 		free(buf);
-		return;
+		return NULL;
 	}
 	printf("spl_data adr 0x%x harsh_data adr 0x%x\n", spl_data, harsh_data);
 	ret = cal_md5(spl_data, CONFIG_SPL_LOAD_LEN, harsh_data);

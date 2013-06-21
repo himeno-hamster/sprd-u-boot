@@ -638,7 +638,7 @@ void vbc_shutdown(int stream)
 
 	vbc_idx = vbc_str_2_index(stream);
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 2; i++) {
 		vbc[vbc_idx].arch_disable(i);
 		vbc[vbc_idx].dma_set[i] (0);
 	}
