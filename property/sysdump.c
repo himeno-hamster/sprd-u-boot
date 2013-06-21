@@ -367,7 +367,7 @@ void write_sysdump_before_boot(int rst_mode)
 		else
 			path = NULL;
 
-		sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT, infop->time, 0);
+		sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT, 0);
 		write_mem_to_mmc(path, fnbuf,
 			(char *)infop + sizeof(*infop), infop->elfhdr_size);
 
@@ -381,22 +381,22 @@ void write_sysdump_before_boot(int rst_mode)
 				waddr = mem[i].paddr;
 
 		#ifdef CONFIG_RAMDUMP_NO_SPLIT
-				sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT"_0x%8.8x-0x%8.8x_dump.lst", infop->time, i + 1, mem[i].paddr, mem[i].paddr + mem[i].size -1);
+				sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT"_0x%8.8x-0x%8.8x_dump.lst", i + 1, mem[i].paddr, mem[i].paddr + mem[i].size -1);
 				write_mem_to_mmc(path, fnbuf, waddr, mem[i].size);
 		#else
 			if (mem[i].size <= SZ_8M) {
-				sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT, infop->time, i + 1);
+				sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT, /*infop->time,*/ i + 1);
 				write_mem_to_mmc(path, fnbuf, waddr, mem[i].size);
 			} else {
 				for (j = 0; j < mem[i].size / SZ_8M; j++) {
 					sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT"_%03d",
-						infop->time, i + 1, j);
+						/*infop->time,*/ i + 1, j);
 					write_mem_to_mmc(path, fnbuf, waddr + j * SZ_8M, SZ_8M);
 				}
 
 				if (mem[i].size % SZ_8M) {
 					sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT"_%03d",
-						infop->time, i + 1, j);
+						/*infop->time,*/ i + 1, j);
 					write_mem_to_mmc(path, fnbuf, waddr + j * SZ_8M,
 									(mem[i].size % SZ_8M));
 				}
@@ -405,7 +405,7 @@ void write_sysdump_before_boot(int rst_mode)
 		}
 #else
 		for (i = 0; i < infop->mem_num; i++) {
-			sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT, infop->time, i + 1);
+			sprintf(fnbuf, SYSDUMP_CORE_NAME_FMT, /*infop->time,*/ i + 1);
 			write_mem_to_mmc(path, fnbuf, mem[i].paddr, mem[i].size);
 		}
 #endif

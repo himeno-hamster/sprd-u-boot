@@ -17,7 +17,7 @@
 //#include <elf.h>
 #include <linux/types.h>
 
-#define SYSDUMP_CORE_NAME_FMT 	"sysdump_%s_.core.%02d" /* time, number */
+#define SYSDUMP_CORE_NAME_FMT 	"sysdump.core.%02d" /* time, number */
 #define NR_KCORE_MEM		80
 #define SYSDUMP_MAGIC		"SPRD_SYSDUMP_119"
 
