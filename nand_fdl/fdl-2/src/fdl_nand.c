@@ -989,12 +989,13 @@ int nand_read_fdl(struct real_mtd_partition *phypart, unsigned int off, unsigned
 	int ret=0;
 	int pos;
 	unsigned char buffer[FDL_NAND_BUF_LEN];
-	unsigned long addr = phypart->offset;
+	static unsigned long addr;
         static unsigned long skip_addr = 0;
 	static unsigned int cur_read_pos = 0;
         int offset;
 
         if(off == 0){
+                addr = phypart->offset;
 		cur_read_pos = phypart->offset;
 		skip_addr = 0x0;
 		}
@@ -1011,6 +1012,7 @@ int nand_read_fdl(struct real_mtd_partition *phypart, unsigned int off, unsigned
 			printf("skip bad block 0x%x\r\n", cur_read_pos&(~(nand->erasesize - 1)));
 
 			cur_read_pos = (cur_read_pos + nand->erasesize)&(~(nand->erasesize - 1));
+                        addr = cur_read_pos;
 
 		} else {
 			printf("good block 0x%x\n", addr & (~(nand->erasesize - 1)));
