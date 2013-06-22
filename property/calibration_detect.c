@@ -208,6 +208,9 @@ extern void udc_power_on(void);
 extern void udc_power_off(void);
 extern void usb_in_cal(int flag);
 
+extern void CHG_TurnOn (void);
+extern void CHG_ShutDown (void);
+
 #define mdelay(_ms) udelay(_ms*1000)
 
 //#define DEBUG
@@ -446,6 +449,9 @@ void calibration_detect(int key)
         }
 	sprintf(cmd_buf, "calibration=%d,%d", caliberate_mode&0xff, (caliberate_mode&(~0xff))>>8);
         s_is_calibration_mode=1;
+#ifdef CONFIG_SC7710G2
+	CHG_ShutDown();
+#endif
 #if defined( CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined(CONFIG_SC7710G2)
 		vlx_nand_boot(BOOT_PART, buf, BACKLIGHT_OFF);
 #else

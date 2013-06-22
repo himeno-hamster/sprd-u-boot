@@ -151,7 +151,7 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
    if(charger_connected()){
         DBG("%s: charger connected\n", __FUNCTION__);
-#if defined (CONFIG_SP8810W) 
+#if defined (CONFIG_SP8810W) || defined(CONFIG_SC7710G2)
         	calibration_detect(1);
 #endif
         charge_mode();
@@ -203,7 +203,7 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 #if BOOT_NATIVE_LINUX_MODEM
         *(volatile u32*)CALIBRATION_FLAG = 0xca;
 #endif
-#ifndef CONFIG_SC8830
+#if !defined (CONFIG_SC8830) && !defined(CONFIG_SC7710G2)
         calibration_detect(0);
 #endif
         //if calibrate success, it will here
