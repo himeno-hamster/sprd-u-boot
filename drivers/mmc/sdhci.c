@@ -32,6 +32,13 @@
 void *aligned_buffer;
 void sdhci_dumpregs(struct sdhci_host *host);
 
+void sdhci_usdelay(u32 usec)
+{
+	volatile u32 i;
+	/* current is 800MHZ, when usec =1, the mean is delay 1 us */
+	for (i = 0; i < (usec << 1); i++);
+}
+
 static void sdhci_reset(struct sdhci_host *host, u8 mask)
 {
 	unsigned long timeout;
@@ -45,14 +52,13 @@ static void sdhci_reset(struct sdhci_host *host, u8 mask)
 			return;
 		}
 		timeout--;
-		udelay(1000);
+		sdhci_usdelay(100);
 	}
 }
 
 static void sdhci_cmd_done(struct sdhci_host *host, struct mmc_cmd *cmd)
 {
 	int i;
-	int j;
 	if (cmd->resp_type & MMC_RSP_136) {
 		/* CRC is stripped so we need to do some shifting. */
 		for (i = 0; i < 4; i++) {
@@ -116,7 +122,7 @@ static int sdhci_transfer_data(struct sdhci_host *host, struct mmc_data *data,
 		}
 #endif
 		if (timeout-- > 0)
-			udelay(1000);
+			sdhci_usdelay(100);
 		else {
 			printf("Transfer data timeout\n");
 			return -1;
@@ -152,7 +158,7 @@ int sdhci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 			return COMM_ERR;
 		}
 		timeout--;
-		udelay(1000);
+		sdhci_usdelay(100);
 	}
 
 	mask = SDHCI_INT_RESPONSE;
@@ -249,9 +255,8 @@ static int sdhci_set_clock(struct mmc *mmc, unsigned int clock)
 	struct sdhci_host *host = (struct sdhci_host *)mmc->priv;
 	unsigned int div, clk, timeout;
 
-	clk = sdhci_readw(host, SDHCI_CLOCK_CONTROL);
-	clk &= ~SDHCI_CLOCK_CARD_EN;
-	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
+	sdhci_sdclk_enable(host, 0);
+	sdhci_usdelay(200);
 
 	if (clock == 0)
 		return 0;
@@ -286,9 +291,9 @@ static int sdhci_set_clock(struct mmc *mmc, unsigned int clock)
 			return -1;
 		}
 		timeout--;
-		udelay(1000);
+		sdhci_usdelay(100);
 	}
-
+	sdhci_usdelay(200);
 	clk |= SDHCI_CLOCK_CARD_EN;
 	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
 	return 0;
@@ -348,8 +353,8 @@ void sdhci_set_ios(struct mmc *mmc)
 	if (mmc->clock > 26000000)
 		ctrl |= SDHCI_CTRL_HISPD;
 	else
-		ctrl &= ~SDHCI_CTRL_HISPD;
 #endif
+		ctrl &= ~SDHCI_CTRL_HISPD;
 
 	sdhci_writeb(host, ctrl, SDHCI_HOST_CONTROL);
 }
@@ -426,7 +431,8 @@ int add_sdhci(struct sdhci_host *host, u32 max_clk, u32 min_clk)
 	if (caps & SDHCI_CAN_VDD_180)
 		mmc->voltages |= MMC_VDD_165_195;
 	mmc->host_caps = MMC_MODE_HS | MMC_MODE_HS_52MHz | MMC_MODE_4BIT;
-
+	sdhci_sdclk_enable(host, 0);
+	sdhci_usdelay(200);
 	sdhci_reset(host, SDHCI_RESET_ALL);
 	mmc_register(mmc);
 

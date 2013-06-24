@@ -207,7 +207,7 @@ typedef enum SDHOST_CMD_TYPE_E_TAG
 //---Present state Register---
 //====================
 PUBLIC uint32 SDHOST_GetPinState(SDHOST_HANDLE sdhost_handler);
-
+PUBLIC void SDHOST_Delayus(uint32 usec);
 //====================
 //---Power Control Register---
 //====================

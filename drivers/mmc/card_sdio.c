@@ -1473,7 +1473,7 @@ LOCAL BOOLEAN _SetBusWidth(CARD_SDIO_HANDLE cardHandle,CARD_BUS_WIDTH_E width)
 			SDIO_Card_Pal_SetBusWidth(cardHandle->sdioPalHd,SDIO_CARD_PAL_4_BIT);
 		}
 		break;
-#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2)
+#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
 		case CARD_WIDTH_8_BIT:
 		{
 			SDIO_Card_Pal_SetBusWidth(cardHandle->sdioPalHd,SDIO_CARD_PAL_8_BIT);
@@ -1767,13 +1767,13 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 		return FALSE;
 	}
 #if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) ||defined(CONFIG_SC8830)
+	SDIO_Card_Pal_DisSdClk(cardHandle->sdioPalHd);
 	SDIO_Card_Pal_SetSpeedMode(cardHandle->sdioPalHd, EMMC_SPEED_SDR25);
 	SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd, SDIO_CARD_PAL_50MHz);
 #else
 	SDIO_Card_Pal_SetClk(cardHandle->sdioPalHd,SDIO_CARD_PAL_25MHz);
 #endif
-	__udelay (100*1000);
-#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2)
+#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
 	busWidth = CARD_WIDTH_8_BIT;
 #else
 	busWidth = CARD_WIDTH_4_BIT;

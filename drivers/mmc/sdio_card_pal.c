@@ -519,7 +519,7 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
 
                 SDHOST_SD_POWER (handle->sdio_port,POWR_ON);
                 SDHOST_SD_Clk_Freq_Set (handle->sdio_port,400000);
-		 SDHOST_internalClk_OnOff (handle->sdio_port,CLK_ON);
+                SDHOST_internalClk_OnOff (handle->sdio_port,CLK_ON);
                 SDHOST_SD_clk_OnOff (handle->sdio_port,CLK_ON);
             }
             break;
@@ -527,9 +527,9 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
         case SDIO_CARD_PAL_OFF:
             {
                 SDHOST_SD_POWER (handle->sdio_port,POWR_OFF);
-                SDHOST_RST (handle->sdio_port,RST_ALL);
                 SDHOST_SD_clk_OnOff (handle->sdio_port,CLK_OFF);
                 SDHOST_internalClk_OnOff (handle->sdio_port,CLK_OFF);
+                SDHOST_RST (handle->sdio_port,RST_ALL);
             }
             break;
 
@@ -625,6 +625,7 @@ PUBLIC BOOLEAN SDIO_Card_Pal_SetClk (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_C
     }
 
     SDHOST_internalClk_OnOff (handle->sdio_port,CLK_ON);
+    SDHOST_Delayus(200);
     SDHOST_SD_clk_OnOff (handle->sdio_port,CLK_ON);
 
     return TRUE;
@@ -699,7 +700,7 @@ PUBLIC BOOLEAN SDIO_Card_Pal_SetSpeedMode (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD
         (SDIO_CARD_PAL_MAGICNUM == handle->MagicNum)
         && (TRUE == handle->flag)
     );
-#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2)
+#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
 	switch (speedMode)
 	{
 		case EMMC_SPEED_SDR12:
@@ -951,7 +952,7 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 
             while (0 == (BIT_20&SDHOST_GetPinState (handle->sdio_port)))
             {
-                __udelay (1*1000);
+                SDHOST_Delayus (1*1000);
 
                 if ( (tmOut+20000) < SCI_GetTickCount())
                 {

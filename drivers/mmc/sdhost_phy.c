@@ -16,7 +16,6 @@
 /**---------------------------------------------------------------------------*
  **                         Dependencies                                      *
  **---------------------------------------------------------------------------*/
-
 #include "asm/arch/sci_types.h"
 #include "asm/arch/os_api.h"
 #include "asm/arch/chip_plf_export.h"
@@ -97,7 +96,12 @@ LOCAL DEVICE_HANDLE s_dev_sdio = SCI_NULL;
 PUBLIC ISR_EXE_T _SDHOST_IrqHandle (uint32 isrnum);
 LOCAL void  SdhostHisrFunc (uint32 cnt, void *pData);
 
-
+PUBLIC void SDHOST_Delayus(uint32 usec)
+{
+	volatile uint32 i;
+	/* current is 800MHZ, when usec =1, the mean is delay 1 us */
+	for (i = 0; i < (usec << 1); i++);
+}
 /*****************************************************************************/
 //  Description:  To confirm whether the handle is valid
 //  Author: Jason.wu
@@ -659,7 +663,7 @@ PUBLIC void SDHOST_internalClk_OnOff (SDHOST_HANDLE sdhost_handler,SDHOST_CLK_ON
                 timeout = 30;
                 while ((0 == (sdhost_handler->host_cfg->HOST_CTL1 & BIT_1)) && timeout)
                 {
-                    udelay(100);
+                   SDHOST_Delayus(100);
                     timeout--;
                 }
             }
@@ -668,7 +672,7 @@ PUBLIC void SDHOST_internalClk_OnOff (SDHOST_HANDLE sdhost_handler,SDHOST_CLK_ON
         case CLK_OFF:
             {
                 sdhost_handler->host_cfg->HOST_CTL1 &= (~BIT_0);
-                udelay(1000);
+                SDHOST_Delayus(200);
             }
             break;
 
@@ -705,7 +709,10 @@ PUBLIC void SDHOST_SD_clk_OnOff (SDHOST_HANDLE sdhost_handler,SDHOST_CLK_ONOFF_E
 
         case CLK_OFF:
             {
-                sdhost_handler->host_cfg->HOST_CTL1 &= (~BIT_2);
+                if ((sdhost_handler->host_cfg->HOST_CTL1 & BIT_2) != 0) {
+                    sdhost_handler->host_cfg->HOST_CTL1 &= (~BIT_2);
+                    SDHOST_Delayus(200);
+                }
             }
             break;
 
@@ -941,12 +948,14 @@ LOCAL  void SDHOST_Reset_Controller(SDHOST_SLOT_NO slot_NO)
 	{
 		REG32 (AHB_CTL0)     |= BIT_8;
 		REG32 (AHB_SOFT_RST) |= BIT_11;
+		SDHOST_Delayus(200);
 		REG32 (AHB_SOFT_RST) &=~BIT_11;
 	}
 	else if (slot_NO == SDHOST_SLOT_7)
 	{
 		REG32 (AHB_CTL0)     |= BIT_11;
 		REG32 (AHB_SOFT_RST) |= BIT_14;
+		SDHOST_Delayus(200);
 		REG32 (AHB_SOFT_RST) &=~BIT_14;
 	}
 #elif defined (CONFIG_SC8825)
@@ -999,6 +1008,13 @@ LOCAL void _Reset_MODULE (SDHOST_HANDLE sdhost_handler)
     } else if(&sdio_port_ctl[SDHOST_SLOT_1] == sdhost_handler){
 		SDHOST_Reset_Controller(SDHOST_SLOT_1);
     }
+    else if(&sdio_port_ctl[SDHOST_SLOT_6] == sdhost_handler){
+		SDHOST_Reset_Controller(SDHOST_SLOT_6);
+    }
+    else if(&sdio_port_ctl[SDHOST_SLOT_7] == sdhost_handler){
+		SDHOST_Reset_Controller(SDHOST_SLOT_7);
+    }
+
 }
 
 /*****************************************************************************/
@@ -1037,12 +1053,14 @@ PUBLIC void SDHOST_RST (SDHOST_HANDLE sdhost_handler,SDHOST_RST_TYPE_E rst_type)
 
         case RST_ALL:
             {
+                SDHOST_SD_clk_OnOff(sdhost_handler, CLK_OFF);
                 _Reset_ALL (sdhost_handler);
             }
             break;
             
         case RST_MODULE:
             {
+                SDHOST_SD_clk_OnOff(sdhost_handler, CLK_OFF);
                 _Reset_MODULE (sdhost_handler);
             }
             break;
@@ -2391,7 +2409,9 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
     {
         return NULL;
     }
-
+	sdio_port_ctl[slot_NO].host_cfg =
+							(SDIO_REG_CFG *) ( (volatile uint32 *) EMMC_BASE_ADDR);
+	SDHOST_SD_clk_OnOff(&sdio_port_ctl[slot_NO], CLK_OFF);
 	SDHOST_Reset_Controller(slot_NO);
 	sdio_port_ctl[slot_NO].slotNo = slot_NO;
     // select slot 0
@@ -2520,10 +2540,7 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
     }
     sdio_port_ctl[slot_NO].sigCallBack = fun;
     sdio_port_ctl[slot_NO].err_filter = 0;
-    SDHOST_RST (&sdio_port_ctl[slot_NO],RST_ALL);
-    SDHOST_internalClk_OnOff (&sdio_port_ctl[slot_NO],CLK_ON);
-    _GetSDHOSTCapbility (&sdio_port_ctl[slot_NO],& (sdio_port_ctl[slot_NO].capbility));
-    SDHOST_RST (&sdio_port_ctl[slot_NO],RST_ALL);
+
 #ifndef OS_NONE
     status = ISR_RegHandler_Ex (TB_SDIO_INT, (TB_ISR) _SDHOST_IrqHandle, SdhostHisrFunc, CHIPDRV_HISR_PRIO_1, NULL);
     if (TB_SUCCESS == status)

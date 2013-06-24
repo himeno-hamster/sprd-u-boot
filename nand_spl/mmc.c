@@ -436,10 +436,10 @@ uint32 SCI_GetTickCount(void)
 	tmp_tick2 = SYSTEM_CURRENT_CLOCK;
 
 	while (tmp_tick1 != tmp_tick2)
-                   {
-	  tmp_tick1 = tmp_tick2;
-	  tmp_tick2 = SYSTEM_CURRENT_CLOCK;
-	  }
+	{
+		tmp_tick1 = tmp_tick2;
+		tmp_tick2 = SYSTEM_CURRENT_CLOCK;
+	}
 
 	return tmp_tick1;
 }
@@ -665,7 +665,11 @@ LOCAL void  _irqCardProc (uint32 msg, uint32 errCode, SDHOST_SLOT_NO slotNum)
 
 PUBLIC void SDHOST_SD_clk_Off (SDHOST_HANDLE sdhost_handler)
 {
-    sdhost_handler->host_cfg->HOST_CTL1 &= ~BIT_2;
+	if ((sdhost_handler->host_cfg->HOST_CTL1 & BIT_2) != 0)
+	{
+		sdhost_handler->host_cfg->HOST_CTL1 &= ~BIT_2;
+		delayMs(1);
+	}
 }
 
 PUBLIC void SDHOST_SD_clk_On (SDHOST_HANDLE sdhost_handler)
@@ -701,7 +705,11 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
     uint32 status = 0, i = 0;
 #if   defined (CONFIG_SC8830)
      REG32 (AHB_EB)       |= BIT_11;
+    /* disable sd_clk for clear gltich */
+     sdio_port_ctl[slot_NO].host_cfg = (SDIO_REG_CFG *) ( (volatile uint32 *) EMMC_BASE_ADDR );
+     SDHOST_SD_clk_Off(&sdio_port_ctl[slot_NO]);
      REG32 (AHB_SOFT_RST) |= BIT_14;
+     delayMs(1);
      REG32 (AHB_SOFT_RST) &=~BIT_14;
      sdio_port_ctl[slot_NO].open_flag = TRUE;
      sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (SDIO_BASE_CLK_26M);
@@ -779,10 +787,6 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
 
     sdio_port_ctl[slot_NO].sigCallBack = fun;
     sdio_port_ctl[slot_NO].err_filter = 0;
-    SDHOST_RST (&sdio_port_ctl[slot_NO],RST_ALL);
-    SDHOST_internalClk_On (&sdio_port_ctl[slot_NO]);
-    //_GetSDHOSTCapbility (&sdio_port_ctl[slot_NO],& (sdio_port_ctl[slot_NO].capbility));
-    SDHOST_RST (&sdio_port_ctl[slot_NO],RST_ALL);
 
     return &sdio_port_ctl[slot_NO];
 }
@@ -1490,6 +1494,7 @@ LOCAL void _Reset_MODULE (SDHOST_HANDLE sdhost_handler)
     SCI_ASSERT (TRUE == _RegisterVerifyHOST (sdhost_handler));/*assert verified*/
 #ifdef CONFIG_SC8830
     CHIP_REG_OR(AHB_SOFT_RST, AHB_EMMC_RST);
+    delayMs(1);
     CHIP_REG_AND(AHB_SOFT_RST, ~AHB_EMMC_RST);
 #else
     CHIP_REG_OR(AHB_SOFT_RST, AHB_SDIO_SOFT_RST);
@@ -1534,12 +1539,14 @@ PUBLIC void SDHOST_RST (SDHOST_HANDLE sdhost_handler,SDHOST_RST_TYPE_E rst_type)
 
         case RST_ALL:
             {
+                SDHOST_SD_clk_Off(sdhost_handler);
                 _Reset_ALL (sdhost_handler);
             }
             break;
             
         case RST_MODULE:
             {
+                SDHOST_SD_clk_Off(sdhost_handler);
                 _Reset_MODULE (sdhost_handler);
             }
             break;
@@ -1764,7 +1771,7 @@ PUBLIC BOOLEAN SDIO_Card_Pal_SetClk (SDIO_CARD_PAL_HANDLE handle)
 #endif
 	SDHOST_SD_clk_Off(handle->sdio_port);
 	SDHOST_SD_Clk_Freq_Set (handle->sdio_port,25000000);
-	delayMs(10);
+	delayMs(1);
 	SDHOST_SD_clk_On (handle->sdio_port);
 
 	return TRUE;
@@ -2099,7 +2106,8 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
             LDO_TurnOnLDO(LDO_LDO_SDIO3);
             LDO_TurnOnLDO(LDO_LDO_VDD30);
 #elif defined (CONFIG_SC8830)
-
+		ANA_REG_OR(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR, (BIT_7 | BIT_8));
+		ANA_REG_AND(ANA_REG_GLB_LDO_DCDC_PD_RTCSET, ~(BIT_7 | BIT_8));
 #else
             LDO_SetVoltLevel (LDO_LDO_SDIO1, LDO_VOLT_LEVEL3);
             LDO_SetVoltLevel (LDO_LDO_SIM2, LDO_VOLT_LEVEL1); 
@@ -2131,7 +2139,7 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
             SDHOST_SD_clk_Off(handle->sdio_port);
             SDHOST_SD_Clk_Freq_Set (handle->sdio_port,400000);
             SDHOST_internalClk_On(handle->sdio_port);
-            delayMs(100);
+            delayMs(1);
             SDHOST_SD_clk_On(handle->sdio_port);
             //__udelay (100*1000);
         }
@@ -2142,21 +2150,18 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
 #if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
             LDO_TurnOffLDO (LDO_LDO_SDIO3);
             LDO_TurnOffLDO (LDO_LDO_VDD30);
+#elif defined(CONFIG_SC8830)
+		ANA_REG_AND(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR, ~(BIT_7 | BIT_8));
+		ANA_REG_OR(ANA_REG_GLB_LDO_DCDC_PD_RTCSET, (BIT_7 | BIT_8));
+		delayMs(1);
 #else
             LDO_TurnOffLDO (LDO_LDO_SDIO1);
             LDO_TurnOffLDO (LDO_LDO_SIM2);
 #endif
-            SDHOST_RST (handle->sdio_port,RST_ALL);
-            //SDHOST_SD_clk_Off(handle->sdio_port,CLK_OFF);
-            handle->sdio_port->host_cfg->HOST_CTL1 &= (~BIT_2);
-            //SDHOST_internalClk_On(handle->sdio_port,CLK_OFF);
-            /*
-            handle->sdio_port->host_cfg->HOST_CTL1 &= (~BIT_0);
-            */
-           delayMs(10);
+		SDHOST_SD_clk_Off(handle->sdio_port);
+		SDHOST_RST (handle->sdio_port,RST_ALL);
 
-            //__udelay (250*1000);
-            break;
+		break;
         }
      default:
             break;
@@ -2207,7 +2212,6 @@ LOCAL BOOLEAN _IsCardReady(CARD_SDIO_HANDLE cardHandle)
 	while(1); /*lint !e506*/
 
 }
-
 
 PUBLIC BOOLEAN Emmc_Init()
 {

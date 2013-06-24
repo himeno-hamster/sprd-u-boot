@@ -314,5 +314,21 @@ static inline u8 sdhci_readb(struct sdhci_host *host, int reg)
 }
 #endif
 
+static inline void sdhci_sdclk_enable(struct sdhci_host *host, u8 val)
+{
+	u32 regVal;
+
+	regVal = sdhci_readl(host, SDHCI_CLOCK_CONTROL);
+	/* off sd_clk */
+	if (val == 0) {
+		regVal &= ~SDHCI_CLOCK_CARD_EN;
+		sdhci_writel(host, regVal, SDHCI_CLOCK_CONTROL);
+	}
+	else {
+		regVal |= SDHCI_CLOCK_CARD_EN;
+		sdhci_writel(host, regVal, SDHCI_CLOCK_CONTROL);
+	}
+}
+
 int add_sdhci(struct sdhci_host *host, u32 max_clk, u32 min_clk);
 #endif /* __SDHCI_HW_H */
