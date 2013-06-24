@@ -390,8 +390,13 @@ static struct info_mcu lcd_hx8363_mcu_info = {
 };
 
 struct panel_spec lcd_hx8363_mcu_spec = {
+#ifdef CONFIG_LCD_HVGA
+    .width = 320,
+	.height = 480,
+#else
 	.width = 480,
 	.height = 854,
+#endif
 	.type = LCD_MODE_MCU,
 	.direction = LCD_DIRECT_NORMAL,
 	.info = {.mcu = &lcd_hx8363_mcu_info},
