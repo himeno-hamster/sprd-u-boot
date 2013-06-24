@@ -135,9 +135,9 @@ int sci_adc_vol_request(int channel, int mux)
 # define __section(S) __attribute__ ((__section__(#S)))
 #endif
 
-#define __init0	__section(.data.regu.init0)
-#define __init1	__section(.data.regu.init1)
-#define __init2	__section(.data.regu.init2)
+#define __init0	__section(.rodata.regu.init0)
+#define __init1	__section(.rodata.regu.init1)
+#define __init2	__section(.rodata.regu.init2)
 
 const u32 __init0 __init_begin = 0xeeeebbbb;
 const u32 __init2 __init_end = 0xddddeeee;
