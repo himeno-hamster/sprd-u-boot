@@ -45,7 +45,7 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
       goto usage;
 
 #ifdef CONFIG_SC8830
-        if(cali_file_check())
+        if(cali_file_check() && !boot_pwr_check())
                 calibration_detect(2);
 #endif
 #ifdef CONFIG_SC7710G2
@@ -54,7 +54,7 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	set_cp_emc_pad();
     }
 #endif
-	CHG_Init();
+    CHG_Init();
 
 #ifdef CONFIG_SC8830
 	DCDC_Cal_ArmCore();
@@ -97,9 +97,9 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     board_keypad_init();
     boot_pwr_check();
 
+
     unsigned check_reboot_mode(void);
     unsigned rst_mode= check_reboot_mode();
-
 #ifdef CONFIG_SPRD_SYSDUMP
     write_sysdump_before_boot(rst_mode);
 #endif
