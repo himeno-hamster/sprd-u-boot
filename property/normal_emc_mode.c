@@ -418,8 +418,10 @@ void modem_entry()
 	*(volatile u32*)0x20900254 = 1;// reset cp
 #elif defined (CONFIG_SC8830)
 	u32 state;
-	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
+
 	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
+#ifndef CONFIG_SP8830EC
+	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
 	memcpy(0x50000000, cp0data, sizeof(cp0data));      /* copy cp0 source code */
 	*((volatile u32*)0x402B00A8) |=  0x00000001;       /* reset cp0 */
 	*((volatile u32*)0x402B003C) &= ~0x02000000;       /* clear cp0 force shutdown */
@@ -430,7 +432,7 @@ void modem_entry()
 			break;
 	}
 	*((volatile u32*)0x402B003C) &= ~0x10000000;       /* clear cp0 force deep sleep */
-
+#endif
 	memcpy(0x50001800, cp1data, sizeof(cp1data));      /* copy cp1 source code */
 	*((volatile u32*)0x402B00A8) |=  0x00000002;       /* reset cp1 */
 	*((volatile u32*)0x402B0050) &= ~0x02000000;       /* clear cp1 force shutdown */
@@ -452,7 +454,9 @@ void sipc_addr_reset()
 	memset((void *)SIPC_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 #elif defined (CONFIG_SC8830)
 	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+#ifndef CONFIG_SP8830EC
 	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+#endif
 #endif
 }
 
@@ -1396,6 +1400,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		return;
 	}
 
+#ifndef CONFIG_SP8830EC
 	/* WMODEM_PART */
 	size = (MODEM_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
 	if(size <= 0) {
@@ -1413,6 +1418,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		printf("get WModem info failed!\r\n");
 		return;
 	}
+#endif	
 #else
 	/* MODEM_PART */
 	printf("Reading modem to 0x%08x\n", MODEM_ADR);
