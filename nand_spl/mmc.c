@@ -2225,6 +2225,7 @@ PUBLIC BOOLEAN Emmc_Init()
 	emmc_handle->sdioPalHd = SDIO_Card_Pal_Open(SDIO_CARD_PAL_SLOT_1);
 #endif	
        CARD_SDIO_PwrCtl(emmc_handle, FALSE);
+	delayMs(4);		/* must make sure power off. */
 	CARD_SDIO_PwrCtl(emmc_handle, TRUE);
 	emmc_handle->BlockLen = 0;
 	emmc_handle->RCA = 1;
