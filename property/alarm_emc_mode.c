@@ -43,7 +43,7 @@ int alarm_partition = PARTITION_PROD_INFO3;
 int alarm_file_check(char *time_buf)
 {
 	if ( !ext4_read_content(1,alarm_partition,"/alarm_flag",time_buf,0,200))	{
-		return 0;
+		return 1;
 	}else{
 		return -1;
 	}
@@ -51,7 +51,7 @@ int alarm_file_check(char *time_buf)
 int poweron_file_check(char *time_buf)
 {
 	if ( !ext4_read_content(1,alarm_partition,"/poweron_timeinmillis",time_buf,0,200))	{
-		return 0;
+		return 1;
 	}else{
 		return -1;
 	}
