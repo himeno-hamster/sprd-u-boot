@@ -738,6 +738,9 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
     sprintf(&buf[str_len], " ram=256M");
 #endif
 
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " no_console_suspend");
+
 	addcmdline(buf);
 	ret =read_spldata();
 	if(ret != 0){
