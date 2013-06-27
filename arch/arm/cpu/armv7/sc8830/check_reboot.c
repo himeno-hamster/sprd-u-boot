@@ -6,6 +6,7 @@
 #include <asm/arch/rtc_reg_v3.h>
 #include <asm/arch/regs_adi.h>
 #include <asm/arch/adi_hal_internal.h>
+#include <asm/arch/sprd_reg_aon_apb.h>
 
 #define   HWRST_STATUS_POWERON_MASK 		(0xf0)
 #define   HWRST_STATUS_RECOVERY 		(0x20)
@@ -85,11 +86,22 @@ void power_down_devices(unsigned pd_cmd)
 
 int power_button_pressed(void)
 {
-	//sprd_eic_request(EIC_PBINT);
-	//udelay(3000);
-	//printf("eica status %x\n", sprd_eic_get(EIC_PBINT));
-	//return !sprd_eic_get(EIC_PBINT);
-	return 0;
+	sci_glb_set(REG_AON_APB_APB_EB0,BIT_GPIO_EB | BIT_EIC_EB);
+	sci_glb_set(REG_AON_APB_APB_RTC_EB,BIT_EIC_RTC_EB);
+	sci_adi_set(ANA_REG_GLB_ARM_MODULE_EN,
+		    BIT_ANA_EIC_EN | BIT_ANA_GPIO_EN);
+	sci_adi_set(ANA_REG_GLB_RTC_CLK_EN,BIT_RTC_EIC_EN);
+
+	ANA_REG_SET(ADI_EIC_MASK, 0xff);
+
+	udelay(3000);
+
+	int status = ANA_REG_GET(ADI_EIC_DATA);
+	status = status & (1 << 2);
+
+	printf("power_button_pressed eica status 0x%x\n", status );
+	
+	return !status;//low level if pb hold
 }
 
 int charger_connected(void)
