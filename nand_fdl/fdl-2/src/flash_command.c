@@ -811,6 +811,14 @@ int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, un
 				orginal = g_PhasecheckBUF;
 				backupfile = g_PhasecheckBUF + 0x1000;
 				/* read dlstatus */
+#ifdef CONFIG_SC7710G2
+                                ret = fdl_read_productinfo(g_PhasecheckBUF,off,size,buf);
+                                if(ret == -1){
+                                    return NAND_SYSTEM_ERROR;
+                                }else{
+				    return NAND_SUCCESS;
+                                }
+#else
 				cmd_yaffs_mount(productinfopoint);
 				ret = cmd_yaffs_ls_chk(productinfofilename);
 				if (ret == (PRODUCTINFO_SIZE + 4)) {
@@ -856,6 +864,7 @@ int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, un
 
 			if (read_productinfo_flag == 1)
 				return NAND_SUCCESS;
+#endif
 		} else if (file_in_productinfo_partition == 0x90000022) {
 			if (read_nvram_flag == 0) {
 				memset(g_PhasecheckBUF, 0, 0x2000);
@@ -1570,7 +1579,7 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 			cmd_yaffs_mwrite_file(bkproductinfofilename, g_PhasecheckBUF, (PRODUCTINFO_SIZE + 4));
 			ret = cmd_yaffs_ls_chk(bkproductinfofilename);
         		cmd_yaffs_umount(productinfopoint);
-
+#endif
 			g_prevstatus = NAND_SUCCESS;
 			/* factorydownload tools */
 			is_factorydownload_tools = 1;
@@ -1579,7 +1588,6 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 				get_Dl_Erase_Address_Table(&Dl_Erase_Address);
 				get_Dl_Data_Address_Table(&Dl_Data_Address);
 			}
-#endif
 		} else if (file_in_productinfo_partition == 0x90000022) {
 			cmd_yaffs_mount(productinfopoint);
     			cmd_yaffs_mwrite_file(nvramfilename, g_PhasecheckBUF, PRODUCTINFO_SIZE);
