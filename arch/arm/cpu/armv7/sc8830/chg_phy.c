@@ -70,6 +70,7 @@ void CHG_Init (void)
                                 adc_voltage_table[1][1]=adc_data[3]&0xffff;
                                 adc_voltage_table[1][0]=(adc_data[3]>>16)&0xffff;
                         }
+			free(adc_data);
                 }
         }
 #endif
