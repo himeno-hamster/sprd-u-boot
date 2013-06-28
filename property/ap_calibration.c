@@ -44,6 +44,7 @@ typedef struct
     TOOLS_AP_ADC_REQ_T ap_adc_req;
 }MSG_AP_ADC_CNF;
 static unsigned char g_usb_buf_dest[8*1024];
+static int power_off_Flag = 0;  //add by kenyliu in 2013 06 20 for bug 146310
 
 static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
 {
@@ -283,6 +284,9 @@ static uint8 is_adc_calibration(char *dest, int destSize, char *src,int srcSize)
                 case 13://CURRENT_TEST_UART_ENABLESLEEP
                     break;
                 case 14://CURRENT_TEST_POWER_OFF
+					//add by kenyliu in 2013 06 20 for bug 146310
+					power_off_Flag =0xE;
+					//end kenyliu
                     break;
                 case 15://CURRENT_TEST_DEEP_SLEEP_WAKEUP
                     break;
@@ -472,4 +476,11 @@ uint32 ap_calibration_proc(uint8 *data,uint32 count,uint8 *out_msg)
 #endif
 	return 0;
 }
-
+//add by kenyliu in 2013 06 20 for bug 146310
+int get_adc_flag()
+{
+  #ifdef CONFIG_AP_ADC_CALIBRATION
+	return power_off_Flag;
+  #endif
+}
+//end kenyliu
