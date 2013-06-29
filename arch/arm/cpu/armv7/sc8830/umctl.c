@@ -576,7 +576,6 @@ void umctl2_allport_en()
 {
     uint8 i = 0;
 	
-	return;
     for(i = UMCTL2_PORT_MIN; i < UMCTL2_PORT_MAX; i++)
     {
         umctl2_port_en(i,TRUE);
