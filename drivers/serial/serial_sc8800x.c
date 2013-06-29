@@ -38,7 +38,7 @@
 #define GR_UART_CTRL_EN    0x00400000
 #endif
 
-#ifdef FPGA_VERIFICATION 
+#ifdef FPGA_VERIFICATION
 #define ARM_APB_CLK    48000000UL
 #else
 #define ARM_APB_CLK    26000000UL
@@ -98,22 +98,22 @@ LOCAL void SIO_HwOpen (struct FDL_ChannelHandler *channel, unsigned int divider)
 
 #if defined(CONFIG_SC7710G2)
     if(port->regBase == ARM_UART3_BASE){
-	    /* Disable UART*/
-	    * ( (volatile unsigned int *) (GR_CTRL_REG1)) &= ~ (GR_UART3_CTRL_EN);
-	    /*Disable Interrupt */
-	    * (volatile unsigned int *) (port->regBase + ARM_UART_IEN) = 0;
-	    /* Enable UART*/
-	    * (volatile unsigned int *) GR_CTRL_REG1 |= (GR_UART3_CTRL_EN);
+        /* Disable UART*/
+        * ( (volatile unsigned int *) (GR_CTRL_REG1)) &= ~ (GR_UART3_CTRL_EN);
+        /*Disable Interrupt */
+        * (volatile unsigned int *) (port->regBase + ARM_UART_IEN) = 0;
+        /* Enable UART*/
+        * (volatile unsigned int *) GR_CTRL_REG1 |= (GR_UART3_CTRL_EN);
 
-    } else 
+    } else
 #endif
     {
-	    /* Disable UART*/
-	    * ( (volatile unsigned int *) (GR_CTRL_REG)) &= ~ (GR_UART_CTRL_EN);
-	    /*Disable Interrupt */
-	    * (volatile unsigned int *) (port->regBase + ARM_UART_IEN) = 0;
-	    /* Enable UART*/
-	    * (volatile unsigned int *) GR_CTRL_REG |= (GR_UART_CTRL_EN);
+        /* Disable UART*/
+        * ( (volatile unsigned int *) (GR_CTRL_REG)) &= ~ (GR_UART_CTRL_EN);
+        /*Disable Interrupt */
+        * (volatile unsigned int *) (port->regBase + ARM_UART_IEN) = 0;
+        /* Enable UART*/
+        * (volatile unsigned int *) GR_CTRL_REG |= (GR_UART_CTRL_EN);
     }
     /* Set baud rate  */
     * (volatile unsigned int *) (port->regBase + ARM_UART_CLKD0) = LWORD (divider);
@@ -131,19 +131,19 @@ LOCAL int SIO_Open (struct FDL_ChannelHandler  *channel, unsigned int baudrate)
     unsigned int divider;
     unsigned int i = 0;
 
-	UartPort_T *port  = (UartPort_T *) channel->priv;
-	
+    UartPort_T *port  = (UartPort_T *) channel->priv;
+
     divider = SIO_GetHwDivider (baudrate);
     SIO_HwOpen (channel, divider);
 
     while(!SIO_TRANS_OVER(port->regBase))  /* Wait until all characters are sent out */
     {
-    	i++;
-    	if(i >= UART_SET_BAUDRATE_TIMEOUT)
-    	{
-    	//	return -1;
-		break;
-    	}
+        i++;
+        if(i >= UART_SET_BAUDRATE_TIMEOUT)
+        {
+            //	return -1;
+            break;
+        }
     }
 
     return 0;
@@ -164,7 +164,7 @@ LOCAL int SIO_Read (struct FDL_ChannelHandler  *channel, const unsigned char *bu
 
     return pstart - (unsigned char *) buf;
 #else
-	return 0;
+    return 0;
 #endif
 }
 LOCAL char SIO_GetChar (struct FDL_ChannelHandler  *channel)
@@ -179,7 +179,7 @@ LOCAL char SIO_GetChar (struct FDL_ChannelHandler  *channel)
 
     return SIO_GET_CHAR (port->regBase);
 #else
-	return 0;
+    return 0;
 #endif
 }
 LOCAL int SIO_GetSingleChar (struct FDL_ChannelHandler  *channel)
@@ -200,7 +200,7 @@ LOCAL int SIO_GetSingleChar (struct FDL_ChannelHandler  *channel)
 
     return ch;
 #else
-	return 0;
+    return 0;
 #endif
 }
 LOCAL int SIO_Write (struct FDL_ChannelHandler  *channel, const unsigned char *buf, unsigned int len)
@@ -232,7 +232,7 @@ LOCAL int SIO_Write (struct FDL_ChannelHandler  *channel, const unsigned char *b
 
     return pstart - (const unsigned char *) buf;
 #else
-	return 0;
+    return 0;
 #endif
 }
 
@@ -256,12 +256,23 @@ LOCAL int SIO_PutChar (struct FDL_ChannelHandler  *channel, const unsigned char 
 
     return 0;
 #else
-	return 0;
+    return 0;
 #endif
 }
 LOCAL int SIO_SetBaudrate (struct FDL_ChannelHandler  *channel,  unsigned int baudrate)
 {
+#if 0
     channel->Open (channel, baudrate);
+#else
+    unsigned int divider;
+    UartPort_T *port  = (UartPort_T *) channel->priv;
+
+    divider = SIO_GetHwDivider (baudrate);
+    /* Set baud rate  */
+    * (volatile unsigned int *) (port->regBase + ARM_UART_CLKD0) = LWORD (divider);
+    * (volatile unsigned int *) (port->regBase + ARM_UART_CLKD1) = HWORD (divider);
+
+#endif
     return 0;
 }
 LOCAL int SIO_Close (struct FDL_ChannelHandler  *channel)
@@ -329,22 +340,22 @@ DECLARE_GLOBAL_DATA_PTR;
 int __dl_log_share__ = 0;
 void serial_setbrg(void)
 {
-	SIO_SetBaudrate(&gUart1Channel, 115200);
+    SIO_SetBaudrate(&gUart1Channel, 115200);
 }
 int serial_getc(void)
 {
-	return SIO_GetChar (&gUart1Channel);
+    return SIO_GetChar (&gUart1Channel);
 }
 
 void serial_putc(const char c)
 {
-	SIO_PutChar(&gUart1Channel, c);
- 
-	/* If \n, also do \r */
-	if(__dl_log_share__ == 0){
-		if (c == '\n')
-			serial_putc ('\r');
-	}
+    SIO_PutChar(&gUart1Channel, c);
+
+    /* If \n, also do \r */
+    if(__dl_log_share__ == 0){
+        if (c == '\n')
+            serial_putc ('\r');
+    }
 }
 
 /*
@@ -352,18 +363,18 @@ void serial_putc(const char c)
  *   */
 int serial_tstc (void)
 {
-	UartPort_T *port  = (&gUart1Channel)->priv;
-	/* If receive fifo is empty, return false */
-	return SIO_RX_READY( SIO_GET_RX_STATUS( port->regBase) ) ;
+    UartPort_T *port  = (&gUart1Channel)->priv;
+    /* If receive fifo is empty, return false */
+    return SIO_RX_READY( SIO_GET_RX_STATUS( port->regBase) ) ;
 }
 
 void serial_puts (const char *s)
 {
-	if(__dl_log_share__ == 0){
-		while(*s!=0){
-			serial_putc(*s++);
-		}
-	}
+    if(__dl_log_share__ == 0){
+        while(*s!=0){
+            serial_putc(*s++);
+        }
+    }
 }
 
 /*
@@ -373,29 +384,29 @@ void serial_puts (const char *s)
  *     */
 int serial_init (void)
 {
-	SIO_Open(&gUart1Channel, 115200);
-	/* clear input buffer */
-	if(serial_tstc())
-	  serial_getc();
-	return 0;
+    SIO_Open(&gUart1Channel, 115200);
+    /* clear input buffer */
+    if(serial_tstc())
+        serial_getc();
+    return 0;
 }
 
 /*
-*   add UART0 driver for modem boot
-*/
+ *   add UART0 driver for modem boot
+ */
 #if defined(CONFIG_SC7710G2)
 void serial3_setbrg(void)
 {
-	SIO_SetBaudrate(&gUart3Channel, 115200);
+    SIO_SetBaudrate(&gUart3Channel, 115200);
 }
 int serial3_getc(void)
 {
-	return SIO_GetChar (&gUart3Channel);
+    return SIO_GetChar (&gUart3Channel);
 }
 
 void serial3_putc(const char c)
 {
-	SIO_PutChar(&gUart3Channel, c);
+    SIO_PutChar(&gUart3Channel, c);
 }
 
 /*
@@ -403,40 +414,40 @@ void serial3_putc(const char c)
  *   */
 int serial3_tstc (void)
 {
-	UartPort_T *port  = (&gUart3Channel)->priv;
-	/* If receive fifo is empty, return false */
-	return SIO_RX_READY( SIO_GET_RX_STATUS( port->regBase) ) ;
+    UartPort_T *port  = (&gUart3Channel)->priv;
+    /* If receive fifo is empty, return false */
+    return SIO_RX_READY( SIO_GET_RX_STATUS( port->regBase) ) ;
 }
 
 void serial3_puts (const char *s)
 {
-	while (*s) {
-		serial3_putc (*s++);
-	}
+    while (*s) {
+        serial3_putc (*s++);
+    }
 }
 
 int serial3_init (void)
 {
-	SIO_Open(&gUart3Channel, 115200);
-	/* clear input buffer */
-	if(serial3_tstc())
-	  serial3_getc();
-	return 0;
+    SIO_Open(&gUart3Channel, 115200);
+    /* clear input buffer */
+    if(serial3_tstc())
+        serial3_getc();
+    return 0;
 }
 
 int  serial3_flowctl_enable(void)
 {
-	/*enable tx/rx flow control*/	   
-	* (volatile unsigned int *) (ARM_UART3_BASE + ARM_UART_CTL1)   |= UART_RX_FLOW_EN  | (UART_RX_THRESHOLD & 0x7F);    
-	return 0;
+    /*enable tx/rx flow control*/
+    * (volatile unsigned int *) (ARM_UART3_BASE + ARM_UART_CTL1)   |= UART_RX_FLOW_EN  | (UART_RX_THRESHOLD & 0x7F);
+    return 0;
 }
 
 int  serial1_SwitchToModem(void)
 {
-	//Switch Uart1 from AP to CP
-	REG32(CHIPPIN_CTL_BEGIN + PIN_U1RXD_REG_OFFS) = 0x190;
-	REG32(CHIPPIN_CTL_BEGIN + PIN_U1TXD_REG_OFFS)  = 0x110;
-	return 0;
+    //Switch Uart1 from AP to CP
+    REG32(CHIPPIN_CTL_BEGIN + PIN_U1RXD_REG_OFFS) = 0x190;
+    REG32(CHIPPIN_CTL_BEGIN + PIN_U1TXD_REG_OFFS)  = 0x110;
+    return 0;
 }
 
 #endif
