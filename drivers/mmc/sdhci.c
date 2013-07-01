@@ -32,13 +32,6 @@
 void *aligned_buffer;
 void sdhci_dumpregs(struct sdhci_host *host);
 
-void sdhci_usdelay(u32 usec)
-{
-	volatile u32 i;
-	/* current is 800MHZ, when usec =1, the mean is delay 1 us */
-	for (i = 0; i < (usec << 1); i++);
-}
-
 static void sdhci_reset(struct sdhci_host *host, u8 mask)
 {
 	unsigned long timeout;
@@ -52,7 +45,7 @@ static void sdhci_reset(struct sdhci_host *host, u8 mask)
 			return;
 		}
 		timeout--;
-		sdhci_usdelay(100);
+		udelay(1000);
 	}
 }
 
@@ -122,7 +115,7 @@ static int sdhci_transfer_data(struct sdhci_host *host, struct mmc_data *data,
 		}
 #endif
 		if (timeout-- > 0)
-			sdhci_usdelay(100);
+			udelay(1000);
 		else {
 			printf("Transfer data timeout\n");
 			return -1;
@@ -158,7 +151,7 @@ int sdhci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 			return COMM_ERR;
 		}
 		timeout--;
-		sdhci_usdelay(100);
+		udelay(1000);
 	}
 
 	mask = SDHCI_INT_RESPONSE;
@@ -256,7 +249,7 @@ static int sdhci_set_clock(struct mmc *mmc, unsigned int clock)
 	unsigned int div, clk, timeout;
 
 	sdhci_sdclk_enable(host, 0);
-	sdhci_usdelay(200);
+	udelay(200);
 
 	if (clock == 0)
 		return 0;
@@ -291,9 +284,9 @@ static int sdhci_set_clock(struct mmc *mmc, unsigned int clock)
 			return -1;
 		}
 		timeout--;
-		sdhci_usdelay(100);
+		udelay(100);
 	}
-	sdhci_usdelay(200);
+	udelay(200);
 	clk |= SDHCI_CLOCK_CARD_EN;
 	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
 	return 0;
@@ -432,7 +425,7 @@ int add_sdhci(struct sdhci_host *host, u32 max_clk, u32 min_clk)
 		mmc->voltages |= MMC_VDD_165_195;
 	mmc->host_caps = MMC_MODE_HS | MMC_MODE_HS_52MHz | MMC_MODE_4BIT;
 	sdhci_sdclk_enable(host, 0);
-	sdhci_usdelay(200);
+	udelay(200);
 	sdhci_reset(host, SDHCI_RESET_ALL);
 	mmc_register(mmc);
 
