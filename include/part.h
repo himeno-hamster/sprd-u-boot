@@ -88,7 +88,7 @@ typedef struct disk_partition {
 	ulong	start;		/* # of first block in partition	*/
 	ulong	size;		/* number of blocks in partition	*/
 	ulong	blksz;		/* block size in bytes			*/
-	uchar	name[32];	/* partition name			*/
+	uchar	name[72];	/* partition name			*/
 	uchar	type[32];	/* string type description		*/
 } disk_partition_t;
 

@@ -7,6 +7,7 @@
 
 #include <linux/posix_types.h>
 #include <asm/types.h>
+#include <stddef.h>
 
 #ifndef __KERNEL_STRICT_NAMES
 

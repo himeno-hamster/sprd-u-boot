@@ -609,3 +609,36 @@ void *memchr(const void *s, int c, size_t n)
 
 #endif
 #endif
+
+#ifndef __HAVE_ARCH_WCSNCMP
+int wcsncmp(const wchar_t *s1, const wchar_t *s2, size_t n)
+{
+
+        if (n == 0)
+                return (0);
+        do {
+                if (*s1 != *s2++) {
+                        /* XXX assumes wchar_t = int */
+                        return (*(const unsigned short *)s1 -
+                            *(const unsigned short *)--s2);
+                }
+                if (*s1++ == 0)
+                        break;
+        } while (--n != 0);
+        return (0);
+}
+#endif
+
+#ifndef __HAVE_ARCH_WCSLEN
+size_t wcslen(const wchar_t *s)
+{
+        const wchar_t *p;
+
+        p = s;
+        while (*p)
+                p++;
+
+        return p - s;
+}
+#endif
+

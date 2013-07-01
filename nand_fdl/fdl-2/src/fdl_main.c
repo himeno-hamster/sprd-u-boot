@@ -59,7 +59,7 @@ static void write_bin2flash()
 		printf("write_bin2flash, base_addr=0x%x, bin_addr=0x%x,bin_size=%x\r\n",pbin_table->base_addr, pbin_table->bin_addr,pbin_table->bin_size);
 		begin_time = SCI_GetTickCount();
 #ifdef CONFIG_EMMC_BOOT
-		fdl_emmc_dram_download(pbin_table->base_addr, pbin_table->bin_addr, pbin_table->bin_size);
+		FDL2_eMMC_DRAM_Download(pbin_table->base_addr, pbin_table->bin_addr, pbin_table->bin_size);
 #else
 		FDL2_DramStart(pbin_table->base_addr, pbin_table->bin_size);
 		pbuf = (unsigned char *)pbin_table->bin_addr;
@@ -131,7 +131,7 @@ int main(void)
 			#endif
 		#else
 			if (!FDL_Check_Partition_Table()) {
-  				#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)// JUST FOR TEST , DELETE IT LATER
+				#if 0 //defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)// JUST FOR TEST , DELETE IT LATER
 				write_uefi_partition_table(g_sprd_emmc_partition_cfg);
 				#else				
 				FDL_SendAckPacket (convert_err (EMMC_INCOMPATIBLE_PART));

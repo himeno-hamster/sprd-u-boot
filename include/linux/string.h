@@ -82,6 +82,14 @@ extern int memcmp(const void *,const void *,__kernel_size_t);
 extern void * memchr(const void *,int,__kernel_size_t);
 #endif
 
+#ifndef __HAVE_ARCH_WCSNCMP
+extern int wcsncmp(const wchar_t *s1, const wchar_t *s2, size_t n);
+#endif
+
+#ifndef __HAVE_ARCH_WCSLEN
+extern size_t wcslen(const wchar_t *s);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

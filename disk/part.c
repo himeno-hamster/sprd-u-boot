@@ -26,6 +26,8 @@
 #include <ide.h>
 #include <part.h>
 
+#include "part_uefi.h"
+
 #undef	PART_DEBUG
 
 #ifdef	PART_DEBUG
@@ -403,6 +405,24 @@ int get_partition_info_with_partnum (block_dev_desc_t *dev_desc, int part
 	}
 	return (-1);
 }
+
+int get_all_partition_info (block_dev_desc_t *dev_desc, PARTITION_CFG *info, unsigned int *total_partition_num)
+{
+	switch(dev_desc->part_type){
+#ifdef CONFIG_EFI_PARTITION
+	case PART_TYPE_EFI:
+		if (get_all_partition_info_efi(dev_desc,info,total_partition_num) == 0) {
+			PRINTF ("## Get All EFI partition  ##\n");
+			return (0);
+		}
+		break;
+#endif
+	default:
+		break;
+	}
+	return (-1);
+}
+
 static void print_part_header (const char *type, block_dev_desc_t * dev_desc)
 {
 	puts ("\nPartition Map for ");

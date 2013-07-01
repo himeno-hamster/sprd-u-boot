@@ -36,6 +36,7 @@
 #include <ide.h>
 #include <malloc.h>
 #include "part_efi.h"
+#include "part_uefi.h"
 
 #if defined(CONFIG_CMD_IDE) || \
     defined(CONFIG_CMD_MG_DISK) || \
@@ -206,6 +207,58 @@ int get_partition_info_efi(block_dev_desc_t * dev_desc, int part,
 	}
 	return 0;
 }
+
+int get_all_partition_info_efi(block_dev_desc_t * dev_desc, PARTITION_CFG * info, unsigned int *total_partition_num)
+{
+	gpt_header gpt_head;
+	gpt_entry *pgpt_pte = NULL;
+	unsigned int i,j, partition_nums = 0;
+
+	if (!dev_desc || !info) {
+		printf("%s: Invalid Argument(s)\n", __FUNCTION__);
+		return -1;
+	}
+
+	/* This function validates AND fills in the GPT header and PTE */
+	if (is_gpt_valid(dev_desc, GPT_PRIMARY_PARTITION_TABLE_LBA,
+			&(gpt_head), &pgpt_pte) != 1) {
+		printf("%s: *** ERROR: Invalid Main GPT ***\n", __FUNCTION__);
+		if(is_gpt_valid(dev_desc, dev_desc->lba -1, &(gpt_head), &pgpt_pte) != 1){
+			printf("%s: *** ERROR: Invalid alternate GPT ***\n", __FUNCTION__);
+			return -1;
+
+		}
+	}
+
+	partition_nums = le32_to_int(gpt_head.num_partition_entries);
+
+	//TODO:partitions shuld beyond MAX PARTITION NUM
+	for(i=0;i<partition_nums;i++)
+	{
+		/* The ulong casting limits the maximum disk size to 2 TB */
+		info[i].partition_offset = (ulong) le64_to_int((pgpt_pte)[i].starting_lba);
+		/* The ending LBA is inclusive, to calculate size, add 1 to it */
+		info[i].partition_size = ((ulong)le64_to_int((pgpt_pte)[i].ending_lba) + 1) - info[i].partition_offset;
+
+		for(j=0;j<MAX_UTF_PARTITION_NAME_LEN;j++)
+		{
+			info[i].partition_name[j] = (pgpt_pte[i].partition_name[j] & 0xFF);
+		}
+
+		debug("%s: start 0x%lX, size 0x%lX, name %S", __FUNCTION__,
+			info[i].partition_offset, info[i].partition_size, info[i].partition_name);
+	}
+
+	*total_partition_num = partition_nums;
+
+	/* Remember to free pte */
+	if (pgpt_pte != NULL) {
+		debug("%s: Freeing pgpt_pte\n", __FUNCTION__);
+		free(pgpt_pte);
+	}
+	return 0;
+}
+
 
 int get_partition_info_efi_with_partnum(block_dev_desc_t * dev_desc, int part,
 		disk_partition_t * info, unsigned long total, unsigned long sdidx, int sdpart, disk_partition_t *sdinfo)
