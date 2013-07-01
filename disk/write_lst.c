@@ -18,7 +18,7 @@
  #include "diskconfig.h"
  #include "part_cfg.h"
 extern PART_DEVICE emmc_part_device;
-
+#define DOS_PART_MAGIC_OFFSET 1fe
 struct write_list *
 alloc_wl(uint32_t data_len)
 {
@@ -93,6 +93,8 @@ fail:
 		static int dc=1;
 		printf("write %d partition\n", dc);
 		printf("off %lli len %u\n", lst->offset, lst->len);
+		buf[DOS_PART_MAGIC_OFFSET] = 0x55;
+		buf[DOS_PART_MAGIC_OFFSET + 1] = 0xaa;
 		for(i=0;i<lst->len;i++) {
 			if((i+lst->offset %512)%16 == 0)
 				printf("0x%x   ", i+lst->offset %512);
