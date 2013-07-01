@@ -123,7 +123,6 @@ static int _lex(cstate *cs, int value)
     char *data;
 
     data = cs->data;
-printf("cs->next =%d\n",cs->next);
     if(cs->next != 0) {
         c = cs->next;
         cs->next = 0;
@@ -170,7 +169,6 @@ restart:
 
         default:
             s = data - 1;
-printf("value=%d\n",value);
             if(value) {
                 for(;;) {
                     if(*data == 0) {
@@ -304,7 +302,6 @@ void config_load(cnode *root, char *data)
             default:
                 return;
             }
-		printf("cs");
         }
     }
 }
