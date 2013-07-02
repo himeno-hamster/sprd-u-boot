@@ -559,6 +559,15 @@ LDO_ERR_E LDO_TurnOnLDO(LDO_ID_E ldo_id)
 {
 	struct ldo_ctl_info* ctl = NULL;
 
+	if (ldo_id == LDO_LDO_SDIO3)
+	{
+		if (LDO_TurnOnLDO(LDO_LDO_EMMCCORE) != LDO_ERR_OK)
+			return LDO_ERR_ERR;
+		if (LDO_TurnOnLDO(LDO_LDO_EMMCIO)   != LDO_ERR_OK)
+			return LDO_ERR_ERR;
+		return LDO_ERR_OK;
+	}
+
 	ctl = LDO_GetLdoCtl(ldo_id);
 	SCI_PASSERT(ctl != NULL, ("ldo_id = %d", ldo_id));
 
@@ -572,14 +581,6 @@ LDO_ERR_E LDO_TurnOnLDO(LDO_ID_E ldo_id)
 		}
 		else
 		{
-			if (ldo_id == LDO_LDO_SDIO3)
-			{
-				if (LDO_TurnOnLDO(LDO_LDO_EMMCCORE) != LDO_ERR_OK)
-					return LDO_ERR_ERR;
-				if (LDO_TurnOnLDO(LDO_LDO_EMMCIO)   != LDO_ERR_OK)
-					return LDO_ERR_ERR;
-				return LDO_ERR_OK;
-			}
 			ANA_REG_OR (ctl->bp_rst_reg, ctl->bp_rst);
 			ANA_REG_AND(ctl->bp_reg,     ~(ctl->bp_bits));
 		}
@@ -592,6 +593,15 @@ LDO_ERR_E LDO_TurnOffLDO(LDO_ID_E ldo_id)
 {
 	struct ldo_ctl_info* ctl = NULL;
 	unsigned long flags;
+
+	if (ldo_id == LDO_LDO_SDIO3)
+	{
+		if (LDO_TurnOffLDO(LDO_LDO_EMMCCORE) != LDO_ERR_OK)
+			return LDO_ERR_ERR;
+		if (LDO_TurnOffLDO(LDO_LDO_EMMCIO)   != LDO_ERR_OK)
+			return LDO_ERR_ERR;
+		return LDO_ERR_OK;
+	}
 
 	ctl = LDO_GetLdoCtl(ldo_id);
 	SCI_PASSERT(ctl != NULL, ("ldo_id = %d", ldo_id));
@@ -607,14 +617,6 @@ LDO_ERR_E LDO_TurnOffLDO(LDO_ID_E ldo_id)
 		}
 		else
 		{
-			if (ldo_id == LDO_LDO_SDIO3)
-			{
-				if (LDO_TurnOffLDO(LDO_LDO_EMMCCORE) != LDO_ERR_OK)
-					return LDO_ERR_ERR;
-				if (LDO_TurnOffLDO(LDO_LDO_EMMCIO)   != LDO_ERR_OK)
-					return LDO_ERR_ERR;
-				return LDO_ERR_OK;
-			}
 			ANA_REG_AND(ctl->bp_rst_reg, (~(ctl->bp_rst)));
 			ANA_REG_OR (ctl->bp_reg,     ctl->bp_bits);
 		}
