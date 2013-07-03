@@ -22,23 +22,29 @@
 
 typedef enum
 {
-    ADIN_0 = 0,
-    ADIN_1,
-    ADIN_2,
-    ADIN_3,
-    ADIN_4,
-    ADIN_5,
-    ADIN_6,
-    ADIN_7,
-    ADIN_8,
-    ADIN_9,
-    ADIN_10,
-    ADIN_11,
-    ADIN_12,
-    ADIN_13,
-    ADIN_14,
-    ADIN_15,
-    ADC_MAX
+	ADC_CHANNEL_0 = 0,
+	ADC_CHANNEL_1 = 1,
+	ADC_CHANNEL_2 = 2,
+	ADC_CHANNEL_3 = 3,
+	ADC_CHANNEL_PROG = 4,
+	ADC_CHANNEL_VBAT = 5,
+	ADC_CHANNEL_VCHGSEN = 6,
+	ADC_CHANNEL_VCHGBG = 7,
+	ADC_CHANNEL_ISENSE = 8,
+	ADC_CHANNEL_TPYD = 9,
+	ADC_CHANNEL_TPYU = 10,
+	ADC_CHANNEL_TPXR = 11,
+	ADC_CHANNEL_TPXL = 12,
+	ADC_CHANNEL_DCDCCORE = 13,
+	ADC_CHANNEL_DCDCARM = 14,
+	ADC_CHANNEL_DCDCMEM = 15,
+	ADC_CHANNEL_DCDCLDO = 16,
+	ADC_CHANNEL_VBATBK = 17,
+	ADC_CHANNEL_HEADMIC = 18,
+	ADC_CHANNEL_LDO0 = 19,	/* ldo rf/abb/cama */
+	ADC_CHANNEL_LDO1 = 20,	/* ldo v3v/v28/vsim0/vsim1/cammot/sd0/usb/dvdd18/v25 */
+	ADC_CHANNEL_LDO2 = 21,	/* ldo camio/camcore/cmmb1v2/cmmb1v8/v18/sd1/sd3/ */
+	ADC_MAX = 22
 } adc_channel;
 typedef enum{false, true} bool;
 
@@ -47,9 +53,6 @@ typedef enum{false, true} bool;
 #else
 #define ADC_CHANNEL_TEMP 1
 #endif
-#define ADC_CHANNEL_VBAT 5
-#define ADC_CHANNEL_PROG 4
-#define ADC_CHANNEL_VCHG 6
 
 #ifdef __cplusplus
 extern   "C"
@@ -57,6 +60,7 @@ extern   "C"
 #endif
 
 void ADC_Init (void);
+int32_t ADC_GetValues(adc_channel id, bool scale, uint8_t num, int32_t * p_buf);
 int32_t ADC_GetValue(adc_channel adcSource, bool scale);
 
 #ifdef __cplusplus

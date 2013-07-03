@@ -33,6 +33,20 @@ void CHG_ShutDown (void)
     ANA_REG_OR (ANA_CHGR_CTL1,CHGR_PD_BIT);
 }
 
+void CHG_SetADCCalTbl (unsigned int *adc_data)
+{
+	if(adc_data) {
+		if(((adc_data[2]&0xffff) < 4500 ) && ((adc_data[2]&0xffff) > 3000)
+			&& ((adc_data[3] & 0xffff) < 4500 ) && ((adc_data[3] & 0xffff) > 3000)) {
+			printf("adc_para = 0x%x 0x%x \n",adc_data[2],adc_data[3]);
+			adc_voltage_table[0][1]=adc_data[2]&0xffff;
+			adc_voltage_table[0][0]=(adc_data[2]>>16)&0xffff;
+			adc_voltage_table[1][1]=adc_data[3]&0xffff;
+			adc_voltage_table[1][0]=(adc_data[3]>>16)&0xffff;
+		}
+	}
+}
+
 void CHG_SetRecharge (void)
 {
 	ANA_REG_OR (ANA_CHGR_CTL0,CHGR_RECHG_BIT);

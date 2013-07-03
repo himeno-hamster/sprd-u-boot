@@ -34,7 +34,7 @@ void ADI_init (void);
 #define ANA_REG_OR(reg_addr, value)     \
     do{\
         unsigned short adi_tmp_val = ADI_Analogdie_reg_read(reg_addr); \
-        adi_tmp_val |= (uint16)(value); \
+        adi_tmp_val |= (unsigned short)(value); \
         ADI_Analogdie_reg_write(reg_addr, adi_tmp_val); \
     }while(0)
 #define ANA_REG_MSK_OR(reg_addr, value, msk)        \

@@ -54,7 +54,8 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	set_cp_emc_pad();
     }
 #endif
-    CHG_Init();
+
+	CHG_Init();
 
 #ifdef CONFIG_SC8830
 	DCDC_Cal_ArmCore();
@@ -96,7 +97,6 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     boot_pwr_check();
     board_keypad_init();
     boot_pwr_check();
-
 
     unsigned check_reboot_mode(void);
     unsigned rst_mode= check_reboot_mode();

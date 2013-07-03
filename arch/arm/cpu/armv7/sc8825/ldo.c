@@ -580,7 +580,6 @@ LDO_ERR_E LDO_TurnOnLDO(LDO_ID_E ldo_id)
 {
 	unsigned int b0_mask,b1_mask;
 	struct ldo_ctl_info* ctl = NULL;
-	unsigned long flags;
 
 	b0_mask = (volt_level & BIT_0)?~0:0;
 	b1_mask = (volt_level & BIT_1)?~0:0;
@@ -613,7 +612,6 @@ Err_Exit:
 {
 	unsigned int level_ret = 0;
 	struct ldo_ctl_info* ctl = NULL;
-	unsigned long flags;
 
 	ctl = LDO_GetLdoCtl(ldo_id);
 	SCI_PASSERT(ctl != NULL, ("ldo_id = %d", ldo_id));

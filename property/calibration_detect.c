@@ -499,6 +499,45 @@ int cali_file_check(void)
 }
 
 #ifndef CONFIG_AP_ADC_CALIBRATION
+#if defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8825)
+#include "calibration_nv_struct.h"
+
+#define VLX_ADC_ID   2
+#define VLX_RAND_TO_U32( _addr )	if( (_addr) & 0x3 ){_addr += 0x4 -((_addr) & 0x3); }
+
+u32 Vlx_GetFixedNvitemAddr(u16 identifier, u32 search_start, u32 search_end)
+{
+	u32 start_addr, end_addr;
+	u16 id, len;
+	volatile u16 *flash_ptr;
+
+	start_addr = search_start;
+	end_addr   = search_end;
+	start_addr += sizeof(u32); //skip update flag
+
+	while(start_addr < end_addr)
+	{
+		flash_ptr = (volatile u16 *)(start_addr);
+		id  = *flash_ptr++;
+		len = *flash_ptr;
+		if(0xFFFF == id)
+		{
+			return 0xFFFFFFFF;
+		}
+		if(identifier == id)
+		{
+			return (start_addr + 4);
+		}
+		else
+		{
+			start_addr += 4 + len +(len & 0x1);
+			VLX_RAND_TO_U32( start_addr )
+		}
+	}
+	return 0xFFFFFFFF;
+}
+#endif
+
 int read_adc_calibration_data(char *buffer,int size)
 {
 #if defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8830)
@@ -512,7 +551,24 @@ int read_adc_calibration_data(char *buffer,int size)
 	if(size>48)
 		size=48;
 	memcpy(buffer,&nv_buffer[2],size);
-	return size;	
+	return size;
+#elif defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8825)
+	#define FIXNV_ADR        0x80480000
+	calibration_param_T *calibration_base;
+	u32 item_base;
+	uint16 *value = (uint16 *)(&buffer[8]);
+	item_base = Vlx_GetFixedNvitemAddr(VLX_ADC_ID, FIXNV_ADR, (FIXNV_ADR+FIXNV_SIZE));
+	if(item_base == 0xFFFFFFFF)
+		return 0;
+	calibration_base = (calibration_param_T *)item_base;
+	if(!((calibration_base->adc).reserved[7] & (BIT_9)))
+		return 0;
+
+	value[0] = ((calibration_base->adc).battery[0]) & 0xFFFF;
+	value[1] = ((calibration_base->adc).battery[0] >> 16 ) & 0xFFFF;
+	value[2] = ((calibration_base->adc).battery[1]) & 0xFFFF;
+	value[3] = ((calibration_base->adc).battery[1] >> 16 ) & 0xFFFF;
+	return size;
 #endif
 	return 0;
 }

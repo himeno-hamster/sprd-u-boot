@@ -683,6 +683,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 {
 	int str_len;
 	char * buf;
+	unsigned int *adc_data;
 	buf = malloc(1024);
 	memset(buf, 0, 1024);
 
@@ -760,10 +761,10 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 			*(uint32_t*)(harsh_data+8), *(uint32_t*)(harsh_data+12));
 	}
 
-#if defined( CONFIG_AP_ADC_CALIBRATION) || defined(CONFIG_SC8830)
+#if defined( CONFIG_AP_ADC_CALIBRATION) || (defined(CONFIG_SC8825) && (!(BOOT_NATIVE_LINUX)))
 {
 	extern int read_adc_calibration_data(char *buffer,int size);
-	unsigned int *adc_data;
+	extern void CHG_SetADCCalTbl (unsigned int *adc_data);
 	ret=0;
 	adc_data = malloc(64);
 	if(adc_data){
@@ -776,6 +777,12 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 				sprintf(&buf[str_len], " adc_cal=%d,%d",adc_data[2],adc_data[3]);
 			}
 		}
+
+		#if (defined(CONFIG_SC8825) && (!(BOOT_NATIVE_LINUX)))
+			CHG_SetADCCalTbl(adc_data);
+			DCDC_Cal_ArmCore();
+		#endif
+
 		free(adc_data);
 	}
 }

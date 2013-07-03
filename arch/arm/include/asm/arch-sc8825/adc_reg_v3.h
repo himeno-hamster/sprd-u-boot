@@ -48,9 +48,12 @@ extern   "C"
 ///ADC_CTRL
 //#define ADC_STATUS_BIT                      BIT_4
 //#define ADC_TPC_CH_ON_BIT                   BIT_2
+#define BIT_SW_CH_RUN_NUM(_X_)		((((_X_) - 1) & 0xF ) << 4)
+#define SW_CH_NUM_MSK				(BIT_4 | BIT_5 | BIT_6 | BIT_7)
 #define ADC_MODE_12B                        BIT_2
 #define SW_CH_ON_BIT                        BIT_1
 #define ADC_EN_BIT                          BIT_0
+#define ADC_RST_BIT				BIT_4
 
 ///ADC_CS bit map
 #define ADC_SCALE_BIT                       BIT_5

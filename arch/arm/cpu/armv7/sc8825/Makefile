@@ -34,6 +34,7 @@ endif
 ifdef CONFIG_HW_WATCHDOG
 COBJS  += watchdog.o watchdog_phy_v3.o watchdog_hal.o
 endif
+COBJS += dcdc_cal.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS) )

@@ -10,6 +10,10 @@
 
 void ADC_Init(void)
 {
+	uint32_t i;
+	ANA_REG_OR(ANA_APB_ARM_RST, ADC_RST_BIT);
+	for(i = 0; i < 0xff; i++);
+	ANA_REG_AND(ANA_APB_ARM_RST, ~ADC_RST_BIT);
 	ANA_REG_OR(ANA_APB_CLK_EN, ADC_EB | CLK_AUXAD_EN | CLK_AUXADC_EN);
 	ANA_REG_OR(ADC_CTRL, ADC_EN_BIT);
 	ANA_REG_OR(ADC_CTRL, ADC_MODE_12B);
@@ -35,52 +39,51 @@ void ADC_SetScale(bool scale)
       pr_err("adc scale %d not support\n", scale);
 }
 
-void ADC_ConfigTPC(uint8_t x, uint8_t y)
+int32_t ADC_GetValues(adc_channel id, bool scale, uint8_t num, int32_t *p_buf)
 {
-#if 0
-    if(x > ADC_MAX || y > ADC_MAX){
-        pr_err("tpc x and y channel should be in 0~%d\n", ADC_MAX);
-        return;
-    }
+	int32_t count;
+	uint8_t i;
 
-    ANA_REG_MSK_OR(ADC_TPC_CH_CTRL, x|y<<ADC_TPC_Y_CH_OFFSET, ADC_TPC_X_CH_MSK|ADC_TPC_Y_CH_MSK);
-#endif
+	/* clear int */
+	ANA_REG_OR(ADC_INT_CLR, ADC_IRQ_CLR_BIT);
+
+	/* choose channel */
+	ADC_SetCs(id);
+
+	/* set ADC scale */
+	ADC_SetScale(scale);
+
+	/* set read numbers run ADC soft channel */
+	if (num < 1) {
+		return -1;
+	}
+	ANA_REG_MSK_OR(ADC_CTRL, BIT_SW_CH_RUN_NUM(num), SW_CH_NUM_MSK);
+	ANA_REG_OR(ADC_CTRL, SW_CH_ON_BIT);
+
+	/* wait adc complete */
+	count = 1000;
+	while(!(ANA_REG_GET(ADC_INT_SRC)&ADC_IRQ_RAW_BIT) && count--) {
+		for (i = 0; i < 0xFF; i++);
+	}
+	if (count <= 0) {
+		pr_warning("WARNING: ADC_GetValue timeout....\n");
+		return -1;
+	}
+
+	for (i = 0; i < num; i++) {
+		p_buf[i] = ANA_REG_GET(ADC_DAT) & ADC_DATA_MSK;
+	}
+
+	ANA_REG_AND(ADC_CTRL, ~SW_CH_ON_BIT);			// turn off adc soft channel
+	return 0;
 }
-
 int32_t ADC_GetValue(adc_channel id, bool scale)
 {
-    uint32_t result;
-    unsigned long irq_flag;
-    uint32_t count;
+	int32_t result;
 
-    // clear int 
-    ANA_REG_OR(ADC_INT_CLR, ADC_IRQ_CLR_BIT);
+	if (-1 == ADC_GetValues(id, scale, 1, &result)) {
+		return -1;
+	}
 
-    //choose channel
-    ADC_SetCs(id);
-
-    //set ADC scale
-    ADC_SetScale(scale);
-
-    //run ADC soft channel
-    ANA_REG_OR(ADC_CTRL, SW_CH_ON_BIT);
-
-    count = 12;
-
-    //wait adc complete
-    while(!(ANA_REG_GET(ADC_INT_SRC)&ADC_IRQ_RAW_BIT) && count){
-        udelay(50);
-        count--;
-    }
-    if (count == 0) {
-        pr_warning("WARNING: ADC_GetValue timeout....\n");
-        return -1;
-    }
-
-    result = ANA_REG_GET(ADC_DAT) & ADC_DATA_MSK; // get adc value
-    ANA_REG_AND(ADC_CTRL, ~SW_CH_ON_BIT); // turn off adc soft channel
-    ADC_SetCs(TPC_CHANNEL_X);             // set tpc channel x back
-    ANA_REG_OR(ADC_INT_CLR, ADC_IRQ_CLR_BIT); // clear irq of this time
-
-    return result;
+	return result;
 }
