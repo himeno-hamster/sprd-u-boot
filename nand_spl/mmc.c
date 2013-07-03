@@ -2136,6 +2136,8 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
             LDO_TurnOnLDO(LDO_LDO_SIM2);
 #endif
 #endif
+		delayMs(10);
+
             SDHOST_SD_clk_Off(handle->sdio_port);
             SDHOST_SD_Clk_Freq_Set (handle->sdio_port,400000);
             SDHOST_internalClk_On(handle->sdio_port);
@@ -2147,20 +2149,19 @@ PUBLIC BOOLEAN SDIO_Card_Pal_Pwr (SDIO_CARD_PAL_HANDLE handle,SDIO_CARD_PAL_PWR_
 
    case SDIO_CARD_PAL_OFF:
         {
+		SDHOST_SD_clk_Off(handle->sdio_port);
+		SDHOST_RST (handle->sdio_port,RST_ALL);
 #if defined(CONFIG_TIGER) || defined (CONFIG_SC7710G2)
             LDO_TurnOffLDO (LDO_LDO_SDIO3);
             LDO_TurnOffLDO (LDO_LDO_VDD30);
 #elif defined(CONFIG_SC8830)
 		ANA_REG_AND(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR, ~(BIT_7 | BIT_8));
 		ANA_REG_OR(ANA_REG_GLB_LDO_DCDC_PD_RTCSET, (BIT_7 | BIT_8));
-		delayMs(1);
+		delayMs(10);			/* must make sure power off. */
 #else
             LDO_TurnOffLDO (LDO_LDO_SDIO1);
             LDO_TurnOffLDO (LDO_LDO_SIM2);
 #endif
-		SDHOST_SD_clk_Off(handle->sdio_port);
-		SDHOST_RST (handle->sdio_port,RST_ALL);
-
 		break;
         }
      default:
@@ -2225,7 +2226,6 @@ PUBLIC BOOLEAN Emmc_Init()
 	emmc_handle->sdioPalHd = SDIO_Card_Pal_Open(SDIO_CARD_PAL_SLOT_1);
 #endif	
        CARD_SDIO_PwrCtl(emmc_handle, FALSE);
-	delayMs(4);		/* must make sure power off. */
 	CARD_SDIO_PwrCtl(emmc_handle, TRUE);
 	emmc_handle->BlockLen = 0;
 	emmc_handle->RCA = 1;
