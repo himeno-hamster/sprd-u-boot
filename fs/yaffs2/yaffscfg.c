@@ -34,6 +34,7 @@
 #else
 #include "malloc.h"
 #endif
+#include "yportenv.h"
 
 unsigned yaffs_traceMask = 0x0; /* Disable logging */
 //unsigned yaffs_traceMask = 0xFFFFFFFF; /* Enable logging */
@@ -714,14 +715,14 @@ void cmd_yaffs_mread_file(char *fn, unsigned char *addr)
 
 	yaffs_stat(fn,&s);
 
-	printf ("Copy %s to 0x%08x... ", fn, addr);
+	PRINT("Copy %s to 0x%08x... ", fn, addr);
 	h = yaffs_open(fn, O_RDWR,0);
 	if(h<0)
 	{
 		printf("File not found\n");
 		return;
 	}
-	printf("st_size = %d\n", (int)s.st_size);
+	PRINT("st_size = %d\n", (int)s.st_size);
 	yaffs_read(h,addr,(int)s.st_size);
 	//printf("\t[DONE]\n");
 
@@ -741,20 +742,20 @@ void cmd_yaffs_mread_fileex(char *fn, unsigned char *addr, int size)
 
 	yaffs_stat(fn,&s);
 
-	printf ("Copy %s to 0x%08x... ", fn, addr);
+	PRINT("Copy %s to 0x%08x... ", fn, addr);
 	h = yaffs_open(fn, O_RDWR,0);
 	if(h<0)
 	{
 		printf("File not found\n");
 		return;
 	}
-	printf("st_size = %d, size= %d \n", (int)s.st_size, size);
+	PRINT("st_size = %d, size= %d \n", (int)s.st_size, size);
 
 	if(s.st_size > size)
 		s.st_size = size;
 	
 	yaffs_read(h,addr,(int)s.st_size);
-	printf("\t[DONE]\n");
+	PRINT("\t[DONE]\n");
 
 	yaffs_close(h);
 }
@@ -852,8 +853,8 @@ int cmd_yaffs_ls_chk(char *dirfilename)
 					memset(tempstr, 0, 255);
 					sprintf(tempstr, "%s/%s", mountpt, de->d_name);
 					yaffs_stat(tempstr, &stat);
-					printf("%-25s\t%7d\n",de->d_name, stat.st_size);
-					printf("%-25s\t%7d\n",tempstr, stat.st_size);
+					PRINT("%-25s\t%7d\n",de->d_name, stat.st_size);
+					PRINT("%-25s\t%7d\n",tempstr, stat.st_size);
 					ret = stat.st_size;
 					return ret;
 				}

@@ -6802,9 +6802,9 @@ int yaffs_GetObjectFileLength(yaffs_Object * obj)
 
 	/* Dereference any hard linking */
 	obj = yaffs_GetEquivalentObject(obj);
-	printf("yaffs_GetObjectFileLength obj %x \n", obj);
-	printf("yaffs_GetObjectFileLength obj->variantType %x \n", obj->variantType);
-	printf("yaffs_GetObjectFileLength obj->variant.fileVariant.fileSize %x \n", obj->variant.fileVariant.fileSize);
+	PRINT("yaffs_GetObjectFileLength obj %x \n", obj);
+	PRINT("yaffs_GetObjectFileLength obj->variantType %x \n", obj->variantType);
+	PRINT("yaffs_GetObjectFileLength obj->variant.fileVariant.fileSize %x \n", obj->variant.fileVariant.fileSize);
 
 	if (obj->variantType == YAFFS_OBJECT_TYPE_FILE) {
 		return obj->variant.fileVariant.fileSize;

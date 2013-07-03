@@ -296,7 +296,7 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 
 	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC / 11;
 
-	printf("0x2090023c = 0x%x\n", __raw_readl(0x2090023c));
+	FB_PRINT("0x2090023c = 0x%x\n", __raw_readl(0x2090023c));
 #elif defined CONFIG_SC8830
 	// to do
 	//select DISPC clock source

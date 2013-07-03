@@ -136,6 +136,7 @@
 #define YAFFS_LOSTNFOUND_PREFIX		"obj"
 /* #define YPRINTF(x) printf x */
 
+
 #define YAFFS_ROOT_MODE				0666
 #define YAFFS_LOSTNFOUND_MODE		0666
 
@@ -189,5 +190,13 @@ extern unsigned int yaffs_wr_attempts;
 #ifndef CONFIG_YAFFS_WINCE
 #define YBUG() T(YAFFS_TRACE_BUG,(TSTR("==>> yaffs bug: " __FILE__ " %d" TENDSTR),__LINE__))
 #endif
+
+//#define DEBUG_YAFFS
+#ifdef DEBUG_YAFFS 
+#define PRINT(...) printf(__VA_ARGS__)
+#else
+#define PRINT(...)
+#endif
+
 
 #endif
