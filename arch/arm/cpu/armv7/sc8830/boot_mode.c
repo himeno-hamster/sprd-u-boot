@@ -90,6 +90,12 @@ PUBLIC void BOOT_SetWDGHWFlag (WDG_HW_FLAG_T type, uint32 val)
         CHIP_PHY_SetWDGHWFlag (type, val);
 }
 
+PUBLIC void BOOT_ResetHWVal(uint32 val)
+{
+    CHIP_PHY_ResetHWFlag (val);
+}
+
+
 /**---------------------------------------------------------------------------*
  **                         Compiler Flag                                     *
  **---------------------------------------------------------------------------*/

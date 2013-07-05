@@ -120,7 +120,6 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 #endif
 	    normal_mode();
     }
-
     if(rst_mode == RECOVERY_MODE){
         DBG("func: %s line: %d\n", __func__, __LINE__);
         recovery_mode();
@@ -148,7 +147,10 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		special_mode();
     }else if(rst_mode == CALIBRATION_MODE){
 		calibration_detect(0);
+	}else if(rst_mode == AUTODLOADER_REBOOT) {
+		autodloader_mode();
 	}
+
 #ifdef CONFIG_SC8810
 //    normal_mode();
 #endif

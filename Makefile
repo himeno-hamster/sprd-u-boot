@@ -225,6 +225,7 @@ LIBS += drivers/pcmcia/libpcmcia.o
 LIBS += drivers/power/libpower.o
 LIBS += drivers/spi/libspi.o
 LIBS += drivers/clk/libclk.o
+LIBS += nand_fdl/common/src/libfdlcommon.o
 ifeq ($(CPU),mpc83xx)
 LIBS += drivers/qe/libqe.o
 LIBS += arch/powerpc/cpu/mpc8xxx/lib8xxx.o

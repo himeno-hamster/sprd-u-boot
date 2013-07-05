@@ -30,7 +30,7 @@ gcclibdir := $(shell dirname `$(CC) -print-libgcc-file-name`)
 LDSCRIPT      = $(TOPDIR)/nand_fdl/board/$(VENDOR)/$(SOC)/u-boot.lds
 FDL2_LDFLAGS	= -Bstatic -T $(LDSCRIPT) $(PLATFORM_LDFLAGS)
 AFLAGS	+= -I $(OBJTREE)/include/asm/arch
-CFLAGS	+= -I $(OBJTREE)/include/asm/arch
+CFLAGS	+= -D CONFIG_FRMCHECK -I $(OBJTREE)/include/asm/arch
 
 FDL2_PATH = $(TOPDIR)/nand_fdl/fdl-2
 COM_PATH = $(TOPDIR)/nand_fdl/common

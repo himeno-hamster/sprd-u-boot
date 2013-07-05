@@ -17,6 +17,7 @@
 #define   HWRST_STATUS_SPECIAL			(0x70)
 #define   HWRST_STATUS_CALIBRATION			(0x90)
 #define   HWRST_STATUS_PANIC			(0x80)
+#define   HWRST_STATUS_AUTODLOADER (0Xa0)
 #define   HWRST_STATUS_NORMAL2			(0Xf0)
 
 extern int hw_watchdog_rst_pending(void);
@@ -49,6 +50,8 @@ unsigned check_reboot_mode(void)
 			return PANIC_REBOOT;
 		else if(rst_mode == HWRST_STATUS_SPECIAL)
 			return SPECIAL_MODE;
+		else if(rst_mode == HWRST_STATUS_AUTODLOADER)
+			return AUTODLOADER_REBOOT;
 		else{
 			printf(" a boot mode not supported\n");
 			return 0;

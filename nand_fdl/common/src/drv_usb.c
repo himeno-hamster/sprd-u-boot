@@ -41,6 +41,7 @@ LOCAL uint32 readIndex = 0;
 
 PUBLIC __align (32)  unsigned char usb_out_endpoint_buf[2] [MAX_RECV_LENGTH];
 
+
 int error_count = 0;
  
 /*****************************************************************************/
@@ -150,6 +151,7 @@ LOCAL void usb_start_transfer (USB_EP_NUM_E ep_num, BOOLEAN dir, uint32 transfer
     if (dir)
     {
         volatile USB_DOEPTSIZ_U *doeptsiz_ptr = (USB_DOEPTSIZ_U *) USB_DOEPTSIZ (ep_num);
+	 volatile USB_DOEPCTL_U   *doepctl_ptr = (USB_DOEPCTL_U *) USB_DOEPCTL (ep_num);
 
         if (is_dma)
         {                
@@ -158,7 +160,7 @@ LOCAL void usb_start_transfer (USB_EP_NUM_E ep_num, BOOLEAN dir, uint32 transfer
         }
 
         doeptsiz_ptr->mBits.transfer_size = MAX_RECV_LENGTH;    // transfer size
-        doeptsiz_ptr->mBits.packet_count = 64;
+        doeptsiz_ptr->mBits.packet_count = MAX_RECV_LENGTH/doepctl_ptr->mBits.mps;
         * (volatile uint32 *) USB_DOEPCTL (ep_num) |= (unsigned int) BIT_26; // clear nak
         * (volatile uint32 *) USB_DOEPCTL (ep_num) |= (unsigned int) BIT_31; // endpoint enable
     }
@@ -613,9 +615,11 @@ PUBLIC int USB_EPxSendData (char ep_id ,unsigned int *pBuf,    int len)
 /*****************************************************************************/
 PUBLIC void usb_core_init (void)
 {
-    readIndex = 0;
-    recv_length = 0;
-    return;
+	* (volatile uint32 *) USB_GAHBCFG |= (unsigned int) BIT_5;
+	* (volatile uint32 *) USB_DOEPMSK |= (unsigned int) BIT_13;
+	readIndex = 0;
+	recv_length = 0;
+	return;
 }
 
 

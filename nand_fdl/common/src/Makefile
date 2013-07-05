@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2000-2006
+# (C) Copyright 2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # See file CREDITS for list of people who contributed to this
@@ -12,42 +12,34 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307 USA
+#
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(SOC).o
+LIB	:= $(obj)libfdlcommon.o
 
-COBJS	= generic.o timer.o reset.o ldo.o adi_drv.o mfp_sprd.o chip_phy_v3.o chg_phy.o vibrator.o mmu.o adc.o rtc-sprd.o sec_boot.o glb.o adi.o gpio.o gpio_phy.o clock.o clock_test.o check_reboot.o eic.o ldo_sleep.o
-SOBJS += mmu_asm.o
-ifndef CONFIG_SKIP_LOWLEVEL_INIT
-COBJS   += lowlevel_init.o sdram.o remap.o sdram_prod.o mmu.o chip_cfg.o mcu.o
-SOBJS   = cpu_spec.o mmu_asm.o
-endif
+COBJS-$(CONFIG_AUTODLOADER) += dl_engine.o fdl_crc.o packet.o fdl_channel.o fdl_stdio.o usb_boot.o drv_usb.o virtual_com.o
 
-ifdef CONFIG_HW_WATCHDOG
-COBJS  += watchdog.o watchdog_phy_v3.o watchdog_hal.o
-endif
+#CFLAGS += -I $(TOPDIR)/arch/arm/include/asm/arch-sc8810
+#HOSTCFLAGS += -I $(TOPDIR)/arch/arm/include/asm/arch-sc8810
+#AFLAGS	+= -I $(TOPDIR)/include/asm/arch
+#CFLAGS	+= -I $(TOPDIR)/include/asm/arch
 
-ifdef CONFIG_AUTODLOADER
-COBJS   += chip_cfg.o
-endif
+COBJS	:= $(COBJS-y)
+SRCS	:= $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS))
 
-COBJS += dcdc_cal.o misc.o
+all:	$(LIB)
 
-SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS) )
-
-all:	$(obj).depend $(LIB)
-
-$(LIB):	$(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+$(LIB): $(obj).depend $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 #########################################################################
 

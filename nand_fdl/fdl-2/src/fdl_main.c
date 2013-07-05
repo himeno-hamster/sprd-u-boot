@@ -93,7 +93,7 @@ int main(void)
 	unsigned int i, j;
 
 	printf("fdl main \n");
-	MMU_Init(0);
+	//MMU_Init(0);
 
 	sigture_address = (uint32)FDL2_signature;
 
@@ -130,6 +130,7 @@ int main(void)
 				FDL_SendAckPacket (convert_err (EMMC_INCOMPATIBLE_PART));
 			#endif
 		#else
+			MMU_Init(0);
 			if (!FDL_Check_Partition_Table()) {
 				#if 0 //defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)// JUST FOR TEST , DELETE IT LATER
 				write_uefi_partition_table(g_sprd_emmc_partition_cfg);

@@ -2,7 +2,7 @@
 #include <asm/arch/sci_types.h>
 #include <asm/arch/packet.h>
 #include <asm/arch/fdl_stdio.h>
-#include "fdl_main.h"
+//#include "fdl_main.h"
 #include <asm/arch/fdl_crc.h>
 #include <asm/arch/sio_drv.h>
 #include <asm/arch/usb_boot.h>
@@ -190,10 +190,26 @@ void FDL_PacketDoIdle (void)
                 if (HDLC_FLAG == ch) {
 			packet_ptr->pkt_state = PKT_RECV;
                     	//check the packet. CRC should be 0
+#ifndef CONFIG_FRMCHECK
+                          crc = crc_16_l_calc((unsigned short *)&packet_ptr->packet_body, packet_ptr->data_size);
+#else
                     	crc = frm_chk((unsigned short *)&packet_ptr->packet_body, packet_ptr->data_size);
+#endif
 			
                     	if (0 != crc) {
+				int k;
 				printf("\n\n\n%s %s %d\n\n\n", __FILE__, __FUNCTION__, __LINE__);
+				printf("%4x", packet_ptr->packet_body.type);
+				printf("%4x", packet_ptr->packet_body.size);
+				for(k = 0;  k  < packet_ptr->data_size - 4; k++)
+				{
+					printf("%2x", packet_ptr->packet_body.content[k]);
+				}
+				printf("\n\n\n\n");
+				for(k = 0;  k  < packet_ptr->data_size - 4; k++)
+				{
+					printf("%c", packet_ptr->packet_body.content[k]);
+				}
                         	//Verify error, reject this packet.
                         	FDL_FreePacket(packet_ptr);
                         	packet_receiving = NULL;
@@ -252,7 +268,11 @@ void FDL_PacketDoIdle (void)
                     packet_ptr->pkt_state = PKT_RECV;
 
                     // check the packet. CRC should be 0
+#ifndef CONFIG_FRMCHECK
+                   crc = crc_16_l_calc ( (unsigned short *) &packet_ptr->packet_body, packet_ptr->data_size);
+#else
                     crc = frm_chk ( (unsigned short *) &packet_ptr->packet_body, packet_ptr->data_size);
+#endif
 
 			if (0 != crc) {
 				printf("\n\n\n%s %s %d\n\n\n", __FILE__, __FUNCTION__, __LINE__);
@@ -358,9 +378,13 @@ uint32  FDL_DataProcess (PACKET_T *packet_ptr_src, PACKET_T *packet_ptr_dest)
     packet_ptr_src->packet_body.type = EndianConv_16 (packet_ptr_src->packet_body.type);
 
     /*src CRC calculation*/
+#ifndef  CONFIG_FRMCHECK
+    crc = crc_16_l_calc ( (const unsigned short *) (& (packet_ptr_src->packet_body)), size + PACKET_HEADER_SIZE);
+#else
     crc = frm_chk ( (const unsigned short *) (& (packet_ptr_src->packet_body)), size + PACKET_HEADER_SIZE);
 
     crc = EndianConv_16 (crc);
+#endif
     packet_ptr_src->packet_body.content[ size ] = (crc >> 8) & 0xFF;
     packet_ptr_src->packet_body.content[ size+1 ] = (crc)    & 0xFF;
 

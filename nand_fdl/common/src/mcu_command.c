@@ -9,6 +9,11 @@
 #include <asm/arch/mocor_boot_mode.h>
 #include <asm/arch/chip.h>
 
+#ifndef HWRST_STATUS_NORMAL
+#define   HWRST_STATUS_NORMAL 			(0X40)
+#endif
+
+
 typedef void (*BOOT_ENTRY) (void);
 
 /*****************************************************************************/
@@ -19,7 +24,7 @@ typedef void (*BOOT_ENTRY) (void);
 void ResetMCU (void)
 {
     // Set watchdog reset flag
-    BOOT_ResetHWFlag ();
+    BOOT_ResetHWVal (HWRST_STATUS_NORMAL);
     BOOT_SetWDGHWFlag (TYPE_RESET, AUTO_TEST_MODE);
     // Reset the system via watchdog timeout
     CHIP_ResetMCU ();
@@ -86,7 +91,6 @@ int FDL_McuResetNormal (PACKET_T *packet, void *arg)
     {
         /* Do nothing */;
     }
-
     FDL_ResetMcuClock();
 
     ResetMCU();

@@ -14,6 +14,11 @@ void watchdog_mode(void);
 void unknow_reboot_mode(void);
 void special_mode(void);
 void panic_reboot_mode(void);
+#ifdef CONFIG_AUTODLOADER
+void autodloader_mode(void);
+#else
+#define autodloader_mode() do {} while (0)
+#endif
 int is_bat_low(void);
 int alarm_flag_check(void);
 int cali_file_check(void);
@@ -28,6 +33,7 @@ int read_adc_calibration_data(char *buffer,int size);
 #define UNKNOW_REBOOT_MODE 0x77665508
 #define PANIC_REBOOT 0x77665509
 #define CALIBRATION_MODE 0x7766550a
+#define AUTODLOADER_REBOOT 0x77665510
 
 #define BOOT_NORAML 0xf1
 #define BOOT_FASTBOOT 0xf2

@@ -114,10 +114,18 @@ static int ep_matches(
 		tmp--;
 		if (!isdigit(*tmp)) {
 			if (desc->bEndpointAddress & USB_DIR_IN) {
+#ifdef CONFIG_AUTODLOADER
+				if(('n' != *tmp) || ('5' != ep->name[2]))
+#else
 				if ('n' != *tmp)
+#endif
 					return 0;
 			} else {
+#ifdef CONFIG_AUTODLOADER
+				if(('t' != *tmp) || ('6' != ep->name[2]))
+#else
 				if ('t' != *tmp)
+#endif
 					return 0;
 			}
 		}
