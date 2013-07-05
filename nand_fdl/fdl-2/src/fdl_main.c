@@ -88,7 +88,7 @@ int main(void)
 	 * The UART has also been opened by the 1st FDL and the baudrate
 	 * has been setted correctly.
 	 */  
-	int err;
+	int err = 0;
 	uint32 sigture_address;
 	unsigned int i, j;
 
