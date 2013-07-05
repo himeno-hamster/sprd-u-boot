@@ -216,7 +216,6 @@ LOCAL unsigned short calc_checksum(unsigned char *dat, unsigned long len)
 	checksum += (checksum >> 16);
 	return (~checksum);
 }
-
 /*
 	TRUE(1): pass
 	FALSE(0): fail
@@ -521,11 +520,38 @@ LOCAL unsigned short eMMCCheckSum(const unsigned int *src, int len)
 
     return (unsigned short) (~sum);
 }
-
+LOCAL unsigned int get_pad_data(const unsigned int *src, int len, int offset, unsigned short sum)
+{
+	unsigned int sum_tmp;
+	unsigned int sum1 = 0;
+	unsigned int pad_data;
+	unsigned int i;
+	sum = ~sum;
+	sum_tmp = sum & 0xffff;
+	sum1 = 0;
+	for(i = 0; i < offset; i++) {
+		sum1 += src[i];
+	}
+	for(i = (offset + 1); i < len; i++) {
+		sum1 += src[i];
+	}
+	pad_data = sum_tmp - sum1;
+	return pad_data;
+}
 LOCAL void splFillCheckData(unsigned int * splBuf,  int len)
 {
 #if defined(CONFIG_TIGER) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
 	EMMC_BootHeader *header;
+#if defined(CONFIG_SC8830)
+	unsigned int pad_data;
+	unsigned int w_len;
+	unsigned int w_offset;
+	w_len = (SPL_CHECKSUM_LEN-(BOOTLOADER_HEADER_OFFSET+sizeof(*header))) / 4;
+	w_offset = w_len - 1;
+	//pad the data inorder to make check sum to 0
+	pad_data = (unsigned int)get_pad_data((unsigned char*)splBuf+BOOTLOADER_HEADER_OFFSET+sizeof(*header), w_len, w_offset, 0);
+	*(volatile unsigned int *)((unsigned char*)splBuf+SPL_CHECKSUM_LEN - 4) = pad_data;
+#endif
 	header = (EMMC_BootHeader *)((unsigned char*)splBuf+BOOTLOADER_HEADER_OFFSET);
 	header->version  = 0;
 	header->magicData= MAGIC_DATA;
