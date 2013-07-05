@@ -776,12 +776,12 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 				str_len = strlen(buf);
 				sprintf(&buf[str_len], " adc_cal=%d,%d",adc_data[2],adc_data[3]);
 			}
-		}
 
 		#if (defined(CONFIG_SC8825) && (!(BOOT_NATIVE_LINUX)))
 			CHG_SetADCCalTbl(adc_data);
 			DCDC_Cal_ArmCore();
 		#endif
+		}
 
 		free(adc_data);
 	}
