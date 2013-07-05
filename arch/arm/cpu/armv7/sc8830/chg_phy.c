@@ -5,11 +5,18 @@
 #include <asm/arch/adi_hal_internal.h>
 #include <asm/arch/analog_reg_v3.h>
 
+#define ADC_CAL_TYPE_NO			0
+#define ADC_CAL_TYPE_NV			1
+#define ADC_CAL_TYPE_EFUSE		2
+
 uint16_t adc_voltage_table[2][2] =
 {
     {3308, 4200},
     {2836, 3600},
 };
+
+uint32_t adc_cal_flag = 0;
+
 uint16_t CHGMNG_AdcvalueToVoltage (uint16_t adcvalue)
 {
 	int32_t temp;
@@ -38,9 +45,16 @@ void CHG_SetRecharge (void)
 	ANA_REG_OR (ANA_APB_CHGR_CTL2,CHGR_RECHG_BIT);
 }
 
+uint32_t CHG_GetAdcCalType(void)
+{
+	return adc_cal_flag;
+}
+
 void CHG_Init (void)
 {
 	unsigned int chip_id = 0;
+
+	adc_cal_flag = ADC_CAL_TYPE_NO;
 
 	ANA_REG_MSK_OR(ANA_APB_CHGR_CTL1,
 		    (6 << CHGR_CHG_CUR_SHIFT) & CHGR_CHG_CUR_MSK,CHGR_CHG_CUR_MSK); //set charge current 600mA
@@ -69,6 +83,7 @@ void CHG_Init (void)
                                 adc_voltage_table[0][0]=(adc_data[2]>>16)&0xffff;
                                 adc_voltage_table[1][1]=adc_data[3]&0xffff;
                                 adc_voltage_table[1][0]=(adc_data[3]>>16)&0xffff;
+                                adc_cal_flag = ADC_CAL_TYPE_NV;
                         }
 			free(adc_data);
                 }
