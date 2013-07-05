@@ -184,6 +184,7 @@ __inline LOCAL void set_XOSC32K_config(void)
 #endif
 }
 
+
 __inline LOCAL void set_mem_volt(void)
 {
 #if defined(CONFIG_SC7710G2)
@@ -205,10 +206,21 @@ __inline LOCAL void set_mem_volt(void)
 #endif
 }
 
+#ifndef BIT
+#define BIT(x)	(1<<(x))
+#endif
+
+#define BITS_DCDC_CAL_RST(_x_)     ( (_x_) << 5 & (BIT(5)|BIT(6)|BIT(7)|BIT(8)|BIT(9)) )
+#define BITS_DCDC_CAL(_x_)         ( (_x_) << 0 & (BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4)) )
+#define DCDC_CAL(_x_)	BITS_DCDC_CAL(_x_) | BITS_DCDC_CAL_RST(BITS_DCDC_CAL(-1) - (_x_))
 
 __inline LOCAL void Chip_Workaround(void)
 {
 #if defined(CONFIG_SC7710G2)
+	/*FIXME: adjust vcore/varm, about 3mV one step */
+	ANA_REG_SET(ANA_DCDC_CORE_CTRL1, DCDC_CAL(10));
+	ANA_REG_SET(ANA_DCDC_ARM_CTL1, DCDC_CAL(10));
+
 	/* FIXME: disable otp for a-die internal bug */
 	ANA_REG_OR(ANA_MIXED_CTRL, BIT_1/*BIT_OTP_EN_RST*/);
 	ANA_REG_OR(ANA_DCDC_OPT_CTL, BIT_0/*BIT_DCDC_OTP_PD*/);
