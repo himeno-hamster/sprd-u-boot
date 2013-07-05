@@ -30,6 +30,8 @@
 #define CONFIG_GPIOLIB 1
 //#define NAND_DEBUG  
 //#define DEBUG
+#define CONFIG_SDRAMDISK
+
 #define U_BOOT_SPRD_VER 1
 /*#define SPRD_EVM_TAG_ON 1*/
 #ifdef SPRD_EVM_TAG_ON
@@ -62,11 +64,18 @@
 #define EMMC_SECTOR_SIZE 512
 #define	CONFIG_MMC
 
+#define CONFIG_FS_EXT4
+#define CONFIG_EXT4_WRITE
+#define CONFIG_CMD_EXT4
+#define CONFIG_CMD_EXT4_WRITE
+
+//#define CONFIG_TIGER_MMC
 #define CONFIG_UEFI_PARTITION
 #define CONFIG_EFI_PARTITION
 #define CONFIG_EXT4_SPARSE_DOWNLOAD
 //#define CONFIG_EMMC_SPL
-#define CONFIG_SYS_EMMC_U_BOOT_SECTOR_NUM 0x400
+#define CONFIG_SYS_EMMC_U_BOOT_SECTOR_NUM ((CONFIG_SYS_NAND_U_BOOT_SIZE+EMMC_SECTOR_SIZE-1)/EMMC_SECTOR_SIZE)
+
 #endif
 
 /*
@@ -79,6 +88,7 @@
 #define CONFIG_MMC			1
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_SDHCI			1
+#define CONFIG_SDHCI_CTRL_NO_HISPD     1 /* disable high speed control */
 #define CONFIG_SYS_MMC_MAX_BLK_COUNT	0x1000
 #define CONFIG_MMC_SDMA			1
 #define CONFIG_MV_SDHCI			1
@@ -86,6 +96,7 @@
 #define CONFIG_EFI_PARTITION		1
 #define CONFIG_SYS_MMC_NUM		1
 #define CONFIG_SYS_MMC_BASE		{0x20600000}
+#define CONFIG_SYS_SD_BASE		0x20300000
 #endif
 
 #define BB_DRAM_TYPE_256MB_32BIT
@@ -122,7 +133,7 @@
 #define DYNAMIC_CRC_TABLE
 /* Start copying real U-boot from the second page */
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	0x40000
-#define CONFIG_SYS_NAND_U_BOOT_SIZE	0x80000
+#define CONFIG_SYS_NAND_U_BOOT_SIZE	0x8A000
 #define RAM_TYPPE_IS_SDRAM	0
 //#define FPGA_TRACE_DOWNLOAD //for download image from trace
 
@@ -333,7 +344,7 @@
 #endif // CONFIG_LCD
 
 #define CONFIG_SPRD_SYSDUMP
-#define SYSDUMP_CORE_HDR  	0x8c400000  /* SPRD_IO_MEM_BASE in kernel */
+#define SYSDUMP_CORE_HDR  0x98000000 /*0x8c400000*/  /* SPRD_IO_MEM_BASE in kernel */
 
 #define CALIBRATE_ENUM_MS 15000
 #define CALIBRATE_IO_MS 10000
@@ -364,5 +375,7 @@
 #define CONFIG_SOUND_CODEC_SPRD_V3 1
 #define CONFIG_SOUND_DAI_VBC_R2P0 1
 /* #define CONFIG_SPRD_AUDIO_DEBUG */
+
+#define CONFIG_RAMDUMP_NO_SPLIT 1 /* Don't split sysdump file */
 
 #endif /* __CONFIG_H */
