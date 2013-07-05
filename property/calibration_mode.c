@@ -190,9 +190,11 @@ int  tool_channel_write(char *buffer,int count)
             {
                 while(count > 0){
                     ret = gs_write(g_uart_buf, count);
+#if 0
                     printf("func: %s waitting %d write done\n", __func__, count);
                     if(usb_trans_status)
                         printf("func: %s line %d usb trans with error %d\n", __func__, __LINE__, usb_trans_status);
+#endif
                     usb_wait_trans_done(1);
                     if(ret > 0)
                         count -= ret;
@@ -225,15 +227,17 @@ int  tool_channel_read(char *buffer,int count)
             {
                 if(usb_is_trans_done(0)){
                     int ret;
+#if 0
                     if(usb_trans_status)
                         printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
-
+#endif
                     ret = gs_read(buffer, &size);
                     if(ret)
                         index = size;
-
+#if 0
                     if(usb_trans_status)
                         printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
+#endif
                 }
             }
             break;
