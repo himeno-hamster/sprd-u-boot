@@ -22,6 +22,7 @@ extern int charger_connected(void);
 extern int alarm_triggered(void);
 extern void CHG_TurnOn (void);
 extern void CHG_ShutDown (void);
+extern uint32_t CHG_GetAdcCalType(void);
 extern void CHG_Init (void);
 extern int cali_file_check(void);
 
@@ -58,7 +59,10 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	CHG_Init();
 
 #ifdef CONFIG_SC8830
-	DCDC_Cal_ArmCore();
+	if (CHG_GetAdcCalType() != 0)
+	{
+		DCDC_Cal_ArmCore();
+	}
 	//DCDC_Cal_All(0);
 #endif
 
