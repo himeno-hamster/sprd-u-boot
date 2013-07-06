@@ -66,7 +66,7 @@ int sci_adc_request(int channel)
 	int i;
 	int results[MEASURE_TIMES];
 
-	if (-1 == ADC_GetValues(channel, 1, MEASURE_TIMES, results)) {
+	if (-1 == ADC_GetValues(channel, ADC_SCALE_3V, MEASURE_TIMES, results)) {
 		return 0;
 	}
 

@@ -47,7 +47,7 @@ void ADC_SetScale(bool scale)
 
 int32_t ADC_GetValues(adc_channel id, bool scale, uint8_t num, int32_t *p_buf)
 {
-	uint32_t count;
+	int32_t count,i;
 
 	/* clear int */
 	ANA_REG_OR(ADC_INT_CLR, ADC_IRQ_CLR_BIT);
@@ -66,11 +66,11 @@ int32_t ADC_GetValues(adc_channel id, bool scale, uint8_t num, int32_t *p_buf)
 	ANA_REG_OR(ADC_CTRL, SW_CH_ON_BIT);
 
 	/* wait adc complete */
-	count = 24;
+	count = 1000;
 	while(!(ANA_REG_GET(ADC_INT_SRC)&ADC_IRQ_RAW_BIT) && count--) {
-		udelay(50);
+		for (i =0; i < 0xff; i++);
 	}
-	if (count == 0) {
+	if (count <= 0) {
 		pr_warning("WARNING: ADC_GetValue timeout....\n");
 		return -1;
 	}
