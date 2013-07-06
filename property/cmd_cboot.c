@@ -25,6 +25,7 @@ extern void CHG_ShutDown (void);
 extern uint32_t CHG_GetAdcCalType(void);
 extern void CHG_Init (void);
 extern int cali_file_check(void);
+unsigned check_reboot_mode(void);
 
 int boot_pwr_check(void)
 {
@@ -41,12 +42,15 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     uint32_t key_mode = 0;
     uint32_t key_code = 0;
     volatile int i;
+    unsigned rst_mode= check_reboot_mode();
 
     if(argc > 2)
       goto usage;
 
 #ifdef CONFIG_SC8830
-        if(cali_file_check() && !boot_pwr_check())
+        if(cali_file_check() && !boot_pwr_check()&&
+           (!rst_mode || (rst_mode == CALIBRATION_MODE))&&
+           (!alarm_triggered()))
                 calibration_detect(2);
 #endif
 #ifdef CONFIG_SC7710G2
@@ -102,8 +106,6 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     board_keypad_init();
     boot_pwr_check();
 
-    unsigned check_reboot_mode(void);
-    unsigned rst_mode= check_reboot_mode();
 #ifdef CONFIG_SPRD_SYSDUMP
     write_sysdump_before_boot(rst_mode);
 #endif
