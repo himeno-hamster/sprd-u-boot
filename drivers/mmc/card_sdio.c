@@ -360,6 +360,9 @@ CARD_SDIO_HANDLE  emmc_handle = NULL;
 
 LOCAL CARD_PORT_T cardPort[CARD_SDIO_SLOT_MAX] = {0};
 
+extern int LDO_Init(void);
+extern  void  SDIO_Card_Pal_SetType(SDIO_CARD_PAL_HANDLE handle, SDIO_CARD_PAL_TYPE_E sdio_type);
+
 //-----------------------------------------------------------------------------------
 //	To judge whether the handle is valid
 //-----------------------------------------------------------------------------------
@@ -2325,6 +2328,8 @@ PUBLIC BOOLEAN CARD_SDIO_ReadMultiBlock(CARD_EMMC_PARTITION_TPYE  cardPartiton, 
 	uint8 rspBuf[16];
 	uint32 address = 0xFFFFFFFF;
 	CARD_DATA_PARAM_T data;
+	uint32 argument = 0;
+	CARD_DATA_PARAM_T *dataParam = NULL;
 
 	CARD_SDIO_ASSERT(TRUE == _IsCardHandleValid(cardHandle));	/*assert verified*/
 
@@ -2353,10 +2358,10 @@ PUBLIC BOOLEAN CARD_SDIO_ReadMultiBlock(CARD_EMMC_PARTITION_TPYE  cardPartiton, 
 	data.direction = SDIO_DMA_IN;
 	if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD18_READ_MULTIPLE_BLOCK,address,&data,rspBuf))
 	{
-		SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,NULL,NULL,rspBuf);
+		SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,argument,dataParam,rspBuf);
 		return FALSE;
 	}
-	if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,NULL,NULL,rspBuf))
+	if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,argument,dataParam,rspBuf))
 	{
 		return FALSE;
 	}
@@ -2434,6 +2439,8 @@ PUBLIC BOOLEAN CARD_SDIO_WriteMultiBlock(CARD_EMMC_PARTITION_TPYE  cardPartiton,
 	uint8 rspBuf[16];
 	uint32 address = 0xFFFFFFFF;
 	CARD_DATA_PARAM_T data;
+	uint32 argument = 0;
+	CARD_DATA_PARAM_T *dataParam = NULL;
 
 	CARD_SDIO_ASSERT(TRUE == _IsCardHandleValid(cardHandle));	/*assert verified*/
 
@@ -2462,10 +2469,10 @@ PUBLIC BOOLEAN CARD_SDIO_WriteMultiBlock(CARD_EMMC_PARTITION_TPYE  cardPartiton,
 	data.direction = SDIO_DMA_OUT;
 	if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD25_WRITE_MULTIPLE_BLOCK,address,&data,rspBuf))
 	{
-		SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,NULL,NULL,rspBuf);
+		SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,argument,dataParam,rspBuf);
 		return FALSE;
 	}
-	if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,NULL,NULL,rspBuf))
+	if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,argument,dataParam,rspBuf))
 	{
 		return FALSE;
 	}
@@ -2657,6 +2664,8 @@ LOCAL BOOLEAN SDCARD_SDIO_WriteMultiBlock(CARD_SDIO_HANDLE cardHandle,uint32 sta
 	uint8 rspBuf[16];
 	uint32 address;
 	CARD_DATA_PARAM_T data;
+	uint32 argument = 0;
+	CARD_DATA_PARAM_T *dataParam = NULL;
 
 	CARD_SDIO_ASSERT(TRUE == _IsCardHandleValid(cardHandle));	/*assert verified*/
 
@@ -2687,10 +2696,10 @@ LOCAL BOOLEAN SDCARD_SDIO_WriteMultiBlock(CARD_SDIO_HANDLE cardHandle,uint32 sta
 	{
 		if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD25_WRITE_MULTIPLE_BLOCK,address,&data,rspBuf))
 		{
-			SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,NULL,NULL,rspBuf);
+			SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,argument,dataParam,rspBuf);
 			return FALSE;
 		}
-		if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,NULL,NULL,rspBuf))
+		if(SDIO_CARD_PAL_ERR_NONE != SDIO_Card_Pal_SendCmd(cardHandle->sdioPalHd,CARD_CMD12_STOP_TRANSMISSION,argument,dataParam,rspBuf))
 		{
 			return FALSE;
 		}

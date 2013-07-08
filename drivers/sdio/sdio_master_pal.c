@@ -421,7 +421,7 @@ SDIO_CARD_PAL_ERROR_E SPRD_SDSlave_Pal_SendCmd(
     return SDIO_CARD_PAL_ERR_NONE;
 }
 
-int SPRD_SDSlave_Pal_Close(SDIO_CARD_PAL_HANDLE handle)
+void SPRD_SDSlave_Pal_Close(SDIO_CARD_PAL_HANDLE handle)
 {
 
     SDIO_CARD_PAL_ASSERT(
@@ -434,7 +434,7 @@ int SPRD_SDSlave_Pal_Close(SDIO_CARD_PAL_HANDLE handle)
     SDHOST_UnRegister(handle->sdio_port);
 
     handle->s_CardEvent = 0;
-    return TRUE;
+
 }
 
 void SDIO_Card_Pal_SlotSelect(SDIO_CARD_PAL_SLOT_E slotNo)

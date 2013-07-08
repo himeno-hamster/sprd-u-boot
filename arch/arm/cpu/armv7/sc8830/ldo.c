@@ -592,7 +592,6 @@ LDO_ERR_E LDO_TurnOnLDO(LDO_ID_E ldo_id)
 LDO_ERR_E LDO_TurnOffLDO(LDO_ID_E ldo_id)
 {
 	struct ldo_ctl_info* ctl = NULL;
-	unsigned long flags;
 
 	if (ldo_id == LDO_LDO_SDIO3)
 	{
@@ -705,7 +704,6 @@ LDO_VOLT_LEVEL_E LDO_GetVoltLevel(LDO_ID_E ldo_id)
 {
 	unsigned int level_ret = 0;
 	struct ldo_ctl_info* ctl = NULL;
-	unsigned long flags;
 
 	ctl = LDO_GetLdoCtl(ldo_id);
 	SCI_PASSERT(ctl != NULL, ("ldo_id = %d", ldo_id));
