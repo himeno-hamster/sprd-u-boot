@@ -33,13 +33,13 @@ static __inline void usb_handler (void);
  **---------------------------------------------------------------------------*/
  
 static int currentDmaBufferIndex = 0;
-LOCAL __align(32) uint32    s_setup_packet[8] = {0};
+LOCAL __align(64) uint32    s_setup_packet[8] = {0};
 LOCAL uint32    enum_speed = 0;
 LOCAL uint32    recv_length = 0;
 LOCAL uint32 nIndex = 0;
 LOCAL uint32 readIndex = 0;
 
-PUBLIC __align (32)  unsigned char usb_out_endpoint_buf[2] [MAX_RECV_LENGTH];
+PUBLIC __align (64)  unsigned char usb_out_endpoint_buf[2] [MAX_RECV_LENGTH];
 
 
 int error_count = 0;
