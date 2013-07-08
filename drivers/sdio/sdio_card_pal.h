@@ -188,7 +188,7 @@ SDIO_CARD_PAL_ERROR_E SPRD_SDSlave_Pal_SendCmd(
     /*IN*/CARD_DATA_PARAM_T* dataParam,
     /*OUT*/unsigned char* rspBuf
 );
-int SPRD_SDSlave_Pal_Close(SDIO_CARD_PAL_HANDLE handle);
+void SPRD_SDSlave_Pal_Close(SDIO_CARD_PAL_HANDLE handle);
 
 typedef enum CARD_VERTION_E_TAG{
 	CARD_V_UNKONWN,
