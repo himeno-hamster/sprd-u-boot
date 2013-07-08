@@ -52,6 +52,8 @@ extern   "C"
 #define UMCTL_DERATEINT  UMCTL2_REG_(0x0024)/*temperature derate interval*/
 #define UMCTL_PWRCTL     UMCTL2_REG_(0x0030)/*low power control*/
 #define UMCTL_PWRTMG     UMCTL2_REG_(0x0034)/*low power timing*/
+#define UMCTL_HWLPCTL    UMCTL2_REG_(0x0038)/*low power timing*/
+
 
 #define UMCTL_RFSHCTL0   UMCTL2_REG_(0x0050)/*refresh control0*/
 #define UMCTL_RFSHCTL1   UMCTL2_REG_(0x0054)
