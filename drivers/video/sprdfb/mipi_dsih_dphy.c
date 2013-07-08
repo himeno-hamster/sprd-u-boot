@@ -10,6 +10,84 @@
 #elif defined DPHY2Btql                                                                                                                                                
 #define MIN_OUTPUT_FREQ         (200)                                                                                                                                  
 #endif                                                                                                                                                                 
+
+//#define SOFT_DPHY_CALIBRATION
+
+uint8_t mipi_dsih_dphy_calibration(dphy_t * phy)
+{
+    uint8_t rd_data[3],sv_data[3];
+    uint8_t data[3];
+    uint8_t i = 0; /* iterator */
+    int8_t j = 0;
+    uint8_t sw_cnt;
+
+
+    /*phy calibration process */
+    sw_cnt = 0;
+    data[0] = 0x03;
+    mipi_dsih_dphy_write(phy, 0x21, data, 1);
+
+    for(i =0;i<50;i++ );
+
+    rd_data[0] = mipi_dsih_dphy_test_data_out(phy);
+    printf("data[0] = 0x03,rd_data[0] = %x \n",rd_data[0]);
+
+    for(j=1;j<8;j++){
+
+        data[0] = 0x03;
+        data[0] |= j<<2;
+        mipi_dsih_dphy_write(phy, 0x21, data, 1);
+
+        for(i =0;i<50;i++) ;
+
+        rd_data[1] = mipi_dsih_dphy_test_data_out(phy);
+        printf("data[%d] = %x,rd_data[1] = %x \n",j,data[0],rd_data[1]);
+        if((rd_data[1]&0x80) != (rd_data[0]&0x80))
+        {
+            sw_cnt++;
+            printf(" break--data[%d] = %x,rd_data[0] = %x,rd_data[1] = %x \n",j,data[0],rd_data[0],rd_data[1]);
+            if(sw_cnt>1){
+                printf("phy calibration error,toggles times more than once \n");
+                return 0x0f;
+            }
+            rd_data[0] = rd_data[1];
+            sv_data[0] = data[0];
+        }
+        if((7 == j) && (0 == sw_cnt)){
+            if(0x80 == (rd_data[1]&0x80))
+                 return 0x1f;
+            if(0x0 == (rd_data[1]&0x80))
+                 return 0x3;
+        }
+    }
+
+    for(j=6;j>=0;j--){
+
+        data[0] = 0x03;
+        data[0] |= j<<2;
+        mipi_dsih_dphy_write(phy, 0x21, data, 1);
+
+        for(i =0;i<50;i++ );
+
+        rd_data[2] = mipi_dsih_dphy_test_data_out(phy);
+        printf("next-->data[%d] = %x,rd_data[2] = %x \n",j,data[0],rd_data[2]);
+        if((rd_data[2]&0x80) != (rd_data[0]&0x80))
+        {
+            printf("break--next-->data[%d] = %x,rd_data[2] = %x,rd_data[0] = %x \n",j,data[0],rd_data[2],rd_data[0]);
+            rd_data[0] = rd_data[2];
+            sv_data[1] = data[0];
+        }
+    }
+
+    sv_data[0] =(sv_data[0]&0x1c) >>2;
+    sv_data[1] =(sv_data[1]&0x1c) >>2;
+    sv_data[0] = sv_data[0] + sv_data[1];
+    sv_data[1] = sv_data[0] / 2 + sv_data[0] % 2;
+    data[0] = (sv_data[1] <<2) | 0x03;
+
+    return data[0];
+
+}
                                                                                                                                                                        
 dsih_error_t mipi_dsih_dphy_open(dphy_t * phy)                                                                                                                         
 {                                                                                                                                                                      
@@ -25,13 +103,15 @@ dsih_error_t mipi_dsih_dphy_open(dphy_t * phy)
     {                                                                                                                                                                  
         return ERR_DSI_PHY_INVALID;                                                                                                                                    
     }                                                                                                                                                                  
-    phy->status = NOT_INITIALIZED;                                                                                                                                     
+    phy->status = NOT_INITIALIZED;
+#if 0
     mipi_dsih_dphy_reset(phy, 0);                                                                                                                                      
     mipi_dsih_dphy_stop_wait_time(phy, 0x1C);                                                                                                                          
     mipi_dsih_dphy_no_of_lanes(phy, 1);                                                                                                                                
     mipi_dsih_dphy_clock_en(phy, 1);                                                                                                                                   
     mipi_dsih_dphy_shutdown(phy, 1);                                                                                                                                   
-    mipi_dsih_dphy_reset(phy, 1);                                                                                                                                      
+    mipi_dsih_dphy_reset(phy, 1);
+#endif
     phy->status = INITIALIZED;                                                                                                                                         
     return OK;                                                                                                                                                         
 }                                                                                                                                                                      
@@ -139,7 +219,10 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
     mipi_dsih_dphy_shutdown(phy, 0);                                                                                                                                   
     /* provide an initial active-high test clear pulse in TESTCLR  */                                                                                                  
     mipi_dsih_dphy_test_clear(phy, 1);                                                                                                                                 
-    mipi_dsih_dphy_test_clear(phy, 0);                                                                                                                                 
+    mipi_dsih_dphy_test_clear(phy, 0);
+    for(i=0;i<100;i++){
+	;
+    }
 #ifdef DWC_MIPI_DPHY_BIDIR_TSMC40LP                                                                                                                                    
     /* find ranges */                                                                                                                                                  
     for (range = 0; (range < (sizeof(ranges)/sizeof(ranges[0]))) && ((output_freq / 1000) > ranges[range].freq); range++)                                              
@@ -159,20 +242,20 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
   /* Jessica add - begin*/  
     data[0] =  0x42;//0x44;//0x44;//0x40;                 //0x40: ok for 200    clock lane lpx /*about 52ns*/
     mipi_dsih_dphy_write(phy, 0x60, data, 1);
-    data[0] =  0x0;//0xA6;//0xC6;//0xC6;//0x86;                 //0x48: ok for 200     prepare time
-    mipi_dsih_dphy_write(phy, 0x61, data, 1);
+//    data[0] =  0x0;//0xA6;//0xC6;//0xC6;//0x86;                 //0x48: ok for 200     prepare time
+//    mipi_dsih_dphy_write(phy, 0x61, data, 1);
 
-    data[0] =  0x0;//0x6a;//0x6a;//0x4a;                  //0x4a: ok for 200    zero time
-    mipi_dsih_dphy_write(phy, 0x62, data, 1);
+//    data[0] =  0x0;//0x6a;//0x6a;//0x4a;                  //0x4a: ok for 200    zero time
+//    mipi_dsih_dphy_write(phy, 0x62, data, 1);
 
     data[0] =  0x42;//0x44;//0x40;//0x40;              // 0x40: ok for 200          data lane lpx /*about 52ns*/
     mipi_dsih_dphy_write(phy, 0x70, data, 1);
 
-    data[0] =  0x0;//0x84;//0x96;//0x96;//0x86;                //0x48: ok for 200         prepare time
-    mipi_dsih_dphy_write(phy, 0x71, data, 1);
+//    data[0] =  0x0;//0x84;//0x96;//0x96;//0x86;                //0x48: ok for 200         prepare time
+//    mipi_dsih_dphy_write(phy, 0x71, data, 1);
 
-    data[0] =  0x0;;//0x44;//0x44;//0x40;               //0x4a: ok for 200          zero time
-    mipi_dsih_dphy_write(phy, 0x72, data, 1);
+//    data[0] =  0x0;;//0x44;//0x44;//0x40;               //0x4a: ok for 200          zero time
+//   mipi_dsih_dphy_write(phy, 0x72, data, 1);
 
     //data[0] =  0x44;                                                                                 
     //mipi_dsih_dphy_write(phy, 0x73, data, 1);
@@ -210,8 +293,8 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
    data[0] = input_divider - 1;                                                                                                                                       
    mipi_dsih_dphy_write(phy, 0x17, data, 1);           //Jessica                                                                                                               
     
-    data[0] = 1;
-    mipi_dsih_dphy_write(phy, 0xB0, data, 1);
+//    data[0] = 1;
+//    mipi_dsih_dphy_write(phy, 0xB0, data, 1);
 
 
 
@@ -227,8 +310,26 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
     mipi_dsih_dphy_no_of_lanes(phy, no_of_lanes);                                                                                                                      
     mipi_dsih_dphy_stop_wait_time(phy, 0x1C);                                                                                                                          
     mipi_dsih_dphy_clock_en(phy, 1);                                                                                                                                   
+    for(i=0;i<100;i++){
+	;
+    }
     mipi_dsih_dphy_shutdown(phy, 1);                                                                                                                                   
+    for(i=0;i<100;i++){
+	;
+    }
     mipi_dsih_dphy_reset(phy, 1);                                                                                                                                      
+
+#ifdef SOFT_DPHY_CALIBRATION
+    data[0] = mipi_dsih_dphy_calibration(phy);
+
+    mipi_dsih_dphy_write(phy, 0x21, data, 1);
+
+    for(i =0;i<50;i++ );
+
+    data[1] = mipi_dsih_dphy_test_data_out(phy);
+    printf("mipi_dsih_dphy_calibration--> data[0]= %x,data[1] = %x \n",data[0],data[1]);
+#endif
+
     return OK;                                                                                                                                                         
 } 
 
