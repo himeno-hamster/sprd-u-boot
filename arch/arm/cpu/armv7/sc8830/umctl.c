@@ -239,7 +239,11 @@ void umctl2_low_power_open()
 	wait_pclk(50);
 	
 	umctl2_port_auto_gate();
+	umctl2_ctl_auto_gate();
 	wait_pclk(50);
+
+	//for kevin
+	//reg_bits_set(UMCTL_HWLPCTL,16,12,0X40);//hardware idle period
 	
     umctl2_low_pd_set(UMCTL_AUTO_SF_DIS,
                       UMCTL_AUTO_PD_EN,
@@ -584,7 +588,24 @@ void umctl2_allport_en()
 
 void umctl2_port_auto_gate()
 {
-	REG32(0x402B00F0) = 0X3FF;
+	//for kevin
+	REG32(0x402B00F0) = 0X3ff03FF;
+	//REG32(0x402B00F0) = 0X3FF;
+}
+
+void umctl2_ctl_auto_gate()
+{
+	if(REG32(0x402E00FC) == 0)
+	{
+		return;
+	}
+	else
+	{
+		//enable ddr phy,ctl,publ clock auto gate, only shark cs chip have
+    	reg_bits_set(0x402b00c8,4,3,7);    
+		//disable ddr phy,ctl,publ clock force eb,because auto gate had been enable
+		reg_bits_set(0x402b00c8,0,3,0);    
+	}		
 }
 
 void umctl2_port_init(umctl2_port_info_t* port_info)
@@ -1163,7 +1184,7 @@ void publ_basic_mode_init(CLK_TYPE_E clk,DRAM_INFO* dram)
     reg_bits_set(PUBL_DSGCR,1,1,1);//Byte Disable Enable
     reg_bits_set(PUBL_DSGCR,2,1,0);//Impedance Update Enable
     reg_bits_set(PUBL_DSGCR,3,1,1);//Low Power I/O Power Down
-    reg_bits_set(PUBL_DSGCR,4,1,0);//Low Power DLL Power Down
+    reg_bits_set(PUBL_DSGCR,4,1,1);//Low Power DLL Power Down
     reg_bits_set(PUBL_DSGCR,5,3,DQS_GATE_EARLY_LATE);//DQS Gate Extension
     reg_bits_set(PUBL_DSGCR,8,3,DQS_GATE_EARLY_LATE);//DQS Gate Early
        
