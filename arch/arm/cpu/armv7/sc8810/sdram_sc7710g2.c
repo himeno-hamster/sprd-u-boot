@@ -1027,8 +1027,8 @@ LOCAL void set_emc_clock_freq(void)
             emc_clk_sel = EMC_CLK_XTL_SOURCE;
             break;
         case EMC_CLK_67MHZ:
-            emc_div = 1;
-            emc_clk_freq = EMC_CLK_133MHZ;
+            emc_clk_sel = EMC_CLK_DPLL_SOURCE;
+            break;
         case EMC_CLK_133MHZ:
             emc_clk_sel = EMC_CLK_DPLL_SOURCE;
             break;
@@ -1042,7 +1042,8 @@ LOCAL void set_emc_clock_freq(void)
             emc_clk_sel = EMC_CLK_DPLL_SOURCE;
             break;
         case EMC_CLK_200MHZ:
-            emc_div = 1;
+            emc_clk_sel = EMC_CLK_DPLL_SOURCE;
+            break;
         case EMC_CLK_400MHZ:
         default:
             emc_clk_sel = EMC_CLK_DPLL_SOURCE;
