@@ -262,7 +262,7 @@ modem_reset:
 		extern void modem_poweroff(void);
 		
 		modem_poweroff();
-		mdelay(2000);
+		mdelay(100);
 	}
 	
     uart_putc(0x7E);
