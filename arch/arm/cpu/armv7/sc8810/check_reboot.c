@@ -78,6 +78,21 @@ int power_button_pressed(void)
 	return !!(status & (1 << 3)/*PBINT*/);//low level if pb hold
 }
 
+int pbint2_connected(void)
+{
+#ifdef CONFIG_SC7710G2
+	ANA_REG_OR(ANA_APB_CLK_EN, BIT_3);
+	ANA_REG_OR(ANA_RTC_CLK_EN, BIT_3);
+#else
+	ANA_REG_OR(ANA_APB_CLK_EN, BIT_3|BIT_11);
+#endif
+	ANA_REG_SET(ADI_EIC_MASK, 0xff);
+	udelay(3000);
+	int status = ANA_REG_GET(ADI_EIC_DATA);
+	//printf("eica status %x\n", status);
+	return !!(status & (1 << 7)/*PBINT2*/);//low level if pb hold
+}
+
 int charger_connected(void)
 {
 #ifdef CONFIG_SC7710G2

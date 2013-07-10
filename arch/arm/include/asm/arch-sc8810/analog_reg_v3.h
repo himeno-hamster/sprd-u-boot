@@ -340,6 +340,7 @@ extern   "C"
 #define	CHAR_SW_POINT_MSK		(0x1F << CHAR_SW_POINT_SHIFT)
 #else
 ///ANA_CHGR_CTL0
+
 #define CHGR_ADAPTER_EN		BIT_0
 #define CHGR_ADAPTER_EN_RST	BIT_1
 #define CHGR_USB_500MA_EN		BIT_2
@@ -349,7 +350,11 @@ extern   "C"
 #define CHGR_USB_CHG_MSK                (3 << CHGR_USB_CHG_SHIFT)
 #define CHGR_ADAPTER_CHG_SHIFT          6
 #define CHGR_ADAPTER_CHG_MSK            (3 << CHGR_ADAPTER_CHG_SHIFT)
+#ifdef CONFIG_SC7710G2
+#define CHGR_PD_BIT                     			BIT_6
+#else
 #define CHGR_PD_BIT                     			BIT_8
+#endif
 #define PA_LDO_EN_RST					BIT_9
 #define CHGR_RECHG_BIT                  		BIT_12
 #define CHGR_ADATPER_EN_BIT             	BIT_0

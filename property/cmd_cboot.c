@@ -18,6 +18,7 @@
 #endif
 
 extern int power_button_pressed(void);
+extern int pbint2_connected(void);
 extern int charger_connected(void);
 extern int alarm_triggered(void);
 extern void CHG_TurnOn (void);
@@ -63,6 +64,11 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 #ifdef CONFIG_AUTOBOOT
 	normal_mode();
+#endif
+
+#ifdef CONFIG_SC7710G2
+	if(!pbint2_connected())
+		normal_mode();
 #endif
 
     boot_pwr_check();
