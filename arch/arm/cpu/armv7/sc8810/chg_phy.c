@@ -70,11 +70,16 @@ void CHG_Init (void)
                                 adc_voltage_table[1][1]=adc_data[3]&0xffff;
                                 adc_voltage_table[1][0]=(adc_data[3]>>16)&0xffff;
                         }
-                        free(adc_data);  
+                        free(adc_data);
                 }
           }
 #endif
 
+#ifdef CONFIG_SC7710G2
+	ANA_REG_MSK_OR(ANA_CHGR_CTL0,CHGR_ADAPTER_EN,(CHGR_ADAPTER_EN | CHGR_ADAPTER_EN_RST));
+	ANA_REG_MSK_OR(ANA_CHGR_CTL1,
+		    (4 << CHGR_CHG_CUR_SHIFT) & CHGR_CHG_CUR_MSK,CHGR_CHG_CUR_MSK); //set charge current 500mA
+#endif
 	CHG_SetRecharge();
 }
 

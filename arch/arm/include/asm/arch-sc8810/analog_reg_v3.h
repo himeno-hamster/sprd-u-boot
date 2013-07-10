@@ -323,6 +323,22 @@ extern   "C"
 #define DCDC_DEDTDEN_RST	BIT_9
 #define DCDC_DEDTDEN	BIT_8
 
+#if defined(CONFIG_SC7710G2)
+///ANA_CHGR_CTL0
+#define CHGR_ADAPTER_EN		BIT_0
+#define CHGR_ADAPTER_EN_RST	BIT_1
+#define CHGR_CHG_CUR_SHIFT	(2)
+#define CHGR_CHG_CUR_MSK	(0xF << CHGR_CHG_CUR_SHIFT)
+#define	CHGR_PD_BIT			BIT_6
+#define	CHGR_CURVE_SHARP_BIT	BIT_7
+#define CHGR_PWM_EN_BIT			BIT_10
+#define CHGR_PWM_EN_BIT_RST		BIT_11
+#define CHGR_RECHG_BIT			BIT_12
+
+///ANA_CHGR_CTL1
+#define CHAR_SW_POINT_SHIFT		0
+#define	CHAR_SW_POINT_MSK		(0x1F << CHAR_SW_POINT_SHIFT)
+#else
 ///ANA_CHGR_CTL0
 #define CHGR_ADAPTER_EN		BIT_0
 #define CHGR_ADAPTER_EN_RST	BIT_1
@@ -345,6 +361,7 @@ extern   "C"
 ///ANA_CHGR_CTL1
 #define CHAR_SW_POINT_SHIFT     	0
 #define CHAR_SW_POINT_MSK       		(0x1F << CHAR_SW_POINT_SHIFT)
+#endif
 
 /*
   the VIBRATOR_CTL0 register bit
