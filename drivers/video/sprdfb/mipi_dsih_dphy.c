@@ -120,8 +120,9 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
     uint32_t loop_divider = 0; /* (M) */                                                                                                                               
     uint32_t input_divider = 1; /* (N) */                                                                                                                              
     uint8_t data[4]; /* maximum data for now are 4 bytes per test mode*/                                                                                               
-    uint8_t no_of_bytes = 0;                                                                                                                                           
-    uint8_t i = 0; /* iterator */                                                                                                                                      
+    uint8_t no_of_bytes = 0;
+    uint8_t i = 0;
+    uint8_t index=0;/* iterator */
     uint8_t range = 0; /* ranges iterator */                                                                                                                           
     int flag = 0;                                                                                                                                                      
 #ifdef DWC_MIPI_DPHY_BIDIR_TSMC40LP                                                                                                                                    
@@ -204,11 +205,11 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
     {   /* variable was incremented before exiting the loop */                                                                                                         
         input_divider--;                                                                                                                                               
     }                                                                                                                                                                  
-    for (i = 0; (i < (sizeof(loop_bandwidth)/sizeof(loop_bandwidth[0]))) && (loop_divider > loop_bandwidth[i].loop_div); i++)                                          
+    for (index = 0; (index < (sizeof(loop_bandwidth)/sizeof(loop_bandwidth[0]))) && (loop_divider > loop_bandwidth[index].loop_div); index++)
     {                                                                                                                                                                  
         ;                                                                                                                                                              
     }                                                                                                                                                                  
-    if (i >= (sizeof(loop_bandwidth)/sizeof(loop_bandwidth[0])))                                                                                                       
+    if (index >= (sizeof(loop_bandwidth)/sizeof(loop_bandwidth[0])))
     {                                                                                                                                                                  
         return ERR_DSI_PHY_FREQ_OUT_OF_BOUND;                                                                                                                          
     }                                                                                                                                                                  
@@ -284,10 +285,10 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
     mipi_dsih_dphy_write(phy, 0x10, data, 1);                                                                                                                          
 #endif                                                                                                                                                                 
     /* PLL Lock bypass|charge pump current [7:4]|[3:0] */                                                                                                              
-    data[0] = (0x00 << 4) | (loop_bandwidth[i].cp_current << 0);                                                                                                       
+    data[0] = (0x00 << 4) | (loop_bandwidth[index].cp_current << 0);
     mipi_dsih_dphy_write(phy, 0x11, data, 1);           //Jessica                                                                                                               
     /* bypass CP default|bypass LPF default| LPF resistor [7]|[6]|[5:0] */                                                                                             
-    data[0] = (0x01 << 7) | (0x01 << 6) |(loop_bandwidth[i].lpf_resistor << 0);                                                                                        
+    data[0] = (0x01 << 7) | (0x01 << 6) |(loop_bandwidth[index].lpf_resistor << 0);
     mipi_dsih_dphy_write(phy, 0x12, data, 1);                                                                                                                          
     /* PLL input divider ratio [7:0] */                                                                                                                                
    data[0] = input_divider - 1;                                                                                                                                       
@@ -299,9 +300,9 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
 
 
     no_of_bytes = 2; /* pll loop divider (code 0x18) takes only 2 bytes (10 bits in data) */                                                                           
-    for (i = 0; i < no_of_bytes; i++)                                                                                                                                  
+    for (index = 0; index < no_of_bytes; index++)
     {                                                                                                                                                                  
-        data[i] = ((uint8_t)((((loop_divider - 1) >> (5 * i)) & 0x1F) | (i << 7) ));                                                                                   
+        data[index] = ((uint8_t)((((loop_divider - 1) >> (5 * index)) & 0x1F) | (index << 7) ));
         /* 7 is dependent on no_of_bytes                                                                                                                               
         make sure 5 bits only of value are written at a time */                                                                                                        
     }                                                                                                                                                                  

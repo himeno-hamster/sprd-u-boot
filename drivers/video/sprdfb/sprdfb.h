@@ -57,6 +57,7 @@ struct panel_if_ctrl{
 	void (*panel_if_uninit)(struct sprdfb_device *dev);
 	void (*panel_if_before_refresh)(struct sprdfb_device *dev);
 	void (*panel_if_after_refresh)(struct sprdfb_device *dev);
+	void (*panel_if_before_panel_reset)(struct sprdfb_device *dev);
 	void (*panel_if_suspend)(struct sprdfb_device *dev);
 	void (*panel_if_resume)(struct sprdfb_device *dev);
 };

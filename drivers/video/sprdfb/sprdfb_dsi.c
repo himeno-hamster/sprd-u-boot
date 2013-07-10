@@ -297,6 +297,7 @@ int32_t sprdfb_dsi_ready(struct sprdfb_device *dev)
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_CMD_MODE_CFG, 0x1);
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL, 0x1);
 	}else{
+		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL, 0x1);
 		mipi_dsih_video_mode(&(dsi_ctx.dsi_inst), 1);
 		dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PWR_UP, 0);
 		udelay(100);
@@ -305,6 +306,36 @@ int32_t sprdfb_dsi_ready(struct sprdfb_device *dev)
 		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST0);
 		dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_ERROR_ST1);
 	}
+	return 0;
+}
+
+
+static int32_t sprdfb_dsi_set_lp_mode(void)
+{
+	uint32_t reg_val;
+	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
+
+	mipi_dsih_cmd_mode(&(dsi_ctx.dsi_inst), 1);
+	dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_CMD_MODE_CFG, 0x1fff);
+	reg_val = dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL);
+	reg_val = reg_val & (~(BIT(0)));
+	dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL,  reg_val);
+	return 0;
+}
+
+static int32_t sprdfb_dsi_set_hs_mode(void)
+{
+	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
+
+	mipi_dsih_cmd_mode(&(dsi_ctx.dsi_inst), 1);
+	dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_CMD_MODE_CFG, 0x1);
+	dsi_core_write_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_IF_CTRL, 0x1);
+	return 0;
+}
+
+int32_t sprdfb_dsi_before_panel_reset(struct sprdfb_device *dev)
+{
+	sprdfb_dsi_set_lp_mode();
 	return 0;
 }
 
@@ -401,6 +432,8 @@ static int32_t sprd_dsi_eotp_set(uint8_t rx_en, uint8_t tx_en)
 struct ops_mipi sprdfb_mipi_ops = {
 	.mipi_set_cmd_mode = sprdfb_dsi_set_cmd_mode,
 	.mipi_set_video_mode = sprdfb_dsi_set_video_mode,
+	.mipi_set_lp_mode = sprdfb_dsi_set_lp_mode,
+	.mipi_set_hs_mode = sprdfb_dsi_set_hs_mode,
 	.mipi_gen_write = sprdfb_dsi_gen_write,
 	.mipi_gen_read = sprdfb_dsi_gen_read,
 	.mipi_dcs_write = sprdfb_dsi_dcs_write,

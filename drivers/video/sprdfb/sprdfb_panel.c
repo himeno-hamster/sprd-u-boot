@@ -262,12 +262,18 @@ static int32_t panel_reset_dispc(struct panel_spec *self)
 }
 
 
-static void panel_reset(struct panel_spec *panel)
+static void panel_reset(struct sprdfb_device *dev)
 {
 	FB_PRINT("sprdfb: [%s]\n",__FUNCTION__);
 
-	/* panel reset */
-	panel_reset_dispc(panel);
+	//clk/data lane enter LP
+	if(NULL != dev->if_ctrl->panel_if_before_panel_reset){
+		dev->if_ctrl->panel_if_before_panel_reset(dev);
+	}
+	mdelay(5);
+
+	//reset panel
+	panel_reset_dispc(dev->panel);
 }
 
 static int panel_mount(struct sprdfb_device *dev, struct panel_spec *panel)
@@ -372,7 +378,7 @@ static struct panel_spec *adapt_panel_from_readid(struct sprdfb_device *dev)
 			continue;
 		}
 		panel_init(dev);
-		panel_reset(lcd_panel[i].panel);
+		panel_reset(dev);
 		id = dev->panel->ops->panel_readid(dev->panel);
 		if(id == lcd_panel[i].lcd_id) {
 			FB_PRINT("sprdfb: [%s]: LCD Panel 0x%x is attached!\n", __FUNCTION__, lcd_panel[i].lcd_id);

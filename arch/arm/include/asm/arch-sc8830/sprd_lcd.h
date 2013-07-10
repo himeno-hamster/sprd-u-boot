@@ -201,6 +201,8 @@ struct ops_spi{
 struct ops_mipi{
 	int32_t (*mipi_set_cmd_mode)(void);
 	int32_t (*mipi_set_video_mode)(void);
+	int32_t (*mipi_set_lp_mode)(void);
+	int32_t (*mipi_set_hs_mode)(void);
 	int32_t (*mipi_gen_write)(uint8_t *param, uint16_t param_length);
 	int32_t (*mipi_gen_read)(uint8_t *param, uint16_t param_length, uint8_t bytes_to_read, uint8_t *read_buffer);
 	int32_t (*mipi_dcs_write)(uint8_t *param, uint16_t param_length);

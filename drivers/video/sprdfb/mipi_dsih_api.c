@@ -510,17 +510,18 @@ dsih_error_t mipi_dsih_dpi_video(dsih_ctrl_t * instance, dsih_dpi_video_t * vide
     mipi_dsih_hal_dpi_video_vc(instance, video_params->virtual_channel);
     mipi_dsih_dphy_no_of_lanes(&(instance->phy_instance), video_params->no_of_lanes);
     /* enable high speed clock */
-    mipi_dsih_dphy_enable_hs_clk(&(instance->phy_instance), 1);
+//    mipi_dsih_dphy_enable_hs_clk(&(instance->phy_instance), 1);
     return err_code;
 }
 dsih_error_t mipi_dsih_dcs_wr_cmd(dsih_ctrl_t * instance, uint8_t vc, uint8_t* params, uint16_t param_length)
 {
     uint8_t packet_type = 0;
-    int i = 0;
+//    int i = 0;
     if (params == 0)
     {
         return ERR_DSI_OUT_OF_BOUND;
     }
+#if 0
     if (param_length > 2)
     {
         i = 2;
@@ -566,6 +567,20 @@ dsih_error_t mipi_dsih_dcs_wr_cmd(dsih_ctrl_t * instance, uint8_t vc, uint8_t* p
             }
             return ERR_DSI_INVALID_COMMAND;
     }
+#endif
+	switch(param_length)
+	{
+		case 1:
+			packet_type = 0x05; /* DCS short write no param */
+			break;
+		case 2:
+			packet_type = 0x15; /* DCS short write 1 param */
+			break;
+		default:
+			packet_type = 0x39; /* DCS long write/write_LUT command packet */
+			break;
+	}
+
     return mipi_dsih_gen_wr_packet(instance, vc, packet_type, params, param_length);
 }
 void mipi_dsih_cmd_mode(dsih_ctrl_t * instance, int en)
