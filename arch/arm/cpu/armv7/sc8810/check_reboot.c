@@ -14,7 +14,11 @@ unsigned check_reboot_mode(void)
 
 	rst_mode = ANA_REG_GET(ANA_HWRST_STATUS);
 	rst_mode &= HWRST_STATUS_POWERON_MASK;
+#ifdef CONFIG_SC7710G2
+	ANA_REG_SET(ANA_HWRST_STATUS, 0x1f0); //set flag for watchdog reset
+#else
 	ANA_REG_SET(ANA_HWRST_STATUS, 0); //clear flag
+#endif
 	if(rst_mode == HWRST_STATUS_RECOVERY)
 		return RECOVERY_MODE;
 	else if(rst_mode == HWRST_STATUS_FASTBOOT)
