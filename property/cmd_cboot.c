@@ -47,6 +47,8 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     if(argc > 2)
       goto usage;
 
+	CHG_Init();
+
 #ifdef CONFIG_SC8830
         if(cali_file_check() && !boot_pwr_check()&&
            (!rst_mode || (rst_mode == CALIBRATION_MODE))&&
@@ -59,8 +61,6 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	set_cp_emc_pad();
     }
 #endif
-
-	CHG_Init();
 
 #ifdef CONFIG_SC8830
 	if (CHG_GetAdcCalType() != 0)
