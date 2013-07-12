@@ -534,7 +534,7 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 			break;
 		pnum++;
 	}
-	printf("Flash emmc partition:%s check:%s-%d\n", _sprd_emmc_partition[pos].partition_str, arg, pnum);
+	printf("Flash emmc partition:%s check:%s-%d\n", _sprd_emmc_partition[pos-1].partition_str, arg, pnum);
 	if (pnum >= sizeof(_sprd_emmc_partition) / sizeof(eMMC_Parttion)){
 		fastboot_fail("unknown partition name");
 		return;
@@ -870,7 +870,7 @@ void cmd_boot(const char *arg, void *data, unsigned sz)
 		return;
 	}
 	ramdisk_actual= ROUND_TO_PAGE(hdr->ramdisk_size,(FLASH_PAGE_SIZE - 1));
-	if(ramdisk_actual<0){
+	if(ramdisk_actual==0){
 		fastboot_fail("ramdisk size error");
 		return;
 	}
