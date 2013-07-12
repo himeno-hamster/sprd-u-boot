@@ -364,5 +364,6 @@ struct display_ctrl sprdfb_dispc_ctrl = {
 	.init		 	= sprdfb_dispc_init,
 	.uninit		= sprdfb_dispc_uninit,
 	.refresh		= sprdfb_dispc_refresh,
+	.update_clk     = dispc_update_clock,
 };
 
