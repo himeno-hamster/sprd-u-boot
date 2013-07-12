@@ -31,6 +31,7 @@
 #define OPERATION_MODE_SR 0x04
 #define OPERATION_MODE_DPD 0x05
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define IS_SHARK_CS  ((REG32(0x402E00FC) == 0)?0:1)
 
 
 /**---------------------------------------------------------------------------*
@@ -243,7 +244,10 @@ void umctl2_low_power_open()
 	wait_pclk(50);
 
 	//for kevin
-	//reg_bits_set(UMCTL_HWLPCTL,16,12,0X40);//hardware idle period
+	if(IS_SHARK_CS)
+	{
+		reg_bits_set(UMCTL_HWLPCTL,16,12,0X40);//hardware idle period
+	}
 	
     umctl2_low_pd_set(UMCTL_AUTO_SF_DIS,
                       UMCTL_AUTO_PD_EN,
@@ -566,7 +570,7 @@ void umctl2_refresh_init(DRAM_INFO* dram)
 }
 void umctl2_port_en(UMCTL2_PORT_ID_E port_id,BOOLEAN en)
 {  
-	if(REG32(0x402E00FC) == 0)
+	if(!IS_SHARK_CS)
 	{
 		return;
 	}
@@ -595,7 +599,7 @@ void umctl2_port_auto_gate()
 
 void umctl2_ctl_auto_gate()
 {
-	if(REG32(0x402E00FC) == 0)
+	if(!IS_SHARK_CS)
 	{
 		return;
 	}
