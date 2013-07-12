@@ -86,6 +86,7 @@ struct display_ctrl {
 	int32_t	(*uninit)		  (struct sprdfb_device *dev);
 
 	int32_t 	(*refresh)	  (struct sprdfb_device *dev);
+	void		(*update_clk)	  (struct sprdfb_device *dev);
 };
 
 #endif

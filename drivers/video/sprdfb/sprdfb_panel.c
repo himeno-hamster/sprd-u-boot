@@ -377,6 +377,7 @@ static struct panel_spec *adapt_panel_from_readid(struct sprdfb_device *dev)
 			FB_PRINT("sprdfb: panel_mount failed!\n");
 			continue;
 		}
+		dev->ctrl->update_clk(dev);
 		panel_init(dev);
 		panel_reset(dev);
 		id = dev->panel->ops->panel_readid(dev->panel);
