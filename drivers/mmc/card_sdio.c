@@ -2662,7 +2662,7 @@ LOCAL CARD_SDIO_HANDLE  sdcard_handle = NULL;
 LOCAL BOOLEAN SDCARD_SDIO_WriteMultiBlock(CARD_SDIO_HANDLE cardHandle,uint32 startBlock,uint32 num,uint8* buf)
 {
 	uint8 rspBuf[16];
-	uint32 address;
+	uint32 address  = 0xFFFFFFFF;
 	CARD_DATA_PARAM_T data;
 	uint32 argument = 0;
 	CARD_DATA_PARAM_T *dataParam = NULL;

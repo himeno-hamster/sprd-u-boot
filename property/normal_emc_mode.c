@@ -1483,8 +1483,12 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	secure_check(SIMLOCK_ADR, 0, SIMLOCK_ADR + SIMLOCK_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
 #endif
 #endif
-	creat_cmdline(cmdline,hdr);
-
+	{	
+		char * buf = creat_cmdline(cmdline,hdr);
+		if (buf != NULL) {
+			free(buf);
+		}
+	}
 #if BOOT_NATIVE_LINUX_MODEM
 	//sipc addr clear
 	sipc_addr_reset();
