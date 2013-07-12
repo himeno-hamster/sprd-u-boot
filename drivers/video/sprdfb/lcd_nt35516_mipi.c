@@ -59,7 +59,11 @@ static LCM_Init_Code init_data[] = {
 {LCM_SEND(10), {8, 0, 0xF3,0x02,0x03,0x07,0x45,0x88,0xD1,0x0D}},
 // Manufacture Command Set for Page 0
 {LCM_SEND(8), {6, 0, 0xF0,0x55,0xAA,0x52,0x08,0x00}},
+#ifdef CONFIG_SP8830EC
+{LCM_SEND(6), {4, 0, 0xB1,0x7C,0x06,0x00}}, // command/video mode,rotate 180
+#else
 {LCM_SEND(6), {4, 0, 0xB1,0x7C,0x00,0x00}}, // command/video mode
+#endif
 {LCM_SEND(7), {5, 0, 0xB8,0x01,0x02,0x02,0x02}},
 {LCM_SEND(6), {4, 0, 0xBC,0x00,0x00,0x00}},  // inversion
 {LCM_SEND(9), {7, 0, 0xC9,0x63,0x06,0x0D,0x1A,0x17,0x00}},
@@ -230,6 +234,7 @@ static uint32_t nt35516_readid(struct panel_spec *self)
 	mipi_eotp_set_t mipi_eotp_set = self->info.mipi->ops->mipi_eotp_set;
 
 	printk("lcd_nt35516_mipi read id!\n");
+	return 0x16;	//debug
 //#ifdef CONFIG_SC8830
 //	return 0x16;	//debug
 //#endif
