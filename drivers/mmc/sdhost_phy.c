@@ -2409,9 +2409,12 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
     {
         return NULL;
     }
-	sdio_port_ctl[slot_NO].host_cfg =
+	if (slot_NO == SDHOST_SLOT_7)
+	{
+		sdio_port_ctl[slot_NO].host_cfg =
 							(SDIO_REG_CFG *) ( (volatile uint32 *) EMMC_BASE_ADDR);
-	SDHOST_SD_clk_OnOff(&sdio_port_ctl[slot_NO], CLK_OFF);
+		SDHOST_SD_clk_OnOff(&sdio_port_ctl[slot_NO], CLK_OFF);
+	}
 	SDHOST_Reset_Controller(slot_NO);
 	sdio_port_ctl[slot_NO].slotNo = slot_NO;
     // select slot 0

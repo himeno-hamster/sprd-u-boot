@@ -216,10 +216,10 @@ static int __match_dcdc_vol(const struct regulator_regs *regs, u32 vol)
 	return j;
 }
 
-static int dcdc_set_voltage(struct regulator_desc *desc, int min_uV, int max_uV)
+static int dcdc_set_voltage(struct regulator_desc *desc, int min_mV, int max_mV)
 {
 	const struct regulator_regs *regs = desc->regs;
-	int i, mv = min_uV;
+	int i, mv = min_mV;
 
 	/* found the closely vol ctrl bits */
 	i = __match_dcdc_vol(regs, mv);
@@ -307,6 +307,19 @@ exit:
 	return ret;
 }
 
+static u16 dcdc_get_trimming_vol(struct regulator_desc *desc)
+{
+	int shft, trm_vol = 0;
+	u16 tmpVal;
+
+	shft = __ffs(desc->regs->cal_ctl_bits);
+	tmpVal = (ANA_REG_GET(desc->regs->cal_ctl) & desc->regs->cal_ctl_bits) >> shft;
+
+	trm_vol = tmpVal * (dcdc_get_trimming_step(desc, trm_vol))/1000;
+
+	return trm_vol;
+}
+
 static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 {
 	struct regulator_regs *regs = desc->regs;
@@ -321,9 +334,9 @@ static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 		ANA_REG_OR(regs->cal_ctl, ldo_cal_sel);
 
 	//def_vol = to_vol = desc->regs->vol_def;
-	shft = __ffs(desc->regs->vol_ctl_bits);
-	tmpVal = (ANA_REG_GET(desc->regs->vol_ctl) & desc->regs->vol_ctl_bits) >> shft;
-	def_vol = to_vol = desc->regs->vol_sel[tmpVal];
+	shft = __ffs(regs->vol_ctl_bits);
+	tmpVal = (ANA_REG_GET(regs->vol_ctl) & regs->vol_ctl_bits) >> shft;
+	def_vol = to_vol = regs->vol_sel[tmpVal] + dcdc_get_trimming_vol(desc);
 
 	adc_vol = sci_adc_vol_request(adc_chan, ldo_cal_sel);
 	if (adc_vol <= 0) {
