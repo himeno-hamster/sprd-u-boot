@@ -262,7 +262,7 @@ static int32_t sprdfb_dispc_init(struct sprdfb_device *dev)
 
 	dispc_layer_init(dev);
 
-	dispc_update_clock(dev);
+//	dispc_update_clock(dev);
 
 	if(SPRDFB_PANEL_IF_DPI == dev->panel_if_type){
 		if(is_first_frame){
