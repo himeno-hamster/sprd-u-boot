@@ -349,8 +349,8 @@
 #define CONFIG_SPRD_SYSDUMP
 #define SYSDUMP_CORE_HDR  0x98000000 /*0x8c400000*/  /* SPRD_IO_MEM_BASE in kernel */
 
-#define CALIBRATE_ENUM_MS 15000
-#define CALIBRATE_IO_MS 10000
+#define CALIBRATE_ENUM_MS 3000
+#define CALIBRATE_IO_MS 2000
 
 //#define LOW_BAT_ADC_LEVEL 782 /*phone battery adc value low than this value will not boot up*/
 #define LOW_BAT_VOL            3500 /*phone battery voltage low than this value will not boot up*/
