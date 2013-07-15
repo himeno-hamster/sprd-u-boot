@@ -103,7 +103,7 @@ void LCD_SetBackLightBrightness( unsigned long  value)
 void set_backlight(uint32_t value)
 {
 #ifdef CONFIG_SP8830
-	ANA_REG_SET(0x40038894,(ANA_REG_GET(0x40038894)|(0x1 << 8)));
+	ANA_REG_SET(0x40038894,(ANA_REG_GET(0x40038894)|(0x3 << 7)));
 #endif
 #if defined (CONFIG_SP8825) || defined (CONFIG_SP8825EA) || defined (CONFIG_SP8825EB) ||defined(CONFIG_GARDA)
 	__raw_writel(0x101, 0x4C000138);
