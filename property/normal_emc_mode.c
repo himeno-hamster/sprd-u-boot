@@ -259,6 +259,12 @@ int is_factorymode()
 
 	printf("Checking factorymode : ");
 	p_block_dev = get_dev("mmc", 1);
+	if(NULL == p_block_dev)
+	{
+		printf("\nCan't get mmc device,get_dev return error!\n");
+		return ret;
+	}
+
 	int factoryalarmret1, factoryalarmret2;
 	unsigned long factoryalarmcnt1, factoryalarmcnt2;
 	unsigned char factoryalarmarray1[PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE];

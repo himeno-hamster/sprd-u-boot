@@ -253,9 +253,17 @@ static void index_partitions(void)
 		}
 
 		part = mtd_part_info(current_mtd_dev, current_mtd_partnum);
-		setenv("mtddevname", part->name);
 
-		debug("=> mtddevnum %d,\n=> mtddevname %s\n", mtddevnum, part->name);
+		if(NULL == part){
+			setenv("mtddevnum", NULL);
+			setenv("mtddevname", NULL);
+
+			debug("=> mtddevnum NULL\n=> mtddevname NULL\n");
+		}else{
+			setenv("mtddevname", part->name);
+
+			debug("=> mtddevnum %d,\n=> mtddevname %s\n", mtddevnum, part->name);
+		}
 	} else {
 		setenv("mtddevnum", NULL);
 		setenv("mtddevname", NULL);
@@ -1551,6 +1559,8 @@ static int parse_mtdparts(const char *const mtdparts)
 #else
 	p = get_mtdparts();
 #endif
+	if(NULL == p)
+		return err;
 
 	if (strncmp(p, "mtdparts=", 9) != 0) {
 		printf("mtdparts variable doesn't start with 'mtdparts='\n");
