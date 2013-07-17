@@ -22,6 +22,8 @@
 
 
 //#define 	DSI_CTL_BEGIN	0x60100000
+#define	SPRD_MIPI_DPHY_GEN1
+
 
 #define DISPC_AHB_SOFT_RST            	AHB_SOFT_RST
 #define BIT_DISPC_SOFT_RST		 	BIT(20)

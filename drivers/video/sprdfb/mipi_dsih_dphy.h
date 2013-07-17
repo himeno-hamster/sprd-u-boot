@@ -31,8 +31,13 @@ void mipi_dsih_dphy_no_of_lanes(dphy_t * instance, uint8_t no_of_lanes);
 uint8_t mipi_dsih_dphy_get_no_of_lanes(dphy_t * instance);                                                           
 void mipi_dsih_dphy_enable_hs_clk(dphy_t * instance, int enable);                                                    
 dsih_error_t mipi_dsih_dphy_escape_mode_trigger(dphy_t * instance, uint8_t trigger_request);                         
+ #ifdef GEN_2
+dsih_error_t mipi_dsih_dphy_ulps_data_lanes(dphy_t * instance, int enable);
+dsih_error_t mipi_dsih_dphy_ulps_clk_lane(dphy_t * instance, int enable);
+#else
 void mipi_dsih_dphy_ulps_data_lanes(dphy_t * instance, int enable);                                                  
-void mipi_dsih_dphy_ulps_clk_lane(dphy_t * instance, int enable);                                                    
+void mipi_dsih_dphy_ulps_clk_lane(dphy_t * instance, int enable);
+#endif
 uint32_t mipi_dsih_dphy_status(dphy_t * instance, uint16_t mask);                                                    
 /* end of obligatory functions*/                                                                                     
 void mipi_dsih_dphy_test_clock(dphy_t * instance, int value);                                                        
@@ -48,4 +53,3 @@ void mipi_dsih_dphy_write_part(dphy_t * instance, uint32_t reg_address, uint32_t
 uint32_t mipi_dsih_dphy_read_word(dphy_t * instance, uint32_t reg_address);                                          
 uint32_t mipi_dsih_dphy_read_part(dphy_t * instance, uint32_t reg_address, uint8_t shift, uint8_t width);            
 #endif /* MIPI_DSIH_DPHY_H_ */                                                                                       
-                                                                                                                           
