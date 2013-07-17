@@ -56,7 +56,7 @@ ALL		= $(nandobj)u-boot-spl $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin $(
 all:$(ALL)
 
 file_size_check: $(nandobj)u-boot-spl-16k.bin
-	./file_size_check.sh 24576 $< $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin $(nandobj)u-boot-spl $(nandobj)u-boot-sec
+	./file_size_check.sh 23552 $< $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin $(nandobj)u-boot-spl $(nandobj)u-boot-sec
 
 $(nandobj)u-boot-spl-16k.bin: $(nandobj)u-boot-spl.bin $(nandobj)u-boot-sec.bin
 	cat $(nandobj)u-boot-sec.bin $(nandobj)u-boot-spl.bin > $@
@@ -65,7 +65,7 @@ $(nandobj)u-boot-sec.bin:	$(nandobj)u-boot-sec
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to "0x50005C00" -O binary $< $@
 
 $(nandobj)u-boot-spl.bin:	$(nandobj)u-boot-spl
-	$(OBJCOPY) ${OBJCFLAGS} --pad-to "0x5000B000" -O binary $< $@
+	$(OBJCOPY) ${OBJCFLAGS} --pad-to "0x5000AC00" -O binary $< $@
 
 $(nandobj)u-boot-sec:	$(SEC_OBJS) $(SEC_LDSCRIPT)
 	cd $(LNDIR) && $(LD) $(SEC_LDFLAGS) $(__SEC_OBJS) \
