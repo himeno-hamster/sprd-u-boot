@@ -23,6 +23,8 @@
 
 #define BIT(x) (1<<x)
 
+#define	SPRD_MIPI_DPHY_GEN2
+
 #define DSI_CTL_BEGIN				CTL_BASE_DSI
 
 #define DSI_AHB_SOFT_RST           		REG_AP_AHB_AHB_RST

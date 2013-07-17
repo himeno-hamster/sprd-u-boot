@@ -35,7 +35,7 @@
                                                                                        
 //#include <stdint.h>             
 #include <common.h>
-
+#include "sprdfb_chip_common.h"
 
 //typedef unsigned char   uint8_t;       
 //typedef unsigned short  uint16_t;      
@@ -47,8 +47,19 @@
 #define ONE_MS_ACTIVE_WAIT    50000 /* 50MHz processor */                              
 #define DEFAULT_BYTE_CLOCK    864000 /* a value to start PHY PLL - random */           
                                                                                        
-#define DWC_MIPI_DPHY_BIDIR_TSMC40LP                                                   
-/* #define DPHY2Btql */ /* test chip PHY */                                            
+/** Define D-PHY type */
+#ifdef SPRD_MIPI_DPHY_GEN1
+/** DWC_MIPI_DPHY_BIDIR_TSMC40LP 4 Lanes Gen 1 1GHz */
+ #define DWC_MIPI_DPHY_BIDIR_TSMC40LP
+ #endif
+#ifdef SPRD_MIPI_DPHY_GEN2
+/** DWC_MIPI_DPHY_BIDIR_TSMC40LP / GF28LP 4 Lanes Gen 2 1.5GHz */
+#define GEN_2
+#endif
+/** 4 Lanes Gen 2 1.5GHz testchips */
+//#define TESTCHIP
+/** TQL 2 Lane test chip */
+/* #define DPHY2Btql */
 typedef enum                                                                           
 {                                                                                      
     OK = 0,                                                                            
@@ -65,6 +76,9 @@ typedef enum
     ERR_DSI_PHY_POWERUP,                                                               
     ERR_DSI_PHY_INVALID,                                                               
     ERR_DSI_PHY_FREQ_OUT_OF_BOUND,                                                     
+#ifdef GEN_2
+    ERR_DSI_PHY_PLL_NOT_LOCKED,
+#endif
     ERR_DSI_TIMEOUT                                                                    
 }                                                                                      
 dsih_error_t;                                                                          
