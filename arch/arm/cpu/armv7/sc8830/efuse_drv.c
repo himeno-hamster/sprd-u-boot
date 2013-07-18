@@ -161,7 +161,7 @@ int sci_efuse_calibration_get(unsigned int * p_cal_data)
 
 	//printf("afuse: data = 0x%x\n\r",data);
 	/* adc 3.6V  */
-	adc_temp = ((data & 0xFF) >> 8) + BASE_ADC_P0 - ADC_DATA_OFFSET;
+	adc_temp = ((data & 0xFF00) >> 8) + BASE_ADC_P0 - ADC_DATA_OFFSET;
 	p_cal_data[1] = (VOL_P0) | ((adc_temp << 2) << 16);
 
 	/* adc 4.2V */
