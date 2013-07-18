@@ -210,10 +210,19 @@
 
 /* DDR */
 #define DDR_CLK 533
+//---these three macro below,only one can be open
+//#define DDR_LPDDR1
+#define DDR_LPDDR2
+//#define DDR_DDR3
+
 #define DDR_TYPE DRAM_LPDDR2_2CS_8G_X32
 //#define DDR_TYPE DRAM_LPDDR2_1CS_4G_X32
 //#define DDR_TYPE DRAM_LPDDR2_1CS_8G_X32
 //#define DDR_TYPE DRAM_LPDDR2_2CS_16G_X32
+//#define DDR_TYPE DRAM_DDR3_1CS_2G_X8_4P
+//#define DDR_TYPE DRAM_DDR3_1CS_4G_X16_2P
+
+#define DDR3_DLL_ON TRUE
 //#define DLL_BYPASS
 #define DDR_APB_CLK 128
 #define DDR_DFS_SUPPORT
