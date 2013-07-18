@@ -102,19 +102,22 @@ typedef enum
 typedef enum
 {
 /*Driver strength for lpddr1*/
-    DS_FULL,
-    DS_HALF,
-    DS_QUARTER,
-    DS_OCTANT,
-    DS_THREE_QUATERS,
-/*Driver strength for lpddr2 or ddr3*/
-    DS_34R3 = 0x01,
-    DS_40R,
-    DS_48R,
-    DS_60R,
-    DS_68R6,
-    DS_80R,
-    DS_120R,
+    LPDDR1_DS_FULL,
+    LPDDR1_DS_HALF,
+    LPDDR1_DS_QUARTER,
+    LPDDR1_DS_OCTANT,
+    LPDDR1_DS_THREE_QUATERS,
+/*Driver strength for lpddr2*/
+    LPDDR2_DS_34R3 = 0x01,
+    LPDDR2_DS_40R  = 0x02,
+    LPDDR2_DS_48R  = 0x03,
+    LPDDR2_DS_60R  = 0x04,
+    LPDDR2_DS_68R6 = 0x05,
+    LPDDR2_DS_80R  = 0x06,
+    LPDDR2_DS_120R = 0x07,
+/*Driver strength for ddr3*/
+	DDR3_DS_40R    = 0x00,
+	DDR3_DS_34R3   = 0x01
 }MEM_IODS_E;
 
 /*Truth Table-Commands*/
@@ -259,7 +262,10 @@ typedef enum
 	PUBL_LPDDR2_DS_48OHM = 0x9,
 	PUBL_LPDDR2_DS_60OHM = 0x7,
 	PUBL_LPDDR2_DS_80OHM = 0x5,
-	PUBL_LPDDR2_DS_MAX   = 0x5	
+	PUBL_LPDDR2_DS_MAX   = 0x5,
+
+	PUBL_DDR3_DS_34OHM   = 0xd,
+	DDR3_DDR3_DS_40OHM   = 0xb
 
 }PUBL_DS_E;
 
@@ -303,6 +309,15 @@ typedef enum
 
 typedef enum
 {
+	MEM_MR0 = 0,
+	MEM_MR1 = 1,
+	MEM_MR2 = 2,
+	MEM_MR3 = 3,
+	MEM_MR10 = 10,
+}MEM_MR_E;
+
+typedef enum
+{
 	MEM_MRW = 0,
 	MEM_MRD = 1,
 }MEM_CMD_E;
@@ -338,21 +353,21 @@ typedef enum
 typedef struct 
 {
 	uint32 tREFI;	 //average Refresh interval time between each row,normall = 7800 ns	
-    uint8 tRAS;    //ACTIVE to PRECHARGE command period,(50~70000 ns)	
-    uint8   tRC;     //ACTIVE to ACTIVE command period,(>=tRAS+tRP ns)    
-    uint8   tRFC;    //AUTO REPRESH to ACTIVE/AUTO REPRESH command period,128M/256Mb(>=80 ns)
+    uint32 tRAS;    //ACTIVE to PRECHARGE command period,(50~70000 ns)	
+    uint32   tRC;     //ACTIVE to ACTIVE command period,(>=tRAS+tRP ns)    
+    uint32   tRFC;    //AUTO REPRESH to ACTIVE/AUTO REPRESH command period,128M/256Mb(>=80 ns)
                                               //512Mb(>=110 ns)
                                               // 1Gb/2Gb(>=140 ns)
-    uint8   tRCD;    //ACTIVE to READ or WRITE delay,(>=30 ns)
-    uint8   tRP;     //PRECHARGE command period,(>=30 ns)
-    uint8   tRRD;    //ACTIVE bank A to ACTIVE bank B delay,(>=15 ns)
-    uint8   tWR;     //WRITE recovery time,(>=15 ns)
-    uint8   tWTR;    //internal write to Read command delay,(>=1 tck)
-    uint8   tXP;     //Exit power down to next valid command delay,(>=25 ns)
+    uint32   tRCD;    //ACTIVE to READ or WRITE delay,(>=30 ns)
+    uint32   tRP;     //PRECHARGE command period,(>=30 ns)
+    uint32   tRRD;    //ACTIVE bank A to ACTIVE bank B delay,(>=15 ns)
+    uint32   tWR;     //WRITE recovery time,(>=15 ns)
+    uint32   tWTR;    //internal write to Read command delay,(>=1 tck)
+    uint32   tXP;     //Exit power down to next valid command delay,(>=25 ns)
 
-    uint8   tXSR;    //self refresh exit to next valid command delay,(>=200 ns)    
-    uint8   tMRD;    //MODE REGISTER SET command period,(>=2 tck)
-    uint8   tCKE;    //CKE min pulse width,(>=2 tck)
+    uint32   tXSR;    //self refresh exit to next valid command delay,(>=200 ns)    
+    uint32   tMRD;    //MODE REGISTER SET command period,(>=2 tck)
+    uint32   tCKE;    //CKE min pulse width,(>=2 tck)
 } lpddr1_timing_t;
 
 /*
@@ -362,46 +377,46 @@ typedef struct
 typedef struct 
 {
     /*LPDDR2 SDRAM Core Parameters*/
-    /*uint8 RL;   Read Latency,>=6@800Mhz*/
-    /*uint8 WL;   Write Latency,>=3@800Mhz*/
+    /*uint32 RL;   Read Latency,>=6@800Mhz*/
+    /*uint32 WL;   Write Latency,>=3@800Mhz*/
 	uint32 tREFI;	// average Refresh interval time between each row,normall = 7800 ns	    
-    uint8 tRAS; /*Row Active Time,>=3tCK*/	
-    uint8 tRC;  /*ACTIVE to ACTIVE command period,>=(tRAS + tRPab)ns*/
-    uint8 tRFCab; /*Refresh Cycle time tRFCab,64M~256Mb(>=90 ns)
+    uint32 tRAS; /*Row Active Time,>=3tCK*/	
+    uint32 tRC;  /*ACTIVE to ACTIVE command period,>=(tRAS + tRPab)ns*/
+    uint32 tRFCab; /*Refresh Cycle time tRFCab,64M~256Mb(>=90 ns)
                                           / 1Gb/2Gb/4G(>=110 ns)
                                           / 8Gb(>=210 ns) */
-    uint8 tRFCpb;
-    uint8 tRCD; /*RAS to CAS Delayy,>=3tCK*/
-    uint8 tRP;  /*Preactive to Activate command period,>=3tCK*/
-    uint8 tRRD; /*Active bank A to Active bank B,>=2tCK*/
-    uint8 tWR;  /*Write Recovery Time,>=3tCK*/
-    uint8 tWTR; /*Internal Write to Read Command Delay,>=2tCK*/
-    uint8 tXP;  /*Exit power down to next valid command delay,>=2tCK*/
+    uint32 tRFCpb;
+    uint32 tRCD; /*RAS to CAS Delayy,>=3tCK*/
+    uint32 tRP;  /*Preactive to Activate command period,>=3tCK*/
+    uint32 tRRD; /*Active bank A to Active bank B,>=2tCK*/
+    uint32 tWR;  /*Write Recovery Time,>=3tCK*/
+    uint32 tWTR; /*Internal Write to Read Command Delay,>=2tCK*/
+    uint32 tXP;  /*Exit power down to next valid command delay,>=2tCK*/
     
-    uint8 tXSR; /*Self refresh exit to next valid command delay,>=2tCK*/    
-    uint8 tCKESR;/*low pulse width during Self-Refresh,>=3tCK*/
-    uint8 tCCD; /*CAS to CAS delay,LPDDR2-S4>=2tCK,LPDDR2-S2>=1tCK*/
-    uint8 tRTP; /*Internal Read to Precharge command delay,>=2tCK*/
-    uint8 tFAW; /*Four Bank Activate Window,>=8tCK*/
+    uint32 tXSR; /*Self refresh exit to next valid command delay,>=2tCK*/    
+    uint32 tCKESR;/*low pulse width during Self-Refresh,>=3tCK*/
+    uint32 tCCD; /*CAS to CAS delay,LPDDR2-S4>=2tCK,LPDDR2-S2>=1tCK*/
+    uint32 tRTP; /*Internal Read to Precharge command delay,>=2tCK*/
+    uint32 tFAW; /*Four Bank Activate Window,>=8tCK*/
     uint32 tDPD; /*Minimum Deep Power Down Time,==500us*/
 
     /*ZQ Calibration Parameters*/
     uint32 tZQINIT; /*Initialization Calibration Time,>=1us*/
-    uint8 tZQCL;
-    uint8 tZQCS;
-    uint8 tZQreset;
+    uint32 tZQCL;
+    uint32 tZQCS;
+    uint32 tZQreset;
     /*Read Parameters*/
-    uint8 tDQSCK; /*DQS output access time from CK_t/CK_c,(2500~5500)ps*/
+    uint32 tDQSCK; /*DQS output access time from CK_t/CK_c,(2500~5500)ps*/
     /*CKE Input Parameters*/
-    uint8 tCKE; /*CKE min. pulse width (high and low pulse width),>=3tCK*/
+    uint32 tCKE; /*CKE min. pulse width (high and low pulse width),>=3tCK*/
 
     /*Command Address Input Parameters*/
     /*Boot Parameters (10 MHz - 55 MHz)*/
-    uint8 tDQSCKmax;/*DQS Output Data Access Time from CK_t/CK_c,(2~10)ns*/
+    uint32 tDQSCKmax;/*DQS Output Data Access Time from CK_t/CK_c,(2~10)ns*/
     
     /*Mode Register Parameters*/
-    uint8 tMRW; /*MODE REGISTER Write command period,>=5tCK*/
-    uint8 tMRR; /*Mode Register Read command period,>=2tCK*/
+    uint32 tMRW; /*MODE REGISTER Write command period,>=5tCK*/
+    uint32 tMRR; /*Mode Register Read command period,>=2tCK*/
 } lpddr2_timing_t;
 
 
@@ -412,44 +427,45 @@ typedef struct
 typedef struct 
 {
 	uint32 tREFI;	// average Refresh interval time between each row,normall = 7800 ns	
-    uint8 tRAS; /*ACTIVE to PRECHARGE command period,(35~9tREFI)*/
-    uint8 tRC; /*ACT to ACT or REF command period,>=(45~49)ns*/
-    uint8 tRFC;/*AUTO REPRESH to ACTIVE/AUTO REPRESH command period,
+    uint32 tRAS; /*ACTIVE to PRECHARGE command period,(35~9tREFI)*/
+    uint32 tRC; /*ACT to ACT or REF command period,>=(45~49)ns*/
+    uint32 tRFC;/*AUTO REPRESH to ACTIVE/AUTO REPRESH command period,
                                   /512Mb(>=90 ns) /1Gb(>=110 ns)
                                   /2Gb(>=160 ns)  /4Gb(>=300 ns)  
                                   / 8Gb(>=350 ns) */                                             
-    uint8 tRCD; /*ACT to internal read or write delay time,,>=(11~15)ns*/                                  
-    uint8 tRP; /*PRE command period,>=(11~14)ns*/
-    uint8 tRRD; /*ACTIVE to ACTIVE command period for1/2KB page size,>=4tCK*/
-    uint8 tWR;  /*WRITE recovery time,>=15ns*/
-    uint8 tWTR; /*Delay from start of internal write transaction to internal read command,>=4tCK*/
-    uint8 tXP; /*max(3nCK,7.5ns)*/
+    uint32 tRCD; /*ACT to internal read or write delay time,,>=(11~15)ns*/                                  
+    uint32 tRP; /*PRE command period,>=(11~14)ns*/
+    uint32 tRRD; /*ACTIVE to ACTIVE command period for1/2KB page size,>=4tCK*/
+    uint32 tWR;  /*WRITE recovery time,>=15ns*/
+    uint32 tWTR; /*Delay from start of internal write transaction to internal read command,>=4tCK*/
 
     /*ZQ Calibration Parameters*/
-    uint8 tZQINIT; /*Power-up and RESET calibration time,>=512tCK*/
-    uint8 tZQoper;
-    uint8 tZQCS;
+    uint32 tZQINIT; /*Power-up and RESET calibration time,>=512tCK*/
+    uint32 tZQoper;
+    uint32 tZQCS;
     /*Data Strobe Timing*/
-    uint8 tDQSCK; /*DQS,DQS# rising edge output access time from rising CK*/
+    uint32 tDQSCK; /*DQS,DQS# rising edge output access time from rising CK*/
 
     /*Command and Address Timing*/
-    uint8 tDLLK; /*DLL locking time,>=512tCK*/
-    uint8 tRTP; /*Internal READ Command to PRECHARGE Command delay,>=4tCK*/
-    uint8 tMRD; /*Mode Register Set command cycle time,>=4tCK*/
-    uint8 tMOD; /*Mode Register Set command update delay,>=12tCK*/
-    uint8 tCCD; /*CAS# to CAS# command delay,>=4tCK*/
-    uint8 tFAW; /*Four activate window for 1/2KB page size,>=40ns*/
+    uint32 tDLLK; /*DLL locking time,>=512tCK*/
+    uint32 tRTP; /*Internal READ Command to PRECHARGE Command delay,>=4tCK*/
+    uint32 tMRD; /*Mode Register Set command cycle time,>=4tCK*/
+    uint32 tMOD; /*Mode Register Set command update delay,>=12tCK*/
+    uint32 tCCD; /*CAS# to CAS# command delay,>=4tCK*/
+    uint32 tFAW; /*Four activate window for 1/2KB page size,>=40ns*/
 
     /*Self Refresh Timings*/
-    uint8 tXS;/*Exit Self Refresh to commands not requiring a locked DLL,>=max(5nCK,tRFC(min)+10ns)*/
-    uint8 tCKSRE;/*Valid Clock Requirement after Self Refresh Entry (SRE) or Power-Down Entry (PDE),>=max(5nCK,10ns)*/
-    uint8 tCKSRX;/*Valid Clock Requirement before Self Refresh Exit (SRX) or Power-Down Exit(PDX) or Reset Exit,>=max(5nCK,10ns)*/
+    uint32 tXS;/*Exit Self Refresh to commands not requiring a locked DLL,>=max(5nCK,tRFC(min)+10ns)*/
+    uint32 tXP; /*max(3nCK,7.5ns)*/
+    uint32 tXPDLL; /*max(10nCK,24ns)*/
+    uint32 tCKSRE;/*Valid Clock Requirement after Self Refresh Entry (SRE) or Power-Down Entry (PDE),>=max(5nCK,10ns)*/
+    uint32 tCKSRX;/*Valid Clock Requirement before Self Refresh Exit (SRX) or Power-Down Exit(PDX) or Reset Exit,>=max(5nCK,10ns)*/
 
     /*Power Down Timings*/
     /*tXP:Exit Power Down with DLL on to any valid command; 
       Exit Precharge Power Down with DLL frozen to commands notrequiring a locked DLL*/
 
-    uint8 tCKE; /*CKE minimum pulse width,max(3nCK,7.5ns)*/
+    uint32 tCKE; /*CKE minimum pulse width,max(3nCK,7.5ns)*/
 } ddr3_timing_t;
 
 /*
@@ -460,24 +476,24 @@ typedef struct
 {
     /*Need to be done for details*/
     /* avoid compiling error.*/
-    uint8 to_be_done;
-    uint8 tMRD;
-    uint8 tCCD;
-    uint8 tXS;
-    uint8 tAOND;
+    uint32 to_be_done;
+    uint32 tMRD;
+    uint32 tCCD;
+    uint32 tXS;
+    uint32 tAOND;
 } DDR2_ACTIMING;
 
 typedef struct 
 {
     DRAM_TYPE_E  dram_type;/*dram type: lpddr1,lpddr2,ddr3*/
     uint32     cs_num;     //cs/ranks number.
-    uint8      bank_num;   //bank number,lpddr1 and lpddr2 usually 4,ddr3 usually 8
+    uint32      bank_num;   //bank number,lpddr1 and lpddr2 usually 4,ddr3 usually 8
 
-    uint8      io_width;   /*data io width, x8/x16/x32*/
-    uint8      bl;         /*burst lenght,usually=2,4,8,16*/
-    uint8      rl;         /*read cas latency, usually=1,2,3,4,5,6,7,8*/
-    uint8      wl;         /*write cas latency, usually=1,2,3,4,5,6,7,8 */
-    uint8      al;         /*DDR2/DDR3 only,Posted CAS additive latency(AL)
+    uint32      io_width;   /*data io width, x8/x16/x32*/
+    uint32      bl;         /*burst lenght,usually=2,4,8,16*/
+    uint32      rl;         /*read cas latency, usually=1,2,3,4,5,6,7,8*/
+    uint32      wl;         /*write cas latency, usually=1,2,3,4,5,6,7,8 */
+    uint32      al;         /*DDR2/DDR3 only,Posted CAS additive latency(AL)
                                   //For DDR3,two constrains below must be satisfied.
                                     1.CL=AL+1/2/0 for DDR3
                                     2.WL=AL+CWL,and CWL is 5~12tCK for DDR3
@@ -487,17 +503,17 @@ typedef struct
 
 typedef struct
 {
-    uint8 rdwr_order;
-    uint8 rd_hpr;
-    uint8 rd_pagematch;
-    uint8 rd_urgent;
-    uint8 rd_aging;
-    uint8 rd_reorder_bypass;
+    uint32 rdwr_order;
+    uint32 rd_hpr;
+    uint32 rd_pagematch;
+    uint32 rd_urgent;
+    uint32 rd_aging;
+    uint32 rd_reorder_bypass;
     uint32 rd_priority;
 
-    uint8 wr_pagematch;
-    uint8 wr_urgent;
-    uint8 wr_aging;
+    uint32 wr_pagematch;
+    uint32 wr_urgent;
+    uint32 wr_aging;
     uint32 wr_priority;    
 }umctl2_port_info_t;
 
