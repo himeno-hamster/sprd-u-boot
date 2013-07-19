@@ -8,6 +8,11 @@
 #define SYNC_REQ_BODY 1
 #define SYNC_REQ_TAIL 2
 
+static int sync_done = 0;
+static int sync_enable = 0;
+static int fixnv_sync_done = 0;
+static int runtimenv_sync_done = 0;
+
 typedef struct
 {
 	uint32	packet_type;				// headd,body,tail
@@ -78,6 +83,7 @@ static BOOLEAN _syncReset(uint32 ifSuc)
 	if(ifSuc)
 	{
 		ret = backupData(_id);
+                nvitem_set_sync_done(_id);
 	}
 	else
 	{
@@ -322,5 +328,39 @@ do
 		}
 	}
 }while(1);
+}
+
+int nvitem_sync_enable(void){
+    sync_enable = 1;
+}
+int nvitem_sync_disable(void){
+    sync_enable = 0;
+}
+int nvitem_is_sync_done(void){
+    return (sync_done == 1);
+}
+void nvitem_sync_reset(void){
+    sync_done = 0;
+    fixnv_sync_done = 0;
+    runtimenv_sync_done = 0;
+}
+void nvitem_set_sync_done(int id){
+    if(sync_enable){
+        if(id == 0){
+            printf("NVSYNC,fixnv sync done ...[fixnv_sync_done=%d,runtimenv_sync_done=%d\n",
+                    fixnv_sync_done,runtimenv_sync_done);
+            fixnv_sync_done = 1;
+        }else if(id == 1){
+            printf("NVSYNC,runtimenv sync done ...[fixnv_sync_done=%d,runtimenv_sync_done=%d\n",
+                    fixnv_sync_done,runtimenv_sync_done);
+            runtimenv_sync_done = 1;
+        }
+        if(fixnv_sync_done == 1 && runtimenv_sync_done == 1){
+            printf("NVSYNC,sync_done=true!!!\n");
+            sync_done = 1;
+        }
+    }else{
+        return;
+    }
 }
 

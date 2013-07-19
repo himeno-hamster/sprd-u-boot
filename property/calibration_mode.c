@@ -259,6 +259,12 @@ int  tool_channel_read(char *buffer,int count)
 	}
 	return index;
 }
+extern int nvitem_sync_enable(void);
+extern int nvitem_sync_disable(void);
+extern int nvitem_is_sync_done(void);
+extern void nvitem_sync_reset(void);
+extern int get_nv_sync_flag(void);
+extern void set_nv_sync_flag(int flag);
 void calibration_mode(const uint8_t *pcmd, int length)
 {
 	int ret;
@@ -267,6 +273,7 @@ void calibration_mode(const uint8_t *pcmd, int length)
 	int index = 0;
 	int i;
 	unsigned char buf[MODE_REQUEST_LENGTH] = {0};
+        int sync_index = 0;
 
 	init_calibration_mode();
 #ifndef __DL_UART0__
@@ -314,6 +321,12 @@ void calibration_mode(const uint8_t *pcmd, int length)
 	while(TRUE){
 		count = tool_channel_read(g_usb_buf, MAX_USB_BUF_LEN);
 		if((index = ap_calibration_proc( g_usb_buf, count,g_uart_buf)) == 0){
+                        if(get_nv_sync_flag()){
+                            //printf("NV_SYNC,get_nv_sync_flag so enable nvitem sync ...\n");
+                            //tools request to save wcdma calibration params to flash
+                            //so we must make sure to write it to flash before power off
+                            nvitem_sync_enable();
+                        }
 			if(count > 0){
 				if(count != gUsedChannel->Write(gUsedChannel, g_usb_buf, count)) {
 					return ;
@@ -322,13 +335,33 @@ void calibration_mode(const uint8_t *pcmd, int length)
 			}
 			count = 0;		
 			while(-1 != (ret = gUsedChannel->GetSingleChar(gUsedChannel))){
+                            if(get_nv_sync_flag()){
+				g_uart_buf[sync_index++] = (ret & 0xff);
+                            }else{
 				g_uart_buf[index++] = (ret & 0xff);
+                            }
 			}
 		}
-		if(index > 0){
-			tool_channel_write(g_uart_buf, index);
-		}
 		nvitem_sync();
+                if(get_nv_sync_flag()){
+                    if(sync_index > 0 && nvitem_is_sync_done()){
+                        printf("NV_SYNC,nvitem_is_sync_done=true,so we reset all the gloables ...\n");
+                        nvitem_sync_reset();
+                        nvitem_sync_disable();
+                        set_nv_sync_flag(0);
+                        printf("NV_SYNC,we can notify the tool now!!!\n");
+                        tool_channel_write(g_uart_buf, sync_index);
+                        sync_index = 0;
+                    }else if (sync_index > 0){
+                        //printf("NV_SYNC,nvitem_is_sync_done=flase,sync_index=%d ...\n",sync_index);
+                    }else{
+                        //printf("NV_SYNC,we haven't got response from cp ...\n");
+                    }
+                }else{
+                    if(index > 0){
+                            tool_channel_write(g_uart_buf, index);
+                    }
+                }
 		//add by kenyliu in 2013 06 20 for bug 146310
 		if(0xE == get_adc_flag())
 		{
