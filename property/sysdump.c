@@ -65,13 +65,15 @@ static void wait_for_keypress()
 	int key_code;
 
 	do {
-		udelay(50*1000);
+		udelay(50 * 1000);
 		key_code = board_key_scan();
 		//printf("key_code: %d, (vd:%d,vu:%d,p:%d)\n", key_code, KEY_VOLUMEDOWN, KEY_VOLUMEUP, KEY_POWER);
 		if (key_code == KEY_VOLUMEDOWN || key_code == KEY_VOLUMEUP || key_code == KEY_HOME)
 			break;
 	} while (1);
 	printf("Pressed key: %d\n", key_code);
+	lcd_printf("Pressed key: %d\n", key_code);
+	lcd_display();
 }
 
 int init_mmc_fat(void)
@@ -123,9 +125,9 @@ void write_mem_to_mmc(char *path, char *filename,
 		do {} while (0); /* TODO: jianjun.he */
 	}
 
-	printf("writing 0x%lx bytes sysdump info from 0x%p to sd file %s\n",
-		memsize, memaddr, filename);
-	lcd_printf("writing 0x%lx bytes sysdump info from 0x%p to sd file %s\n", memsize, memaddr, filename);
+	printf("writing 0x%lx bytes to sd file %s\n",
+		memsize, filename);
+	lcd_printf("writing 0x%lx bytes to sd file %s\n", memsize, filename);
 	lcd_display();
 	ret = file_fat_write(filename, memaddr, memsize);
 	if (ret <= 0) {
