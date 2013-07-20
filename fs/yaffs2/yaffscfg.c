@@ -667,12 +667,21 @@ void read_a_file(char *fn)
 
 void cmd_yaffs_mount(char *mp)
 {
-	yaffs_StartUp();
-	int retval = yaffs_mount(mp);
-	if( retval != -1)
-		isMounted = 1;
-	else
-		printf("Error mounting %s, return value: %d\n", mp, yaffsfs_GetError());
+    int retrys = 0;
+RETRY:
+    yaffs_StartUp();
+    int retval = yaffs_mount(mp);
+    if( retval != -1){
+        isMounted = 1;
+    }else{
+        printf("Error mounting %s, return value: %d\n", mp, yaffsfs_GetError());
+        if(-EBUSY == yaffsfs_GetError() && retrys < 3){
+            retrys ++;
+            printf("unmounting %s,then retry(%d)\n",mp,retrys);
+            cmd_yaffs_umount(mp);
+            goto RETRY;
+        }
+    }
 }
 
 static void checkMount(void)

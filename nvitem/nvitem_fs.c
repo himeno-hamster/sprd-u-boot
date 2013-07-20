@@ -356,12 +356,13 @@ BOOLEAN		ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 	//check crc
 	if(_chkEcc(buf, size)){
 		printf("NVITEM partId%x:%s read success!\n",_ramdiskCfg[idx].partId,firstName);
+	        cmd_yaffs_umount(path);
 		return 1;
 	}
 	printf("NVITEM partId%x:%s ECC error......!\n",_ramdiskCfg[idx].partId,firstName);
 // 2 read bakup image
 	memset(buf, 0xFF, size);
-	_getPath(secondName,path);
+	//_getPath(secondName,path);
 	printf("secondName : %s path: %s\n",secondName,path);
 //	cmd_yaffs_mount(path);
 	cmd_yaffs_mread_file(secondName, buf);
@@ -369,11 +370,13 @@ BOOLEAN		ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 
 	if(!_chkEcc(buf, size)){
 		printf("NVITEM partId%x:%s ECC error!\n",_ramdiskCfg[idx].partId,secondName);
+	        memset(buf, 0xFF, size);
+	        cmd_yaffs_umount(path);
 		return 1;
 	}
 
-	_getPath(firstName,path);
-	cmd_yaffs_mount(path);
+	//_getPath(firstName,path);
+	//cmd_yaffs_mount(path);
 	cmd_yaffs_mwrite_file(firstName, (char*)buf, _ramdiskCfg[idx].image_size);
 	cmd_yaffs_umount(path);
 

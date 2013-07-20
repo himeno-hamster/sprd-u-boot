@@ -45,6 +45,7 @@ typedef struct
 }MSG_AP_ADC_CNF;
 static unsigned char g_usb_buf_dest[8*1024];
 static int power_off_Flag = 0;  //add by kenyliu in 2013 06 20 for bug 146310
+static int force_nv_sync = 0;
 
 static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
 {
@@ -293,8 +294,18 @@ static uint8 is_adc_calibration(char *dest, int destSize, char *src,int srcSize)
                 default:
                     break;
             }
+        }else if(0x2B == lpHeader->type){
+            //main command: 0x2B,  WCDMA NV access
+            //sub command : 0x2,   save to flash
+            switch(lpHeader->subtype){
+                case 0x2:
+                    force_nv_sync = 1;
+                    break;
+                default:
+                    break;
+            }
+        }					
         }
-	}					
 
 	return 0;
 }
@@ -477,10 +488,16 @@ uint32 ap_calibration_proc(uint8 *data,uint32 count,uint8 *out_msg)
 	return 0;
 }
 //add by kenyliu in 2013 06 20 for bug 146310
-int get_adc_flag()
+int get_adc_flag(void)
 {
   #ifdef CONFIG_AP_ADC_CALIBRATION
 	return power_off_Flag;
   #endif
 }
 //end kenyliu
+int get_nv_sync_flag(void){
+    return force_nv_sync;
+}
+void set_nv_sync_flag(int flag){
+    force_nv_sync = flag;
+}
