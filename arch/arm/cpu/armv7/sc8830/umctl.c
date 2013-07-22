@@ -320,10 +320,14 @@ void umctl2_basic_mode_init(DRAM_INFO* dram)
 
     /* master register config */
     //to set rank/cs number
+    /*
     reg_bits_set(UMCTL_MSTR, 24, 4, ((ranks==1)?0x01:0)|
                                     ((ranks==2)?0x03:0)|
                                     ((ranks==3)?0x07:0)|
                                     ((ranks==4)?0x0F:0));
+	*/
+	reg_bits_set(UMCTL_MSTR, 24, 4, 3);//both  one cs and two cs lpddr2 should set this bit, the real reaseon should check by asic
+	
     //to set burst length
     reg_bits_set(UMCTL_MSTR, 16, 4, ((BL==2)?0x01:0)|
                                     ((BL==4)?0x02:0)|
