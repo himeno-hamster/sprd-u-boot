@@ -761,7 +761,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 			*(uint32_t*)(harsh_data+8), *(uint32_t*)(harsh_data+12));
 	}
 
-#if defined( CONFIG_AP_ADC_CALIBRATION) || (defined(CONFIG_SC8825) && (!(BOOT_NATIVE_LINUX)))
+#if defined( CONFIG_AP_ADC_CALIBRATION)||defined(CONFIG_SC8830)|| (defined(CONFIG_SC8825) && (!(BOOT_NATIVE_LINUX)))
 {
 	extern int read_adc_calibration_data(char *buffer,int size);
 	extern void CHG_SetADCCalTbl (unsigned int *adc_data);
