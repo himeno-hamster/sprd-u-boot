@@ -552,7 +552,7 @@ LOCAL void EMC_PHY_Mode_Set(SDRAM_CFG_INFO_T_PTR mem_info)
 
     i = REG32(EXT_MEM_CFG1);
     i &= ~((3<<14)|0x3ff);
-    i |=(EMC_CKE_SEL_DEFAULT << 14) |
+    i |=(EMC_CKE_ALL_CS << 14) |
         (EMC_DQS_GATE_DEFAULT<< 8)	|
         (EMC_DQS_GATE_MODE_DEFAULT<< 7) |
         (mem_info->sdram_type<< 6) |//DMEM data output mode,0:dff 1:dl
