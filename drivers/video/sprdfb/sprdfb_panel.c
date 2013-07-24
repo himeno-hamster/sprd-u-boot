@@ -142,7 +142,7 @@ static struct panel_cfg lcd_panel[] = {
 extern struct panel_spec lcd_hx8363_mcu_spec;
 static struct panel_cfg lcd_panel[] = {
     [0]={
-        .lcd_id = 0x18,
+        .lcd_id = 0x84,
         .panel = &lcd_hx8363_mcu_spec ,
         },
 };

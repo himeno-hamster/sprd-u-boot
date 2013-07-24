@@ -346,11 +346,19 @@ static int32_t hx8363_read_id(struct panel_spec *self)
 	send_data_t send_data = self->info.mcu->ops->send_data;
 
 	//Get ID
+        send_cmd(0xB9);
+	send_data(0xFF);
+	send_data(0x83);
+	send_data(0x63);
 
+	send_cmd(0xF4);
+	read_data();
+    
+	id = read_data();
 	//to be added here
+        LCD_PRINT("sprdfb: got lcdid = 0x%x\n", id);
 
-
-	return 0x18; // id;
+	return id; // id;
 }
 
 static struct panel_operations lcd_hx8363_mcu_operations = {
