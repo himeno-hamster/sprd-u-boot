@@ -1,6 +1,5 @@
 
 #include "asm/arch/sci_types.h"
-#include "asm/arch/sci_api.h"
 #include "sdio_card_pal.h"
 #include "sdhost_drv.h"
 #include "asm/arch/mmu_drvapi.h"

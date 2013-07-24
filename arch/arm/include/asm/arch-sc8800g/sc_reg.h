@@ -22,7 +22,6 @@
  **-------------------------------------------------------------------------- */
 #include "sci_types.h"
 #include "os_api.h"
-#include "sci_api.h"
 #include "chip_drv_reg.h"
 
 #ifndef WIN32 

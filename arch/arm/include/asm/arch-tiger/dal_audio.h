@@ -244,25 +244,6 @@ enum aud_stereo_mode
     AUD_NON_STEREO		= 1		// single channel 
 };
 
-
-// Ring callback function prototype.
-typedef void (*AUD_RING_CALLBACK_PFUNC)(void);
-
-typedef struct AUD_RING_PLAY_tag
-{
-	//xSignalHeaderRec signal_head;
-	SIGNAL_VARS 
-    uint16  type;
-    uint16  sub_type;
-    uint32  len;
-    uint32  times;
-    uint32  sample_rate;
-    uint32  clk;
-    uint32	file_offset;
-    uint8	*data_ptr;
-    AUD_RING_CALLBACK_PFUNC callback_pfunc;
-} AUD_RING_PLAY_T;
-
 typedef enum
 {
 	MIDI_PLAY   = 1,

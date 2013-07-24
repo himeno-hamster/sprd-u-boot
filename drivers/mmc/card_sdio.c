@@ -18,7 +18,7 @@
  **---------------------------------------------------------------------------*/
 
 #include "asm/arch/sci_types.h"
-#include "asm/arch/sci_api.h"
+#include "asm/arch/os_api.h"
 #include "card_sdio.h"
 #include "sdio_card_pal.h"
 #ifdef MBBMS_SUPPORT  
@@ -298,7 +298,7 @@ typedef enum CARD_BUS_WIDTH_TAG
 #define EXT_CSD_SEC_CNT_INDEX	212	/* RO, 4 bytes */
 #define EXT_CSD_PARTITION_CFG_INDEX	179
 /*
- * EXT_CSD field definitions
+ * 
  */
 
 #define EXT_CSD_CMD_SET_NORMAL		(1<<0)
