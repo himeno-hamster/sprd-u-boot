@@ -300,6 +300,7 @@ void umctl2_low_power_open()
 		reg_bits_set(UMCTL_HWLPCTL,16,12,0X40);//hardware idle period
 	}
 	#endif
+	reg_bits_set(UMCTL_HWLPCTL,16,12,0);//hardware idle period	
 	
     umctl2_low_pd_set(UMCTL_AUTO_SF_DIS,
                       UMCTL_AUTO_PD_EN,
@@ -450,7 +451,7 @@ void umctl2_dfi_init(DRAM_INFO* dram)
     reg_bits_set(UMCTL_DFILPCFG0, 4,4,2);//dfi_lp_wakeup_pd
     reg_bits_set(UMCTL_DFILPCFG0, 0,1,0);//dfi_lp_en_pd
     #endif
-    UMCTL2_REG_SET(UMCTL_DFILPCFG0,0X0700F100);
+    UMCTL2_REG_SET(UMCTL_DFILPCFG0,0X0700F000);
 
     //DFIUPD0
     UMCTL2_REG_SET(UMCTL_DFIUPD0, 0X80400003);
