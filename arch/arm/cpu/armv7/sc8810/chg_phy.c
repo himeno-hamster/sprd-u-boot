@@ -42,6 +42,7 @@ void CHG_SetRecharge (void)
 	ANA_REG_OR (ANA_CHGR_CTL0,CHGR_RECHG_BIT);
 }
 
+#ifndef FDL_CHG_SC7710G2
 void CHG_Init (void)
 {
 	unsigned int efuse_cal_data[2] = {0};
@@ -83,3 +84,4 @@ void CHG_Init (void)
 	CHG_SetRecharge();
 }
 
+#endif

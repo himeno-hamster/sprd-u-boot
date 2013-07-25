@@ -47,7 +47,7 @@ CPU_OBJ_FILE += sdram_sc7710g2.o sdram_prod_sc7710g2.o
 endif
 
 ifdef CONFIG_SC7710G2
-CPU_OBJ_FILE += adi_drv.o misc.o
+CPU_OBJ_FILE += adi_drv.o misc.o chg_phy.o
 endif
 
 CPU_LIB       = $(addprefix $(obj),$(CPU_OBJ_FILE))
@@ -87,7 +87,7 @@ $(obj)%.o:$(SRCTREE)/nand_fdl/fdl-1/src/%.S
 $(obj)%.o:$(SRCTREE)/arch/$(ARCH)/cpu/$(CPU)/$(SOC)/%.S
 	$(CC) $(AFLAGS) -I $(FDL1_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
 $(obj)%.o:$(SRCTREE)/arch/$(ARCH)/cpu/$(CPU)/$(SOC)/%.c
-	$(CC) $(AFLAGS) -I $(FDL1_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
+	$(CC) $(CFLAGS) -I $(FDL1_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
 endif
 
 include $(SRCTREE)/rules.mk

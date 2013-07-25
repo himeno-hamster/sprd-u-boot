@@ -25,6 +25,7 @@ typedef enum _CMD_TYPE
     BSL_SET_BAUDRATE,                           /* 0x9 */
     BSL_ERASE_FLASH,                            /* 0xA */
     BSL_REPARTITION,                            /* 0xB */
+	BSL_CMD_OFF_CHG = 0x13,						/* 0x13*/
 
     BSL_CMD_TYPE_MAX,
 

@@ -36,7 +36,14 @@ int data_exec(PACKET_T *packet, void *arg);
  * set_baudrate
  ******************************************************************************/
 int set_baudrate(PACKET_T *packet, void *arg);
- 
+
+#ifdef CONFIG_SC7710G2
+/******************************************************************************
+ * set_chg_flag
+ ******************************************************************************/
+int set_chg_flag(PACKET_T *packet, void *arg);
+#endif
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

@@ -34,6 +34,9 @@ static void error(void)
 }
 
 
+
+
+
 int main(void)
 {
     PACKET_T *packet;
@@ -47,6 +50,10 @@ int main(void)
     FDL_DlReg(BSL_CMD_EXEC_DATA,  data_exec,    0);
     FDL_DlReg(BSL_CMD_END_DATA,   data_end,     0);
     FDL_DlReg(BSL_SET_BAUDRATE,   set_baudrate, 0);
+
+#ifdef CONFIG_SC7710G2
+	FDL_DlReg(BSL_CMD_OFF_CHG,	  set_chg_flag,  0);
+#endif
 
     for (;;)
     {

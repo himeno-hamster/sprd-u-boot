@@ -22,7 +22,7 @@ typedef struct _DL_FILE_STATUS
 } DL_FILE_STATUS, *PDL_FILE_STATUS;
 
 static DL_FILE_STATUS g_file;
-
+static unsigned long chg_on_flag = 0;
 
 int sys_connect(PACKET_T *packet, void *arg)
 {
@@ -54,7 +54,14 @@ int data_start(PACKET_T *packet, void *arg)
         FDL_SendAckPacket(BSL_REP_DOWN_SIZE_ERROR);
         return 0;
     }
+#ifdef CONFIG_SC7710G2
+	extern void CHG_ShutDown(void);
 
+	if (!chg_on_flag) {
+		CHG_ShutDown();
+		chg_on_flag = 0;
+	}
+#endif
     g_file.start_address = start_addr;
     g_file.total_size = file_size;
     g_file.recv_size = 0;
@@ -113,9 +120,9 @@ int set_baudrate(PACKET_T *packet, void *arg)
     unsigned long baudrate = *(unsigned long*)(packet->packet_body.content);
 #if defined (CHIP_ENDIAN_LITTLE)
     baudrate = EndianConv_32(baudrate);
-#endif   
+#endif
     if (!packet->ack_flag)
-    { 
+	{
         packet->ack_flag = 1;
         FDL_SendAckPacket(BSL_REP_ACK);
     }
@@ -125,3 +132,17 @@ int set_baudrate(PACKET_T *packet, void *arg)
     return 0;
 }
 
+#ifdef CONFIG_SC7710G2
+int set_chg_flag(PACKET_T *packet, void *arg)
+{
+	if (!packet->ack_flag)
+	{
+		packet->ack_flag = 1;
+		FDL_SendAckPacket(BSL_REP_ACK);
+	}
+
+	chg_on_flag = 1;
+
+	return 1;
+}
+#endif

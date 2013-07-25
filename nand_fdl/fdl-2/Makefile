@@ -124,7 +124,7 @@ $(obj)%.o:$(SRCTREE)/nand_fdl/fdl-2/src/%.S
 $(obj)%.o:$(SRCTREE)/$(CPUDIR)/$(SOC)/%.S
 	$(CC) $(AFLAGS) -I $(FDL2_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
 $(obj)%.o:$(SRCTREE)/$(CPUDIR)/$(SOC)/%.c
-	$(CC) $(AFLAGS) -I $(FDL2_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
+	$(CC) $(CFLAGS) -I $(FDL2_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
 endif
 # defines $(obj).depend target
 include $(SRCTREE)/rules.mk
