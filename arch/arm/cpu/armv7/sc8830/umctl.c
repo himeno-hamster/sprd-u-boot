@@ -293,11 +293,13 @@ void umctl2_low_power_open()
 	umctl2_ctl_auto_gate();
 	wait_pclk(50);
 
+	#if 0
 	//for kevin
 	if(IS_SHARK_CS)
 	{
 		reg_bits_set(UMCTL_HWLPCTL,16,12,0X40);//hardware idle period
 	}
+	#endif
 	
     umctl2_low_pd_set(UMCTL_AUTO_SF_DIS,
                       UMCTL_AUTO_PD_EN,
@@ -1312,7 +1314,8 @@ void publ_basic_mode_init(CLK_TYPE_E clk,DRAM_INFO* dram)
     reg_bits_set(PUBL_DSGCR,1,1,1);//Byte Disable Enable
     reg_bits_set(PUBL_DSGCR,2,1,0);//Impedance Update Enable
     reg_bits_set(PUBL_DSGCR,3,1,1);//Low Power I/O Power Down
-    reg_bits_set(PUBL_DSGCR,4,1,1);//Low Power DLL Power Down
+    //reg_bits_set(PUBL_DSGCR,4,1,1);//Low Power DLL Power Down
+    reg_bits_set(PUBL_DSGCR,4,1,0);//Low Power DLL Power Down
     reg_bits_set(PUBL_DSGCR,5,3,DQS_GATE_EARLY_LATE);//DQS Gate Extension
     reg_bits_set(PUBL_DSGCR,8,3,DQS_GATE_EARLY_LATE);//DQS Gate Early
        
