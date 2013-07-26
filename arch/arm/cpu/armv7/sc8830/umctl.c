@@ -282,7 +282,7 @@ void umctl2_low_power_open()
                       UMCTL_AUTO_CKP_EN);
 	*/
 	
-	UMCTL2_REG_SET(UMCTL_DFILPCFG0, 0x0700f100); /*DFI LP setting*/
+	UMCTL2_REG_SET(UMCTL_DFILPCFG0, 0x0700f000); /*DFI LP setting*/
 	wait_pclk(50);
 	
 	//UMCTL2_REG_SET(PUBL_PIR, 0x40010);/*auto trigger ITM reset*/
@@ -293,14 +293,14 @@ void umctl2_low_power_open()
 	umctl2_ctl_auto_gate();
 	wait_pclk(50);
 
-	#if 0
+	#if 1
 	//for kevin
 	if(IS_SHARK_CS)
 	{
-		reg_bits_set(UMCTL_HWLPCTL,16,12,0X40);//hardware idle period
+		//reg_bits_set(UMCTL_HWLPCTL,16,12,0X40);//hardware idle period
+		reg_bits_set(UMCTL_HWLPCTL,16,12,0);//hardware idle period
 	}
 	#endif
-	reg_bits_set(UMCTL_HWLPCTL,16,12,0);//hardware idle period	
 	
     umctl2_low_pd_set(UMCTL_AUTO_SF_DIS,
                       UMCTL_AUTO_PD_EN,
