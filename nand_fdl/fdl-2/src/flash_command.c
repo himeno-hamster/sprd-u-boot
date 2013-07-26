@@ -639,6 +639,17 @@ static int _fixnv_chkEcc(unsigned char* buf, int size)
 
 int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, unsigned int size, unsigned char *buf)
 {
+#if 1
+    int ret = 0;
+    if (strcmp(phypart->name, "fixnv") == 0) {
+        ret = fdl_read_fixnv(g_fixnv_buf_yaffs,off,size,buf);
+        if(ret == -1){
+            return NAND_SYSTEM_ERROR;
+        }else{
+            return NAND_SUCCESS;
+        }
+    }
+#else
 	char *fixnvpoint = "/fixnv";
 	char *fixnvfilename = "/fixnv/fixnv.bin";
 	char *backupfixnvpoint = "/backupfixnv";
@@ -686,6 +697,7 @@ int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, un
 	}else{
 		return NAND_SYSTEM_ERROR;
 	}
+#endif
 }
 
 #else
@@ -1259,24 +1271,6 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 
     if (CHECKSUM_OTHER_DATA != g_checksum) {
 #ifdef CONFIG_SC7710G2
-        /* erase fixnv partition */
-        memset(&phy_partition, 0, sizeof(struct real_mtd_partition));
-        strcpy(phy_partition.name, "fixnv");
-        ret = log2phy_table(&phy_partition);
-        phy_partition_info(phy_partition, __LINE__);
-        g_prevstatus = ret;
-        if (ret == NAND_SUCCESS) {
-            printf("erase fixnv start\n");
-            ret = nand_start_write (&phy_partition, 0, &nand_page_oob_info, 0);
-            printf("\nerase fixnv end\n");
-            g_prevstatus = ret;
-            if (ret == NAND_SUCCESS) {
-                printf("write fixnv start\n");
-                fdl_download_fixnv(g_fixnv_buf,1);
-                printf("write fixnv end\n");
-                g_prevstatus = NAND_SUCCESS;
-            }
-        }
         /* erase backup fixnv partition */
         memset(&phy_partition, 0, sizeof(struct real_mtd_partition));
         strcpy(phy_partition.name, "backupfixnv");
@@ -1296,6 +1290,24 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
             }
         }
 
+        /* erase fixnv partition */
+        memset(&phy_partition, 0, sizeof(struct real_mtd_partition));
+        strcpy(phy_partition.name, "fixnv");
+        ret = log2phy_table(&phy_partition);
+        phy_partition_info(phy_partition, __LINE__);
+        g_prevstatus = ret;
+        if (ret == NAND_SUCCESS) {
+            printf("erase fixnv start\n");
+            ret = nand_start_write (&phy_partition, 0, &nand_page_oob_info, 0);
+            printf("\nerase fixnv end\n");
+            g_prevstatus = ret;
+            if (ret == NAND_SUCCESS) {
+                printf("write fixnv start\n");
+                fdl_download_fixnv(g_fixnv_buf,1);
+                printf("write fixnv end\n");
+                g_prevstatus = NAND_SUCCESS;
+            }
+        }
 #else
 
 	/* It's fixnv data */
