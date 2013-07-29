@@ -338,6 +338,15 @@
 #define CONSOLE_COLOR_CYAN 0x001f
 #endif
 #endif // CONFIG_LCD
+
+/*lcd backlight configuration
+* 1. default: pwm driving extring backlight ic
+* 2. when using whtled parallel mode, turn on CONFIG_BACKLIGHT_WHTLED_PARA
+* 3. when using whtled serial mode, turn on CONFIG_BACKLIGHT_WHTLED_SER
+*/
+//#define CONFIG_BACKLIGHT_WHTLED_PARA
+//#define CONFIG_BACKLIGHT_WHTLED_SER
+
 /*
  * MMC definition
  */
