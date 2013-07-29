@@ -143,6 +143,8 @@ static CUSTOM2LOG custom2log_table[] = {
 	{0x90000026, 0x80000011},
 	{0xffffffff, 0xffffffff}
 };
+static int read_done = 0;
+
 #define ECC_NBL_SIZE 0x4000
 //bootloader header flag offset from the beginning
 #define BOOTLOADER_HEADER_OFFSET   32
@@ -641,11 +643,18 @@ int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, un
 {
 #if 1
     int ret = 0;
+    //static int read_done = 0;
+    if(read_done){
+		memcpy(buf, (unsigned char *)(g_fixnv_buf_yaffs + off), size);
+        return NAND_SUCCESS;
+    }
     if (strcmp(phypart->name, "fixnv") == 0) {
+        printf("reading nv from flash\n");
         ret = fdl_read_fixnv(g_fixnv_buf_yaffs,off,size,buf);
         if(ret == -1){
             return NAND_SYSTEM_ERROR;
         }else{
+            read_done = 1;
             return NAND_SUCCESS;
         }
     }
@@ -1271,6 +1280,16 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
 
     if (CHECKSUM_OTHER_DATA != g_checksum) {
 #ifdef CONFIG_SC7710G2
+        {
+            //check the data from tools
+            unsigned int calc_len = Vlx_CalcFixnvLen(g_fixnv_buf,g_fixnv_buf + FIXNV_SIZE);
+            unsigned int recv_len = g_sram_addr - (unsigned long) g_fixnv_buf;
+            if(calc_len != recv_len){
+                printf("calc_len = %d,recv_len = %d\n",calc_len,recv_len);
+                SEND_ERROR_RSP(BSL_CHECKSUM_DIFF);
+                return;
+            }
+        }
         /* erase backup fixnv partition */
         memset(&phy_partition, 0, sizeof(struct real_mtd_partition));
         strcpy(phy_partition.name, "backupfixnv");
@@ -1308,6 +1327,9 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
                 g_prevstatus = NAND_SUCCESS;
             }
         }
+
+        printf("next time we'll read nv from flash instead of memory!\n");
+        read_done = 0;
 #else
 
 	/* It's fixnv data */

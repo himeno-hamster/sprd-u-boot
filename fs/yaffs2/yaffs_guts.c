@@ -3428,10 +3428,8 @@ static int yaffs_PutChunkIntoFile(yaffs_Object * in, int chunkInInode,
 			 * not be loaded during a scan
 			 */
 
-			if (inScan > 0) {
-				newSerial = newTags.serialNumber;
-				existingSerial = existingTags.serialNumber;
-			}
+			newSerial = newTags.serialNumber;
+			existingSerial = existingTags.serialNumber;
 
 			if ((inScan > 0) &&
 			    (in->myDev->isYaffs2 ||
@@ -6302,7 +6300,7 @@ static int yaffs_ScanBackwards(yaffs_Device * dev)
 					   ("yaffs tragedy: Could not make object for object  %d  "
 					    "at chunk %d during scan"
 					    TENDSTR), tags.objectId, chunk));
-					continue;
+
 				}
 
 				if (in->valid) {
@@ -6449,14 +6447,11 @@ static int yaffs_ScanBackwards(yaffs_Device * dev)
 					}
 					in->dirty = 0;
 
-					if (!parent)
-						alloc_failed = 1;
-
 					/* directory stuff...
 					 * hook up to parent
 					 */
 
-					if (parent && parent->variantType ==
+					if (parent->variantType ==
 					    YAFFS_OBJECT_TYPE_UNKNOWN) {
 						/* Set up as a directory */
 						parent->variantType =
@@ -6464,7 +6459,7 @@ static int yaffs_ScanBackwards(yaffs_Device * dev)
 						INIT_LIST_HEAD(&parent->variant.
 							       directoryVariant.
 							       children);
-					} else if (!parent || parent->variantType !=
+					} else if (parent->variantType !=
 						   YAFFS_OBJECT_TYPE_DIRECTORY)
 					{
 						/* Hoosterman, another problem....
@@ -6580,6 +6575,37 @@ static int yaffs_ScanBackwards(yaffs_Device * dev)
 	 */
 	yaffs_HardlinkFixup(dev,hardList);
 
+
+	/*
+	*  Sort out state of unlinked and deleted objects.
+	*/
+	{
+		struct list_head *i;
+		struct list_head *n;
+
+		yaffs_Object *l;
+
+		/* Soft delete all the unlinked files */
+		list_for_each_safe(i, n,
+				   &dev->unlinkedDir->variant.directoryVariant.
+				   children) {
+			if (i) {
+				l = list_entry(i, yaffs_Object, siblings);
+				yaffs_DestroyObject(l);
+			}
+		}
+
+		/* Soft delete all the deletedDir files */
+		list_for_each_safe(i, n,
+				   &dev->deletedDir->variant.directoryVariant.
+				   children) {
+			if (i) {
+				l = list_entry(i, yaffs_Object, siblings);
+				yaffs_DestroyObject(l);
+
+			}
+		}
+	}
 
 	yaffs_ReleaseTempBuffer(dev, chunkData, __LINE__);
 
