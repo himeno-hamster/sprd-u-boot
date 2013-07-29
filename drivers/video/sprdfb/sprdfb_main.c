@@ -68,6 +68,7 @@ static void __raw_bits_or(unsigned int v, unsigned int a)
 	__raw_writel((__raw_readl(a) | v), a);
 }
 
+
 static void LCD_SetPwmRatio(unsigned short value)
 {
 #ifdef CONFIG_SC8830
@@ -84,8 +85,25 @@ static void LCD_SetPwmRatio(unsigned short value)
 #endif
 }
 
+#define WHTLED_PD_SET           BIT_0
+#define WHTLED_PD_RST           BIT_1
+#define WHTLED_SER_ENB          BIT_2
+#define WHTLED_BOOST_ENB        BIT_4
+#define WHTLED_V_SHIFT          0
+#define WHTLED_V_MSK            (0x1F << WHTLED_V_SHIFT)
+
 void LCD_SetBackLightBrightness( unsigned long  value)
 {
+
+#ifdef CONFIG_BACKLIGHT_WHTLED_SER
+    ANA_REG_OR(ANA_WHTLED_CTL0, WHTLED_BOOST_ENB);
+#else
+#ifdef CONFIG_BACKLIGHT_WHTLED_PARA
+    ANA_REG_AND(ANA_WHTLED_CTL0, ~(WHTLED_PD_SET | WHTLED_PD_RST | WHTLED_SER_ENB));
+    ANA_REG_OR(ANA_WHTLED_CTL0,  WHTLED_PD_RST);
+    ANA_REG_MSK_OR (ANA_WHTLED_CTL1, ( (value << WHTLED_V_SHIFT) &WHTLED_V_MSK), WHTLED_V_MSK);
+#else
+
 	unsigned long duty_mod= 0;
 	if(value > LCD_PWM_MOD_VALUE)
 		value = LCD_PWM_MOD_VALUE;
@@ -97,6 +115,9 @@ void LCD_SetBackLightBrightness( unsigned long  value)
 
 	duty_mod = (value << 8) | LCD_PWM_MOD_VALUE;
 	LCD_SetPwmRatio(duty_mod);
+#endif
+#endif
+
 }
 
 
