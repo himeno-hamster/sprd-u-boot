@@ -579,8 +579,9 @@ typedef struct
     uint8 clk_drv;          //clock pin driver strength
 
     uint8 clk_wr;   // dll clk wr balance
-}EMC_PARAM_T, *EMC_PARAM_PTR;
 
+    uint8 nand_id[5];
+}EMC_PARAM_T, *EMC_PARAM_PTR;
 
 typedef struct
 {
