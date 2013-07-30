@@ -8,7 +8,7 @@
 
 #include <asm/arch/sprd_spi.h>
 
-#ifdef CONFIG_FB_SC7710
+#ifdef CONFIG_SC7710G2
 #define SPI2_BASE 0x8e008000
 #else
 #define SPI2_BASE 0x4e006000
@@ -74,7 +74,7 @@ PUBLIC void SPI_Enable( uint32 spi_id, BOOLEAN is_en)
 				*(volatile uint32 *)GR_GEN0 |= ( 1 << GEN0_SPI1_EN);
 				break;
 			case 2: 
-#ifdef CONFIG_FB_SC7710
+#ifdef CONFIG_SC7710G2
 				*(volatile uint32 *)0x8b0000a4 |= ( 1 << 19);
 #else
 				*(volatile uint32 *)GR_GEN0 |= ( 1 << GEN0_SPI2_EN);
