@@ -169,8 +169,10 @@ int clk_set_parent(struct clk *clk, struct clk *parent)
 {
 	int ret = -EACCES;
 	unsigned long flags;
+#if defined(CONFIG_DEBUG_FS)
 	struct clk *old_parent = clk_get_parent(clk);
 	debug0("clk %p, parent %p <<< %p\n", clk, parent, old_parent);
+#endif
 	if (IS_ERR_OR_NULL(clk) || IS_ERR(parent))
 		return -EINVAL;
 
