@@ -807,7 +807,7 @@ static struct ldo_ctl_info* LDO_GetLdoCtl(LDO_ID_E ldo_id)
 	int i = 0;
 	struct ldo_ctl_info* ctl = NULL;
 
-	for ( i = 0; i < ARRAY_SIZE(ldo_ctl_data); ++i) {
+	for ( i = 0; i < (int) ARRAY_SIZE(ldo_ctl_data); ++i) {
 		if (ldo_ctl_data[i].id == ldo_id) {
 			ctl = &ldo_ctl_data[i];
 			break;
