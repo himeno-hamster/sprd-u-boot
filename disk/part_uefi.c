@@ -97,8 +97,8 @@ typedef struct _align_pmbr
 align_pmbr pmbr __attribute__ ((aligned(4))) = {0};
 gpt_header gpt_head __attribute__ ((aligned(4))) = {0};
 
-unsigned long long int _cur_lba_num = 0; 
-unsigned long long int all_used_size = 0;
+static unsigned long long int _cur_lba_num = 0; 
+static unsigned long long int all_used_size = 0;
 
 #ifndef CONFIG_SC8830
 PARTITION_CFG g_partition_cfg[]={
@@ -243,19 +243,19 @@ unsigned int _gen_gpt_entry(int part_index , gpt_entry *g_entry,PARTITION_CFG *p
 	//judge if user data partition
 	if( MAX_SIZE_FLAG == p_partition_cfg[part_index].partition_size)
 	{
-		_cur_lba_num = _cur_lba_num + (emmc_part_device.total_sector-2-MAX_PARTITION_INFO/4-MAX_PARTITION_INFO/4-1-all_used_size*2);
+		_cur_lba_num = _cur_lba_num + (emmc_part_device.total_sector-STARTING_LBA_OF_FIRST_PARTITION-MAX_PARTITION_INFO/4-1-all_used_size*2);
+		_cur_lba_num = (_cur_lba_num/STARTING_LBA_OF_FIRST_PARTITION)*STARTING_LBA_OF_FIRST_PARTITION;
 		*(unsigned long long int*)g_entry->ending_lba = _cur_lba_num-1;
 	}else
 	{
 		_cur_lba_num = _cur_lba_num + p_partition_cfg[part_index].partition_size * 2;
 		*(unsigned long long int*)g_entry->ending_lba = _cur_lba_num - 1;
 	}
-	
 
 	memset (&g_entry->attributes, 0, sizeof (gpt_entry_attributes));
 
 	for (i = 0; i < MAX_UTF_PARTITION_NAME_LEN; i++)
-			g_entry->partition_name[i] = (efi_char16_t) PED_CPU_TO_LE16 ((unsigned short int*) p_partition_cfg[part_index].partition_name[i]);
+			g_entry->partition_name[i] = (efi_char16_t) PED_CPU_TO_LE16 (p_partition_cfg[part_index].partition_name[i]);
 
 	return 1;
 }
@@ -264,9 +264,9 @@ unsigned int _parser_cfg(unsigned int *total_partition,PARTITION_CFG *p_partitio
 {
 	int count = 0;
 	for(count=0;count<MAX_PARTITION_INFO;count++)
-	{	
+	{
 		if(0 == p_partition_cfg[count].partition_size)
-		{			
+		{
 			*total_partition = count;
 			break;
 		} else
@@ -311,14 +311,15 @@ unsigned int _gen_gpt(gpt_header *g_header,PARTITION_CFG *p_partition_cfg)
 	
 	memset(g_header->reserved2,0,GPT_BLOCK_SIZE - 92);	
 
-	_cur_lba_num = MAX_PARTITION_INFO/4 + 2;
+	//_cur_lba_num = MAX_PARTITION_INFO/4 + 2;
+	_cur_lba_num = STARTING_LBA_OF_FIRST_PARTITION;
 
 	printf("write gpt partition \n");
 	for(i=0;i<gpt_partition_number;i++)
-	{	
+	{
 		_gen_gpt_entry(i,&g_gpt_entry_block._gpt_entry[i],p_partition_cfg);
 	}
-	
+
 	//*(unsigned long int*)g_header->partition_entry_array_crc32 = ;
 	crc = uefi_crc32(&g_gpt_entry_block,(le32_to_int(g_header->num_partition_entries)) *(le32_to_int( g_header->sizeof_partition_entry)));
 	*(unsigned long int*)g_header->partition_entry_array_crc32 = PED_CPU_TO_LE32(crc);

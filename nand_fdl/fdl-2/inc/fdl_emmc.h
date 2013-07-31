@@ -21,7 +21,6 @@
 
 
 int FDL_BootIsEMMC(void);
-int FDL_Check_Partition_Table(void);
 
 static __inline DLSTATUS convert_err (int err)
 {
@@ -63,7 +62,9 @@ int FDL2_eMMC_DataEnd (PACKET_T *packet, void *arg);
 /******************************************************************************
  * read_flash
  ******************************************************************************/
-int FDL2_eMMC_Read (PACKET_T *packet, void *arg);
+int FDL2_eMMC_ReadStart(PACKET_T * packet, void * arg);
+int FDL2_eMMC_ReadMidst(PACKET_T * packet, void * arg);
+int FDL2_eMMC_ReadEnd(PACKET_T * packet, void * arg);
 
 /******************************************************************************
  * erase_flash

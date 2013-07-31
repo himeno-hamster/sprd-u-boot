@@ -130,13 +130,7 @@ int main(void)
 				FDL_SendAckPacket (convert_err (EMMC_INCOMPATIBLE_PART));
 			#endif
 		#else
-			if (!FDL_Check_Partition_Table()) {
-				#if 0 //defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)// JUST FOR TEST , DELETE IT LATER
-				write_uefi_partition_table(g_sprd_emmc_partition_cfg);
-				#else				
-				FDL_SendAckPacket (convert_err (EMMC_INCOMPATIBLE_PART));
-				#endif
-			}
+			//do nothing
 		#endif
 			err = EMMC_SUCCESS;
 		}
@@ -163,7 +157,9 @@ int main(void)
 	  		FDL_DlReg(BSL_CMD_START_DATA,     FDL2_eMMC_DataStart,         0);
 	   		FDL_DlReg(BSL_CMD_MIDST_DATA,     FDL2_eMMC_DataMidst,         0);
 	   		FDL_DlReg(BSL_CMD_END_DATA,       FDL2_eMMC_DataEnd,           0);
-	   		FDL_DlReg(BSL_CMD_READ_FLASH,     FDL2_eMMC_Read,         0);
+			FDL_DlReg(BSL_CMD_READ_FLASH_START,     FDL2_eMMC_ReadStart,         0);
+			FDL_DlReg(BSL_CMD_READ_FLASH_MIDST,     FDL2_eMMC_ReadMidst,         0);
+			FDL_DlReg(BSL_CMD_READ_FLASH_END,     FDL2_eMMC_ReadEnd,         0);
 	   		FDL_DlReg(BSL_ERASE_FLASH,        FDL2_eMMC_Erase,        0);
 		    	FDL_DlReg(BSL_REPARTITION,    	   FDL2_eMMC_Repartition,       0);	
 		}
@@ -178,8 +174,8 @@ int main(void)
    		FDL_DlReg(BSL_CMD_NORMAL_RESET,   FDL_McuResetNormal/*mcu_reset_boot*/,   0);
 	    	FDL_DlReg(BSL_CMD_READ_CHIP_TYPE, FDL_McuReadChipType, 0);  
 #ifdef CONFIG_EMMC_BOOT
-		FDL_SendAckPacket (EMMC_SUCCESS == err ? BSL_REP_ACK :
-					BSL_INCOMPATIBLE_PARTITION);
+		//Send BSL_INCOMPATIBLE_PARTITION because of FDL2 will know nothing about new partition
+		FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
 #else
 		/* Reply the EXEC cmd received in the 1st FDL. */
 		FDL_SendAckPacket (NAND_SUCCESS == err ? BSL_REP_ACK :

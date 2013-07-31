@@ -239,10 +239,12 @@ int get_all_partition_info_efi(block_dev_desc_t * dev_desc, PARTITION_CFG * info
 		info[i].partition_offset = (ulong) le64_to_int((pgpt_pte)[i].starting_lba);
 		/* The ending LBA is inclusive, to calculate size, add 1 to it */
 		info[i].partition_size = ((ulong)le64_to_int((pgpt_pte)[i].ending_lba) + 1) - info[i].partition_offset;
+		//TODO: We write partition index at unique_partition_guid.b[15]
+		info[i].partition_index = pgpt_pte[i].unique_partition_guid.b[15];
 
 		for(j=0;j<MAX_UTF_PARTITION_NAME_LEN;j++)
 		{
-			info[i].partition_name[j] = (pgpt_pte[i].partition_name[j] & 0xFF);
+			info[i].partition_name[j] = (wchar_t)pgpt_pte[i].partition_name[j];
 		}
 
 		debug("%s: start 0x%lX, size 0x%lX, name %S", __FUNCTION__,

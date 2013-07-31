@@ -25,6 +25,27 @@ typedef struct
 }TRACE_PACKET_T;
 #endif
 
+#define PARTITION_SIZE_LENGTH  (4)
+
+#ifdef FPGA_TRACE_DOWNLOAD
+LOCAL void _decode_packet_data(TRACE_PACKET_T *packet, wchar_t* partition_name, unsigned long* size, unsigned long* checksum)
+#else
+LOCAL void _decode_packet_data(PACKET_T *packet, wchar_t* partition_name, unsigned long* size, unsigned long* checksum)
+#endif
+{
+	int i;
+	unsigned short *data = (unsigned short *) (packet->packet_body.content);
+	*size = *(unsigned long *) ((unsigned char *)data + MAX_PARTITION_NAME_SIZE);
+	if(NULL != checksum)
+		*checksum = *(unsigned long *) ((unsigned char *)data + MAX_PARTITION_NAME_SIZE+4);
+
+	for(i=0;i<MAX_UTF_PARTITION_NAME_LEN;i++)
+	{
+		partition_name[i] = *(data+i);
+	}
+
+	return;
+}
 
 #ifdef FPGA_TRACE_DOWNLOAD
 int FDL2_eMMC_DataStart (TRACE_PACKET_T *packet, void *arg)
@@ -32,30 +53,13 @@ int FDL2_eMMC_DataStart (TRACE_PACKET_T *packet, void *arg)
 int FDL2_eMMC_DataStart (PACKET_T *packet, void *arg)
 #endif
 {
-	unsigned long *data = (unsigned long *) (packet->packet_body.content);
-	unsigned long start_addr = *data;
-	unsigned long size = * (data + 1);
-	unsigned long nv_checksum = *(data+2);
+	wchar_t partition_name[MAX_UTF_PARTITION_NAME_LEN]={0};
+	unsigned long size,nv_checksum;
 
-#if defined(CHIP_ENDIAN_LITTLE)
-	start_addr = EndianConv_32 (start_addr);
-	size = EndianConv_32 (size);
-#endif
+	_decode_packet_data(packet, partition_name, &size, &nv_checksum);
 
-#ifdef FPGA_TRACE_DOWNLOAD
-	printf("pkt_state:0x%x, data_size:0x%x, ack_flag=0x%x,packet_body.type:0x%x, packet_body.size:0x%x,packet_body.content[0]:%02x,[1]:%02x,[2]:%02x,[3]:%02x,[4]:%02x,[5]:%02x,[6]:%02x,[7]:%02x\r\n",
-		packet->pkt_state, packet->data_size, packet->ack_flag,
-		packet->packet_body.type, packet->packet_body.size,
-		packet->packet_body.content[0],
-		packet->packet_body.content[1],
-		packet->packet_body.content[2],
-		packet->packet_body.content[3],
-		packet->packet_body.content[4],
-		packet->packet_body.content[5],
-		packet->packet_body.content[6],
-		packet->packet_body.content[7]);
-#endif
-	return fdl2_emmc_download_start(start_addr,size,nv_checksum);
+	printf("FDL2_eMMC_DataStart: Partition_Name:%S,Size:%d\n",partition_name,size);
+	return fdl2_emmc_download_start(partition_name,size,nv_checksum);
 }
 
 
@@ -74,39 +78,32 @@ int FDL2_eMMC_DataEnd (TRACE_PACKET_T *packet, void *arg)
 int FDL2_eMMC_DataEnd (PACKET_T *packet, void *arg)
 #endif
 {
-#ifdef FPGA_TRACE_DOWNLOAD
-	printf("pkt_state:0x%x, data_size:0x%x, ack_flag=0x%x,packet_body.type:0x%x, packet_body.size:0x%x,packet_body.content[0]:%02x,[1]:%02x,[2]:%02x,[3]:%02x\r\n",
-		packet->pkt_state, packet->data_size, packet->ack_flag,
-		packet->packet_body.type, packet->packet_body.size,
-		packet->packet_body.content[0],
-		packet->packet_body.content[1],
-		packet->packet_body.content[2],
-		packet->packet_body.content[3]);
-#endif
-
 	return fdl2_emmc_download_end();
 }
 
-int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
+int FDL2_eMMC_ReadStart(PACKET_T *packet, void *arg)
 {
-    	unsigned long *data = (unsigned long *) (packet->packet_body.content);
-    	unsigned long addr = *data;
-    	unsigned long size = * (data + 1);
-    	unsigned long off = * (data + 2);
-		int           ret;
+	wchar_t partition_name[MAX_UTF_PARTITION_NAME_LEN]={0};
+	unsigned long size;
 
-#if defined(CHIP_ENDIAN_LITTLE)
-    	addr = EndianConv_32 (addr);
-    	size = EndianConv_32 (size);
-	off = EndianConv_32 (off);
-#endif
+	_decode_packet_data(packet, partition_name, &size, NULL);
+
+	return fdl2_emmc_read_start(partition_name, size);
+}
+
+int FDL2_eMMC_ReadMidst(PACKET_T *packet, void *arg)
+{
+	unsigned long *data = (unsigned long *) (packet->packet_body.content);
+	unsigned long size = *data;
+	unsigned long off = *(data + 1);
+	int           ret;
 
 	if (size > MAX_PKT_SIZE) {
 		FDL_SendAckPacket (BSL_REP_DOWN_SIZE_ERROR);
 		return FALSE;
 	}
 
-	ret = fdl2_emmc_read(addr, size, off, (unsigned char *)(packet->packet_body.content));
+	ret = fdl2_emmc_read_midst(size, off, (unsigned char *)(packet->packet_body.content));
 	if(ret)
 	{
 		packet->packet_body.type = BSL_REP_READ_FLASH;
@@ -121,22 +118,41 @@ int FDL2_eMMC_Read(PACKET_T *packet, void *arg)
 	}
 }
 
-int FDL2_eMMC_Erase(PACKET_T *packet, void *arg)
+int FDL2_eMMC_ReadEnd(PACKET_T *packet, void *arg)
 {
-	unsigned long *data = (unsigned long *) (packet->packet_body.content);
-	unsigned long addr = *data;
-	unsigned long size = * (data + 1);
-#if defined(CHIP_ENDIAN_LITTLE)
-	addr = EndianConv_32 (addr);
-	size = EndianConv_32 (size);
-#endif
-
-	return fdl2_emmc_erase(addr, size);
+	return fdl2_emmc_read_end();
 }
 
+int FDL2_eMMC_Erase(PACKET_T *packet, void *arg)
+{
+	wchar_t partition_name[MAX_UTF_PARTITION_NAME_LEN]={0};
+	unsigned long size;
+
+	_decode_packet_data(packet, partition_name, &size, NULL);
+
+	printf("FDL2_eMMC_Erase: Partition_Name:%S,Size:%d\n",partition_name,size);
+
+	return fdl2_emmc_erase(partition_name, size);
+}
+
+/**
+	Packet body content:
+		Partition Name(72Byte)+SIZE(4Byte)+...
+*/
 int FDL2_eMMC_Repartition (PACKET_T *pakcet, void *arg)
 {
-	return fdl2_emmc_repartition();
+	unsigned short total_partition_num = 0;
+	unsigned short size = pakcet->packet_body.size;
+	unsigned short *data = (unsigned short *) (pakcet->packet_body.content);
+
+	if(0 != (size%(MAX_PARTITION_NAME_SIZE + PARTITION_SIZE_LENGTH)))
+	{
+		FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
+		return 0;
+	}
+	total_partition_num = size/(MAX_PARTITION_NAME_SIZE + PARTITION_SIZE_LENGTH);
+	printf("FDL2_eMMC_Repartition: Partition total num:%d\n",total_partition_num);
+	return fdl2_emmc_repartition(data, total_partition_num);
 }
 
 
