@@ -798,7 +798,8 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
     /*OUT*/uint8 *rspBuf
 )
 {
-    uint32 tmpIntFilter;
+	uint32 tmpIntFilter;
+	int tmOut;
 	const CMD_CTL_FLG* curCmdInfo = NULL;
 #if defined CONFIG_SC8830
 	if (handle->sdio_type == SDIO_CARD_PAL_TYPE_SD)
@@ -813,177 +814,149 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 #endif
 	SDIO_CARD_PRINT(("%s : cmd:%x, cmdIndex:%x, argument:%x\r\n", __FUNCTION__, cmd, curCmdInfo->cmdIndex, argument));
 	
-    SDIO_CARD_PAL_ASSERT (	/*assert verified*/
-        (SDIO_CARD_PAL_MAGICNUM == handle->MagicNum)
-        && (TRUE == handle->flag)
-    );
-    SDIO_CARD_PAL_ASSERT (cmd == curCmdInfo->cmd);	/*assert verified*/
+	SDIO_CARD_PAL_ASSERT (	/*assert verified*/
+		(SDIO_CARD_PAL_MAGICNUM == handle->MagicNum)
+		&& (TRUE == handle->flag)
+	);
+	SDIO_CARD_PAL_ASSERT (cmd == curCmdInfo->cmd);	/*assert verified*/
 
 #ifdef DUAL_TCARD_SUPPORT
-    switch(handle->sdio_No)
-    {
-        case SDIO_CARD_PAL_SLOT_0:
-        case SDIO_CARD_PAL_SLOT_1:
-        {
-             if(s_activeslot !=  handle->sdio_No)
-            {
-                 s_activeslot = handle->sdio_No;
-                 _SlotSelect(handle->sdio_No); 
-             }
-         }
-	  break;
-
-	default:
+	switch(handle->sdio_No)
 	{
-            SDIO_CARD_PAL_ASSERT (0);	/*assert verified*/
-        }
-	break;
-    }
+		case SDIO_CARD_PAL_SLOT_0:
+		case SDIO_CARD_PAL_SLOT_1:
+			{
+				if(s_activeslot !=  handle->sdio_No)
+				{
+					s_activeslot = handle->sdio_No;
+					_SlotSelect(handle->sdio_No); 
+				}
+			}
+			break;
+
+		default:
+			{
+				SDIO_CARD_PAL_ASSERT (0);	/*assert verified*/
+			}
+			break;
+	}
 #endif	
 
 #ifndef OS_NONE    
-    SCI_SDIO_EnableDeepSleep (DISABLE_AHB_SLEEP);
-    CHNG_FREQ_Event_Clr (FREQ_CHNG_EVENT_SDIO,SYS_MODE_NORMAL);
+	SCI_SDIO_EnableDeepSleep (DISABLE_AHB_SLEEP);
+	CHNG_FREQ_Event_Clr (FREQ_CHNG_EVENT_SDIO,SYS_MODE_NORMAL);
 #endif
 
-    SDHOST_NML_IntSig_Dis (handle->sdio_port, SIG_ALL);
-    SDHOST_NML_IntStatus_Dis (handle->sdio_port, SIG_ALL); // ???
-    SDHOST_NML_IntStatus_Clr (handle->sdio_port, SIG_ALL);
+	SDHOST_NML_IntSig_Dis (handle->sdio_port, SIG_ALL);
+	SDHOST_NML_IntStatus_Dis (handle->sdio_port, SIG_ALL); // ???
+	SDHOST_NML_IntStatus_Clr (handle->sdio_port, SIG_ALL);
 
-    //--
-    SDHOST_SetDataTimeOutValue (handle->sdio_port,0xE);
+	SDHOST_SetDataTimeOutValue (handle->sdio_port,0xE);
 
-    //--
-    SDHOST_SetErrCodeFilter (handle->sdio_port, curCmdInfo->errFilter);
+	SDHOST_SetErrCodeFilter (handle->sdio_port, curCmdInfo->errFilter);
 
-    tmpIntFilter = curCmdInfo->intFilter;
+	tmpIntFilter = curCmdInfo->intFilter;
 
-    if (NULL != curCmdInfo->errFilter)
-    {
-        tmpIntFilter |= SIG_ERR;
-    }
+	if (NULL != curCmdInfo->errFilter)
+	{
+		tmpIntFilter |= SIG_ERR;
+	}
 
-    if (NULL != dataParam)
-    {
-        tmpIntFilter |= SIG_DMA_INT;
-    }
+	if (NULL != dataParam)
+	{
+		tmpIntFilter |= SIG_DMA_INT;
+	}
 
-    SDHOST_NML_IntStatus_En (handle->sdio_port, tmpIntFilter);
-    SDHOST_NML_IntSig_En (handle->sdio_port, tmpIntFilter);
+	SDHOST_NML_IntStatus_En (handle->sdio_port, tmpIntFilter);
+	SDHOST_NML_IntSig_En (handle->sdio_port, tmpIntFilter);
 #ifndef CONFIG_SC8830
 #ifdef OS_NONE
 	*(volatile uint32 *)(INT_IRQ_EN) |= (0x1<<TB_SDIO1_INT);
 #endif
 #endif
-    _InitCardEvent (handle);
+	_InitCardEvent (handle);
 
-    if (NULL != dataParam)
-    {
-        uint32 bufferSize = 0;
+	if (NULL != dataParam)
+	{
+		uint32 bufferSize = 0;
 #ifdef DEBUG_SDIO
-        s_dataParam = *dataParam;
+		s_dataParam = *dataParam;
 #endif
-        bufferSize = dataParam->blkLen  *  (dataParam->blkNum);
-        //if(dataParam->direction == SDIO_DMA_OUT)
-        {
-               Dcache_CleanRegion((unsigned int)(dataParam->databuf), bufferSize);
-               Dcache_InvalRegion((unsigned int)(dataParam->databuf), bufferSize);
-        }
-        //MMU_DmaCacheSync( (uint32) (dataParam->databuf), bufferSize, DMABUFFER_BIDIRECTIONAL);
-       
-        SDHOST_SetDmaAddr (handle->sdio_port, (uint32) (dataParam->databuf));
-        SDHOST_SetDataParam (handle->sdio_port, dataParam->blkLen, dataParam->blkNum, SDIO_DMA_512K);
+		bufferSize = dataParam->blkLen  *  (dataParam->blkNum);
+		//if(dataParam->direction == SDIO_DMA_OUT)
+		{
+			Dcache_CleanRegion((unsigned int)(dataParam->databuf), bufferSize);
+			Dcache_InvalRegion((unsigned int)(dataParam->databuf), bufferSize);
+		}
+		//MMU_DmaCacheSync( (uint32) (dataParam->databuf), bufferSize, DMABUFFER_BIDIRECTIONAL);
+
+		SDHOST_SetDmaAddr (handle->sdio_port, (uint32) (dataParam->databuf));
+		SDHOST_SetDataParam (handle->sdio_port, dataParam->blkLen, dataParam->blkNum, SDIO_DMA_512K);
 #ifdef DEBUG_SDIO
-        s_sdio_dma_addr[0] = SDHOST_GetDmaAddr (handle->sdio_port);
+		s_sdio_dma_addr[0] = SDHOST_GetDmaAddr (handle->sdio_port);
 #endif
-    }
+	}
 
-    SDHOST_SetCmdArg (handle->sdio_port,argument);
-    //__udelay(1000);
-    SDHOST_SetCmd (handle->sdio_port,curCmdInfo->cmdIndex,curCmdInfo->transmode,CMD_TYPE_NORMAL, curCmdInfo->Response);
-    //__udelay(1000);
-    #if 0
-        // Get interrupt status.
-	while(0 == (isr_status & (0x1<<TB_SDIO1_INT))){
-            isr_status = * (volatile uint32 *) (INT_IRQ_STS);
-            }
-	_SDHOST_IrqHandle(TB_SDIO1_INT);
+	SDHOST_SetCmdArg (handle->sdio_port,argument);
+	//__udelay(1000);
+	SDHOST_SetCmd (handle->sdio_port,
+					curCmdInfo->cmdIndex,
+					curCmdInfo->transmode,
+					CMD_TYPE_NORMAL,
+					curCmdInfo->Response);
 
-    #ifdef DEBUG_SDIO
-        if (NULL != dataParam)
-        {
-            s_sdio_dma_addr[1] = SDHOST_GetDmaAddr (handle->sdio_port);
-        }
-    #endif
-#endif
-//---
+	tmOut = 30000;
 	while (0 != _WaitCardEvent(handle,curCmdInfo->intFilter))
 	{
-		//if(0 != (TB_SDIO1_INT&0x0000FFFF))
+		_SDHOST_IrqHandle(handle->sdio_No);
+		SDHOST_Delayus (100);
+		tmOut--;
+		if (tmOut <= 0)
 		{
-			_SDHOST_IrqHandle(handle->sdio_No);
+			s_CardErrCode |= ERR_DATA_TIMEOUT;
+			break;
 		}
 	}
-//---
    
-    SDHOST_RST (handle->sdio_port,RST_CMD_DAT_LINE);
+	SDHOST_RST (handle->sdio_port,RST_CMD_DAT_LINE);
 
 #ifndef OS_NONE	
-    SCI_SDIO_EnableDeepSleep (ENABLE_AHB_SLEEP);
-    CHNG_FREQ_Event_Set (FREQ_CHNG_EVENT_SDIO,SYS_MODE_NORMAL);
+	SCI_SDIO_EnableDeepSleep (ENABLE_AHB_SLEEP);
+	CHNG_FREQ_Event_Set (FREQ_CHNG_EVENT_SDIO,SYS_MODE_NORMAL);
 #endif
 
-    if (0 != s_CardErrCode)
-    {
-        if (
-            (CARD_CMD38_ERASE == cmd)
-            && (ERR_DATA_TIMEOUT == s_CardErrCode)
-        )
-        {
-            /*
-                该case用于防止，R1b的busy信号过长超过SDIO的TimeOut时间。
-                一般较大的SD卡擦除时间较长。
-            */
-            uint32 tmOut;
+	if (0 != s_CardErrCode)
+	{
+		if ((CARD_CMD38_ERASE == cmd) && (ERR_DATA_TIMEOUT == s_CardErrCode))
+		{
+			SDIO_CARD_PRINT ( ("SDIO_Card may be erase R1b is too long"));
+			tmOut = SCI_GetTickCount();
 
-            SDIO_CARD_PRINT ( ("SDIO_Card may be erase R1b is too long"));
-            tmOut = SCI_GetTickCount();
+			while (0 == (BIT_20 & SDHOST_GetPinState (handle->sdio_port)))
+			{
+				SDHOST_Delayus (1000);
 
-            while (0 == (BIT_20&SDHOST_GetPinState (handle->sdio_port)))
-            {
-                SDHOST_Delayus (1*1000);
+				if ( (tmOut+20000) < SCI_GetTickCount())
+				{
+					SDHOST_RST (handle->sdio_port,RST_CMD_DAT_LINE);
+					return s_CardErrCode;
+				}
+			}
+			s_CardErrCode &= ~ERR_DATA_TIMEOUT;
+		}
+		else
+		{
+			SDIO_CARD_PRINT ( ("SDIO_Card error = 0x%x",s_CardErrCode));
+			return s_CardErrCode;
+		}
+	}
 
-                if ( (tmOut+20000) < SCI_GetTickCount())
-                {
-                    #ifdef DEBUG_SDIO
-                        if (NULL != dataParam)
-                        {
-                            s_sdio_dma_addr[2] = SDHOST_GetDmaAddr (handle->sdio_port);
-                        }
-                    #endif
-                    SDHOST_RST (handle->sdio_port,RST_CMD_DAT_LINE);
-                    return s_CardErrCode;
-                }
-            }
-        }
-        else
-        {
-            SDIO_CARD_PRINT ( ("SDIO_Card error = 0x%x",s_CardErrCode));
-            return s_CardErrCode;
-        }
-    }
+	SDHOST_GetRspFromBuf (handle->sdio_port, curCmdInfo->Response, rspBuf);
 
-      /* if (NULL != dataParam)
-       {
-	  if(dataParam->direction == SDIO_DMA_IN)		   
-			      Dcache_InvalRegion((unsigned int)(dataParam->databuf), dataParam->blkLen  *  dataParam->blkNum);
-       }*/
+	SDIO_CARD_PRINT(("resp[0-4]:%02X, %02X, %02X, %02X\r\n",
+					rspBuf[0], rspBuf[1], rspBuf[2], rspBuf[3]));
 
-    SDHOST_GetRspFromBuf (handle->sdio_port, curCmdInfo->Response, rspBuf);
-
-	SDIO_CARD_PRINT(("resp[0-4]:%02X, %02X, %02X, %02X\r\n", rspBuf[0], rspBuf[1], rspBuf[2], rspBuf[3]));
-
-    return SDIO_CARD_PAL_ERR_NONE;
+	return SDIO_CARD_PAL_ERR_NONE;
 }
 
 PUBLIC BOOLEAN SDIO_Card_Pal_Close (SDIO_CARD_PAL_HANDLE handle)

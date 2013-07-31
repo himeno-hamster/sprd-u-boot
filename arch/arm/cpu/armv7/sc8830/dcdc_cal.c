@@ -312,8 +312,8 @@ static u16 dcdc_get_trimming_vol(struct regulator_desc *desc)
 	int shft, trm_vol = 0;
 	u16 tmpVal;
 
-	shft = __ffs(desc->regs->cal_ctl_bits);
-	tmpVal = (ANA_REG_GET(desc->regs->cal_ctl) & desc->regs->cal_ctl_bits) >> shft;
+	shft = __ffs(desc->regs->vol_trm_bits);
+	tmpVal = (ANA_REG_GET(desc->regs->vol_trm) & desc->regs->vol_trm_bits) >> shft;
 
 	trm_vol = tmpVal * (dcdc_get_trimming_step(desc, trm_vol))/1000;
 
