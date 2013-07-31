@@ -882,7 +882,7 @@ void umctl2_dramtiming_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
     reg_bits_set(UMCTL_DRAMTMG1,  0, 6, tRC); /*Active-to-Active command period*/
 
     reg_bits_set(UMCTL_DRAMTMG2, 24, 6, WL);
-    reg_bits_set(UMCTL_DRAMTMG2, 16, 5, RL+1);
+    reg_bits_set(UMCTL_DRAMTMG2, 16, 5, RL);
     /*Minimam time from read command to write command*/
     reg_bits_set(UMCTL_DRAMTMG2,  8, 5, IS_LPDDR2(dram_type)?(RL+(BL>>1)+tDQSCKmax+1-WL):(RL+(BL>>1)+2-WL));
     reg_bits_set(UMCTL_DRAMTMG2,  0, 6, (WL+(BL>>1)+tWTR));
@@ -1051,7 +1051,7 @@ void umctl2_poweron_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
     #if defined(DDR_LPDDR2)
     {
 		uint32 tWR  =lpddr2_timing->tWR;
-		tZQINIT = lpddr2_timing->tZQINIT;
+		//tZQINIT = lpddr2_timing->tZQINIT;
 		
         /*mr store the value to write to MR1 register*/
         /*Set sequential burst-type with wrap*/
@@ -1096,7 +1096,7 @@ void umctl2_poweron_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
     {
         uint32 tWR  = (uint32)(ddr3_timing->tWR);
         uint32 CWL = (uint32)((WL-AL)?(WL-AL):0x00);
-		tZQINIT = lpddr2_timing->tZQINIT;
+		//tZQINIT = lpddr2_timing->tZQINIT;
 		
         /*mr store the value to write to MR1 register*/
         /*Set sequential burst-type with wrap*/
@@ -1162,7 +1162,7 @@ void umctl2_poweron_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
 
 
     /*dev_zqinit_x32,ZQ initial calibration,tZQINIT.*/ //to be confirm by johnnywang
-    reg_bits_set(UMCTL_INIT5, 16, 8,(tZQINIT>>5));
+    reg_bits_set(UMCTL_INIT5, 16, 8,us_to_x32(tZQINIT,umctl2_clk));
     /*max_auto_init_x1024,max duration of the auto initialization,tINIT5.*/ // to be confirm by johnnywang
     reg_bits_set(UMCTL_INIT5,  0,10,(IS_LPDDR2(dram_type)?us_to_x1024(10,umctl2_clk):0x00));
 
@@ -1395,7 +1395,8 @@ void publ_timing_init(CLK_TYPE_E umctl2_clk,DRAM_INFO* dram)
     reg_bits_set(PUBL_PTR2,17,10,us_to_xclock(1, umctl2_clk));//tDINIT3
 
     //DTPR0, to be confirm by johnnywang    
-    //UMCTL2_REG_SET(PUBL_DTPR0,IS_LPDDR1(dram_type)?0x3088444a:0x36916a6d);
+    UMCTL2_REG_SET(PUBL_DTPR0,IS_LPDDR1(dram_type)?0x3088444a:0x36916a6d);
+	#if 0
     {
 		uint32 tMRD =(IS_LPDDR1(dram_type)?(lpddr1_timing->tMRD):0x00)|
 					(IS_LPDDR2(dram_type)?(lpddr2_timing->tMRW):0x00)|
@@ -1433,9 +1434,11 @@ void publ_timing_init(CLK_TYPE_E umctl2_clk,DRAM_INFO* dram)
 			                      (tRAS<<16)|(tRRD<<21)|(tRC<<25)|(1<<31));
 		
 	}
+	#endif
 
 
     //DTPR1	
+	/*
     reg_bits_set(PUBL_DTPR1,0,2,0);//ODT turn-on/turn-off delays (DDR2 only)
     reg_bits_set(PUBL_DTPR1,2,1,1);//Read to Write command delay
     reg_bits_set(PUBL_DTPR1,3,6,IS_LPDDR2(dram_type)?lpddr2_timing->tFAW:0 |
@@ -1447,12 +1450,13 @@ void publ_timing_init(CLK_TYPE_E umctl2_clk,DRAM_INFO* dram)
                                  IS_DDR3(dram_type)  ?ddr3_timing->tRFC:0);//
     reg_bits_set(PUBL_DTPR1,24,3,IS_LPDDR2(dram_type)?lpddr2_timing->tDQSCK:0);//tDQSCK
     reg_bits_set(PUBL_DTPR1,27,3,IS_LPDDR2(dram_type)?lpddr2_timing->tDQSCKmax:0);//tDQSCKmax	
-	//UMCTL2_REG_SET(PUBL_DTPR1,0x193400A0);
+	*/
+	UMCTL2_REG_SET(PUBL_DTPR1,0x193400A0);
 	
     //DTPR2, to set tXS,tXP,tCKE,tDLLK //to be confirm by johnnywang
-    reg_bits_set(PUBL_DTPR2, 0,10,IS_LPDDR2(dram_type)?lpddr2_timing->tXSR: ddr3_timing->tXS);
-    reg_bits_set(PUBL_DTPR2,10, 5,IS_LPDDR2(dram_type)?lpddr2_timing->tXP: ddr3_timing->tXPDLL);
-    reg_bits_set(PUBL_DTPR2,15, 4,IS_LPDDR2(dram_type)?lpddr2_timing->tCKESR: (ddr3_timing->tCKE+1));	
+    //reg_bits_set(PUBL_DTPR2, 0,10,IS_LPDDR2(dram_type)?lpddr2_timing->tXSR: ddr3_timing->tXS);
+    //reg_bits_set(PUBL_DTPR2,10, 5,IS_LPDDR2(dram_type)?lpddr2_timing->tXP: ddr3_timing->tXPDLL);
+    //reg_bits_set(PUBL_DTPR2,15, 4,IS_LPDDR2(dram_type)?lpddr2_timing->tCKESR: (ddr3_timing->tCKE+1));	
     //only used in PUBL DCU unite,I suppose
     //don't need to set,use the default value    
 }
