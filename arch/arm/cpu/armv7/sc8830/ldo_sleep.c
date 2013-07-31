@@ -58,8 +58,8 @@ void init_ldo_sleep_gr(void)
 		BIT_SLP_LDOCAMD_PD_EN |
 		BIT_SLP_LDOCAMA_PD_EN |
 		BIT_SLP_LDOSIM2_PD_EN |
-		BIT_SLP_LDOSIM1_PD_EN |
-		BIT_SLP_LDOSIM0_PD_EN |
+		//BIT_SLP_LDOSIM1_PD_EN |
+		//BIT_SLP_LDOSIM0_PD_EN |
 		BIT_SLP_LDOSD_PD_EN |
 		BIT_SLP_LDOAVDD18_PD_EN |
 		0
@@ -105,13 +105,13 @@ void init_ldo_sleep_gr(void)
 	****************************************/
 
 	ANA_REG_SET(ANA_REG_GLB_PWR_XTL_EN0,
-		//BIT_LDO_XTL_EN |
+		BIT_LDO_XTL_EN |
 		//BIT_LDO_RF1_EXT_XTL2_EN |
 		//BIT_LDO_RF1_EXT_XTL1_EN |
 		//BIT_LDO_RF1_EXT_XTL0_EN |
 		//BIT_LDO_RF1_XTL2_EN |
 		BIT_LDO_RF1_XTL1_EN |
-		//BIT_LDO_RF1_XTL0_EN |
+		BIT_LDO_RF1_XTL0_EN |
 		//BIT_LDO_RF0_EXT_XTL2_EN |
 		//BIT_LDO_RF0_EXT_XTL1_EN |
 		//BIT_LDO_RF0_EXT_XTL0_EN |
@@ -210,7 +210,7 @@ void init_ldo_sleep_gr(void)
 	/************************************************
 	*   Following is AP/CP LDO D DIE Sleep Control   *
 	*************************************************/
-	
+
 	CHIP_REG_SET(REG_PMU_APB_XTL0_REL_CFG,
 		BIT_XTL0_AP_SEL |
 		BIT_XTL0_CP0_SEL |
@@ -220,8 +220,8 @@ void init_ldo_sleep_gr(void)
 	);
 
 	CHIP_REG_SET(REG_PMU_APB_XTL1_REL_CFG,
-		//BIT_XTL1_AP_SEL |
-		//BIT_XTL1_CP0_SEL |
+		BIT_XTL1_AP_SEL |
+		BIT_XTL1_CP0_SEL |
 		BIT_XTL1_CP1_SEL |
 		//BIT_XTL1_CP2_SEL |
 		0
@@ -232,6 +232,22 @@ void init_ldo_sleep_gr(void)
 		//BIT_XTL2_CP0_SEL |
 		//BIT_XTL2_CP1_SEL |
 		BIT_XTL2_CP2_SEL |
+		0
+	);
+
+	CHIP_REG_SET(REG_PMU_APB_XTLBUF0_REL_CFG,
+		BIT_XTLBUF0_CP2_SEL |
+		//BIT_XTLBUF0_CP1_SEL |
+		BIT_XTLBUF0_CP0_SEL |
+		BIT_XTLBUF0_AP_SEL  |
+		0
+	);
+
+	CHIP_REG_SET(REG_PMU_APB_XTLBUF1_REL_CFG,
+		//BIT_XTLBUF1_CP2_SEL |
+		BIT_XTLBUF1_CP1_SEL |
+		BIT_XTLBUF1_CP0_SEL |
+		BIT_XTLBUF1_AP_SEL  |
 		0
 	);
 }
