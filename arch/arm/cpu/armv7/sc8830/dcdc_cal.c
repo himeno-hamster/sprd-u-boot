@@ -193,6 +193,32 @@ struct regulator_desc {
 
 #include "__sc8830_regulator_map.h"
 
+typedef struct dcdc_cali_tag
+{
+	char name[32];
+	int	cali_vol;								/* ctl_vol - to_vol */
+} dcdc_cali_t;
+
+#define CALI_VOL_ADDR						0x1F00
+#define CALI_VOL_ADDR_NUM					4
+
+static dcdc_cali_t* get_cali_addr()
+{
+	dcdc_cali_t *p = (dcdc_cali_t *)CALI_VOL_ADDR;
+	u32 i = 0;
+
+	while ((*(u32 *)p != 0) && (i < 4))
+	{
+		p++;
+		i++;
+	}
+
+	if (i >= 4)
+		return (dcdc_cali_t*)0;
+	else
+		return p;
+}
+
 /* standard dcdc ops*/
 static int dcdc_get_trimming_step(struct regulator_desc *desc, int to_vol)
 {
@@ -242,10 +268,19 @@ static int dcdc_set_voltage(struct regulator_desc *desc, int min_mV, int max_mV)
 
 static int dcdc_set_trimming(struct regulator_desc *desc, int def_vol, int to_vol, int adc_vol)
 {
+	dcdc_cali_t *p = NULL;
 	int acc_vol = dcdc_get_trimming_step(desc, to_vol) / 1000;
+
 	/*FIXME: no need division?
 	int ctl_vol = DIV_ROUND_UP(def_vol * to_vol * 1000, adc_vol) + acc_vol;	*/
 	int ctl_vol = (def_vol - (adc_vol - to_vol)) + acc_vol;
+
+	p = get_cali_addr();
+	if (p != 0) {
+		strcpy(p->name, desc->name);
+		p->cali_vol = ctl_vol - to_vol;
+	}
+
 	return dcdc_set_voltage(desc, ctl_vol, ctl_vol);
 }
 
@@ -312,8 +347,8 @@ static u16 dcdc_get_trimming_vol(struct regulator_desc *desc)
 	int shft, trm_vol = 0;
 	u16 tmpVal;
 
-	shft = __ffs(desc->regs->cal_ctl_bits);
-	tmpVal = (ANA_REG_GET(desc->regs->cal_ctl) & desc->regs->cal_ctl_bits) >> shft;
+	shft = __ffs(desc->regs->vol_trm_bits);
+	tmpVal = (ANA_REG_GET(desc->regs->vol_trm) & desc->regs->vol_trm_bits) >> shft;
 
 	trm_vol = tmpVal * (dcdc_get_trimming_step(desc, trm_vol))/1000;
 
@@ -336,7 +371,10 @@ static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 	//def_vol = to_vol = desc->regs->vol_def;
 	shft = __ffs(regs->vol_ctl_bits);
 	tmpVal = (ANA_REG_GET(regs->vol_ctl) & regs->vol_ctl_bits) >> shft;
-	def_vol = to_vol = regs->vol_sel[tmpVal] + dcdc_get_trimming_vol(desc);
+	if (regs->typ == 2)
+		def_vol = to_vol = regs->vol_sel[tmpVal] + dcdc_get_trimming_vol(desc);
+	else if (regs->typ == 0)
+		def_vol = to_vol = regs->vol_sel[tmpVal];
 
 	adc_vol = sci_adc_vol_request(adc_chan, ldo_cal_sel);
 	if (adc_vol <= 0) {
@@ -390,6 +428,9 @@ int DCDC_Cal_ArmCore(void)
 	res = (u32) sci_adc_ratio(5, 0);
 	bat_numerators = res >> 16;
 	bat_denominators = res & 0xffff;
+
+	/* initialize 4 struct free */
+	memset((u8 *)CALI_VOL_ADDR , 0x00, (sizeof(dcdc_cali_t) * (CALI_VOL_ADDR_NUM)));
 
 	/* TODO: calibrate all DCDCs */
 	desc = (struct regulator_desc *)(&__init_begin + 1);
