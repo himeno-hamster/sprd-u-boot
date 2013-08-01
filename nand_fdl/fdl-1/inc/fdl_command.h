@@ -36,7 +36,15 @@ int data_exec(PACKET_T *packet, void *arg);
  * set_baudrate
  ******************************************************************************/
 int set_baudrate(PACKET_T *packet, void *arg);
- 
+
+#ifdef CONFIG_SP8830
+/******************************************************************************
+ * set charge flag
+ * ****************************************************************************/
+int set_chg_flag(PACKET_T *packet, void *arg);
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

@@ -23,6 +23,9 @@ typedef struct _DL_FILE_STATUS
 
 static DL_FILE_STATUS g_file;
 
+#ifdef CONFIG_SP8830
+static unsigned long chg_on_flag = 0;
+#endif
 
 int sys_connect(PACKET_T *packet, void *arg)
 {
@@ -54,6 +57,15 @@ int data_start(PACKET_T *packet, void *arg)
         FDL_SendAckPacket(BSL_REP_DOWN_SIZE_ERROR);
         return 0;
     }
+
+#ifdef CONFIG_SP8830
+	extern void CHG_ShutDown(void);
+
+	if (!chg_on_flag) {
+		CHG_ShutDown();
+		chg_on_flag = 0;
+	}
+#endif
 
     g_file.start_address = start_addr;
     g_file.total_size = file_size;
@@ -125,3 +137,16 @@ int set_baudrate(PACKET_T *packet, void *arg)
     return 0;
 }
 
+#ifdef CONFIG_SP8830
+int set_chg_flag(PACKET_T *packet, void *arg)
+{
+	if (!packet->ack_flag)
+	{
+		packet->ack_flag = 1;
+		FDL_SendAckPacket(BSL_REP_ACK);
+	}
+	chg_on_flag = 1;
+
+	return 1;
+}
+#endif

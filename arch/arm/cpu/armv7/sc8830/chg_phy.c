@@ -34,12 +34,12 @@ uint16_t CHGMNG_AdcvalueToVoltage(uint16_t adcvalue)
 
 void CHG_TurnOn(void)
 {
-	ANA_REG_AND(ANA_APB_CHGR_CTL1, ~CHGR_PD_BIT);
+	ANA_REG_MSK_OR(ANA_APB_CHGR_CTL0, CHGR_PD_CLR_BIT, (CHGR_PD_SET_BIT | CHGR_PD_CLR_BIT));
 }
 
 void CHG_ShutDown(void)
 {
-	ANA_REG_OR(ANA_APB_CHGR_CTL1, CHGR_PD_BIT);
+	ANA_REG_MSK_OR(ANA_APB_CHGR_CTL0, CHGR_PD_SET_BIT, (CHGR_PD_SET_BIT | CHGR_PD_CLR_BIT));
 }
 
 void CHG_SetRecharge(void)
@@ -52,6 +52,7 @@ uint32_t CHG_GetAdcCalType(void)
 	return adc_cal_flag;
 }
 
+#ifndef FDL_CHG_SP8830
 enum sprd_adapter_type {
 	ADP_TYPE_UNKNOW = 0,	//unknow adapter type
 	ADP_TYPE_CDP = 1,	//Charging Downstream Port,USB&standard charger
@@ -140,3 +141,4 @@ void CHG_Init(void)
 		free(adc_data);
 	}
 }
+#endif
