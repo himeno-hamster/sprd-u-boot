@@ -1894,6 +1894,9 @@ PUBLIC BOOLEAN CARD_SDIO_InitCard(CARD_SDIO_HANDLE cardHandle, CARD_SPEED_MODE s
 	{
 		return FALSE;
 	}
+
+	delayMs(1);
+
 	pre_tick = SCI_GetTickCount(); /*set start tick value*/       
 	do
 	{

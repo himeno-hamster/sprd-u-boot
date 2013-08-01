@@ -799,6 +799,7 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 )
 {
     uint32 tmpIntFilter;
+	int tmOut;
 	const CMD_CTL_FLG* curCmdInfo = NULL;
 #if defined CONFIG_SC8830
 	if (handle->sdio_type == SDIO_CARD_PAL_TYPE_SD)
@@ -899,33 +900,24 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
     }
 
     SDHOST_SetCmdArg (handle->sdio_port,argument);
-    //__udelay(1000);
     SDHOST_SetCmd (handle->sdio_port,curCmdInfo->cmdIndex,curCmdInfo->transmode,CMD_TYPE_NORMAL, curCmdInfo->Response);
-    //__udelay(1000);
-    #if 0
-        // Get interrupt status.
-	while(0 == (isr_status & (0x1<<TB_SDIO1_INT))){
-            isr_status = * (volatile uint32 *) (INT_IRQ_STS);
-            }
-	_SDHOST_IrqHandle(TB_SDIO1_INT);
 
-    #ifdef DEBUG_SDIO
-        if (NULL != dataParam)
-        {
-            s_sdio_dma_addr[1] = SDHOST_GetDmaAddr (handle->sdio_port);
-        }
-    #endif
-#endif
-//---
 	while (0 != _WaitCardEvent(handle,curCmdInfo->intFilter))
 	{
-		//if(0 != (TB_SDIO1_INT&0x0000FFFF))
+		_SDHOST_IrqHandle(handle->sdio_No);
+
+		if (CARD_CMD38_ERASE == cmd)
 		{
-			_SDHOST_IrqHandle(handle->sdio_No);
+			SDHOST_Delayus(200);
+			tmOut++;
+			if(tmOut > 30000)
+			{
+				s_CardErrCode = ERR_DATA_TIMEOUT;
+				break;
+			}
 		}
 	}
-//---
-   
+
     SDHOST_RST (handle->sdio_port,RST_CMD_DAT_LINE);
 
 #ifndef OS_NONE	
@@ -935,23 +927,14 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 
     if (0 != s_CardErrCode)
     {
-        if (
-            (CARD_CMD38_ERASE == cmd)
-            && (ERR_DATA_TIMEOUT == s_CardErrCode)
-        )
+        if ( (CARD_CMD38_ERASE == cmd) && (ERR_DATA_TIMEOUT == s_CardErrCode))
         {
-            /*
-                该case用于防止，R1b的busy信号过长超过SDIO的TimeOut时间。
-                一般较大的SD卡擦除时间较长。
-            */
-            uint32 tmOut;
-
             SDIO_CARD_PRINT ( ("SDIO_Card may be erase R1b is too long"));
             tmOut = SCI_GetTickCount();
 
-            while (0 == (BIT_20&SDHOST_GetPinState (handle->sdio_port)))
+            while (0 == (BIT_20 & SDHOST_GetPinState (handle->sdio_port)))
             {
-                SDHOST_Delayus (1*1000);
+                SDHOST_Delayus (1000);
 
                 if ( (tmOut+20000) < SCI_GetTickCount())
                 {
@@ -965,6 +948,7 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
                     return s_CardErrCode;
                 }
             }
+		s_CardErrCode &= ~ERR_DATA_TIMEOUT;
         }
         else
         {
