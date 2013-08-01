@@ -39,7 +39,7 @@ CPU_OBJ_FILE += sdram.o adi_drv.o emc.o mcu.o efuse_drv.o
 endif
 
 ifdef CONFIG_SC8830
-CPU_OBJ_FILE += adi_drv.o dram_cfg.o umctl.o mcu.o
+CPU_OBJ_FILE += adi_drv.o dram_cfg.o umctl.o mcu.o chg_phy.o
 endif
 
 ifdef CONFIG_SC7710G2
@@ -87,7 +87,7 @@ $(obj)%.o:$(SRCTREE)/nand_fdl/fdl-1/src/%.S
 $(obj)%.o:$(SRCTREE)/arch/$(ARCH)/cpu/$(CPU)/$(SOC)/%.S
 	$(CC) $(AFLAGS) -I $(FDL1_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
 $(obj)%.o:$(SRCTREE)/arch/$(ARCH)/cpu/$(CPU)/$(SOC)/%.c
-	$(CC) $(AFLAGS) -I $(FDL1_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
+	$(CC) $(CFLAGS) -I $(FDL1_PATH)/inc -I $(COM_PATH)/inc -c -o $@ $<
 endif
 
 include $(SRCTREE)/rules.mk
