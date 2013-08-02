@@ -60,7 +60,7 @@ extern uint32 B1_DQS_STEP_DLY;
 extern uint32 B2_DQS_STEP_DLY;
 extern uint32 B3_DQS_STEP_DLY;
 extern lpddr2_timing_t LPDDR2_ACTIMING_NATIVE;
-
+static DRAM_TYPE_E DDR_TYPE_LOCAL;
 /**---------------------------------------------------------------------------*
  **                            Local Variables
  **---------------------------------------------------------------------------*/
@@ -153,11 +153,17 @@ static void wait_us(uint32 us)
 	}
 }
 
-static void __issue_mem_cmd(MEM_CMD_E wr_rd, MEM_MR_E mr_addr, uint32 mr_data, MEM_CS_E cs)
+static void __mem_init(MEM_CMD_E wr_rd, MEM_MR_E mr_addr, uint32 mr_data, MEM_CS_E cs)
 {
 	uint32 reg_val = 0;
+	uint32 cs_id = 0;
 
-	wait_us(200);
+	switch(cs)
+	{
+		case MEM_CS0 : cs_id = 1;break;
+		case MEM_CS1 : cs_id = 2;break;
+		default : cs_id = 1;break;
+	}
 
 	//wait if mode register busy
 	while(REG32(UMCTL_MRSTAT));
@@ -167,8 +173,7 @@ static void __issue_mem_cmd(MEM_CMD_E wr_rd, MEM_MR_E mr_addr, uint32 mr_data, M
 	REG32(UMCTL_MRCTRL1) = reg_val;
 
 	reg_val = (1<<31) 		|
-		      (mr_addr<<12) |
-		      (cs<<4)		|
+		      (cs_id<<4)	|
 		      (wr_rd);
 	REG32(UMCTL_MRCTRL0) = reg_val;
 
@@ -176,7 +181,7 @@ static void __issue_mem_cmd(MEM_CMD_E wr_rd, MEM_MR_E mr_addr, uint32 mr_data, M
 	while(REG32(UMCTL_MRSTAT));
 
 	//wait some time
-	wait_us(1);
+	wait_us(100);
 }
 
 
@@ -544,6 +549,7 @@ void umctl2_addrmap_init(DRAM_INFO* dram)
             UMCTL2_REG_SET(UMCTL_ADDRMAP6, 0x0F0F0505);
             break;
         }
+		#if 0
         case DRAM_DDR3_1CS_1G_X16:
         case DRAM_DDR3_2CS_2G_X16:
         {
@@ -579,7 +585,7 @@ void umctl2_addrmap_init(DRAM_INFO* dram)
             UMCTL2_REG_SET(UMCTL_ADDRMAP5, 0x06060606);
             UMCTL2_REG_SET(UMCTL_ADDRMAP6, 0x0F0F0F06);
             break;
-        }
+        }        
         case DRAM_DDR3_1CS_4G_X8_4P:
         case DRAM_DDR3_1CS_8G_X16_2P:
         {
@@ -592,6 +598,7 @@ void umctl2_addrmap_init(DRAM_INFO* dram)
             UMCTL2_REG_SET(UMCTL_ADDRMAP6, 0x0F0F0F06);
             break;
         }
+		#endif
 		case DRAM_DDR3_1CS_2G_X8_4P:
 		case DRAM_DDR3_1CS_4G_X16_2P:
 		{
@@ -643,8 +650,7 @@ void umctl2_refresh_init(DRAM_INFO* dram)
     //UMCTL_RFSHCTL3
     //UMCTL_RFSHTMG
 	
-	reg_bits_set(UMCTL_RFSHTMG,16,12,(IS_LPDDR2(dram_type)?(lpddr2_timing->tREFI>>5):0) |
-									(IS_DDR3(dram_type)?(ddr3_timing->tREFI>>5):0) );
+	reg_bits_set(UMCTL_RFSHTMG,16,12,(IS_LPDDR2(dram_type)?(lpddr2_timing->tREFI>>5):(ddr3_timing->tREFI>>5)));
 
 	reg_bits_set(UMCTL_RFSHTMG,0,9,(IS_LPDDR2(dram_type)?lpddr2_timing->tRFCab:0) |
 								  (IS_DDR3(dram_type)?ddr3_timing->tRFC:0) );
@@ -875,9 +881,7 @@ void umctl2_dramtiming_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
 
     reg_bits_set(UMCTL_DRAMTMG1, 16, 6, tXP);
     /*Minimun from read to precharge of same bank*/
-    reg_bits_set(UMCTL_DRAMTMG1,  8,5,(IS_DDR3(dram_type)?(AL+MAX(tRTP,4)):0x00) |
-                                      (IS_LPDDR1(dram_type)?(BL>>1):0x00) |
-                                      (IS_LPDDR2(dram_type)?((BL>>1)+MAX(tRTP,2)-2):0x00));
+    reg_bits_set(UMCTL_DRAMTMG1,  8,5,(IS_LPDDR2(dram_type)?((BL>>1)+MAX(tRTP,2)-2):(AL+MAX(tRTP,4))));
 
     reg_bits_set(UMCTL_DRAMTMG1,  0, 6, tRC); /*Active-to-Active command period*/
 
@@ -888,8 +892,7 @@ void umctl2_dramtiming_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
     reg_bits_set(UMCTL_DRAMTMG2,  0, 6, (WL+(BL>>1)+tWTR));
 
     /*tMRW, time to wait during load mode register writes.*/
-    reg_bits_set(UMCTL_DRAMTMG3, 16,10,(IS_LPDDR2(dram_type)?0x05:0x00) |
-                                       (IS_DDR3(dram_type)?0x05:0x00));
+    reg_bits_set(UMCTL_DRAMTMG3, 16,10,0x05);
     reg_bits_set(UMCTL_DRAMTMG3, 12, 3, tMRD);
     reg_bits_set(UMCTL_DRAMTMG3,  0,10, tMOD);
 
@@ -900,48 +903,26 @@ void umctl2_dramtiming_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
 
     /*tCKSRX,the time before SelfRefreshExit that CK is maintained as a valid clock.*/
     /*Specifies the clock stable time before SRX.*/
-    reg_bits_set(UMCTL_DRAMTMG5, 24, 4,(IS_LPDDR1(dram_type)?0x01:0x00) |
-                                       (IS_LPDDR2(dram_type)?0x02:0x00) |
-                                       //(IS_LPDDR3(dram_type)?0x02:0x00) |
-                                       //(IS_DDR2(dram_type)?0x01:0x00) |
-                                       (IS_DDR3(dram_type)?tCKSRX:0x00) );
+    reg_bits_set(UMCTL_DRAMTMG5, 24, 4,(IS_LPDDR2(dram_type)?0x02:tCKSRX));
     /*tCKSRE,the time after SelfRefreshDownEntry that CK is maintained as a valid clock.*/
     /*Specifies the clock disable delay after SRE.*/
-    reg_bits_set(UMCTL_DRAMTMG5, 16, 4,(IS_LPDDR1(dram_type)?0x00:0x00) |
-                                       (IS_LPDDR2(dram_type)?0x02:0x00) |
-                                       //(IS_LPDDR3(dram_type)?0x02:0x00) |
-                                       //(IS_DDR2(dram_type)?0x01:0x00) |
-                                       (IS_DDR3(dram_type)?0x06:0x00) );
+    reg_bits_set(UMCTL_DRAMTMG5, 16, 4,(IS_LPDDR2(dram_type)?0x02:0x06));
     /*tCKESR,Minimum CKE low width for selfrefresh entry to exit timing in clock cycles.*/
-    reg_bits_set(UMCTL_DRAMTMG5,  8, 6,(IS_LPDDR1(dram_type)?tRFC:0x00) |
-                                       (IS_LPDDR2(dram_type)?tCKESR:0x00) |
-                                       //(IS_LPDDR3(dram_type)?tCKESR:0x00) |
-                                       //(IS_DDR2(dram_type)?tCKE:0x00) |
-                                       (IS_DDR3(dram_type)?(tCKE+1):0x00) );
+    reg_bits_set(UMCTL_DRAMTMG5,  8, 6,(IS_LPDDR2(dram_type)?tCKESR:(tCKE+1)));
     /*tCKE,Minimum number of cycles of CKE HIGH/LOW during power-down and selfRefresh.*/
     reg_bits_set(UMCTL_DRAMTMG5,  0, 4, tCKE);
     
     /*tCKDPDE,time after DeepPowerDownEntry that CK is maintained as a valid clock.*/
-    reg_bits_set(UMCTL_DRAMTMG6, 24, 4,(IS_LPDDR1(dram_type)?0x00:0x00) |
-                                       (IS_LPDDR2(dram_type)?0x02:0x00) |
-                                       (IS_LPDDR3(dram_type)?0x02:0x00) );
+    reg_bits_set(UMCTL_DRAMTMG6, 24, 4,0x02);
     /*tCKDPDX,time before DeepPowerDownExit that CK is maintained as a valid clock before issuing DPDX.*/
-    reg_bits_set(UMCTL_DRAMTMG6, 16, 4,(IS_LPDDR1(dram_type)?0x01:0x00) |
-                                       (IS_LPDDR2(dram_type)?0x02:0x00) |
-                                       (IS_LPDDR3(dram_type)?0x02:0x00) );
+    reg_bits_set(UMCTL_DRAMTMG6, 16, 4,0x02);
     /*tCKCSX,time before ClockStopExit that CK is maintained as a valid clock before issuing DPDX.*/
-    reg_bits_set(UMCTL_DRAMTMG6,  0, 4,(IS_LPDDR1(dram_type)?0x01:0x00) |
-                                       (IS_LPDDR2(dram_type)?(tXP+0x02):0x00) |
-                                       (IS_LPDDR3(dram_type)?(tXP+0x02):0x00) );
+    reg_bits_set(UMCTL_DRAMTMG6,  0, 4,(tXP+0x02));
 
     /*tCKPDE,time after PowerDownEntry that CK is maintained as a valid clock before issuing PDE.*/
-    reg_bits_set(UMCTL_DRAMTMG7,  8, 4,(IS_LPDDR1(dram_type)?0x00:0x00) |
-                                       (IS_LPDDR2(dram_type)?0x02:0x00) |
-                                       (IS_LPDDR3(dram_type)?0x02:0x00) );
+    reg_bits_set(UMCTL_DRAMTMG7,  8, 4,0x02);
     /*tCKPDX,time before PowerDownExit that CK is maintained as a valid clock before issuing PDX.*/
-    reg_bits_set(UMCTL_DRAMTMG7,  0, 4,(IS_LPDDR1(dram_type)?0x00:0x00) |
-                                       (IS_LPDDR2(dram_type)?0x02:0x00) |
-                                       (IS_LPDDR3(dram_type)?0x02:0x00) );
+    reg_bits_set(UMCTL_DRAMTMG7,  0, 4,0x02);
 
     /*post_selfref_gap_x32,time after coming out of selfref before doing anything.Default:0x44
     //reg_bits_set(MCTL_DRAMTMG8,  0, 4, max(tXSNR,max(tXSRD,tXSDLL)));*/
@@ -995,11 +976,7 @@ void umctl2_poweron_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
     uint32 tCKb = 50;
 
     /*post_cle_x1024,cycles to wait after driving CKE high to start the SDRAM init sequence.*/
-    reg_bits_set(UMCTL_INIT0, 16,10,(IS_LPDDR2(dram_type)?us_to_x1024(200,umctl2_clk):0x00) |
-                                    (IS_DDR3(dram_type)?  ns_to_x1024(360,umctl2_clk):0x00) 
-//                                    (IS_LPDDR3(dram_type)?us_to_x1024(200,umctl2_clk):0x00) |
-//                                    (IS_DDR2(dram_type)?  ns_to_x1024(400,umctl2_clk):0x00) |                                     
-                                     );
+    reg_bits_set(UMCTL_INIT0, 16,10,(IS_LPDDR2(dram_type)?us_to_x1024(200,umctl2_clk):ns_to_x1024(360,umctl2_clk)));
     /*pre_cle_x1024,cycles to wait after reset before driving CKE high to start the SDRAM init sequence.*/
     reg_bits_set(UMCTL_INIT0,  0,10,
                                     /*tINIT0 of 20ms(max) + tINIT1 of 100ns(min)*/
@@ -1823,12 +1800,255 @@ void  __cal_actiming(lpddr2_timing_t *cal_timing,lpddr2_timing_t *native_timing,
 }
 #endif
 
+#ifdef DDR_AUTO_DETECT
+volatile uint32 MRR_VLD = 0;
+
+uint32 __reorder_mrr_data(uint32 mrr_data)
+{
+	uint32 mrr_data_new = 0;
+
+	mrr_data_new = ((mrr_data&BIT_7)>>3) | // bit7->data4
+	               ((mrr_data&BIT_6)>>3) | // bit6->data3
+	               ((mrr_data&BIT_5)>>3) | // bit5->data2
+	               ((mrr_data&BIT_4)>>4) | // bit4->data0
+	               ((mrr_data&BIT_3)<<4) | // bit3->data7
+	               ((mrr_data&BIT_2)<<4) | // bit2->data6
+	               ((mrr_data&BIT_1)   ) | // bit1->data1
+	               ((mrr_data&BIT_0)<<5);  // bit0->data5
+	               
+	return mrr_data_new;
+}
+
+uint32 __get_mr8(MEM_CS_E cs)
+{
+	volatile uint32 mr8 = 0;
+	volatile uint32 cnt = 0;
+	volatile uint32 mrr_vld_old = 0;
+	volatile uint32 temp = 0;
+
+	wait_pclk(50);
+	REG32(PUBL_PIR) |= 0X11; //trigger itm reset
+	wait_pclk(50);
+	do temp = UMCTL2_REG_GET(PUBL_PGSR);
+	while((temp&0x1) == 0);
+	wait_pclk(5263);//publ apb clk=26m-38ns, 5263*38ns = 200us
+
+	__mem_init(MEM_MRD, MEM_MR8, 0, cs); //read MR8
+
+	wait_pclk(50);
+	REG32(PUBL_PIR) |= 0X11; //trigger itm reset
+	wait_pclk(50);
+	do temp = UMCTL2_REG_GET(PUBL_PGSR);
+	while((temp&0x1) == 0);
+	wait_pclk(5263);//publ apb clk=26m-38ns, 5263*38ns = 200us
+
+	mrr_vld_old = MRR_VLD;
+
+	while(1)
+	{
+		mr8 = REG32(0x300200a8);
+		MRR_VLD = mr8&0x100;
+
+		if(mrr_vld_old == MRR_VLD)
+		{
+			cnt++;
+			if(cnt >= 0x100000)
+			{
+				return 0xffffffff;
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
+	return(__reorder_mrr_data(mr8&0xff));
+}
+
+BOOLEAN __update_dram_info(DRAM_TYPE_E* ddr_type)
+{
+	volatile uint32 mr8_cs0[5] = {0};
+	volatile uint32 mr8_cs1[5] = {0};
+	uint32 i = 0;
+	uint32 cs0_cap = 0;
+	uint32 cs1_cap = 1;
+
+	//get cs1 mr8
+	for(i = 0; i < 5; i++)
+	{
+		mr8_cs1[i] = __get_mr8(MEM_CS1);
+
+		//if mr8 time out or mr8 is not equal, read mr8 fail, return fail
+		if(mr8_cs1[i] == 0xffffffff ||
+		   mr8_cs1[i] != mr8_cs1[0])
+		{
+        	return FALSE;
+		}
+	}
+	cs1_cap = (mr8_cs1[0]&0x3c)>>2;
+
+	//get cs0 mr8
+	for(i = 0; i < 5; i++)
+	{
+		mr8_cs0[i] = __get_mr8(MEM_CS0);
+
+		//if mr8 time out or mr8 is not equal, read mr8 fail, return fail
+		if(mr8_cs0[i] == 0xffffffff ||
+		   mr8_cs0[i] != mr8_cs0[0])
+		{
+			return FALSE;
+		}
+	}
+	cs0_cap = (mr8_cs0[0]&0x3c)>>2;
+
+	if(mr8_cs1[0] == 0) // only cs0
+	{
+		if(cs0_cap ==4)
+		{
+			*ddr_type = DRAM_LPDDR2_1CS_1G_X32;
+		}
+		else if(cs0_cap ==5)
+		{
+			*ddr_type = DRAM_LPDDR2_1CS_2G_X32;
+		}
+		else if(cs0_cap ==6)
+		{
+			*ddr_type = DRAM_LPDDR2_1CS_4G_X32;
+		}
+		else if(cs0_cap ==7)
+		{
+			*ddr_type = DRAM_LPDDR2_1CS_8G_X32;
+		}
+		else if(cs0_cap ==8)
+		{
+			*ddr_type = DRAM_LPDDR2_1CS_16G_X32;
+		}
+		else
+		{
+			*ddr_type = DRAM_LPDDR2_1CS_4G_X32;
+		}
+		#if 0
+		switch(cs0_cap)
+		{
+			case 4: *ddr_type = DRAM_LPDDR2_1CS_1G_X32;break;
+			case 5: *ddr_type = DRAM_LPDDR2_1CS_2G_X32;break;
+			case 6: *ddr_type = DRAM_LPDDR2_1CS_4G_X32;break;
+			case 7: *ddr_type = DRAM_LPDDR2_1CS_8G_X32;break;
+			case 8: *ddr_type = DRAM_LPDDR2_1CS_16G_X32;break;
+			default : *ddr_type = DRAM_LPDDR2_1CS_4G_X32;break;
+		}
+		#endif
+	}
+	else // both cs0 and cs1 alive
+	{
+		if(cs0_cap ==4) //cs0 1g, cs1 1g
+		{
+			*ddr_type = DRAM_LPDDR2_2CS_2G_X32;
+		}
+		else if((cs0_cap ==5)&&(cs1_cap==4)) //cs0 2g, cs1 1g
+		{
+			*ddr_type = DRAM_LPDDR2_2CS_3G_X32;
+		}
+		else if((cs0_cap ==5)&&(cs1_cap==5)) //cs0 2g, cs1 2g
+		{
+			*ddr_type = DRAM_LPDDR2_2CS_4G_X32;
+		}
+		else if((cs0_cap ==6)&&(cs1_cap==5)) //cs0 4g, cs1 2g
+		{
+			*ddr_type = DRAM_LPDDR2_2CS_6G_X32;
+		}
+		else if((cs0_cap ==6)&&(cs1_cap==6)) //cs0 4g, cs1 4g
+		{
+			*ddr_type = DRAM_LPDDR2_2CS_8G_X32;
+		}
+		else
+		{
+			*ddr_type = DRAM_LPDDR2_2CS_8G_X32;
+		}
+
+		
+		#if 0
+		switch(cs0_cap)
+		{
+			case 4: *ddr_type = DRAM_LPDDR2_2CS_2G_X32;break; //cs0 1g, cs1 1g
+			case 5: //cs0 2g
+			{
+				if(cs1_cap ==4) //cs1 1g
+				{
+					*ddr_type == DRAM_LPDDR2_2CS_3G_X32;
+				}
+				else if(cs1_cap ==5) //cs1 2g
+				{
+					*ddr_type == DRAM_LPDDR2_2CS_4G_X32;
+				}
+				else
+				{
+					*ddr_type == DRAM_LPDDR2_2CS_4G_X32;
+				}
+				break;
+			}
+			case 6: //cs0 4g
+			{
+				if(cs1_cap ==5) //cs1 2g
+				{
+					*ddr_type = DRAM_LPDDR2_2CS_6G_X32;
+				}
+				else //cs1 4g
+				{
+					*ddr_type == DRAM_LPDDR2_2CS_8G_X32;
+				}
+				break;
+			}
+			case 7: //cs0 8g
+			{
+				if(cs1_cap == 6) //cs1 4g
+				{
+					*ddr_type == DRAM_LPDDR2_2CS_12G_X32;
+				}
+				else //cs1 8g
+				{
+					*ddr_type == DRAM_LPDDR2_2CS_16G_X32;
+				}
+				break;
+			}
+			default: *ddr_type == DRAM_LPDDR2_2CS_16G_X32;break;
+		}
+		#endif
+	}
+	return TRUE;	
+}
+
+BOOLEAN __ddr_info_detect(DRAM_TYPE_E* ddr_type)
+{
+	uint32 mr8 = 0;
+
+	if(!__update_dram_info(ddr_type))
+	{
+		return FALSE;
+	}
+	else
+	{
+		return TRUE;
+	}
+}
+#endif
 void sdram_init()
 {
 	#ifdef DDR_DFS_SUPPORT
 	uint32 i = 0;
 	DRAM_INFO * dram_info = NULL;
 
+	#ifdef DDR_AUTO_DETECT	
+	if(IS_SHARK_CS)
+	{
+		DDR_TYPE_LOCAL = DRAM_LPDDR2_1CS_4G_X32;
+	}
+	else
+	{		
+		DDR_TYPE_LOCAL = DDR_TYPE;		
+	}
+	#endif
+	
 	//clear dfs value space
 	for(i = 0; i < 256; i++)
 	{
@@ -1837,15 +2057,46 @@ void sdram_init()
 	
 	for(i = 0; i <ARRAY_SIZE(DDR_DFS_POINT); i++)
 	{
+		#ifdef DDR_AUTO_DETECT
+		dram_info = get_dram_cfg(DDR_TYPE_LOCAL);			
+		#else
 		dram_info = get_dram_cfg(DDR_TYPE);	
+		#endif
 
 		if(DDR_DFS_POINT[i] >= DDR_CLK)		
 		{
 			DDR_DFS_POINT[i] = DDR_CLK;
 		}
 		__cal_actiming(dram_info->ac_timing,&LPDDR2_ACTIMING_NATIVE,DDR_DFS_POINT[i]);
-		
-		__sdram_init(DDR_DFS_POINT[i], UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
+
+		#ifdef DDR_AUTO_DETECT		
+		if(IS_SHARK_CS)
+		{
+			if(DDR_DFS_POINT[i] == CLK_100MHZ)
+			{
+				__sdram_init(DDR_DFS_POINT[i], UMCTL2_PORT_CONFIG, dram_info);
+				
+				if(__ddr_info_detect(&DDR_TYPE_LOCAL))
+				{
+					dram_info = get_dram_cfg(DDR_TYPE_LOCAL);
+				}
+				else
+				{
+					//ddr auto detect fail
+				}
+			}
+			else
+			{
+				__sdram_init(DDR_DFS_POINT[i], UMCTL2_PORT_CONFIG, dram_info);
+			}
+		}
+		else
+		{
+			__sdram_init(DDR_DFS_POINT[i], UMCTL2_PORT_CONFIG, dram_info);
+		}				
+		#else
+		__sdram_init(DDR_DFS_POINT[i], UMCTL2_PORT_CONFIG, dram_info);
+		#endif
 		
 		record_dfs_val(DDR_DFS_POINT[i], DDR_DFS_VAL_BASE+sizeof(ddr_dfs_val_t)*i);
 		

@@ -161,13 +161,14 @@ const ddr3_timing_t DDR3_ACTIMING =
 DRAM_INFO DRAM_INFO_ARRAY[] =
 { 
 /*-dram_type-----------cs_num--bank_num--BUS_WIDTH--BL-CL/RL-WL-AL-actiming-*/
-  {DRAM_LPDDR2_1CS_2G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
+  //{DRAM_LPDDR2_1CS_2G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
   {DRAM_LPDDR2_1CS_4G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
+  {DRAM_LPDDR2_1CS_8G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	
+  //{DRAM_LPDDR2_2CS_4G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	  	
+  {DRAM_LPDDR2_2CS_6G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	
   {DRAM_LPDDR2_2CS_8G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
-  {DRAM_LPDDR2_2CS_6G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
-  {DRAM_LPDDR2_1CS_8G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
-  {DRAM_LPDDR2_2CS_16G_X32,  2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
-  {DRAM_LPDDR2_2CS_12G_X32,  2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
+  //{DRAM_LPDDR2_2CS_12G_X32,  2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	
+  //{DRAM_LPDDR2_2CS_16G_X32,  2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
   {DRAM_DDR3_1CS_2G_X8_4P,   1,   8,	  32,		 8,   6,  5, 0, (void *)(&DDR3_ACTIMING)},
   {DRAM_DDR3_1CS_4G_X16_2P,  1,   8,	  32,		 8,   6,  5, 0, (void *)(&DDR3_ACTIMING)}  
 };
@@ -198,12 +199,16 @@ PUBLIC DRAM_INFO* get_dram_cfg(DRAM_TYPE_E dram_type)
 #if 0
     return (DRAM_INFO*)(&DRAM_INFO_ARRAY[0]);
 #else
-    for(i=0; i<ARRAY_SIZE(DRAM_INFO_ARRAY); i++) {
-        if(DRAM_INFO_ARRAY[i].dram_type == dram_type) break;
+    for(i=0; i<ARRAY_SIZE(DRAM_INFO_ARRAY); i++) 
+	{
+        if(DRAM_INFO_ARRAY[i].dram_type == dram_type)
+        {
+			return (DRAM_INFO*)(&DRAM_INFO_ARRAY[i]);
+        }
     }
-    if(i==ARRAY_SIZE(DRAM_INFO_ARRAY)) i=0;
-
-    return (DRAM_INFO*)(&DRAM_INFO_ARRAY[i]);
+	
+	return (DRAM_INFO*)(&DRAM_INFO_ARRAY[0]);	
+    
 #endif
 }
 
