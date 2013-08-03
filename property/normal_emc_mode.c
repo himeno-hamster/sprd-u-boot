@@ -993,6 +993,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	//array_value((unsigned char *)PRODUCTINFO_ADR, PRODUCTINFO_SIZE);
 	eng_phasechecktest((unsigned char *)PRODUCTINFO_ADR, SP09_MAX_PHASE_BUFF_SIZE);
 #endif
+
 	/* RUNTIMEVN_PART */
 #if defined(CONFIG_SC8830)
 	orginal_right = 0;
@@ -1151,6 +1152,24 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	}
 #endif
 	//array_value((unsigned char *)RUNTIMENV_ADR, RUNTIMENV_SIZE);
+#if defined(CONFIG_SC8830)
+	printf("Reading productinfo to 0x%08x\n", TDPRODINFO_ADR);
+	memset((unsigned char *)TDPRODINFO_ADR, 0xff, PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE);
+	if(prodinfo_read_partition(p_block_dev, PARTITION_PROD_INFO1, 0, (char *)TDPRODINFO_ADR, 
+		PRODUCTINFO_SIZE + 4) == 0){
+		printf("productinfo is right\n");
+	} else {
+		memset((unsigned char *)TDPRODINFO_ADR, 0xff, PRODUCTINFO_SIZE + EMMC_SECTOR_SIZE);
+		if(prodinfo_read_partition(p_block_dev, PARTITION_PROD_INFO2, 0, (char *)TDPRODINFO_ADR, 
+			PRODUCTINFO_SIZE + 4) == 0) {
+			printf("productbackinfo is right\n");
+		}/* else
+			memset((unsigned char *)TDPRODINFO_ADR, 0xff, PRODUCTINFO_SIZE + EMMC_SECTOR_SIZE);*/
+	}
+	memcpy((unsigned char *)WPRODINFO_ADR,(unsigned char *)TDPRODINFO_ADR,PRODUCTINFO_SIZE + EMMC_SECTOR_SIZE);
+	printf("prodinfo:%x %x ,",*(int *)TDPRODINFO_ADR,*((int *)TDPRODINFO_ADR+1));
+
+#endif
 
 	/* DSP_PART */
 #ifdef CONFIG_SC8830

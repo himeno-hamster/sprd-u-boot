@@ -43,10 +43,12 @@ extern unsigned char raw_header[8192];
 #define TDDSP_ADR       0x88020000
 #define TDFIXNV_ADR     0x88480000
 #define TDRUNTIMENV_ADR 0x884a0000
+#define TDPRODINFO_ADR  0x884e0000
 #define TDMODEM_ADR     0x88500000
 #define WDSP_ADR        0x90020000
 #define WFIXNV_ADR      0x90480000
 #define WRUNTIMENV_ADR  0x904a0000
+#define WPRODINFO_ADR   0x904e0000
 #define WMODEM_ADR      0x90500000
 #elif defined(CONFIG_TIGER)
 #define DSP_ADR          0x80020000
