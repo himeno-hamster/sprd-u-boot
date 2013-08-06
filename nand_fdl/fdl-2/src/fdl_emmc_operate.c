@@ -107,6 +107,18 @@ LOCAL BOOLEAN _chkEcc(uint8* buf, uint32 size)
 	return (crc == crcOri);
 }
 
+LOCAL void _makEcc(uint8* buf, uint32 size)
+{
+	uint16 crc;
+	//crc = __crc_16_l_calc(buf, size-2);
+	crc = calc_checksum(buf,size-4);
+	buf[size-4] = (uint8)(0xFF&crc);
+	buf[size-3] = (uint8)(0xFF&(crc>>8));
+	buf[size-2] = 0;
+	buf[size-1] = 0;
+
+	return;
+}
 LOCAL unsigned short eMMCCheckSum(const unsigned int *src, int len)
 {
     unsigned int   sum = 0;
@@ -645,11 +657,7 @@ LOCAL int _emmc_nv_check_and_write(void)
 	else
 		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
 
-	sum = calc_checksum(g_eMMCBuf, FIXNV_SIZE - 4);
-	dataaddr = (unsigned short *)(g_eMMCBuf + FIXNV_SIZE - 4);
-	*dataaddr = sum;
-	dataaddr = (unsigned short *)(g_eMMCBuf + FIXNV_SIZE - 2);
-	*dataaddr = 0;
+	_makEcc(g_eMMCBuf,FIXNV_SIZE);
 
 	//write the original partition
 	_emmc_real_erase_partition(g_dl_eMMCStatus.curUserPartitionName);
@@ -686,11 +694,7 @@ LOCAL int _emmc_prodinfo_check_and_write(void)
 	else
 		nSectorCount = (PRODUCTINFO_SIZE + 8) / EFI_SECTOR_SIZE + 1;
 
-	sum = calc_checksum(g_eMMCBuf, PRODUCTINFO_SIZE - 4);
-	dataaddr = (unsigned short *)(g_eMMCBuf + PRODUCTINFO_SIZE - 4);
-	*dataaddr = sum;
-	dataaddr = (unsigned short *)(g_eMMCBuf + PRODUCTINFO_SIZE - 2);
-	*dataaddr = 0;
+	_makEcc(g_eMMCBuf,PRODUCTINFO_SIZE);
 	//write the original partition
 	_emmc_real_erase_partition(g_dl_eMMCStatus.curUserPartitionName);
 	if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector,
