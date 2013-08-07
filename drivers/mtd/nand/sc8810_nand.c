@@ -106,17 +106,6 @@ static __attribute__((aligned(4))) unsigned char io_wr_port[NAND_MAX_PAGESIZE + 
 static char nand_id_table[5]={0};
 static int  re_oob_layout=0;
 
-struct nand_ecclayout _nand_oob_64 = {
-	.eccbytes = 24,
-	.eccpos = {
-		   40, 41, 42, 43, 44, 45, 46, 47,
-		   48, 49, 50, 51, 52, 53, 54, 55,
-		   56, 57, 58, 59, 60, 61, 62, 63},
-	.oobfree = {
-		{.offset = 2,
-		 .length = 38}}
-};
-
 struct nand_ecclayout _nand_oob_64_4bit = {
 	.eccbytes = 28,
 	.eccpos = {
@@ -127,21 +116,6 @@ struct nand_ecclayout _nand_oob_64_4bit = {
 	.oobfree = {
 		{.offset = 2,
 		 .length = 34}}
-};
-
-
-static struct nand_ecclayout nand_oob_128 = {
-	.eccbytes = 48,
-	.eccpos = {
-		    80,  81,  82,  83,  84,  85,  86,  87,
-		    88,  89,  90,  91,  92,  93,  94,  95,
-		    96,  97,  98,  99, 100, 101, 102, 103,
-		   104, 105, 106, 107, 108, 109, 110, 111,
-		   112, 113, 114, 115, 116, 117, 118, 119,
-		   120, 121, 122, 123, 124, 125, 126, 127},
-	.oobfree = {
-		{.offset = 2,
-		 .length = 78}}
 };
 
 static struct nand_ecclayout _nand_oob_128 = {
@@ -195,19 +169,7 @@ static struct nand_ecclayout _nand_oob_256 = {
 		.length = 142}}
 };
 
-#if 0
-struct sc8810_nand_timing_param nand_timing =
-{
-	50,
-	30,
-	40,
-	40,
-	40,
-	50
-};
-#endif
-
-/* only for special 4kpage or 8kpage nand flash, no 2kpage or normal 4kpage or normal 8kpage */
+/* this table is useing set 4 bit or 8 bit ecc layout */
 static struct sc8810_nand_page_oob nand_config_table[] =
 {
 	{0xec, 0xbc, 0x00, 0x66, 0x56, 4096, 128, 512, 4},
@@ -487,34 +449,6 @@ static u32 sc8810_ecc_decode(struct sc8810_ecc_param *param)
 	}
 	return  ret;
 }
-
-#if 0
-static void set_nfc_param(unsigned long nfc_clk)
-{
-	u32 value = 0;
-	u32 cycles;
-	cycles = nand_timing.acs_time / (1000000000 / nfc_clk);
-	value |= (cycles << NFC_ACS_OFFSET);
-	
-	cycles = nand_timing.rwh_time / (1000000000 / nfc_clk);
-	value |= (cycles << NFC_RWH_OFFSET);
-	
-	cycles = nand_timing.rwl_time / (1000000000 / nfc_clk);
-	value |= (cycles << NFC_RWL_OFFSET);
-	
-	cycles = nand_timing.acr_time / (1000000000 / nfc_clk);
-	value |= (cycles << NFC_ACR_OFFSET);
-	
-	cycles = nand_timing.rr_time / (1000000000 / nfc_clk);
-	value |= (cycles << NFC_RR_OFFSET);
-	
-	cycles = nand_timing.ceh_time / (1000000000 / nfc_clk);
-	value |= (cycles << NFC_CEH_OFFSET);
-	nfc_reg_write(NFC_TIMING, value);
-
-//	local_irq_restore(flags);	
-}
-#endif
 
 #if !defined(CONFIG_NAND_SPL)
 static struct nand_spec_str *get_nand_spec(u8 *nand_id)
@@ -845,11 +779,11 @@ void nand_spl_hardware_config(struct nand_chip *this, u8 id[5])
 		this->ecc.size = nand_config_table[index].eccsize;
 		g_info.ecc_mode = nand_config_table[index].eccbit;
 		this->eccbitmode = g_info.ecc_mode;
-		/* 4 bit ecc, per 512 bytes can creat 13 * 4 = 52 bit , 52 / 8 = 7 bytes
-		   8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 13 bytes, junqiang say use 14 bytes */
+		/* 4 bit ecc, per 512 bytes can creat 14 * 4 = 56 bit ,  56  / 8 = 7 bytes
+		   8 bit ecc, per 512 bytes can creat 14 * 8 = 112 bit , 112 / 8 = 14 bytes,Chip need 14 bytes*/
 		switch (g_info.ecc_mode) {
 			case 4:
-				/* 4 bit ecc, per 512 bytes can creat 13 * 4 = 52 bit , 52 / 8 = 7 bytes */
+				/* 4 bit ecc, per 512 bytes can creat 14 * 4 = 56 bit , 56 / 8 = 7 bytes */
 				this->ecc.bytes = 7;
 				if(nand_config_table[index].oobsize == 64)
 				    this->ecc.layout = &_nand_oob_64_4bit;
@@ -857,7 +791,7 @@ void nand_spl_hardware_config(struct nand_chip *this, u8 id[5])
 				    this->ecc.layout = &_nand_oob_128;
 			break;
 			case 8:
-				/* 8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 14 bytes */
+				/* 8 bit ecc, per 512 bytes can creat 14 * 8 = 112 bit , 112 / 8 = 14 bytes */
 				this->ecc.bytes = 14;
 				if (nand_config_table[index].oobsize == 224)
 					this->ecc.layout = &_nand_oob_224;
@@ -897,8 +831,8 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, unsigned
 		this->ecc.size = nand_config_table[index].eccsize;
 		g_info.ecc_mode = nand_config_table[index].eccbit;
 		this->eccbitmode = g_info.ecc_mode;
-		/* 4 bit ecc, per 512 bytes can creat 13 * 4 = 52 bit , 52 / 8 = 7 bytes
-		   8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 14 bytes */
+		/* 4 bit ecc, per 512 bytes can creat 14 * 4 = 56 bit , 56 / 8 = 7 bytes
+		   8 bit ecc, per 512 bytes can creat 14 * 8 = 112 bit , 112 / 8 = 14 bytes */
 		switch (g_info.ecc_mode) {
 			case 4:
 				/* 4 bit ecc, per 512 bytes can creat 14 * 4 = 56 bit , 56 / 8 = 7 bytes */
@@ -909,7 +843,7 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, unsigned
 				 this->ecc.layout = &_nand_oob_128;
 			break;
 			case 8:
-				/* 8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 14 bytes */
+				/* 8 bit ecc, per 512 bytes can creat 14 * 8 = 112 bit , 112 / 8 = 14 bytes */
 				this->ecc.bytes = 14;
 				if (nand_config_table[index].oobsize == 224)
 					this->ecc.layout = &_nand_oob_224;
@@ -953,9 +887,10 @@ int board_nand_init(struct nand_chip *this)
 
 	if (ptr_nand_spec != NULL)
 		set_nfc_timing(&ptr_nand_spec->timing_cfg, 153);
-	else
-		//nfc_reg_write(NFC_TIMING, ((6 << 0) | (6 << 5) | (10 << 10) | (6 << 16) | (5 << 21) | (5 << 26)));
-		nfc_reg_write(NFC_TIMING, ((12 << 0) | (7 << 5) | (10 << 10) | (6 << 16) | (5 << 21) | (7 << 26)));
+	else {
+            printf("This nand SPRD do not support, Need Advice SPRD! %s %d", __func__, __LINE__);
+            return 1 ;
+        }
 #endif
 
 	extid = io_wr_port[3];
@@ -974,10 +909,10 @@ int board_nand_init(struct nand_chip *this)
 	this->ecc.size = CONFIG_SYS_NAND_ECCSIZE;
 #ifdef CONFIG_NAND_SPL
 	if (mtdoobsize == 64)
-		this->ecc.layout = &_nand_oob_64;
+		this->ecc.layout = &_nand_oob_64_4bit;
 	else if (mtdoobsize == 128)
-		this->ecc.layout = &nand_oob_128;
-	nand_spl_hardware_config(this, io_wr_port);
+		this->ecc.layout = &_nand_oob_128;
+        nand_spl_hardware_config(this, io_wr_port);
 #endif
 	this->chip_delay = 20;
 	this->priv = &g_info;
@@ -1093,6 +1028,11 @@ void read_chip_id(void)
 {
 	int i, cmd = NAND_CMD_READID;
 
+	nfc_mcr_inst_init();
+	nfc_mcr_inst_add(NAND_CMD_RESET, NF_MC_CMD_ID);
+	nfc_mcr_inst_add(0x10, NF_MC_NOP_ID);//add nop clk for twrh timing param
+	nfc_mcr_inst_exc();
+	sc8810_nfc_wait_command_finish(NFC_DONE_EVENT);
 	nfc_mcr_inst_init();
 	nfc_mcr_inst_add(cmd, NF_MC_CMD_ID);
 	nfc_mcr_inst_add(0x00, NF_MC_ADDR_ID);
