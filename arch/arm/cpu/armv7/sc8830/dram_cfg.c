@@ -20,7 +20,11 @@
 /*----------------------------------------------------------------------------*
  *Configuration for SDRAM used --*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*
 **----------------------------------------------------------------------------*/
+#ifdef  CONFIG_SP8830EC
+/*--*/   MEM_IODS_E       MEM_IO_DS          =LPDDR2_DS_48R; //DS_34R3(lpddr2 used)                 /*--*--*--*/
+#else
 /*--*/   MEM_IODS_E       MEM_IO_DS          =LPDDR2_DS_40R; //DS_34R3(lpddr2 used)                 /*--*--*--*/
+#endif
 /*--*/   DRAM_BURSTTYPE_E MEM_BURST_TYPE     =DRAM_BT_SEQ;              /*--*--*--*/
 /*--*/   DRAM_WC_E        MEM_WC_TYPE        =DRAM_WRAP;              /*--*--*--*/
 
@@ -28,7 +32,11 @@
 /*--*/   uint32 DQS_GATE_EARLY_LATE = 2;	                      
     
 /*--*/   uint32 PUBL_LPDDR1_DS = PUBL_LPDDR1_DS_48OHM; //lpddr1 driver strength,refer to multiPHY p155
+#ifdef  CONFIG_SP8830EC
+/*--*/   uint32 PUBL_LPDDR2_DS = PUBL_LPDDR2_DS_48OHM; //lpddr2 driver strength,
+#else
 /*--*/   uint32 PUBL_LPDDR2_DS = PUBL_LPDDR2_DS_40OHM; //lpddr2 driver strength,
+#endif
 /*--*/   uint32 PUBL_DDR3_DS   = PUBL_DDR3_DS_34OHM;   //ddr3 driver strength,
 
     
