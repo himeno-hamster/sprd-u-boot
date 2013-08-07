@@ -401,6 +401,10 @@ LOCAL int _fdl2_check_partition_table(PARTITION_CFG* new_cfg, PARTITION_CFG* old
 			}
 		}
 	}
+	else{
+		return 0;
+	}
+
 	return 1;
 }
 

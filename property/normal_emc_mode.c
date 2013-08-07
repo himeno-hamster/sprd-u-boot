@@ -1357,11 +1357,10 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		if(get_partition_info(p_block_dev, PARTITION_RECOVERY, &info) != 0)
 			return ;
 	}
-	 if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, 4, (uint8*)(uint8*)hdr)){
+	 if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, 4, (uint8*)hdr)){
 		printf("kernel nand read error \n");
 		return;
 	}
-
 	if(memcmp(hdr->magic, BOOT_MAGIC, BOOT_MAGIC_SIZE)){
 		printf("bad boot image header, give up read!!!!\n");
                                       return;
