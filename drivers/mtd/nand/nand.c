@@ -77,18 +77,20 @@ static void nand_init_chip(struct mtd_info *mtd, struct nand_chip *nand,
 
 }
 
-void nand_init(void)
+int nand_init(void)
 {
 	int i;
 	unsigned int size = 0;
 	for (i = 0; i < CONFIG_SYS_MAX_NAND_DEVICE; i++) {
 		nand_init_chip(&nand_info[i], &nand_chip[i], base_address[i]);
+                if(nand_info[i].name == NULL && nand_info[i].size == 0)
+                    return 1;
 		size += nand_info[i].size / 1024;
 		if (nand_curr_device == -1)
 			nand_curr_device = i;
 	}
 	printf("%u MiB\n", size / 1024);
-
+        return 0;
 #ifdef CONFIG_SYS_NAND_SELECT_DEVICE
 	/*
 	 * Select the chip in the board/cpu specific driver

@@ -56,8 +56,7 @@ void set_current_write_pos(unsigned int pos)
 }
 int nand_flash_init(void)
 {
-	nand_init();
-	return 0;
+    return (nand_init());
 }
 
 int get_end_write_pos(void)

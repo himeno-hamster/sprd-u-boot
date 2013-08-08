@@ -24,7 +24,7 @@
 #ifndef _NAND_H_
 #define _NAND_H_
 
-extern void nand_init(void);
+extern int nand_init(void);
 
 #include <linux/mtd/compat.h>
 #include <linux/mtd/mtd.h>
