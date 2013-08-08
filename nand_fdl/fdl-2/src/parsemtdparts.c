@@ -364,7 +364,7 @@ int real_parse_cmdline_partitions(struct real_mtd_partition *current, unsigned l
 		return 0;
 	}
 	
-	index = (current->offset & 0x0000FFFF) + real_current_part;
+	index = (current->offset & 0x0000FFFF)/2 + real_current_part;
 	if ((index >= real_current_part) && (index < MTDPARTITION_MAX)) {
 		current->offset = realpart[index].offset;
 		strcpy(current->name, realpart[index].name);

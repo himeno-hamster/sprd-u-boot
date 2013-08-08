@@ -23,7 +23,7 @@
 #include <asm/arch/sci_types.h>
 #include <asm/arch/pinmap.h>
 #include <asm/arch/bits.h>
-#include <asm/arch/sprd_nfc_reg_v2.h>
+#include <asm/arch-sc8830/sprd_nfc_reg_v2.h>
 //#include <asm/arch/regs_cpc.h>
 #include <nand.h>
 #include <asm/io.h>
@@ -194,6 +194,7 @@ unsigned int ecc_mode_convert(uint32_t mode)
 static struct sprd_tiger_nand_param sprd_tiger_nand_param_tb[] = {
 	{{0xec, 0xbc, 0x00,0x55, 0x54}, 	1, 	5, 	4, 	16, 	12, 	11, 	1, 	2, 	512},
 	{{0xec, 0xbc, 0x00,0x6A, 0x56}, 	1, 	5, 	8, 	16, 	9, 	8, 	1, 	4, 	512},
+	{{0xad, 0xbc, 0x90,0x55, 0x54}, 	1, 	5, 	4, 	16, 	12, 	11, 	1, 	2, 	512},
 };
 #ifdef CONFIG_NAND_SPL
 struct sprd_tiger_boot_header_info {
@@ -663,7 +664,7 @@ static u32 sprd_tiger_get_decode_sts(u32 index)
 	uint32_t shift;
 	uint32_t reg_addr;
 	reg_addr = NFC_STATUS0_REG + (index & 0xfffffffc);
-	shift = (index & 0x3) >> 3;
+	shift = (index & 0x3) << 3;
 	err = sprd_tiger_reg_read(reg_addr);
 	err >>= shift;
 	if((err & ECC_ALL_FF))
@@ -745,7 +746,7 @@ static int sprd_tiger_nand_read_lp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t *
 	{
 		cfg0 |= BUS_WIDTH;
 	}
-	cfg1 = (tiger->info_size - 1) << SPAR_INFO_SIZE_OFFSET;
+	cfg1 = (tiger->info_size) << SPAR_INFO_SIZE_OFFSET;
 	cfg2 = (tiger->ecc_mode << ECC_MODE_OFFSET) | (tiger->info_pos << SPAR_INFO_POS_OFFSET) | ((tiger->sct_pg - 1) << SPAR_SECTOR_NUM_OFFSET) | tiger->ecc_pos;
 
 #ifndef CONFIG_NAND_SPL
@@ -860,7 +861,7 @@ static int sprd_tiger_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, ui
 	{
 		cfg0 |= BUS_WIDTH;
 	}
-	cfg1 = ((tiger->info_size - 1) << SPAR_INFO_SIZE_OFFSET);
+	cfg1 = ((tiger->info_size) << SPAR_INFO_SIZE_OFFSET);
 	cfg2 = (tiger->ecc_mode << ECC_MODE_OFFSET) | (tiger->info_pos << SPAR_INFO_POS_OFFSET) | ((tiger->sct_pg - 1) << SPAR_SECTOR_NUM_OFFSET) | tiger->ecc_pos;
 
 #ifndef CONFIG_NAND_SPL
@@ -879,7 +880,7 @@ static int sprd_tiger_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, ui
 	if(mbuf && sbuf)
 	{
 		cfg0 |= MAIN_USE | SPAR_USE;
-		cfg1 = (tiger->m_size - 1) | ((tiger->s_size - 1) << SPAR_SIZE_OFFSET);
+		cfg1 |= (tiger->m_size - 1) | ((tiger->s_size - 1) << SPAR_SIZE_OFFSET);
 		sprd_tiger_reg_write(NFC_MAIN_ADDR_REG, (uint32_t)mbuf);
 		sprd_tiger_reg_write(NFC_SPAR_ADDR_REG, (uint32_t)sbuf);
 	}
@@ -1070,10 +1071,10 @@ static int sprd_tiger_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 	uint16_t bad;
 	uint16_t *buf;
 
-	page = (int)(ofs >> chip->page_shift) & chip->pagemask;
+	page = (int)((long)ofs >> chip->page_shift) & chip->pagemask;
 
 	if (getchip) {
-		chipnr = (int)(ofs >> chip->chip_shift);
+		chipnr = (int)((long)ofs >> chip->chip_shift);
 		/* Select the NAND device */
 		chip->select_chip(mtd, chipnr);
 	}
@@ -1145,16 +1146,18 @@ static void sprd_tiger_nand_hw_init(struct sprd_tiger_nand_info *tiger)
 	int i = 0;
 	uint32_t val;
 	
-	sprd_tiger_reg_or(0x20900200, BIT_8);
+	sprd_tiger_reg_or(0x20d00000, BIT_17 | BIT_18 | BIT_19 | BIT_6);
 	
-	val = sprd_tiger_reg_read(0x20900210);
-	sprd_tiger_reg_or(0x20900210, BIT_5);
+	sprd_tiger_reg_or(0x20d00004,BIT_9);
 	for(i = 0; i < 0xffff; i++);
-	sprd_tiger_reg_and(0x20900210, ~BIT_5);
-	val |= (3)  | (4 << NFC_RWH_OFFSET) | (3 << NFC_RWE_OFFSET) | (3 << NFC_RWS_OFFSET) | (3 << NFC_ACE_OFFSET) | (3 << NFC_ACS_OFFSET);
+	sprd_tiger_reg_and(0x20d00004, ~BIT_9);
+
+
+	val = (3)  | (4 << NFC_RWH_OFFSET) | (3 << NFC_RWE_OFFSET) | (3 << NFC_RWS_OFFSET) | (3 << NFC_ACE_OFFSET) | (3 << NFC_ACS_OFFSET);
 	
 	sprd_tiger_reg_write(NFC_TIMING_REG, val);
-	sprd_tiger_reg_write(NFC_TIMEOUT_REG, 0x80400000);
+	sprd_tiger_reg_write(NFC_TIMEOUT_REG, 0xffffffff);
+
 	sprd_tiger_reg_or(REG_PIN_NFRB, BIT_7);   //set PIN_NFRB pull up
 	for (i=REG_PIN_NFWPN; i<=REG_PIN_NFD15; i+=4)
 	{
@@ -1192,7 +1195,7 @@ int board_nand_init(struct nand_chip *chip)
 	chip->eccbitmode = g_tiger.ecc_mode;
 	chip->ecc.size = CONFIG_SYS_NAND_ECCSIZE;
 	
-	chip->options |= NAND_BUSWIDTH_16;
+	chip->options = NAND_BUSWIDTH_16;
 
 	return 0;
 }

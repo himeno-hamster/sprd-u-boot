@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <malloc.h>
 #include <asm/arch/bits.h>
-#include <asm/arch/chip_drv_config_extern.h>
+#include <asm/arch-sc8830/chip_drv_config_extern.h>
 
 char * version_string="fdl2";
 
@@ -84,7 +84,7 @@ void hw_watchdog_reset(void)
 {
 }
 
-#ifndef CONFIG_EMMC_BOOT
+#if !((defined CONFIG_EMMC_BOOT)||(defined CONFIG_SC8830))
 uint32 SCI_GetTickCount(void)
 {
 	volatile uint32 tmp_tick1;
