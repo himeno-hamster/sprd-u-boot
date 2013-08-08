@@ -59,9 +59,21 @@ static void ap_cpll_rel_cfg()
 	*((volatile unsigned int *)(REG_PMU_APB_CPLL_REL_CFG)) |= BIT_CPLL_AP_SEL;
 }
 
+static void bb_bg_auto_en()
+{
+	*((volatile unsigned int *)(REG_AON_APB_RES_REG0)) |= 1<<8;
+}
+
+static void bb_ldo_auto_en()
+{
+	*((volatile unsigned int *)(REG_AON_APB_RES_REG0)) |= 1<<9;
+} 
+
 void misc_init()
 {
 	ap_slp_cp_dbg_cfg();
 	ap_cpll_rel_cfg();
+	bb_bg_auto_en();
+	bb_ldo_auto_en();
 }
 

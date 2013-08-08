@@ -63,6 +63,9 @@
 #define REG_AON_APB_CA7_RST_MONITOR     SCI_ADDR(SPRD_AONAPB_PHYS, 0x00B0)
 #define REG_AON_APB_BOND_OPT0           SCI_ADDR(SPRD_AONAPB_PHYS, 0x00B4)
 #define REG_AON_APB_BOND_OPT1           SCI_ADDR(SPRD_AONAPB_PHYS, 0x00B8)
+#define REG_AON_APB_RES_REG0            SCI_ADDR(SPRD_AONAPB_PHYS, 0x00BC)
+#define REG_AON_APB_RES_REG1            SCI_ADDR(SPRD_AONAPB_PHYS, 0x00C0)
+#define REG_AON_APB_CHIP_ID             SCI_ADDR(SPRD_AONAPB_PHYS, 0x00FC)
 
 /* bits definitions for register REG_AON_APB_APB_EB0 */
 #define BIT_I2C_EB                      ( BIT(31) )
