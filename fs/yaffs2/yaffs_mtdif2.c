@@ -223,6 +223,14 @@ int nandmtd2_QueryNANDBlock(struct yaffs_DeviceStruct *dev, int blockNo,
 			*sequenceNumber = 0;
 			*state = YAFFS_BLOCK_STATE_EMPTY;
 		}
+                /*if ecc unfixed, set the block empty. This block will be erased when allocate.*/
+		if(t.eccResult == YAFFS_ECC_RESULT_UNFIXED)
+		{
+		        T(YAFFS_TRACE_MTD,
+	                (TSTR("yaffsdebug : unfixed ecc error when scan block, seqnum:0x%x" TENDSTR), t.sequenceNumber));
+                        *sequenceNumber = 0;
+			*state = YAFFS_BLOCK_STATE_EMPTY;
+		}
 	}
 	T(YAFFS_TRACE_MTD,
 	  (TSTR("block is bad seq %d state %d" TENDSTR), *sequenceNumber,

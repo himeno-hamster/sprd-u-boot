@@ -6036,7 +6036,14 @@ static int yaffs_ScanBackwards(yaffs_Device * dev)
 		} else if (state == YAFFS_BLOCK_STATE_EMPTY) {
 			T(YAFFS_TRACE_SCAN_DEBUG,
 			  (TSTR("Block empty " TENDSTR)));
-			dev->nErasedBlocks++;
+			/*erase all empty block when scan*/
+			if (!yaffs_EraseBlockInNAND(dev, blk)) {
+	                    dev->nErasureFailures++;
+		            T(YAFFS_TRACE_BAD_BLOCKS,
+			         (TSTR("**>>scan Erasure failed %d" TENDSTR), blk));
+                            continue;
+			}
+                        dev->nErasedBlocks++;
 			dev->nFreeChunks += dev->nChunksPerBlock;
 		} else if (state == YAFFS_BLOCK_STATE_NEEDS_SCANNING) {
 
@@ -6134,7 +6141,7 @@ static int yaffs_ScanBackwards(yaffs_Device * dev)
 
 			chunk = blk * dev->nChunksPerBlock + c;
 
-			result = yaffs_ReadChunkWithTagsFromNAND(dev, chunk, NULL,
+			result = yaffs_ReadChunkWithTagsFromNAND(dev, chunk, chunkData,
 							&tags);
 
 			/* Let's have a good look at this chunk... */
