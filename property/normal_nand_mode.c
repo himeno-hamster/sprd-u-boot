@@ -10,6 +10,24 @@ extern int cmd_yaffs_ls_chk(const char *dirfilename);
 extern void cmd_yaffs_mread_file(char *fn, unsigned char *addr);
 extern void cmd_yaffs_mread_fileex(char *fn, unsigned char *addr, int size);
 static int flash_page_size = 0;
+void nand_block_info(struct mtd_info *nand, int *good, int *bad)
+{
+    loff_t off; 
+    int goodblk, badblk;
+
+    goodblk = badblk = 0; 
+
+    for (off = 0; off < nand->size; off += nand->erasesize)
+        if (nand_block_isbad(nand, off)) {
+
+            badblk ++;
+        } else {
+
+            goodblk ++;
+        }
+    *good = goodblk;
+    *bad = badblk;
+}
 int is_factorymode()
 {
 	int ret = 0;
@@ -321,6 +339,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	size_t size;
 	loff_t off = 0;
 
+        int good_blknum, bad_blknum;
 	char *fixnvpoint = "/fixnv";
 	char *fixnvfilename = "/fixnv/fixnv.bin";
 	char *fixnvfilename2 = "/fixnv/fixnvchange.bin";
@@ -377,7 +396,10 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
    lcd_display_logo(backlight_set,(ulong)bmp_img,size);
 #endif
     set_vibrator(0);
-
+    {
+	nand_block_info(nand, &good_blknum, &bad_blknum);
+	printf("good is %d  bad is %d\n", good_blknum, bad_blknum);
+    }
 #if !(BOOT_NATIVE_LINUX)
 	/*int good_blknum, bad_blknum;
 	nand_block_info(nand, &good_blknum, &bad_blknum);
@@ -833,6 +855,14 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	}
 	secure_check(VMJALUNA_ADR, 0, VMJALUNA_ADR + VMJALUNA_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
 #endif
+
+    {
+
+        good_blknum = 0;
+        bad_blknum  = 0;
+	nand_block_info(nand, &good_blknum, &bad_blknum);
+	printf("good is %d  bad is %d\n", good_blknum, bad_blknum);
+    }
 	creat_cmdline(cmdline,hdr);
 	vlx_entry();
 }
