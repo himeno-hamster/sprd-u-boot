@@ -166,7 +166,7 @@ static unsigned int Vlx_GetFixedBvitemAddr(unsigned short identifier, unsigned i
 *	description:check the file structure to identify 
 *				whether it has been damaged or not.
 ****************************************************/
-static int file_check(unsigned char *array, unsigned long size, unsigned short *crc)
+static int file_check(unsigned char *array, unsigned long size)
 {
 	//check both crc16 , fixed flag	and make sure the crc16 value is not zero!
 	if((unsigned short)crc16(0,array, size-2)== *((unsigned short*)&array[size-2])&&
@@ -174,10 +174,7 @@ static int file_check(unsigned char *array, unsigned long size, unsigned short *
 		0 != *((unsigned short*)&array[size-2])&&
 		(unsigned short)calc_checksum(array,size-4) == *((unsigned short*)&array[size-4]))
 	{
-	        if(crc){
-                    *crc = *((unsigned short*)&array[size-2]);
-                }
-                return 1;
+		return 1; 
 	}else{
         printf("file_check error!\n");
         printf("*((unsigned short*)&array[size-2]) = 0x%x\n",*((unsigned short*)&array[size-2]));
@@ -238,38 +235,20 @@ static int load_sector_to_memory(const char* sector_path,
 {
 	int ret = -1;
 	int try_backup_file = 0;
-	int is_back_file_ok= 0;
-        const char * curr_file = sector_name;
-        const char * back_file = backup_sector_name;
-        unsigned short back_file_crc=0;
-        unsigned short master_file_crc=1;
-        //clear memory
+	const char * curr_file = sector_name;
+
+	//clear memory
 	memset(mem_addr, 0xff,size);
 	//mount yaffs
 	cmd_yaffs_mount(sector_path);
 
-        if(backup_sector_name){
-            //is file exist and has a right size?
-	    ret = cmd_yaffs_ls_chk(back_file);
-	    if (ret == size||ret == size - 4) {
-		//read file to mem
-		cmd_yaffs_mread_file(back_file, mem_addr);
-		ret = file_check(mem_addr, size-4, (unsigned short*)&back_file_crc);
-	    }
-	    else{
-		ret = -1;
-	    }
-
-            if(ret == 1){
-                is_back_file_ok=1;
-            }
-        }
 TRY_BACKUP_FILE:
-        ret = cmd_yaffs_ls_chk(curr_file);
+	//is file exist and has a right size?
+	ret = cmd_yaffs_ls_chk(curr_file);
 	if (ret == size||ret == size - 4) {             //0x5a5a5a5a end flags maybe cutted by NVITEMD!
 		//read file to mem
 		cmd_yaffs_mread_file(curr_file, mem_addr);
-		ret = file_check(mem_addr, size-4, (unsigned short*)&master_file_crc);
+		ret = file_check(mem_addr, size-4);
 	}
 	else{
 		ret = -1;
@@ -281,14 +260,9 @@ TRY_BACKUP_FILE:
 		try_backup_file = 1;
 		goto TRY_BACKUP_FILE;
 	}else if(backup_sector_name&&ret == 1&&!try_backup_file){
-                if(is_back_file_ok && (back_file_crc == master_file_crc)){
-		    printf("[load_sector_to_memory]both of files are correct, no need sync......\n");
-                }
-                else{
-                    printf("[load_sector_to_memory]sync the latest file......\n");
-                    cmd_yaffs_mwrite_file((char*)backup_sector_name, (char*)mem_addr,(int)size);
-	        }
-        }
+		printf("[load_sector_to_memory]sync the latest file......\n");
+		cmd_yaffs_mwrite_file((char*)backup_sector_name, (char*)mem_addr,(int)size);
+	}
 
 	if(try_backup_file&&ret==1){
 		//recovery_sector(sector_path,sector_name,mem_addr,size);
