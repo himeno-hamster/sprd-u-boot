@@ -30,6 +30,10 @@ extern int nand_part_read(char *partname,char *buffer, int size);
 #define AP_ADC_SAVE     3
 #define	AP_GET_VOLT	4
 
+#define PRECISION_1MV       (1<<24)
+#define PRECISION_10MV      (0)
+#define MAX_VOLTAGE         (0xFFFFFF)
+
 typedef struct
 {
     uint32    adc[2];           // calibration of ADC, two test point
@@ -318,7 +322,15 @@ static uint32 ap_get_voltage(uint32 channel, MSG_AP_ADC_CNF *pMsgADC)
 		voltage = CHGMNG_AdcvalueToVoltage(adc_result);
                 msg = (MSG_HEAD_T *)pMsgADC;
 		para = (msg+1);
-                *para = (voltage/10);
+//                *para = (voltage/10);
+            if (voltage > MAX_VOLTAGE)
+            {
+                *para = (PRECISION_10MV | ((voltage/10) & MAX_VOLTAGE));
+            }
+            else
+            {
+                *para = (PRECISION_1MV | (voltage & MAX_VOLTAGE));
+            }
         }
         else
         {
