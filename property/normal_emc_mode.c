@@ -485,7 +485,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	disk_partition_t info;
 	int filelen;
 	ulong part_length;
-	#if (defined CONFIG_SC8810) || (defined CONFIG_SC8825)
+	#if (defined CONFIG_SC8810) || (defined CONFIG_SC8825) || (defined CONFIG_SC8830)
 	MMU_Init(CONFIG_MMU_TABLE_ADDR);
 	#endif
 	p_block_dev = get_dev("mmc", 1);
