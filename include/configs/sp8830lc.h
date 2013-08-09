@@ -213,7 +213,7 @@
 */
 
 /* DDR */
-#define DDR_CLK 400
+#define DDR_CLK 333
 
 //---these three macro below,only one can be open
 //#define DDR_LPDDR1
@@ -341,6 +341,7 @@
 //#define CONFIG_LCD_QHD 1
 //#define CONFIG_LCD_720P 1
 #define CONFIG_LCD_WVGA 1
+#define CONFIG_720P_TO_WVGA
 //#define CONFIG_LCD_INFO
 //#define LCD_TEST_PATTERN
 //#define CONFIG_LCD_LOGO

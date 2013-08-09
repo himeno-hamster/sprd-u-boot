@@ -139,14 +139,22 @@ static void dispc_layer_init(struct sprdfb_device *dev)
 	dispc_write(0xff, DISPC_OSD_ALPHA);
 
 	/* OSD layer size */
+#ifndef CONFIG_720P_TO_WVGA
 	reg_val = ( dev->panel->width& 0xfff) | ((dev->panel->height & 0xfff ) << 16);
+#else	
+	reg_val = ( 480 & 0xfff) | ((800 & 0xfff ) << 16);
+#endif	
 	dispc_write(reg_val, DISPC_OSD_SIZE_XY);
 
 	/* OSD layer start position */
 	dispc_write(0, DISPC_OSD_DISP_XY);
 
 	/* OSD layer pitch */
+#ifndef CONFIG_720P_TO_WVGA
 	reg_val = ( dev->panel->width & 0xfff) ;
+#else
+	reg_val = ( 480 & 0xfff) ;
+#endif	
 	dispc_write(reg_val, DISPC_OSD_PITCH);
 
 	/*OSD base address*/
