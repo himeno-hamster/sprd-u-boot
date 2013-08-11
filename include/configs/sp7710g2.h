@@ -242,7 +242,7 @@
 #define xstr(s)	str(s)
 #define str(s)	#s
 
-#define  UART_CONSOLE_SUPPORT
+//#define  UART_CONSOLE_SUPPORT
 
 #ifdef  UART_CONSOLE_SUPPORT
 #define CONFIG_UART_CONSOLE   " console=ttyS1,115200n8 "
