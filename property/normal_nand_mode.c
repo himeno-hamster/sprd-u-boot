@@ -513,7 +513,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		cmd_yaffs_ls_chk(fixnvfilename);
 		cmd_yaffs_mread_fileex(fixnvfilename, (unsigned char *)FIXNV_ADR, FIXNV_SIZE);
 		cmd_yaffs_umount(fixnvpoint);
-		if(!fixnv_chkEcc(FIXNV_ADR, FIXNV_SIZE)){
+		if(!chkEcc(FIXNV_ADR, FIXNV_SIZE)){
 			// 2 read backup fixNv
 			printf("Read origin fixnv fail\n");
 			memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE);
@@ -521,7 +521,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 			cmd_yaffs_ls_chk(backupfixnvfilename);
 			cmd_yaffs_mread_fileex(backupfixnvfilename, (unsigned char *)FIXNV_ADR, FIXNV_SIZE);
 			cmd_yaffs_umount(backupfixnvpoint);
-			if(!fixnv_chkEcc(FIXNV_ADR, FIXNV_SIZE)){
+			if(!chkEcc(FIXNV_ADR, FIXNV_SIZE)){
 				printf("Read backup fixnv fail\n");
 			}
 			else{
@@ -538,7 +538,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		cmd_yaffs_ls_chk(runtimenvfilename);
 		cmd_yaffs_mread_fileex(runtimenvfilename, (unsigned char *)RUNTIMENV_ADR,RUNTIMENV_SIZE);
 		cmd_yaffs_umount(runtimenvpoint);
-		if(!fixnv_chkEcc(RUNTIMENV_ADR, RUNTIMENV_SIZE)){
+		if(!chkEcc(RUNTIMENV_ADR, RUNTIMENV_SIZE)){
 			// 2 read backup runtime nv
 			printf("Read origin  runtime nv fail\n");
 			memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
@@ -546,7 +546,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 			cmd_yaffs_ls_chk(runtimenvfilename2);
 			cmd_yaffs_mread_fileex(runtimenvfilename2, (unsigned char *)RUNTIMENV_ADR, RUNTIMENV_SIZE);
 			cmd_yaffs_umount(runtimenvpoint2);
-			if(!fixnv_chkEcc(RUNTIMENV_ADR, RUNTIMENV_SIZE)){
+			if(!chkEcc(RUNTIMENV_ADR, RUNTIMENV_SIZE)){
 				printf("Read backup  runtime nv fail\n");
 			}
 			else{
@@ -563,7 +563,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		cmd_yaffs_ls_chk(productinfofilename);
 		cmd_yaffs_mread_file(productinfofilename, (unsigned char *)(PRODUCTINFO_ADR));
 		cmd_yaffs_umount(productinfopoint);
-		if(!fixnv_chkEcc((PRODUCTINFO_ADR), PRODUCTINFO_SIZE)){
+		if(!chkEcc((PRODUCTINFO_ADR), PRODUCTINFO_SIZE)){
 			// 3 read backup productinfo
 			printf("Read origin productinfo fail\n");
 			memset((unsigned char *)(PRODUCTINFO_ADR), 0xff, PRODUCTINFO_SIZE);
@@ -571,7 +571,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 			cmd_yaffs_ls_chk(productinfofilename2);
 			cmd_yaffs_mread_file(productinfofilename2, (unsigned char *)(PRODUCTINFO_ADR));
 			cmd_yaffs_umount(productinfopoint);
-			if(!fixnv_chkEcc((PRODUCTINFO_ADR), PRODUCTINFO_SIZE)){
+			if(!chkEcc((PRODUCTINFO_ADR), PRODUCTINFO_SIZE)){
 				printf("Read backup productinfo fail\n");
 			}
 			else{

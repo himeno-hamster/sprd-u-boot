@@ -208,6 +208,67 @@ int get_partition_info_efi(block_dev_desc_t * dev_desc, int part,
 	return 0;
 }
 
+int get_partition_info_by_name_efi(block_dev_desc_t * dev_desc, wchar_t* partition_name,
+				disk_partition_t * info)
+{
+	gpt_header gpt_head;
+	gpt_entry *pgpt_pte = NULL;
+	int ret = -1;
+	unsigned int i,j,partition_nums=0;
+	wchar_t disk_parition[MAX_UTF_PARTITION_NAME_LEN];
+
+	if (!dev_desc || !info || !partition_name) {
+		printf("%s: Invalid Argument(s)\n", __FUNCTION__);
+		return -1;
+	}
+
+	/* This function validates AND fills in the GPT header and PTE */
+	if (is_gpt_valid(dev_desc, GPT_PRIMARY_PARTITION_TABLE_LBA,
+			&(gpt_head), &pgpt_pte) != 1) {
+		printf("%s: *** ERROR: Invalid Main GPT ***\n", __FUNCTION__);
+		if(is_gpt_valid(dev_desc, dev_desc->lba -1, &(gpt_head), &pgpt_pte) != 1){
+			printf("%s: *** ERROR: Invalid alternate GPT ***\n", __FUNCTION__);
+			return -1;
+
+		}
+	}
+
+	/*Get the partition info*/
+	partition_nums = le32_to_int(gpt_head.num_partition_entries);
+	for(i=0;i<partition_nums;i++)
+	{
+		for(j=0;j<MAX_UTF_PARTITION_NAME_LEN;j++)
+		{
+			disk_parition[j] = (wchar_t)pgpt_pte[i].partition_name[j];
+		}
+
+		if(0 == wcsncmp(disk_parition, partition_name, wcslen(partition_name)))
+		{
+			/* The ulong casting limits the maximum disk size to 2 TB */
+			info->start = (ulong) le64_to_int((pgpt_pte)[i].starting_lba);
+			/* The ending LBA is inclusive, to calculate size, add 1 to it */
+			info->size = ((ulong)le64_to_int((pgpt_pte)[i].ending_lba) + 1) - info->start;
+			info->blksz = GPT_BLOCK_SIZE;
+
+			sprintf((char *)info->name, "%s", print_efiname(&((pgpt_pte)[i])));
+			sprintf((char *)info->type, "U-Boot");
+
+			debug("%s: start 0x%lX, size 0x%lX, name %s", __FUNCTION__,
+				info->start, info->size, info->name);
+			ret = 0;
+			break;
+		}
+	}
+
+	/* Remember to free pte */
+	if (pgpt_pte != NULL) {
+		debug("%s: Freeing pgpt_pte\n", __FUNCTION__);
+		free(pgpt_pte);
+	}
+
+	return ret;
+}
+
 int get_all_partition_info_efi(block_dev_desc_t * dev_desc, PARTITION_CFG * info, unsigned int *total_partition_num)
 {
 	gpt_header gpt_head;

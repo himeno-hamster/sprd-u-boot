@@ -84,7 +84,7 @@ unsigned short calc_checksum(unsigned char *dat, unsigned long len)
 	return (~checksum);
 }
 
-int fixnv_chkEcc(unsigned char* buf, int size)
+int chkEcc(unsigned char* buf, int size)
 {
 	unsigned short crc,crcOri;
 //	crc = __crc_16_l_calc(buf, size-2);

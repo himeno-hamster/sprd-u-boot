@@ -105,6 +105,7 @@ block_dev_desc_t* mg_disk_get_dev(int dev);
 /* disk/part.c */
 int get_partition_info (block_dev_desc_t * dev_desc, int part, disk_partition_t *info);
 int get_partition_info_with_partnum (block_dev_desc_t * dev_desc, int part, disk_partition_t *info, unsigned long total, unsigned long sdidx, int sdpart, disk_partition_t *sdinfo);
+int get_partition_info_by_name (block_dev_desc_t *dev_desc, wchar_t* partition_name,disk_partition_t *info);
 void print_part (block_dev_desc_t *dev_desc);
 void  init_part (block_dev_desc_t *dev_desc);
 void dev_print(block_dev_desc_t *dev_desc);
@@ -141,6 +142,7 @@ int   test_part_amiga (block_dev_desc_t *dev_desc);
 #ifdef CONFIG_EFI_PARTITION
 /* disk/part_efi.c */
 int get_partition_info_efi (block_dev_desc_t * dev_desc, int part, disk_partition_t *info);
+int get_partition_info_by_name_efi(block_dev_desc_t * dev_desc, wchar_t* partition_name,disk_partition_t * info);
 void print_part_efi (block_dev_desc_t *dev_desc);
 int   test_part_efi (block_dev_desc_t *dev_desc);
 #endif

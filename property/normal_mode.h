@@ -249,6 +249,14 @@ typedef struct _tagSP09_PHASE_CHECK
 
 }SP09_PHASE_CHECK_T, *LPSP09_PHASE_CHECK_T;
 
+typedef struct boot_image_required
+{
+	wchar_t* partition;  //partition name record on disk
+	wchar_t* bak_partition;  //if no backup partition, set NULL
+	unsigned long size;  //partition size to be read
+	unsigned long mem_addr;  //target memory addr
+}boot_image_required_t;
+
 extern const int SP09_MAX_PHASE_BUFF_SIZE;
 
 void set_vibrator(int on);
@@ -262,7 +270,7 @@ int eng_getphasecheck(SP09_PHASE_CHECK_T* phase_check);
 int eng_phasechecktest(unsigned char *array, int len);
 int fixnv_is_correct(unsigned char *array, unsigned long size);
 int fixnv_is_correct_endflag(unsigned char *array, unsigned long size);
-int fixnv_chkEcc(unsigned char* buf, int size);
+int chkEcc(unsigned char* buf, int size);
 unsigned long get_nv_index(unsigned char *array, unsigned long size);
 int runtimenv_is_correct(unsigned char *array, unsigned long size);
 int sn_is_correct(unsigned char *array, unsigned long size);
