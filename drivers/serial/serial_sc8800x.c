@@ -261,7 +261,18 @@ LOCAL int SIO_PutChar (struct FDL_ChannelHandler  *channel, const unsigned char 
 }
 LOCAL int SIO_SetBaudrate (struct FDL_ChannelHandler  *channel,  unsigned int baudrate)
 {
+#if 0
     channel->Open (channel, baudrate);
+#else
+    unsigned int divider;
+    UartPort_T *port  = (UartPort_T *) channel->priv;
+
+    divider = SIO_GetHwDivider (baudrate);
+    /* Set baud rate  */
+    * (volatile unsigned int *) (port->regBase + ARM_UART_CLKD0) = LWORD (divider);
+    * (volatile unsigned int *) (port->regBase + ARM_UART_CLKD1) = HWORD (divider);
+
+#endif
     return 0;
 }
 LOCAL int SIO_Close (struct FDL_ChannelHandler  *channel)

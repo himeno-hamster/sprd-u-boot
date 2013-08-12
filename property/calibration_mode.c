@@ -147,7 +147,7 @@ static int Calibration_ReinitUsb(void)
 		end_time = get_timer_masked();
 		if(end_time - start_time > get_cal_enum_ms())
 			return -1;
-	}	
+	}
 	printf("USB SERIAL CONFIGED\n");
 
 	start_time = get_timer_masked();
@@ -155,7 +155,7 @@ static int Calibration_ReinitUsb(void)
 		end_time = get_timer_masked();
 		if(end_time - start_time > get_cal_io_ms())
 			return -1;
-	}	
+	}
 	return 0;
 }
 
@@ -190,9 +190,11 @@ int  tool_channel_write(char *buffer,int count)
 		{
 			while(count > 0){
 				ret = gs_write(g_uart_buf, count);
+#if 0
 				printf("func: %s waitting %d write done\n", __func__, count);
 				if(usb_trans_status)
 					printf("func: %s line %d usb trans with error %d\n", __func__, __LINE__, usb_trans_status);
+#endif
 				usb_wait_trans_done(1);
 				if(ret > 0)
 					count -= ret;
@@ -225,15 +227,17 @@ int  tool_channel_read(char *buffer,int count)
 		{
 			if(usb_is_trans_done(0)){
 				int ret;
+#if 0
 				if(usb_trans_status)
 					printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
-
+#endif
 				ret = gs_read(buffer, &size);
 				if(ret)
 					index = size;
-
+#if 0
 				if(usb_trans_status)
 					printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
+#endif
 			}
 		}
 		break;
@@ -267,111 +271,126 @@ extern int get_nv_sync_flag(void);
 extern void set_nv_sync_flag(int flag);
 void calibration_mode(const uint8_t *pcmd, int length)
 {
-	int ret;
-	int count = 0;
-	unsigned char ch;
-	int index = 0;
-	int i;
-	unsigned char buf[MODE_REQUEST_LENGTH] = {0};
-        int sync_index = 0;
+    int ret;
+    int count = 0;
+    unsigned char ch;
+    int index = 0;
+    int i;
+    unsigned char buf[MODE_REQUEST_LENGTH] = {0};
+    int sync_index = 0;
 
-	init_calibration_mode();
+    init_calibration_mode();
 #ifndef __DL_UART0__
-	if(CALIBRATION_CHANNEL==1)
-	__dl_log_share__ = 1;
-#endif	
+    if(CALIBRATION_CHANNEL==1)
+        __dl_log_share__ = 1;
+#endif
 
-	gUsedChannel = Calibration_ChannelGet(CALIBRATION_CHANNEL);
-	gUsedChannel->Open(gUsedChannel, 115200);
-#if 1    
-        while(gUsedChannel->GetChar(gUsedChannel) != 0x7e); // purge fifo
-        buf[0] = 0x7e;
-	for(i = 1; i < MODE_REQUEST_LENGTH; i++){
-		ch = gUsedChannel->GetChar(gUsedChannel);
-		buf[i] = ch;
-	}
+    gUsedChannel = Calibration_ChannelGet(CALIBRATION_CHANNEL);
+    gUsedChannel->Open(gUsedChannel, 115200);
+#if 1
+    while(gUsedChannel->GetChar(gUsedChannel) != 0x7e); // purge fifo
+    buf[0] = 0x7e;
+    for(i = 1; i < MODE_REQUEST_LENGTH; i++){
+        ch = gUsedChannel->GetChar(gUsedChannel);
+        buf[i] = ch;
+    }
 
-	if(-1 == Calibration_ParseRequsetMode(buf, MODE_REQUEST_LENGTH))
-		return ;
-	if(-1 == Calibration_SetMode(pcmd, length))
-		return ;
+    if(-1 == Calibration_ParseRequsetMode(buf, MODE_REQUEST_LENGTH))
+        return ;
+    if(-1 == Calibration_SetMode(pcmd, length))
+        return ;
 
-	printf("calibration_mode step2\n");
+    printf("calibration_mode step2\n");
 
-	// wait for cp ready
-	i=0;
-	while(gpio_get_value(CP_AP_LIV) == 0);
-	printf("calibration_mode step3\n");
+    // wait for cp ready
+    i=0;
+    while(gpio_get_value(CP_AP_LIV) == 0);
+    printf("calibration_mode step3\n");
 
 #if defined(CONFIG_SC7710G2)
-	serial3_flowctl_enable();
+    serial3_flowctl_enable();
 #endif
 
-	int nvitem_sync(void);
-	nvitem_sync();
+    int nvitem_sync(void);
+    nvitem_sync();
 
-	printf("calibration_mode step4\n");
+    printf("calibration_mode step4\n");
 
 #endif
-	if(tool_channel_open() == -1)
-		return;
+    if(tool_channel_open() == -1)
+        return;
 
-	printf("calibration_mode step5\n");
+    printf("calibration_mode step5\n");
 
-	while(TRUE){
-		count = tool_channel_read(g_usb_buf, MAX_USB_BUF_LEN);
-		if((index = ap_calibration_proc( g_usb_buf, count,g_uart_buf)) == 0){
-                        if(get_nv_sync_flag()){
-                            //printf("NV_SYNC,get_nv_sync_flag so enable nvitem sync ...\n");
-                            //tools request to save wcdma calibration params to flash
-                            //so we must make sure to write it to flash before power off
-                            nvitem_sync_enable();
-                        }
-			if(count > 0){
-				if(count != gUsedChannel->Write(gUsedChannel, g_usb_buf, count)) {
-					return ;
-				}
-				mdelay(3);
-			}
-			count = 0;		
-			while(-1 != (ret = gUsedChannel->GetSingleChar(gUsedChannel))){
-                            if(get_nv_sync_flag()){
-				g_uart_buf[sync_index++] = (ret & 0xff);
-                            }else{
-				g_uart_buf[index++] = (ret & 0xff);
-                            }
-			}
-		}
-		nvitem_sync();
-                if(get_nv_sync_flag()){
-                    if(sync_index > 0 && nvitem_is_sync_done()){
-                        printf("NV_SYNC,nvitem_is_sync_done=true,so we reset all the gloables ...\n");
-                        nvitem_sync_reset();
-                        nvitem_sync_disable();
-                        set_nv_sync_flag(0);
-                        printf("NV_SYNC,we can notify the tool now!!!\n");
-                        tool_channel_write(g_uart_buf, sync_index);
-                        sync_index = 0;
-                    }else if (sync_index > 0){
-                        //printf("NV_SYNC,nvitem_is_sync_done=flase,sync_index=%d ...\n",sync_index);
-                    }else{
-                        //printf("NV_SYNC,we haven't got response from cp ...\n");
-                    }
-                }else{
-                    if(index > 0){
-                            tool_channel_write(g_uart_buf, index);
-                    }
+    while(TRUE){
+        count = tool_channel_read(g_usb_buf, MAX_USB_BUF_LEN);
+        if((index = ap_calibration_proc( g_usb_buf, count,g_uart_buf)) == 0){
+            if(get_nv_sync_flag()){
+                //printf("NV_SYNC,get_nv_sync_flag so enable nvitem sync ...\n");
+                //tools request to save wcdma calibration params to flash
+                //so we must make sure to write it to flash before power off
+                nvitem_sync_enable();
+            }
+            if(count > 0){
+                if(count != gUsedChannel->Write(gUsedChannel, g_usb_buf, count)) {
+                    return ;
                 }
-		//add by kenyliu in 2013 06 20 for bug 146310
-		if(0xE == get_adc_flag())
-		{
-			power_down_devices();
-		}
-		//end kenyliu
-	}
+                mdelay(3);
+            }
+            count = 0;
+#if 0
+            while(-1 != (ret = gUsedChannel->GetSingleChar(gUsedChannel))){
+                if(get_nv_sync_flag()){
+                    g_uart_buf[sync_index++] = (ret & 0xff);
+                }else{
+                    g_uart_buf[index++] = (ret & 0xff);
+                }
+            }
+#else
+            if(get_nv_sync_flag()){
+                sync_index += gUsedChannel->Read(gUsedChannel, g_uart_buf, MAX_UART_BUF_LEN);
+            }else{
+                index += gUsedChannel->Read(gUsedChannel, g_uart_buf, MAX_UART_BUF_LEN);
+            }
+#endif
+        }
+        if(gpio_get_value(CP_AP_LIV) == 1) {
+            nvitem_sync();
+        }
+        if(get_nv_sync_flag()){
+            if(sync_index > 0 && nvitem_is_sync_done()){
+                printf("NV_SYNC,nvitem_is_sync_done=true,so we reset all the gloables ...\n");
+                nvitem_sync_reset();
+                nvitem_sync_disable();
+                set_nv_sync_flag(0);
+                printf("NV_SYNC,we can notify the tool now!!!\n");
+                tool_channel_write(g_uart_buf, sync_index);
+                sync_index = 0;
+            }else if (sync_index > 0){
+                //printf("NV_SYNC,nvitem_is_sync_done=flase,sync_index=%d ...\n",sync_index);
+            }else{
+                //printf("NV_SYNC,we haven't got response from cp ...\n");
+            }
+        }else{
+            if(index > 0){
+                if(1 == index && 'K' == g_uart_buf[0] && 0 == gpio_get_value(CP_AP_LIV)) {
+                    printf("change bandrate ...");
+                    gUsedChannel->SetBaudrate(gUsedChannel, 1843200/*921600*/);
+                }else {
+                    tool_channel_write(g_uart_buf, index);
+                }
+            }
+        }
+        //add by kenyliu in 2013 06 20 for bug 146310
+        if(0xE == get_adc_flag())
+        {
+            power_down_devices();
+        }
+        //end kenyliu
+    }
 #ifndef __DL_UART0__
-		__dl_log_share__ = 0;
-#endif	
+    __dl_log_share__ = 0;
+#endif
 
 }
 
