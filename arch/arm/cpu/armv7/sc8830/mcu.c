@@ -45,12 +45,12 @@ static uint32 AhbClkConfig()
     uint32 ahb_cfg;
     ahb_cfg  = REG32(REG_AP_CLK_AP_AHB_CFG);
     ahb_cfg &=~3;
-    ahb_cfg |= 2;  //ahb select 128M           0:26M 1:76M 2:128M 3:192M
+    ahb_cfg |= 3;  //ahb select 192M           0:26M 1:76M 2:128M 3:192M
     REG32(REG_AP_CLK_AP_AHB_CFG) = ahb_cfg;
 
     ahb_cfg  = REG32(REG_AON_CLK_PUB_AHB_CFG);
     ahb_cfg &=~3;
-    ahb_cfg |= 2;  //pub ahb select 128M      0:26M 1:76M 2:128M 3:153M
+    ahb_cfg |= 3;  //pub ahb select 153M      0:26M 1:76M 2:128M 3:153M
     REG32(REG_AON_CLK_PUB_AHB_CFG) = ahb_cfg;
 
     delay();
@@ -67,7 +67,7 @@ static uint32 ApbClkConfig()
 
     apb_cfg = REG32(REG_AON_CLK_AON_APB_CFG);
     apb_cfg &=~3;
-    apb_cfg |= 1;  //aon apb select 76M        0:26M 1:76M 2:96M 3:128M
+    apb_cfg |= 3;  //aon apb select 128M        0:26M 1:76M 2:96M 3:128M
     REG32(REG_AON_CLK_AON_APB_CFG) = apb_cfg;
 
     delay();

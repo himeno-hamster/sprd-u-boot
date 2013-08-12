@@ -329,11 +329,11 @@ PUBLIC uint32 TDPllRefConfig(TDPLL_REF_T rf_id)
 
 /* after switch, up ahb clock to 128M, APB to 64M */
     pll_reg = readl(REG_AP_CLK_AP_AHB_CFG);
-    pll_reg |= 0x2;
+    pll_reg |= 0x3;
     writel(pll_reg, REG_AP_CLK_AP_AHB_CFG);
 
     pll_reg = readl(REG_AON_CLK_PUB_AHB_CFG);
-    pll_reg |= 0x2;
+    pll_reg |= 0x3;
     writel(pll_reg, REG_AON_CLK_PUB_AHB_CFG);
     
     pll_reg = readl(REG_AP_CLK_AP_APB_CFG);
@@ -341,7 +341,7 @@ PUBLIC uint32 TDPllRefConfig(TDPLL_REF_T rf_id)
     writel(pll_reg, REG_AP_CLK_AP_APB_CFG);
 
     pll_reg = readl(REG_AON_CLK_AON_APB_CFG);
-    pll_reg |= 0x1;
+    pll_reg |= 0x3;
     writel(pll_reg, REG_AON_CLK_AON_APB_CFG);
 
     return 0;
