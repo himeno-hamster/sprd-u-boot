@@ -30,7 +30,7 @@ PARTITION_CFG const g_sprd_emmc_partition_cfg[MAX_PARTITION_INFO] = {
 	{PARTITION_USER_DAT, 	MAX_SIZE_FLAG, 	PARTITION_RAW,0,L"userdata"},
         {0, 0, 0,0,L""}
 };
-#elif defined CONFIG_SP8830EC
+#elif defined (CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
 PARTITION_CFG const g_sprd_emmc_partition_cfg[MAX_PARTITION_INFO] = {
 	{PARTITION_TDMODEM, 	10 * 1024,	PARTITION_RAW,0,L"tdmodem"},
 	{PARTITION_TDDSP, 	5 * 1024, 	PARTITION_RAW,0,L"tddsp"},
@@ -51,7 +51,7 @@ PARTITION_CFG const g_sprd_emmc_partition_cfg[MAX_PARTITION_INFO] = {
 	{PARTITION_SD, 		1000 * 1024, 	PARTITION_RAW,0,L"sd"},
 	{PARTITION_PROD_INFO4, 	256, 		PARTITION_RAW,0,L"prodinfo4"},
 	{PARTITION_USER_DAT, 	MAX_SIZE_FLAG, 	PARTITION_RAW,0,L"userdata"},
-        {0, 0, 0,0,""}
+        {0, 0, 0,0,L""}
 };	
 #elif defined CONFIG_SP7735EC
 PARTITION_CFG const g_sprd_emmc_partition_cfg[MAX_PARTITION_INFO] = {

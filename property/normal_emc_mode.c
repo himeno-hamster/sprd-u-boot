@@ -17,12 +17,20 @@ static boot_image_required_t const s_boot_image_table[]={
 	{L"wruntimenv1",L"wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR},
 	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},
 	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,WPRODINFO_ADR},
+
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
 	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
-	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR},
-#ifndef CONFIG_SP8830EC	
+	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR}, 	
+#elif defined(CONFIG_SP7735EC)
 	{L"wmodem",NULL,MODEM_SIZE,WMODEM_ADR},
-#endif
 	{L"wdsp",NULL,DSP_SIZE,WDSP_ADR},
+#else
+	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
+	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR},		
+	{L"wmodem",NULL,MODEM_SIZE,WMODEM_ADR},
+	{L"wdsp",NULL,DSP_SIZE,WDSP_ADR},
+#endif	
+
 #else
 	{L"fixnv1",L"fixnv2",FIXNV_SIZE,FIXNV_ADR},
 	{L"runtimenv1",L"runtimenv2",RUNTIMENV_SIZE,RUNTIMENV_ADR},
@@ -349,9 +357,41 @@ void modem_entry()
 #elif defined (CONFIG_SC8830)
 	u32 state;
 
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
 	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
-#ifndef CONFIG_SP8830EC
+
+	memcpy(0x50001800, cp1data, sizeof(cp1data));	   /* copy cp1 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000002;	   /* reset cp1 */
+	*((volatile u32*)0x402B0050) &= ~0x02000000;	   /* clear cp1 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00BC);
+		if (!(state & (0xf<<16)))
+			break;
+	}
+	*((volatile u32*)0x402B0050) &= ~0x10000000;	   /* clear cp1 force deep sleep */
+
+	*((volatile u32*)0x402B00A8) &= ~0x00000002;	   /* clear reset cp0 cp1 */
+
+#elif defined(CONFIG_SP7735EC)
 	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
+
+	memcpy(0x50000000, cp0data, sizeof(cp0data));	   /* copy cp0 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000001;	   /* reset cp0 */
+	*((volatile u32*)0x402B003C) &= ~0x02000000;	   /* clear cp0 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00B8);
+		if (!(state & (0xf<<28)))
+			break;
+	}
+	*((volatile u32*)0x402B003C) &= ~0x10000000;	   /* clear cp0 force deep sleep */
+	*((volatile u32*)0x402B00A8) &= ~0x00000001;	   /* clear reset cp0 cp1 */
+
+#else
+	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
+	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
+	
 	memcpy(0x50000000, cp0data, sizeof(cp0data));      /* copy cp0 source code */
 	*((volatile u32*)0x402B00A8) |=  0x00000001;       /* reset cp0 */
 	*((volatile u32*)0x402B003C) &= ~0x02000000;       /* clear cp0 force shutdown */
@@ -362,7 +402,7 @@ void modem_entry()
 			break;
 	}
 	*((volatile u32*)0x402B003C) &= ~0x10000000;       /* clear cp0 force deep sleep */
-#endif
+
 	memcpy(0x50001800, cp1data, sizeof(cp1data));      /* copy cp1 source code */
 	*((volatile u32*)0x402B00A8) |=  0x00000002;       /* reset cp1 */
 	*((volatile u32*)0x402B0050) &= ~0x02000000;       /* clear cp1 force shutdown */
@@ -375,6 +415,7 @@ void modem_entry()
 	*((volatile u32*)0x402B0050) &= ~0x10000000;       /* clear cp1 force deep sleep */
 
 	*((volatile u32*)0x402B00A8) &= ~0x00000003;       /* clear reset cp0 cp1 */
+#endif	
 #endif
 }
 
@@ -383,8 +424,12 @@ void sipc_addr_reset()
 #ifdef CONFIG_SC8825
 	memset((void *)SIPC_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 #elif defined (CONFIG_SC8830)
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
 	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#ifndef CONFIG_SP8830EC
+#elif defined(CONFIG_SP7735EC)
+	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+#else
+	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 #endif
 #endif
