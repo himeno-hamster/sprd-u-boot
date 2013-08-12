@@ -2,7 +2,7 @@
 *	Author: dayong.yang
 *	Last modified: 2013-04-03 13:30
 *	Filename: special_downloading.c
-*	Description: 
+*	Description:
 ****************************************************/
 #include <config.h>
 #include "special_downloading.h"
@@ -64,7 +64,7 @@ static const unsigned short  crc16_table[256] =
 };
 
 /****************************************************
-*	description: util function used to calc CRC16 value 
+*	description: util function used to calc CRC16 value
 ****************************************************/
 static unsigned short crc16 (unsigned short crc, unsigned char const *buffer, unsigned int len)
 {
@@ -77,7 +77,7 @@ static unsigned short crc16 (unsigned short crc, unsigned char const *buffer, un
 }
 
 /****************************************************
-*	description:caculate the valid length of NV file 
+*	description:caculate the valid length of NV file
 ****************************************************/
 static unsigned int Vlx_CalcFixnvLen(unsigned int search_start, unsigned int search_end)
 {
@@ -108,7 +108,7 @@ static unsigned int Vlx_CalcFixnvLen(unsigned int search_start, unsigned int sea
 }
 
 /****************************************************
-*	description:check the file structure to identify 
+*	description:check the file structure to identify
 *				whether it has been damaged or not.
 ****************************************************/
 static int file_check(unsigned char *array, unsigned long size)
@@ -119,11 +119,11 @@ static int file_check(unsigned char *array, unsigned long size)
 		0 != *((unsigned short*)&array[size-2])&&
 		(unsigned short)calc_checksum(array,size-4) == *((unsigned short*)&array[size-4]))
 	{
-		return 1; 
+		return 1;
 	}else{
         if(check_compatible){
             if((unsigned short)calc_checksum(array,size-4) == *((unsigned short*)&array[size-4])){
-                return 1; 
+                return 1;
             }
         }
         printf("file_check error!\n");
@@ -170,11 +170,11 @@ static void recovery_sector(const char* dst_sector_path,
 	cmd_yaffs_mwrite_file((char*)dst_sector_name,(char*)mem_addr, (int)size);
 	if(backup_dst_sector_name)
 		cmd_yaffs_mwrite_file((char*)backup_dst_sector_name,(char*)mem_addr,(int)size);
-	cmd_yaffs_umount(dst_sector_path);	
+	cmd_yaffs_umount(dst_sector_path);
 }
 
 /****************************************************
-*	description:load file to memory and do some sync 
+*	description:load file to memory and do some sync
 *				options,if nessary.
 ****************************************************/
 static int load_sector_to_memory(const char* sector_path,
@@ -266,9 +266,9 @@ int fdl_read_fixnv(unsigned char * gBuf,unsigned int offset, unsigned int size, 
 		if(ret ==1){
 			//we got a right file in backupfixnvpoint,
 			//use it to recovery fixnvpoint's files.
-			recovery_sector(fixnvpoint, 
-					fixnvfilename, 
-					fixnvfilename2, 
+			recovery_sector(fixnvpoint,
+					fixnvfilename,
+					fixnvfilename2,
 					(unsigned char *)gBuf,
 					FIXNV_SIZE + 4);
 		}else{
@@ -284,11 +284,11 @@ int fdl_read_fixnv(unsigned char * gBuf,unsigned int offset, unsigned int size, 
 	}else{
 		//everything is right!!
 		//there's nothing to do here ......
-	}	
+	}
 	printf("Reading fixnv success!\n");
-    
+
     if(!check_compatible){
-        //finally we check the fixnv structure,if fail,then u-boot will hung up!!!		
+        //finally we check the fixnv structure,if fail,then u-boot will hung up!!!
         if(check_fixnv_struct(gBuf,FIXNV_SIZE) == -1){
             ret = -1;
             goto EXIT;
@@ -338,33 +338,48 @@ EXIT:
 *	description: This function used to download fixnv
 *				file in research download process.
 ****************************************************/
-void fdl_download_fixnv(unsigned char *gBuf,int is_fixnv){
+int fdl_download_fixnv(unsigned char *gBuf,int is_fixnv){
 	char *fixnvpoint = "/fixnv";
 	char *fixnvfilename = "/fixnv/fixnv.bin";
 	char *fixnvfilename2 = "/fixnv/fixnvbkup.bin";
 	char *backupfixnvpoint = "/backupfixnv";
 	char *backupfixnvfilename = "/backupfixnv/fixnv.bin";
 	unsigned int length = 0;
+    int ret = -1;
 
-	length = Vlx_CalcFixnvLen(gBuf, gBuf+FIXNV_SIZE);	
-	*((unsigned int*)&gBuf[FIXNV_SIZE-8])= length;//keep the real  fixnv file size.	
-	*((unsigned short*)&gBuf[FIXNV_SIZE-4])= calc_checksum(gBuf,FIXNV_SIZE-4); 
+	length = Vlx_CalcFixnvLen(gBuf, gBuf+FIXNV_SIZE);
+	*((unsigned int*)&gBuf[FIXNV_SIZE-8])= length;//keep the real  fixnv file size.
+	*((unsigned short*)&gBuf[FIXNV_SIZE-4])= calc_checksum(gBuf,FIXNV_SIZE-4);
 	*(unsigned short*)&gBuf[FIXNV_SIZE-2] = crc16(0,(unsigned const char*)gBuf,FIXNV_SIZE-2);
 	*(unsigned int*)&gBuf[FIXNV_SIZE] = 0x5a5a5a5a;
 
 	if(is_fixnv){
-		recovery_sector(fixnvpoint, 
-				fixnvfilename, 
-				fixnvfilename2, 
+		recovery_sector(fixnvpoint,
+				fixnvfilename,
+				fixnvfilename2,
 				(unsigned char *)gBuf,
 				FIXNV_SIZE + 4);
+        printf("try readback fixnv/fixnv.bin&fixnv/fixnvbkup.bin ...\n");
+        ret = load_sector_to_memory(fixnvpoint,
+				fixnvfilename,
+				fixnvfilename2,
+                (unsigned char *)gBuf,
+                FIXNV_SIZE + 4);
 	}else{
-		recovery_sector(backupfixnvpoint, 
-				backupfixnvfilename , 
-				0, 
-				(unsigned char *)gBuf,
-				FIXNV_SIZE + 4);
+        recovery_sector(backupfixnvpoint,
+                backupfixnvfilename ,
+                0,
+                (unsigned char *)gBuf,
+                FIXNV_SIZE + 4);
+        printf("try readback backupfixnv/fixnv.bin ...\n");
+        ret = load_sector_to_memory(backupfixnvpoint,
+                backupfixnvfilename,
+                0,//backupfixnvfilename2,
+                (unsigned char *)gBuf,
+                FIXNV_SIZE + 4);
 	}
+
+    return ret;
 }
 
 /****************************************************
@@ -377,13 +392,13 @@ void fdl_download_productinfo(unsigned char *gBuf){
 	char *productinfofilename = "/productinfo/productinfo.bin";
 	char *productinfofilename2 = "/productinfo/productinfobkup.bin";
 
-	*((unsigned short*)&gBuf[PRODUCTINFO_SIZE-4])= calc_checksum(gBuf,PRODUCTINFO_SIZE-4); 
+	*((unsigned short*)&gBuf[PRODUCTINFO_SIZE-4])= calc_checksum(gBuf,PRODUCTINFO_SIZE-4);
 	*(unsigned short*)&gBuf[PRODUCTINFO_SIZE-2] = crc16(0,(unsigned const char*)gBuf,PRODUCTINFO_SIZE-2);
 	*(unsigned int*)&gBuf[PRODUCTINFO_SIZE] = 0x5a5a5a5a;
 
-	recovery_sector(productinfopoint, 
-			productinfofilename, 
-			productinfofilename2, 
+	recovery_sector(productinfopoint,
+			productinfofilename,
+			productinfofilename2,
 			(unsigned char *)gBuf,
 			PRODUCTINFO_SIZE + 4);
 

@@ -2,7 +2,7 @@
 *	Author: dayong.yang
 *	Last modified: 2013-04-04 13:48
 *	Filename: special_nvitemd.c
-*	Description: 
+*	Description:
 ****************************************************/
 
 #include "special_nvitemd.h"
@@ -56,7 +56,7 @@ static const unsigned short  crc16_table[256] =
 };
 
 /****************************************************
-*	description: util function used to calc CRC16 value 
+*	description: util function used to calc CRC16 value
 ****************************************************/
 static unsigned short crc16 (unsigned short crc, unsigned char const *buffer, unsigned int len)
 {
@@ -69,7 +69,7 @@ static unsigned short crc16 (unsigned short crc, unsigned char const *buffer, un
 }
 
 /****************************************************
-*	description:caculate the valid length of NV file 
+*	description:caculate the valid length of NV file
 ****************************************************/
 static unsigned int Vlx_CalcFixnvLen(unsigned int search_start, unsigned int search_end)
 {
@@ -100,11 +100,11 @@ static unsigned int Vlx_CalcFixnvLen(unsigned int search_start, unsigned int sea
 }
 
 /****************************************************
-*	description: add crc16 to file ends 
+*	description: add crc16 to file ends
 ****************************************************/
 void nvitemd_add_crc16(unsigned char * buf,unsigned int size){
 
-	*(unsigned short*)&buf[size-2] = crc16(0,buf,size-2);	
+	*(unsigned short*)&buf[size-2] = crc16(0,buf,size-2);
 }
 
 /****************************************************
@@ -112,12 +112,17 @@ void nvitemd_add_crc16(unsigned char * buf,unsigned int size){
 ****************************************************/
 void nvitemd_add_fixnv_len(unsigned char *buf,unsigned int size){
 
-	unsigned int length = Vlx_CalcFixnvLen((unsigned int)buf, (unsigned int)buf+size);	
-	*((unsigned int*)&buf[size-8]) = length;//keep the real  fixnv file size.	
+	unsigned int length = Vlx_CalcFixnvLen((unsigned int)buf, (unsigned int)buf+size);
+    if(*((unsigned int*)&buf[size-8]) != length||length == 0){
+        printf("ERROR!!!\n");
+        printf("old len = %d while new len = %d\n",*((unsigned int*)&buf[size-8]),length);
+        while(1);
+    }
+//	*((unsigned int*)&buf[size-8]) = length;//keep the real  fixnv file size.
 }
 
 /****************************************************
-*	description:check the file structure to identify 
+*	description:check the file structure to identify
 *				whether it has been damaged or not.
 ****************************************************/
 int file_check(unsigned char *array, unsigned long size)
@@ -128,7 +133,7 @@ int file_check(unsigned char *array, unsigned long size)
 		0 != *((unsigned short*)&array[size-2])&&
 		(unsigned short)calc_checksum(array,size-4) == *((unsigned short*)&array[size-4]))
 	{
-		return 1; 
+		return 1;
 	}else{
 		return -1;
 	}

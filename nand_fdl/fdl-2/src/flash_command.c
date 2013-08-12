@@ -1303,7 +1303,10 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
             g_prevstatus = ret;
             if (ret == NAND_SUCCESS) {
                 printf("write backupfixnv start\n");
-                fdl_download_fixnv(g_fixnv_buf,0);
+                if(-1 == fdl_download_fixnv(g_fixnv_buf,0)){
+                    SEND_ERROR_RSP(BSL_WRITE_ERROR);
+                    return;
+                }
                 printf("write backupfixnv end\n");
                 g_prevstatus = NAND_SUCCESS;
             }
@@ -1322,7 +1325,10 @@ int FDL2_DataEnd (PACKET_T *packet, void *arg)
             g_prevstatus = ret;
             if (ret == NAND_SUCCESS) {
                 printf("write fixnv start\n");
-                fdl_download_fixnv(g_fixnv_buf,1);
+                if(-1 == fdl_download_fixnv(g_fixnv_buf,1)){
+                    SEND_ERROR_RSP(BSL_WRITE_ERROR);
+                    return;
+                }
                 printf("write fixnv end\n");
                 g_prevstatus = NAND_SUCCESS;
             }

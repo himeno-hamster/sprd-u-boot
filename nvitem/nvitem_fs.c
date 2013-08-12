@@ -394,6 +394,18 @@ BOOLEAN		ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 	note:
 		first imageBakPath then imagePath
 */
+BOOLEAN     try_read_back(const char* path,const char * filename,uint8* buf,uint32 size){
+	memset(buf, 0xFF, size);
+	cmd_yaffs_mount(path);
+	cmd_yaffs_mread_file(filename, buf);
+	if(_chkEcc(buf, size)){
+		printf("read back sucess!\n");
+		return 1;
+	}
+    cmd_yaffs_umount(path);
+    return 0;
+}
+
 BOOLEAN		ramDisk_Write(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 {
 	int idx;
@@ -418,11 +430,38 @@ BOOLEAN		ramDisk_Write(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
 	cmd_yaffs_mount(path);
 	cmd_yaffs_mwrite_file(_ramdiskCfg[idx].imageBak_path, (char*)buf, _ramdiskCfg[idx].image_size);
 	cmd_yaffs_umount(path);
+    #ifdef CONFIG_SC7710G2
+    if(0 == try_read_back(path,_ramdiskCfg[idx].imageBak_path,buf,size)){
+        printf("Fatal error,readback failed!\n");
+        while(1);
+    }
+    #endif
 // 3 write origin image
 	_getPath(_ramdiskCfg[idx].image_path,path);
 	cmd_yaffs_mount(path);
 	cmd_yaffs_mwrite_file(_ramdiskCfg[idx].image_path, (char*)buf, _ramdiskCfg[idx].image_size);
 	cmd_yaffs_umount(path);
+    #ifdef CONFIG_SC7710G2
+    if(0 == try_read_back(path,_ramdiskCfg[idx].image_path,buf,size)){
+        printf("Fatal error,readback failed!\n");
+        while(1);
+    }
+    #endif
+
+
+    #ifdef CONFIG_SC7710G2
+    if(idx == 0){
+        printf("update /backupfixnv/fixnv.bin ...\n");
+	    cmd_yaffs_mount("/backupfixnv");
+	    cmd_yaffs_mwrite_file("/backupfixnv/fixnv.bin", (char*)buf, _ramdiskCfg[idx].image_size);
+	    cmd_yaffs_umount("/backupfixnv");
+        if(0 == try_read_back("/backupfixnv","/backupfixnv/fixnv.bin",buf,size)){
+            printf("Fatal error,readback failed!\n");
+            while(1);
+        }
+    }
+    #endif
+
 	return 1;
 
 }

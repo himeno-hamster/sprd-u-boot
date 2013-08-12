@@ -2,7 +2,7 @@
 *	Author: dayong.yang
 *	Last modified: 2013-04-02 23:09
 *	Filename: special_loading.c
-*	Description: 
+*	Description:
 ****************************************************/
 #include "normal_mode.h"
 #include "special_loading.h"
@@ -15,7 +15,7 @@ extern void cmd_yaffs_mread_file(char *fn, unsigned char *addr);
 extern int find_dev_and_part(const char *id, struct mtd_device **dev,unsigned char *part_num, struct part_info **part);
 extern int nand_write_spl(unsigned char *buf, struct mtd_info *mtd);
 extern unsigned short calc_checksum(unsigned char *dat, unsigned long len);
-extern struct mtd_info nand_info[]; 
+extern struct mtd_info nand_info[];
 //macro definition
 #define VLX_RAND_TO_UNSIGNED_INT( _addr ) \
 		if( (_addr) & 0x3 ){_addr += 0x4 -((_addr) & 0x3); }
@@ -83,7 +83,7 @@ static int uart_log_off = 1;
 static void setup_uart_log_flag(unsigned char *buf);
 
 /****************************************************
-*	description: util function used to calc CRC16 value 
+*	description: util function used to calc CRC16 value
 ****************************************************/
 static unsigned short crc16 (unsigned short crc, unsigned char const *buffer, unsigned int len)
 {
@@ -96,7 +96,7 @@ static unsigned short crc16 (unsigned short crc, unsigned char const *buffer, un
 }
 
 /****************************************************
-*	description:caculate the valid length of NV file 
+*	description:caculate the valid length of NV file
 ****************************************************/
 static unsigned int Vlx_CalcFixnvLen(unsigned int search_start, unsigned int search_end)
 {
@@ -127,7 +127,7 @@ static unsigned int Vlx_CalcFixnvLen(unsigned int search_start, unsigned int sea
 }
 
 /****************************************************
-*	description: to caculate a specified NV item's 
+*	description: to caculate a specified NV item's
 *				offset addr in given NV file.
 ****************************************************/
 static unsigned int Vlx_GetFixedBvitemAddr(unsigned short identifier, unsigned int search_start, unsigned int search_end)
@@ -151,7 +151,7 @@ static unsigned int Vlx_GetFixedBvitemAddr(unsigned short identifier, unsigned i
 		}
 		if(identifier == id)
 		{
-			return (start_addr + 4);	
+			return (start_addr + 4);
 		}
 		else
 		{
@@ -163,7 +163,7 @@ static unsigned int Vlx_GetFixedBvitemAddr(unsigned short identifier, unsigned i
 }
 
 /****************************************************
-*	description:check the file structure to identify 
+*	description:check the file structure to identify
 *				whether it has been damaged or not.
 ****************************************************/
 static int file_check(unsigned char *array, unsigned long size, unsigned short *crc)
@@ -223,11 +223,11 @@ static void recovery_sector(const char* dst_sector_path,
 	cmd_yaffs_mwrite_file((char*)dst_sector_name,(char*)mem_addr, (int)size);
 	if(backup_dst_sector_name)
 		cmd_yaffs_mwrite_file((char*)backup_dst_sector_name,(char*)mem_addr,(int)size);
-	cmd_yaffs_umount(dst_sector_path);	
+	cmd_yaffs_umount(dst_sector_path);
 }
 
 /****************************************************
-*	description:load file to memory and do some sync 
+*	description:load file to memory and do some sync
 *				options,if nessary.
 ****************************************************/
 static int load_sector_to_memory(const char* sector_path,
@@ -236,72 +236,72 @@ static int load_sector_to_memory(const char* sector_path,
 		unsigned char * mem_addr,
 		unsigned int size)
 {
-	int ret = -1;
-	int try_backup_file = 0;
-	int is_back_file_ok= 0;
-        const char * curr_file = sector_name;
-        const char * back_file = backup_sector_name;
-        unsigned short back_file_crc=0;
-        unsigned short master_file_crc=1;
-        //clear memory
-	memset(mem_addr, 0xff,size);
-	//mount yaffs
-	cmd_yaffs_mount(sector_path);
+    int ret = -1;
+    int try_backup_file = 0;
+    int is_back_file_ok= 0;
+    const char * curr_file = sector_name;
+    const char * back_file = backup_sector_name;
+    unsigned short back_file_crc=0;
+    unsigned short master_file_crc=1;
+    //clear memory
+    memset(mem_addr, 0xff,size);
+    //mount yaffs
+    cmd_yaffs_mount(sector_path);
 
-        if(backup_sector_name){
-            //is file exist and has a right size?
-	    ret = cmd_yaffs_ls_chk(back_file);
-	    if (ret == size||ret == size - 4) {
-		//read file to mem
-		cmd_yaffs_mread_file(back_file, mem_addr);
-		ret = file_check(mem_addr, size-4, (unsigned short*)&back_file_crc);
-	    }
-	    else{
-		ret = -1;
-	    }
-
-            if(ret == 1){
-                is_back_file_ok=1;
-            }
+    if(backup_sector_name){
+        //is file exist and has a right size?
+        ret = cmd_yaffs_ls_chk(back_file);
+        if (ret == size||ret == size - 4) {
+            //read file to mem
+            cmd_yaffs_mread_file(back_file, mem_addr);
+            ret = file_check(mem_addr, size-4, (unsigned short*)&back_file_crc);
         }
+        else{
+            ret = -1;
+        }
+
+        if(ret == 1){
+            is_back_file_ok=1;
+        }
+    }
 TRY_BACKUP_FILE:
-        ret = cmd_yaffs_ls_chk(curr_file);
-	if (ret == size||ret == size - 4) {             //0x5a5a5a5a end flags maybe cutted by NVITEMD!
-		//read file to mem
-		cmd_yaffs_mread_file(curr_file, mem_addr);
-		ret = file_check(mem_addr, size-4, (unsigned short*)&master_file_crc);
-	}
-	else{
-		ret = -1;
-	}
+    ret = cmd_yaffs_ls_chk(curr_file);
+    if (ret == size||ret == size - 4) {             //0x5a5a5a5a end flags maybe cutted by NVITEMD!
+        //read file to mem
+        cmd_yaffs_mread_file(curr_file, mem_addr);
+        ret = file_check(mem_addr, size-4, (unsigned short*)&master_file_crc);
+    }
+    else{
+        ret = -1;
+    }
 
-	//try backup files.
-	if(backup_sector_name&&ret == -1&&!try_backup_file){
-		curr_file = backup_sector_name;
-		try_backup_file = 1;
-		goto TRY_BACKUP_FILE;
-	}else if(backup_sector_name&&ret == 1&&!try_backup_file){
-                if(is_back_file_ok && (back_file_crc == master_file_crc)){
-		    printf("[load_sector_to_memory]both of files are correct, no need sync......\n");
-                }
-                else{
-                    printf("[load_sector_to_memory]sync the latest file......\n");
-                    cmd_yaffs_mwrite_file((char*)backup_sector_name, (char*)mem_addr,(int)size);
-	        }
+    //try backup files.
+    if(backup_sector_name&&ret == -1&&!try_backup_file){
+        curr_file = backup_sector_name;
+        try_backup_file = 1;
+        goto TRY_BACKUP_FILE;
+    }else if(backup_sector_name&&ret == 1&&!try_backup_file){
+        if(is_back_file_ok && (back_file_crc == master_file_crc)){
+            printf("[load_sector_to_memory]both of files are correct, no need sync......\n");
         }
+        else{
+            printf("[load_sector_to_memory]sync the latest file......\n");
+            cmd_yaffs_mwrite_file((char*)backup_sector_name, (char*)mem_addr,(int)size);
+        }
+    }
 
-	if(try_backup_file&&ret==1){
-		//recovery_sector(sector_path,sector_name,mem_addr,size);
-		printf("[load_sector_to_memory]recovery the latest file......\n");
-		cmd_yaffs_mwrite_file((char*)sector_name, (char*)mem_addr,(int)size);
-	}else if(try_backup_file&&ret==-1){
-		printf("[load_sector_to_memory]both of the files are not correct......\n");
-	}
+    if(try_backup_file&&ret==1){
+        //recovery_sector(sector_path,sector_name,mem_addr,size);
+        printf("[load_sector_to_memory]recovery the latest file......\n");
+        cmd_yaffs_mwrite_file((char*)sector_name, (char*)mem_addr,(int)size);
+    }else if(try_backup_file&&ret==-1){
+        printf("[load_sector_to_memory]both of the files are not correct......\n");
+    }
 
-	//unmout yaffs
-	cmd_yaffs_umount(sector_path);
+    //unmout yaffs
+    cmd_yaffs_umount(sector_path);
 
-	return ret;
+    return ret;
 }
 
 /****************************************************
@@ -316,7 +316,7 @@ static int load_kernel_and_layout(struct mtd_info *nand,
 		unsigned int virtual_page_size,
 		unsigned int real_page_size
 		){
-	int ret = -1; 
+	int ret = -1;
 	boot_img_hdr *hdr = (boot_img_hdr*)header;
 	unsigned int off = phystart;
 	int size = real_page_size;
@@ -351,12 +351,12 @@ static int load_kernel_and_layout(struct mtd_info *nand,
 		//read kernel image
 		printf("file size: %x\n",hdr->kernel_size);
 		printf("use size: %x\n",used_size);
-		printf("spare size: %x\n",spare_size);	
+		printf("spare size: %x\n",spare_size);
 
 		if(spare_size){
 			memcpy(kernel,&prev_page_addr[used_size],spare_size);
 			next_file_size -= spare_size;
-		}		
+		}
 		size = (next_file_size+(real_page_size - 1)) & (~(real_page_size - 1));
 		ret = nand_read_offset_ret(nand, off, &size, (void *)(kernel+spare_size), &off);
 		if(ret != 0){
@@ -379,7 +379,7 @@ static int load_kernel_and_layout(struct mtd_info *nand,
 		if(spare_size){
 			memcpy(ramdisk,&prev_page_addr[used_size],spare_size);
 			next_file_size -= spare_size;
-		}		
+		}
 		size = (next_file_size+(real_page_size - 1)) & (~(real_page_size - 1));
 		ret = nand_read_offset_ret(nand, off, &size, (void *)(ramdisk+spare_size), &off);
 		if(ret != 0){
@@ -425,9 +425,9 @@ static void update_fixnv(unsigned char *old_addr,unsigned char*new_addr){
 		}
 	}
 
-	length = Vlx_CalcFixnvLen(new_addr, new_addr+FIXNV_SIZE);	
-	*((unsigned int*)&new_addr[FIXNV_SIZE-8]) = length;//keep the real  fixnv file size.	
-	*((unsigned short*)&new_addr[FIXNV_SIZE-4]) = calc_checksum(new_addr,FIXNV_SIZE-4); 
+	length = Vlx_CalcFixnvLen(new_addr, new_addr+FIXNV_SIZE);
+	*((unsigned int*)&new_addr[FIXNV_SIZE-8]) = length;//keep the real  fixnv file size.
+	*((unsigned short*)&new_addr[FIXNV_SIZE-4]) = calc_checksum(new_addr,FIXNV_SIZE-4);
 	*((unsigned short*)&new_addr[FIXNV_SIZE-2]) = crc16(0,(unsigned const char*)new_addr,FIXNV_SIZE-2);
 	*(unsigned int*)&new_addr[FIXNV_SIZE] = 0x5a5a5a5a;
 	memcpy(old_addr,new_addr,FIXNV_SIZE+4);
@@ -440,8 +440,8 @@ static void update_fixnv(unsigned char *old_addr,unsigned char*new_addr){
 ****************************************************/
 int try_update_spl(void){
 	char *spl_mount_point = "/spl";
-	char *tmp_mount_point = "/backupfixnv";
-	char *tmp_file_name = "/backupfixnv/spl.bin";
+	char *tmp_mount_point = "/productinfo";
+	char *tmp_file_name = "/productinfo/spl.bin";
 	struct mtd_info *nand;
 	struct mtd_device *dev;
 	struct part_info *part;
@@ -475,13 +475,32 @@ EXIT:
 }
 
 /****************************************************
+*	description: get crc of a given file
+****************************************************/
+static unsigned short get_crc_status(const char * mount_point,const char *file,
+        unsigned int size,unsigned char * addr){
+    int ret = -1;
+
+    ret = load_sector_to_memory(mount_point,
+            file,
+            0,//backupfixnvfilename2,
+            addr,
+            size);
+    if(ret == 1){
+        return  *((unsigned short*)&addr[size-6]);
+    }else{
+        return 0;
+    }
+}
+
+/****************************************************
 *	description: This function designed to deal with
 *				NV partion's update and loading logic.
 ****************************************************/
 int try_load_fixnv(void){
 	int length = 0,need_update = 0;
-	char *nvitem_point = "/backupfixnv";
-	char *nvitem_name = "/backupfixnv/nvitem.bin";
+	char *nvitem_point = "/productinfo";
+	char *nvitem_name = "/productinfo/nvitem.bin";
 	//default names,if already has been changed,please update it.
 	char *fixnvpoint = "/fixnv";
 	char *fixnvfilename = "/fixnv/fixnv.bin";
@@ -489,6 +508,7 @@ int try_load_fixnv(void){
 	char *backupfixnvpoint = "/backupfixnv";
 	char *backupfixnvfilename = "/backupfixnv/fixnv.bin";
 	int ret = 0;
+    unsigned short crc = 0;
 
 	printf("test if there is a need to update fixnv......\n");
 	cmd_yaffs_mount(nvitem_point);
@@ -501,6 +521,11 @@ int try_load_fixnv(void){
 	}
 
 	/* FIXNV_PART */
+    crc = get_crc_status(backupfixnvpoint,
+                backupfixnvfilename,
+                FIXNV_SIZE + 4,
+                (unsigned char *)FIXNV_ADR);
+
 	printf("Reading fixnv to 0x%08x\n", FIXNV_ADR);
 	//try "/fixnv/fixnvchange.bin" first,if fail,
 	//try /fixnv/fixnv.bin instead
@@ -520,9 +545,9 @@ int try_load_fixnv(void){
 		if(ret ==1){
 			//we got a right file in backupfixnvpoint,
 			//use it to recovery fixnvpoint's files.
-			recovery_sector(fixnvpoint, 
-					fixnvfilename, 
-					fixnvfilename2, 
+			recovery_sector(fixnvpoint,
+					fixnvfilename,
+					fixnvfilename2,
 					(unsigned char *)FIXNV_ADR,
 					FIXNV_SIZE + 4);
 		}else{
@@ -538,23 +563,33 @@ int try_load_fixnv(void){
 	}else{
 		//everything is right!!
 		//there's nothing to do here ......
-	}	
+        if(crc == *((unsigned short *)(FIXNV_ADR+FIXNV_SIZE-2))){
+            printf("backupfixnv/fixnv.bin is lastest,no need syncing ...\n");
+        }else{
+            printf("sync fixnv partition to backupfixnv partition ...\n");
+            recovery_sector(backupfixnvpoint,
+                    backupfixnvfilename,
+                    0,
+                    (unsigned char *)FIXNV_ADR,
+                    FIXNV_SIZE + 4);
+        }
+	}
 	printf("Reading fixnv success!\n");
 
-	if(need_update){		
-		printf("update fixnv's items\n");	
+	if(need_update){
+		printf("update fixnv's items\n");
 		update_fixnv(FIXNV_ADR,RUNTIMENV_ADR);
 		printf("update fixnv partition");
-		recovery_sector(fixnvpoint, 
-				fixnvfilename, 
-				fixnvfilename2, 
+		recovery_sector(fixnvpoint,
+				fixnvfilename,
+				fixnvfilename2,
 				(unsigned char *)FIXNV_ADR,
 				FIXNV_SIZE + 4);
 		printf("remove /fixnv/nvitem.bin");
 		cmd_yaffs_rm(nvitem_name);
 	}
 
-	//finally we check the fixnv structure,if fail,then u-boot will hung up!!!		
+	//finally we check the fixnv structure,if fail,then u-boot will hung up!!!
 	if(check_fixnv_struct(FIXNV_ADR,FIXNV_SIZE) == -1){
         printf("check_fixnv_struct error !!\n");
 		ret = -1;
@@ -563,13 +598,13 @@ int try_load_fixnv(void){
 
     setup_uart_log_flag((unsigned char*)FIXNV_ADR);
 EXIT:
-	cmd_yaffs_umount(nvitem_point);	
+	cmd_yaffs_umount(nvitem_point);
 	return ret;
 }
 
 
 /****************************************************
-*	description: loading runtime nv partition 
+*	description: loading runtime nv partition
 ****************************************************/
 int try_load_runtimenv(void){
 	int ret = 0;
@@ -593,7 +628,7 @@ int try_load_runtimenv(void){
 }
 
 /****************************************************
-*	description: loading productinfo partition 
+*	description: loading productinfo partition
 ****************************************************/
 int try_load_productinfo(void){
 	int ret = 0;
@@ -615,7 +650,7 @@ int try_load_productinfo(void){
 }
 
 /****************************************************
-*	description: set up uart log flag 
+*	description: set up uart log flag
 ****************************************************/
 static void setup_uart_log_flag(unsigned char *buf){
 
@@ -639,7 +674,7 @@ static void setup_uart_log_flag(unsigned char *buf){
 }
 
 /****************************************************
-*	description: get uart log flag 
+*	description: get uart log flag
 ****************************************************/
 int is_uart_log_off(void){
     return uart_log_off;

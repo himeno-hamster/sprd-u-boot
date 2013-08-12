@@ -32,7 +32,7 @@ int fdl_read_productinfo(unsigned char * gBuf,unsigned int offset, unsigned int 
 *	description: This function used to download fixnv
 *				file in research download process.
 ****************************************************/
-void fdl_download_fixnv(unsigned char *gBuf,int is_fixnv);
+int fdl_download_fixnv(unsigned char *gBuf,int is_fixnv);
 
 /****************************************************
 *	description: This function used to download productinfo
