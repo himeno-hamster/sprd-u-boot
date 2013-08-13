@@ -113,12 +113,12 @@
 #define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 #endif
 
-#define FIXNV_SIZE		(128 * 1024)
-#define PRODUCTINFO_SIZE	(3 * 1024)
+#define FIXNV_SIZE		(2*128 * 1024)
+#define PRODUCTINFO_SIZE	(16 * 1024)
 #define MODEM_SIZE		(0xA00000)
 #define DSP_SIZE		(0x3E0400) /* 3968K */
 #define VMJALUNA_SIZE		(0x64000) /* 400K */
-#define RUNTIMENV_SIZE		(256 * 1024)
+#define RUNTIMENV_SIZE		(3*128 * 1024)
 #define CONFIG_SPL_LOAD_LEN	(0x6000)
 
 #define PRODUCTINFO_ADR		0x80490000
@@ -213,13 +213,14 @@
 */
 
 /* DDR */
-#define DDR_CLK 400
+#define DDR_CLK 500
 
 //---these three macro below,only one can be open
 //#define DDR_LPDDR1
 #define DDR_LPDDR2
 //#define DDR_DDR3
 
+//#define DDR_AUTO_DETECT
 #define DDR_TYPE DRAM_LPDDR2_2CS_8G_X32
 //#define DDR_TYPE DRAM_LPDDR2_1CS_4G_X32
 //#define DDR_TYPE DRAM_LPDDR2_1CS_8G_X32
