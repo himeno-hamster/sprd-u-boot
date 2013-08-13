@@ -209,7 +209,7 @@
 */
 
 /* DDR */
-#define DDR_CLK 533
+#define DDR_CLK 350
 //---these three macro below,only one can be open
 //#define DDR_LPDDR1
 #define DDR_LPDDR2
