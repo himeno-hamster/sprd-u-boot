@@ -65,32 +65,41 @@ PUBLIC int FDL_BootIsEMMC(void)
 	return 1;
 }
 
+/**
+	just convert partition name wchar to char with violent.
+*/
+LOCAL __inline char* _w2c(wchar_t *wchar)
+{
+	static char buf[72]={0};
+	unsigned int i=0;
+	while((NULL != wchar[i]) && (i<72))
+	{
+		buf[i] = wchar[i]&0xFF;
+		i++;
+	}
+	buf[i]=0;
+
+	return buf;
+}
+
 LOCAL unsigned short calc_checksum(unsigned char *dat, unsigned long len)
 {
-	unsigned long checksum = 0;
-	unsigned short *pstart, *pend;
-	if (0 == (unsigned long)dat % 2)  {
-		pstart = (unsigned short *)dat;
-		pend = pstart + len / 2;
-		while (pstart < pend) {
-			checksum += *pstart;
-			pstart ++;
-		}
-		if (len % 2)
-			checksum += *(unsigned char *)pstart;
-		} else {
-		pstart = (unsigned char *)dat;
-		while (len > 1) {
-			checksum += ((*pstart) | ((*(pstart + 1)) << 8));
-			len -= 2;
-			pstart += 2;
-		}
-		if (len)
-			checksum += *pstart;
-	}
-	checksum = (checksum >> 16) + (checksum & 0xffff);
-	checksum += (checksum >> 16);
-	return (~checksum);
+        unsigned short num = 0;
+        unsigned long chkSum = 0;
+        while(len>1){
+                num = (unsigned short)(*dat);
+                dat++;
+                num |= (((unsigned short)(*dat))<<8);
+                dat++;
+                chkSum += (unsigned long)num;
+                len -= 2;
+        }
+        if(len){
+                chkSum += *dat;
+        }
+        chkSum = (chkSum >> 16) + (chkSum & 0xffff);
+        chkSum += (chkSum >> 16);
+        return (~chkSum);
 }
 
 /*
@@ -232,7 +241,7 @@ LOCAL int _uefi_get_part_info(void)
 			part_num++;
 		}
 	#else
-	printf("GPT PARTITION \n");
+	printf("%s:GPT PARTITION \n",__FUNCTION__);
 
 	if (get_all_partition_info(dev_desc, uefi_part_info, &g_total_partition_number) != 0)
 		return 0;
@@ -258,6 +267,7 @@ LOCAL unsigned long efi_GetPartBaseSec(wchar_t *partition_name)
 	}
 
 	//Can't find the specified partition
+	printf("%s: Can't find partition:%s!\n", __FUNCTION__,_w2c(partition_name));
 	FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
 	return 0;
 }
@@ -275,6 +285,7 @@ LOCAL unsigned long efi_GetPartSize(wchar_t *partition_name)
 	}
 
 	//Can't find the specified partition
+	printf("%s: Can't find partition:%s!\n", __FUNCTION__,_w2c(partition_name));
 	FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
 	return 0;
 }
@@ -301,7 +312,7 @@ LOCAL void _parser_repartition_cfg(unsigned short* partition_cfg, unsigned short
 			s_sprd_emmc_partition_cfg[i].partition_name[j] = *(partition_cfg+38*i+j);
 		}
 
-		printf("_decode_repartition_cfg:partition name:%S,partition_size:%d\n",s_sprd_emmc_partition_cfg[i].partition_name,s_sprd_emmc_partition_cfg[i].partition_size);
+		printf("%s:partition name:%s,partition_size:0x%x\n",__FUNCTION__,_w2c(s_sprd_emmc_partition_cfg[i].partition_name),s_sprd_emmc_partition_cfg[i].partition_size);
 	}
 	return;
 }
@@ -339,6 +350,7 @@ LOCAL BOOLEAN _get_compatible_partition(wchar_t* partition_name)
 	}
 	//Can't find the specified partition
 	g_dl_eMMCStatus.curUserPartitionName = NULL;
+	printf("%s:Can't find partition:%s \n", __FUNCTION__,_w2c(partition_name));
 	return FALSE;
 }
 
@@ -652,6 +664,7 @@ LOCAL int _emmc_nv_check_and_write(void)
 	fix_nv_checksum = Get_CheckSum((unsigned char *) g_eMMCBuf, g_status.total_recv_size);
 	if (fix_nv_checksum != g_checksum) {
 		//may data transfer error
+		printf("%s:nv data transfer error,checksum error!\n", __FUNCTION__);
         	SEND_ERROR_RSP(BSL_CHECKSUM_DIFF);
 		return 0;
         }
@@ -667,7 +680,7 @@ LOCAL int _emmc_nv_check_and_write(void)
 	_emmc_real_erase_partition(g_dl_eMMCStatus.curUserPartitionName);
 	if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector,
 		nSectorCount, (unsigned char *)g_eMMCBuf)) {
-		//The fixnv checksum is error.
+		printf("%s:original nv write error! \n", __FUNCTION__);
 		SEND_ERROR_RSP (BSL_WRITE_ERROR);
 		return 0;
 	}
@@ -678,7 +691,7 @@ LOCAL int _emmc_nv_check_and_write(void)
 	_emmc_real_erase_partition(backup_partition_name);
 	if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, nSectorBase, nSectorCount,
 		(unsigned char *)g_eMMCBuf)) {
-		//Write error
+		printf("%s:backup nv write error! \n", __FUNCTION__);
 		SEND_ERROR_RSP (BSL_WRITE_ERROR);
 		return 0;
 	}
@@ -704,6 +717,7 @@ LOCAL int _emmc_prodinfo_check_and_write(void)
 	if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector,
 		nSectorCount, (unsigned char *)g_eMMCBuf)) {
 		//write error
+		printf("%s:original prodinfo write error! \n", __FUNCTION__);
 		SEND_ERROR_RSP (BSL_WRITE_ERROR);
 		return 0;
 	}
@@ -713,6 +727,7 @@ LOCAL int _emmc_prodinfo_check_and_write(void)
 	_emmc_real_erase_partition(backup_partition_name);
 	if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, nSectorBase, nSectorCount, 
 		(unsigned char *)g_eMMCBuf)) {
+		printf("%s:backup prodinfo write error! \n", __FUNCTION__);
 		SEND_ERROR_RSP (BSL_WRITE_ERROR);
 		return 0;
 	}
@@ -750,10 +765,11 @@ LOCAL BOOLEAN _read_partition_with_backup(wchar_t *partition_name, uint8* buf, u
 	base_sector = efi_GetPartBaseSec(backup_partition_name);
 	if(!Emmc_Read(PARTITION_USER, base_sector, (size>>9), (uint8*)buf))
 	{
-		//...
+		printf("%s:partition %s read error!\n", __FUNCTION__,_w2c(backup_partition_name));
 		return 0;
 	}
 	if(!_chkEcc(buf, size)){
+		printf("%s:partition:%s checksum error!\n", __FUNCTION__,_w2c(backup_partition_name));
 		SEND_ERROR_RSP(BSL_EEROR_CHECKSUM);
 		return 0;
 	}
@@ -768,6 +784,8 @@ LOCAL BOOLEAN _read_partition_with_backup(wchar_t *partition_name, uint8* buf, u
 PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size, unsigned long nv_checksum)
 {
 	int i = 0;
+
+	printf("Enter %s,partition:%s,size:0x%x \n", __FUNCTION__,_w2c(partition_name),size);
 
 	g_status.total_size  = size;
 
@@ -795,6 +813,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 		g_dl_eMMCStatus.part_total_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
 
 		if ((size > g_dl_eMMCStatus.part_total_size) || (size > FIXNV_SIZE)) {
+			printf("%s:size(0x%x) beyond max,size:0x%x,FIXNV_SIZE:0x%x !\n", __FUNCTION__,size,g_dl_eMMCStatus.part_total_size,FIXNV_SIZE);
 			FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
 			return 0;
 		}
@@ -808,6 +827,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 
 		g_dl_eMMCStatus.part_total_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
 		if ((size > g_dl_eMMCStatus.part_total_size) || (size > FIXNV_SIZE)) {
+			printf("%s:size(0x%x) beyond max,size:0x%x,FIXNV_SIZE:0x%x !\n", __FUNCTION__,size,g_dl_eMMCStatus.part_total_size,FIXNV_SIZE);
 			FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
 			return 0;
 		}
@@ -825,6 +845,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 		g_dl_eMMCStatus.base_sector =  0;
 		memset(g_eMMCBuf, 0xff, g_dl_eMMCStatus.part_total_size);
 		if (size > g_dl_eMMCStatus.part_total_size) {
+			printf("%s:size(0x%x) beyond max size:0x%x!\n", __FUNCTION__,size,g_dl_eMMCStatus.part_total_size);
 			FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
 			return 0;
 		}
@@ -836,6 +857,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 		g_dl_eMMCStatus.base_sector =  0;
 		memset(g_eMMCBuf, 0xff, g_dl_eMMCStatus.part_total_size);
 		if (size > g_dl_eMMCStatus.part_total_size) {
+			printf("%s:size(0x%x) beyond max size:0x%x!\n", __FUNCTION__,size,g_dl_eMMCStatus.part_total_size);
 			FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
 			return 0;
 		}
@@ -853,6 +875,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 
 		g_dl_eMMCStatus.part_total_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
 		if (size > g_dl_eMMCStatus.part_total_size) {
+			printf("%s:size(0x%x) beyond max size:0x%x!\n", __FUNCTION__,size,g_dl_eMMCStatus.part_total_size);
 			FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
 			return 0;
 		}
@@ -872,6 +895,7 @@ PUBLIC int fdl2_emmc_download(unsigned short size, char *buf)
 	unsigned long each_write_block = 10000;
 
 	if ((g_status.total_recv_size + size) > g_status.total_size) {
+		printf("%s,size+recvd>total_size!\n", __FUNCTION__);
 		FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
 		return 0;
 	}
@@ -958,6 +982,7 @@ PUBLIC int fdl2_emmc_download_end(void)
 {
 	if(g_status.unsave_recv_size != 0)
 	{
+		printf("%s:unsaved size is not zero!\n", __FUNCTION__);
 		FDL2_eMMC_SendRep (EMMC_SYSTEM_ERROR);
 		return 0;
 	}
@@ -969,6 +994,8 @@ PUBLIC int fdl2_emmc_download_end(void)
 
 PUBLIC int fdl2_emmc_read_start(wchar_t* partition_name, unsigned long size)
 {
+	printf("Enter %s,partition:%s,size:0x%x \n", __FUNCTION__,_w2c(partition_name),size);
+
 	if(!_get_compatible_partition(partition_name))
 	{
 		FDL_SendAckPacket (convert_err (EMMC_INCOMPATIBLE_PART));
@@ -983,6 +1010,7 @@ PUBLIC int fdl2_emmc_read_start(wchar_t* partition_name, unsigned long size)
 	{
 		g_dl_eMMCStatus.part_total_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
 		if ((size > g_dl_eMMCStatus.part_total_size) /*|| (size > FIXNV_SIZE)*/){
+			printf("%s:size(0x%x) beyond max size:0x%x!\n", __FUNCTION__,size,g_dl_eMMCStatus.part_total_size);
 			FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
 			return FALSE;
 		}
@@ -992,6 +1020,7 @@ PUBLIC int fdl2_emmc_read_start(wchar_t* partition_name, unsigned long size)
 	{
 		g_dl_eMMCStatus.part_total_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
 		if ((size > g_dl_eMMCStatus.part_total_size)/* || (size > PRODUCTINFO_SIZE)*/) {
+			printf("%s:size(0x%x) beyond max size:0x%x!\n", __FUNCTION__,size,g_dl_eMMCStatus.part_total_size);
 			FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
 			return FALSE;
 		}
@@ -1017,6 +1046,7 @@ PUBLIC int fdl2_emmc_read_start(wchar_t* partition_name, unsigned long size)
 
 	if (size > g_dl_eMMCStatus.part_total_size)
 	{
+		printf("%s:size(0x%x) beyond max size:0x%x!\n", __FUNCTION__,size,g_dl_eMMCStatus.part_total_size);
 		FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
 		return FALSE;
 	}
@@ -1032,6 +1062,7 @@ PUBLIC int fdl2_emmc_read_midst(unsigned long size, unsigned long off, unsigned 
 
 	if ((size +off) > g_dl_eMMCStatus.part_total_size)
 	{
+		printf("%s:size(0x%x)+off(0x%x) beyond max size(0x%x)!\n", __FUNCTION__,size,off,g_dl_eMMCStatus.part_total_size);
 		FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
 		return FALSE;
 	}
@@ -1073,6 +1104,7 @@ PUBLIC int fdl2_emmc_read_midst(unsigned long size, unsigned long off, unsigned 
 		nSectorOffset = off / EFI_SECTOR_SIZE;
 		if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector + nSectorOffset,  nSectorCount, buf ))
 		{
+			printf("%s: read error!\n", __FUNCTION__);
 			FDL2_eMMC_SendRep (EMMC_SYSTEM_ERROR);
 			return FALSE;
 		}
@@ -1095,12 +1127,13 @@ PUBLIC int fdl2_emmc_erase(wchar_t* partition_name, unsigned long size)
 	wchar_t *backup_partition_name = NULL;
 
 	if ((wcsncmp(partition_name, L"erase_all", wcslen(L"erase_all")) == 0) && (size = 0xffffffff)) {
-		printf("Scrub to erase all of flash\n");
+		printf("%s:Erase all!\n", __FUNCTION__);
 		if (!_emmc_erase_allflash()) {
 			SEND_ERROR_RSP (BSL_WRITE_ERROR);			
 			return 0;
 		}
 	} else {
+		printf("%s:erase partition %s!\n", __FUNCTION__,_w2c(partition_name));
 		if(!_get_compatible_partition(partition_name))
 		{
 			FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
@@ -1155,7 +1188,7 @@ PUBLIC int fdl2_emmc_repartition(unsigned short* partition_cfg, unsigned short t
 
 	if(_fdl2_check_partition_table(s_sprd_emmc_partition_cfg, uefi_part_info, total_partition_num))
 	{
-		printf("fdl2_emmc_repartition:Partition Config same with before!");
+		printf("%s:Partition Config same with before!\n",__FUNCTION__);
 		FDL2_eMMC_SendRep (EMMC_SUCCESS);
 		return 1;
 	}
