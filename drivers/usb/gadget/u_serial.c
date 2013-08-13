@@ -364,9 +364,14 @@ __acquires(&port->port_lock)
 */
 {
 	struct list_head	*pool = &port->write_pool;
-	struct usb_ep		*in = port->port_usb->in;
+	struct usb_ep		*in = PNULL;
 	int			status = 0;
 	bool			do_tty_wake = false;
+
+	if (!port->port_usb){
+		return status;
+	}
+	in = port->port_usb->in;
 
 	while (!list_empty(pool)) {
 		struct usb_request	*req;
@@ -432,8 +437,11 @@ __acquires(&port->port_lock)
 */
 {
 	struct list_head	*pool = &port->read_pool;
-	struct usb_ep		*out = port->port_usb->out;
-
+	struct usb_ep		*out = PNULL;
+	if (!port->port_usb){
+		return 0;
+	}
+    out = port->port_usb->out;
 	while (!list_empty(pool)) {
 		struct usb_request	*req;
 		int			status;

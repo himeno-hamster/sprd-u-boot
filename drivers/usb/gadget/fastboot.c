@@ -1011,11 +1011,13 @@ int fastboot_init(void *base, unsigned size, struct usb_ep * ep_in, struct usb_e
 	download_max = size;
 	if(!ep_in) {
 		printf("ep in is not alloc\r\n");
+		return -1;
 	}
 	in = ep_in;
 	
 	if(!ep_out) {
 		printf("ep out is not alloc\r\n");
+		return -1;
 	}
 	out = ep_out;
 
