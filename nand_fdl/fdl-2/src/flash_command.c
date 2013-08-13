@@ -298,30 +298,22 @@ void phy_partition_info(struct real_mtd_partition phy, int line)
 
 static unsigned short calc_checksum(unsigned char *dat, unsigned long len)
 {
-	unsigned long checksum = 0;
-	unsigned short *pstart, *pend;
-	if (0 == (unsigned long)dat % 2)  {
-		pstart = (unsigned short *)dat;
-		pend = pstart + len / 2;
-		while (pstart < pend) {
-			checksum += *pstart;
-			pstart ++;
-		}
-		if (len % 2)
-			checksum += *(unsigned char *)pstart;
-		} else {
-		pstart = (unsigned char *)dat;
-		while (len > 1) {
-			checksum += ((*pstart) | ((*(pstart + 1)) << 8));
-			len -= 2;
-			pstart += 2;
-		}
-		if (len)
-			checksum += *pstart;
-	}
-	checksum = (checksum >> 16) + (checksum & 0xffff);
-	checksum += (checksum >> 16);
-	return (~checksum);
+        unsigned short num = 0;
+        unsigned long chkSum = 0;
+        while(len>1){
+                num = (unsigned short)(*dat);
+                dat++;
+                num |= (((unsigned short)(*dat))<<8);
+                dat++;
+                chkSum += (unsigned long)num;
+                len -= 2;
+        }
+        if(len){
+                chkSum += *dat;
+        }
+        chkSum = (chkSum >> 16) + (chkSum & 0xffff);
+        chkSum += (chkSum >> 16);
+        return (~chkSum);
 }
 
 #define NV_MULTI_LANG_ID   (405)
