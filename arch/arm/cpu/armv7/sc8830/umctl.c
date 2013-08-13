@@ -681,8 +681,8 @@ void umctl2_allport_en()
 void umctl2_port_auto_gate()
 {
 	//for kevin
-	REG32(0x402B00F0) = 0X3ff03FF;
-	//REG32(0x402B00F0) = 0X3FF;
+	//REG32(0x402B00F0) = 0X3ff03FF;
+	REG32(0x402B00F0) = 0X3FF;
 }
 
 void umctl2_ctl_auto_gate()
@@ -926,7 +926,7 @@ void umctl2_dramtiming_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
 
     /*post_selfref_gap_x32,time after coming out of selfref before doing anything.Default:0x44
     //reg_bits_set(MCTL_DRAMTMG8,  0, 4, max(tXSNR,max(tXSRD,tXSDLL)));*/
-    reg_bits_set(UMCTL_DRAMTMG8,  0,7,0x10);
+    reg_bits_set(UMCTL_DRAMTMG8,  0,7,IS_LPDDR2(dram_type)?0x2:0x10);
 #else
 	reg_bits_set(UMCTL_DRAMTMG0,  0,32,0x0c147f11);
 	reg_bits_set(UMCTL_DRAMTMG1,  0,32,0x00030313);
