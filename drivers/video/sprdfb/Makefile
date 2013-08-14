@@ -42,6 +42,7 @@ COBJS-$(CONFIG_FB_LCD_NT35510_MIPI) += lcd_nt35510_mipi.o
 COBJS-$(CONFIG_FB_LCD_NT35512_MIPI) += lcd_nt35512_mipi.o
 COBJS-$(CONFIG_FB_LCD_OTM8018B_MIPI) += lcd_otm_8018b_mipi.o
 COBJS-$(CONFIG_FB_LCD_SSD2075_MIPI) += lcd_ssd2075_mipi.o
+COBJS-$(CONFIG_FB_LCD_ILI9806C_RGB_SPI) += lcd_ili9806c_rgb_spi.o
 #endif
 
 COBJS	:= $(COBJS-y)
