@@ -364,7 +364,7 @@ __acquires(&port->port_lock)
 */
 {
 	struct list_head	*pool = &port->write_pool;
-	struct usb_ep		*in = PNULL;
+	struct usb_ep		*in = NULL;
 	int			status = 0;
 	bool			do_tty_wake = false;
 
@@ -437,7 +437,7 @@ __acquires(&port->port_lock)
 */
 {
 	struct list_head	*pool = &port->read_pool;
-	struct usb_ep		*out = PNULL;
+	struct usb_ep		*out = NULL;
 	if (!port->port_usb){
 		return 0;
 	}
