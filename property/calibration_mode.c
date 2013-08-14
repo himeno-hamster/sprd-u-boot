@@ -338,7 +338,7 @@ void calibration_mode(const uint8_t *pcmd, int length)
                 mdelay(3);
             }
             count = 0;
-#if 0
+#if 1
             while(-1 != (ret = gUsedChannel->GetSingleChar(gUsedChannel))){
                 if(get_nv_sync_flag()){
                     g_uart_buf[sync_index++] = (ret & 0xff);
@@ -364,6 +364,14 @@ void calibration_mode(const uint8_t *pcmd, int length)
                 nvitem_sync_disable();
                 set_nv_sync_flag(0);
                 printf("NV_SYNC,we can notify the tool now!!!\n");
+                {
+                    int i = 0;
+                    printf("\n--------------------------------------------\n");
+                    for(i = 0;i < sync_index;i++){
+                        printf("%02x ",g_uart_buf[i]);
+                    }
+                    printf("\n--------------------------------------------\n");
+                }
                 tool_channel_write(g_uart_buf, sync_index);
                 sync_index = 0;
             }else if (sync_index > 0){

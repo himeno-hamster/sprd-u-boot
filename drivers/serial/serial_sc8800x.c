@@ -38,7 +38,7 @@
 #define GR_UART_CTRL_EN    0x00400000
 #endif
 
-#ifdef FPGA_VERIFICATION 
+#ifdef FPGA_VERIFICATION
 #define ARM_APB_CLK    48000000UL
 #else
 #define ARM_APB_CLK    26000000UL
@@ -105,7 +105,7 @@ LOCAL void SIO_HwOpen (struct FDL_ChannelHandler *channel, unsigned int divider)
 	    /* Enable UART*/
 	    * (volatile unsigned int *) GR_CTRL_REG1 |= (GR_UART3_CTRL_EN);
 
-    } else 
+    } else
 #endif
     {
 	    /* Disable UART*/
@@ -132,7 +132,7 @@ LOCAL int SIO_Open (struct FDL_ChannelHandler  *channel, unsigned int baudrate)
     unsigned int i = 0;
 
 	UartPort_T *port  = (UartPort_T *) channel->priv;
-	
+
     divider = SIO_GetHwDivider (baudrate);
     SIO_HwOpen (channel, divider);
 
@@ -261,7 +261,7 @@ LOCAL int SIO_PutChar (struct FDL_ChannelHandler  *channel, const unsigned char 
 }
 LOCAL int SIO_SetBaudrate (struct FDL_ChannelHandler  *channel,  unsigned int baudrate)
 {
-#if 0
+#if  0
     channel->Open (channel, baudrate);
 #else
     unsigned int divider;
@@ -350,7 +350,7 @@ int serial_getc(void)
 void serial_putc(const char c)
 {
 	SIO_PutChar(&gUart1Channel, c);
- 
+
 	/* If \n, also do \r */
 	if(__dl_log_share__ == 0){
 		if (c == '\n')
@@ -437,8 +437,8 @@ int serial3_init (void)
 
 int  serial3_flowctl_enable(void)
 {
-	/*enable tx/rx flow control*/	   
-	* (volatile unsigned int *) (ARM_UART3_BASE + ARM_UART_CTL1)   |= UART_RX_FLOW_EN  | (UART_RX_THRESHOLD & 0x7F);    
+	/*enable tx/rx flow control*/
+	* (volatile unsigned int *) (ARM_UART3_BASE + ARM_UART_CTL1)   |= UART_RX_FLOW_EN  | (UART_RX_THRESHOLD & 0x7F);
 	return 0;
 }
 
