@@ -103,7 +103,21 @@ void LCD_SetBackLightBrightness( unsigned long  value)
 void set_backlight(uint32_t value)
 {
 #ifdef CONFIG_SP8830
+#if 0
+	/*backlight is driven by PWMD */
+#define DEFAULT_BRIGHTNESS (0xff >> 2)
+	/*enbale pwm3*/
+	__raw_bits_or((0x1 << 7), 0x402e0000);
+	/*config pwm3*/
+	__raw_writel(DEFAULT_BRIGHTNESS << 8 | 0xff, 0x40260064);
+	__raw_writel(0xffff, 0x4026006c);
+	__raw_writel(0xffff, 0x40260070);
+	__raw_writel(0x101,  0x40260060);
+
+#else
+	/*backlight is driven by whiteled */
 	ANA_REG_SET(0x40038894,(ANA_REG_GET(0x40038894)|(0x3 << 7)));
+#endif
 #endif
 #if defined (CONFIG_SP8825) || defined (CONFIG_SP8825EA) || defined (CONFIG_SP8825EB) ||defined(CONFIG_GARDA)
 	__raw_writel(0x101, 0x4C000138);
