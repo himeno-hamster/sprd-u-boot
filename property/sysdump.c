@@ -338,7 +338,8 @@ void write_sysdump_before_boot(int rst_mode)
 	printf("rst_mode:0x%x, Check if need to write sysdump info of 0x%08lx to file...\t", rst_mode,
 		SYSDUMP_CORE_HDR);
 
-	if ((rst_mode == WATCHDOG_REBOOT) || ((rst_mode == PANIC_REBOOT) && !memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic)))) {
+	if ((rst_mode == WATCHDOG_REBOOT) || (rst_mode == UNKNOW_REBOOT_MODE) || \
+		((rst_mode == PANIC_REBOOT) && !memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic)))) {
 		printf("\n");
 
 		memset(infop->magic, 0, sizeof(infop->magic));
@@ -349,7 +350,7 @@ void write_sysdump_before_boot(int rst_mode)
 		/* display on screen */
 		display_writing_sysdump();
 
-		if (rst_mode == WATCHDOG_REBOOT) {
+		if ((rst_mode == WATCHDOG_REBOOT) || (rst_mode == UNKNOW_REBOOT_MODE)) {
 			infop->dump_path[0] = '\0';
 			infop->mem_num = sprd_dump_mem_num;
 			infop->dump_mem_paddr = (unsigned long)sprd_dump_mem;
