@@ -1022,7 +1022,18 @@ int fastboot_init(void *base, unsigned size, struct usb_ep * ep_in, struct usb_e
 	out = ep_out;
 
 	tx_req = usb_ep_alloc_request(in, 0);
+	if(!tx_req)
+	{
+	      printf("ep tx request is not alloc\r\n");
+	      return -1;
+	}
 	rx_req =  usb_ep_alloc_request(out, 0);
+	if(!rx_req)
+	{
+	      printf("ep rx request is not alloc\r\n");
+	      usb_ep_free_request(in,tx_req);
+	      return -1;
+	}
 /*
 	in = udc_endpoint_alloc(UDC_TYPE_BULK_IN, 512);
 	if (!in)
