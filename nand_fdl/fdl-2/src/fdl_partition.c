@@ -53,7 +53,7 @@ PARTITION_CFG const g_sprd_emmc_partition_cfg[MAX_PARTITION_INFO] = {
 	{PARTITION_USER_DAT, 	MAX_SIZE_FLAG, 	PARTITION_RAW,0,L"userdata"},
         {0, 0, 0,0,L""}
 };	
-#elif defined CONFIG_SP7735EC
+#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC)
 PARTITION_CFG const g_sprd_emmc_partition_cfg[MAX_PARTITION_INFO] = {
 	{PARTITION_WMODEM, 	10 * 1024, 	PARTITION_RAW,0,L"wmodem"},
 	{PARTITION_WDSP, 	5 * 1024, 	PARTITION_RAW,0,L"wdsp"},

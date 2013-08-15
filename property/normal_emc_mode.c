@@ -11,20 +11,26 @@
 
 static boot_image_required_t const s_boot_image_table[]={
 #ifdef CONFIG_SC8830
+
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
+	{L"tdfixnv1",L"tdfixnv2",FIXNV_SIZE,TDFIXNV_ADR},
+	{L"tdruntimenv1",L"tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR},
+	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},
+	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
+	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR}, 	
+#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC)
+	{L"wfixnv1",L"wfixnv2",FIXNV_SIZE,WFIXNV_ADR},
+	{L"wruntimenv1",L"wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR},
+	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,WPRODINFO_ADR},
+	{L"wmodem",NULL,MODEM_SIZE,WMODEM_ADR},
+	{L"wdsp",NULL,DSP_SIZE,WDSP_ADR},
+#else
 	{L"tdfixnv1",L"tdfixnv2",FIXNV_SIZE,TDFIXNV_ADR},
 	{L"tdruntimenv1",L"tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR},
 	{L"wfixnv1",L"wfixnv2",FIXNV_SIZE,WFIXNV_ADR},
 	{L"wruntimenv1",L"wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR},
 	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},
 	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,WPRODINFO_ADR},
-
-#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
-	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
-	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR}, 	
-#elif defined(CONFIG_SP7735EC)
-	{L"wmodem",NULL,MODEM_SIZE,WMODEM_ADR},
-	{L"wdsp",NULL,DSP_SIZE,WDSP_ADR},
-#else
 	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
 	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR},		
 	{L"wmodem",NULL,MODEM_SIZE,WMODEM_ADR},
@@ -373,7 +379,7 @@ void modem_entry()
 
 	*((volatile u32*)0x402B00A8) &= ~0x00000002;	   /* clear reset cp0 cp1 */
 
-#elif defined(CONFIG_SP7735EC)
+#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC)
 	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
 
 	memcpy(0x50000000, cp0data, sizeof(cp0data));	   /* copy cp0 source code */
@@ -426,7 +432,7 @@ void sipc_addr_reset()
 #elif defined (CONFIG_SC8830)
 #if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
 	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#elif defined(CONFIG_SP7735EC)
+#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC)
 	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 #else
 	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
