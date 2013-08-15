@@ -108,12 +108,16 @@ LOCAL unsigned short calc_checksum(unsigned char *dat, unsigned long len)
 */
 LOCAL BOOLEAN _chkEcc(uint8* buf, uint32 size)
 {
+#if 0  //don't checksum for a period of time
 	uint16 crc,crcOri;
 
 	crc = calc_checksum(buf,size-4);
 	crcOri = (uint16)((((uint16)buf[size-3])<<8) | ((uint16)buf[size-4]) );
 
 	return (crc == crcOri);
+#else
+	return 1;
+#endif
 }
 
 LOCAL void _makEcc(uint8* buf, uint32 size)
