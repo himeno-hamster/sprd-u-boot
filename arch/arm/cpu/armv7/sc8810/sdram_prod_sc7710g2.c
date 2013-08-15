@@ -39,7 +39,7 @@ LOCAL CONST EMC_PARAM_T s_emc_parm[] =
 	//{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        2,		3,          1,      2,          12, 	{0, 0, 0, 0, 0}},  // 4+2 nandmcp
 	//{CHIP_CLK_1000MHZ, EMC_CLK_333MHZ, DDR_DRV_STR_TR_Q,        1,		1,          1,      2,          19, 	{0, 0, 0, 0, 0}},  // openphone
 	{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        1,		2,          1,      2,          12,			{0, 0, 0, 0, 0}},  // PCB_V1.1.0
-//	{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,		1,		2,			1,		2,			12, 		{0x2c, 0xb3, 0xd1, 0x55, 0x5a}},  // custom para, just example
+  //{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,		1,		2,			1,		2,			12, 		{0x2c, 0xb3, 0x90, 0x66, 0x64}},  // custom para, just example
 
 };
 
@@ -242,7 +242,7 @@ LOCAL EMC_CHL_INFO_T s_emc_chl_info[] =
 
 #include <linux/mtd/nand.h>
 #include <asm/arch/regs_nfc.h>
-
+#define NAND_CMD_RESET  (0xFF)
 #define NF_MC_CMD_ID	(0xFD)
 #define NF_MC_ADDR_ID	(0xF1)
 #define NF_MC_WAIT_ID	(0xF2)
@@ -252,7 +252,40 @@ LOCAL EMC_CHL_INFO_T s_emc_chl_info[] =
 #define NF_MC_WBLK_ID	(0xF7)
 #define NF_MC_DEACTV_ID	(0xF9)
 #define NF_MC_NOP_ID	(0xFA)
+void send_reset_command(void)
+{
+	u8 mc_ins_num = 0;
+	u32 ins, mode;
+	unsigned int offset, high_flag, value;
 
+	/* nfc_mcr_inst_add(cmd, NF_MC_CMD_ID); */
+	ins       = NAND_CMD_RESET;
+	mode      = NF_MC_CMD_ID;
+	offset	  = mc_ins_num >> 1;
+	high_flag = mc_ins_num & 0x1;
+	if (high_flag) {
+		value = REG32(NFC_START_ADDR0 + (offset << 2));
+		value &= 0x0000ffff;
+		value |= ins << 24;
+		value |= mode << 16;
+	} else {
+		value = REG32(NFC_START_ADDR0 + (offset << 2));
+		value &= 0xffff0000;
+		value |= ins << 8;
+		value |= mode;
+	}
+	REG32(NFC_START_ADDR0 + (offset << 2)) = value;
+	mc_ins_num ++;
+
+	/* nfc_mcr_inst_exc(); */
+    value = REG32(NFC_CFG0);
+    value |= NFC_BUS_WIDTH_16;
+    value |= (1 << NFC_CMD_SET_OFFSET);
+
+	REG32(NFC_CFG0) = value ;
+    value = NFC_CMD_VALID | ((unsigned int)NF_MC_NOP_ID) |  ((mc_ins_num - 1) << 16);
+    REG32(NFC_CMD) = value;
+}
 void send_readid_command(void)
 {
 	u8 mc_ins_num = 0;
@@ -339,9 +372,10 @@ void read_nand_id(uint8 *nand_id, uint8 id_len)
 	REG32(NFC_CFG0) = value;
 	REG32(NFC_TIMING) = ((12 << 0) | (7 << 5) | (10 << 10) | (6 << 16) | (5 << 21) | (7 << 26));
 	REG32(NFC_TIMING+0X4) = 0xffffffff;//TIMEOUT
+	send_reset_command();
+	for(ik_cnt = 0; ik_cnt < 0x1000; ik_cnt++);//wait cmd finish
 	send_readid_command();
-
-	for(ik_cnt = 0; ik_cnt < 0x1000; ik_cnt++);
+	for(ik_cnt = 0; ik_cnt < 0x1000; ik_cnt++);//wait cmd finish
 	value = REG32(NFC_CLR_RAW);
 	REG32(NFC_CLR_RAW) = 0xFFFF0000;
 

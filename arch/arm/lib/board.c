@@ -449,6 +449,7 @@ static char *failed = "*** failed ***\n";
 void board_init_r (gd_t *id, ulong dest_addr)
 {
 	char *s;
+        int ret = 0 ;
 	bd_t *bd;
 	ulong malloc_start;
 #if !defined(CONFIG_SYS_NO_FLASH)
@@ -521,7 +522,11 @@ void board_init_r (gd_t *id, ulong dest_addr)
 #if !defined(CONFIG_EMMC_BOOT)
 #if defined(CONFIG_CMD_NAND)
 	puts ("NAND:  ");
-	nand_init();		/* go init the NAND */
+	ret = nand_init();		/* go init the NAND */
+        if (ret) {
+            puts ("NAND init error  ");
+            while(1);
+        }
 #endif
 #endif
 

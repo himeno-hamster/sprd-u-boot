@@ -16,6 +16,16 @@
 #include <parsemtdparts.h>
 #include <asm/arch/cmd_def.h>
 #include <asm/arch/secure_boot.h>
+#include <asm/errno.h>
+#include <config.h>
+#include <common.h>
+#include <asm/io.h>
+#define CONFIG_SYS_NAND_READ_DELAY \
+        { volatile int dummy; int i; for (i=0; i<10000; i++) dummy = i; }
+
+#define CONFIG_SYS_NAND_BAD_BLOCK_POS   0
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE    1
+static int pageinblock = 0;
 struct mtd_info *_local_mtd = 0;
 
 /*#define FDL2_DEBUG 1
@@ -803,6 +813,157 @@ int nand_write_spl(u8 *buf, struct mtd_info *mtd)
 }
 #endif
 
+#ifdef CONFIG_NAND_SC7710G2
+void get_header_info(u8 *bl_data, struct mtd_info *nand, int ecc_pos)
+{
+    struct bootloader_header *header;
+    struct nand_chip *chip = nand->priv;
+    struct sc8810_ecc_param param;
+
+    u8 ecc[44];
+    header = (struct bootloader_header *)(bl_data + BOOTLOADER_HEADER_OFFSET);
+    memset(header, 0, sizeof(struct bootloader_header));
+    memset(ecc,0xff, sizeof(ecc));
+    header->version = 0x1;
+    header->sct_size = chip->ecc.size;
+    header->hash_len = 0x400;
+    //header->page_type = get_nand_page_type(nand->writesize);
+    if (chip->options & NAND_BUSWIDTH_16)       {
+        header->bus_width = 1;
+    }
+    if(nand->writesize > 512)   {
+     /*  header->advance = 1;
+         One more address cycle for devices > 128MiB */
+        if (chip->chipsize > (128 << 20))               {
+            header->acycle = 5;
+        }
+        else     {
+            header->acycle = 4;
+        }
+    }
+    else{
+       /* header->advance = 0;
+         One more address cycle for devices > 32MiB */
+        if (chip->chipsize > (32 << 20)) {
+            header->acycle = 3;
+        }
+        else    {
+            header->acycle = 3;
+        }
+    }
+
+    header->acycle -= 3;
+    header->magic_num = 0xaa55a5a5;
+    header->spare_size = (nand->oobsize/chip->ecc.steps);
+    header->ecc_mode = ecc_mode_convert(chip->eccbitmode);
+    header->ecc_pos = ecc_pos;
+    header->sct_size = (nand->writesize/chip->ecc.steps);
+    header->sct_per_page = chip->ecc.steps;
+    //header->check_sum = CheckSum((unsigned int *)(bl_data + BOOTLOADER_HEADER_OFFSET + 4), (NAND_PAGE_LEN - BOOTLOADER_HEADER_OFFSET - 4));
+
+    param.mode = 24;
+    param.ecc_num = 1;
+    param.sp_size = sizeof(ecc);
+    param.ecc_pos = 0;
+    param.m_size = chip->ecc.size;
+    param.p_mbuf = (u8 *)bl_data;
+    param.p_sbuf = ecc;
+
+    sc8810_ecc_decode(&param);
+    memcpy(header->ecc_value, ecc, sizeof(ecc));
+}
+
+static int nand_is_bad_block(struct mtd_info *mtd, int block)
+{
+#if 0
+    struct nand_chip *this = mtd->priv;
+
+    nand_command(mtd, block, 0, CONFIG_SYS_NAND_BAD_BLOCK_POS, NAND_CMD_READOOB);
+
+    /*
+     * * Read one byte
+     * */
+    if (readb(this->IO_ADDR_R) != 0xff)
+        return 1;
+#endif
+    return 0;
+}
+
+static int nand_read_spl_page(struct mtd_info *mtd, int block, int page, u32 *dst)
+{
+    struct nand_chip *this = mtd->priv;
+    u_char *ecc_calc;
+    u_char *ecc_code;
+    u_char *oob_data;
+    int i;
+    int eccsize = this->ecc.size;
+    int eccbytes = this->ecc.bytes;
+    int eccsteps = mtd->writesize / eccsize;
+    int ecctotal = eccbytes * eccsteps;
+
+    uint8_t *p = dst;
+    int stat;
+    printf("eccsize=0x%x ; eccbytes=0x%x ; eccsteps=0x%x ; ecctotal=0x%x\r\n",eccsize,eccbytes,eccsteps,ecctotal);
+
+    this->cmdfunc(mtd, NAND_CMD_READ0, 0x00, page);
+
+    ecc_calc = (u_char *)(CONFIG_SYS_SDRAM_BASE + 0x10000);
+    ecc_code = ecc_calc + 0x100;
+    oob_data = ecc_calc + 0x200;
+
+    for (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) {
+        this->ecc.hwctl(mtd, NAND_ECC_READ);
+        this->read_buf(mtd, p, eccsize);
+        this->ecc.calculate(mtd, p, &ecc_calc[i]);
+    }
+
+    this->read_buf(mtd, oob_data, mtd->oobsize);
+    return 0;
+}
+
+static int nand_load_spl(struct mtd_info *mtd, unsigned int offs,
+        unsigned int spl_size, uchar *dst)
+{
+    unsigned int block, lastblock;
+    static unsigned int page = 0;
+    static unsigned int total_page = 0;
+
+    block = offs / mtd->erasesize;
+    total_page += spl_size / mtd->writesize;
+    lastblock = (offs + spl_size - 1) / mtd->erasesize;
+    page = (offs % mtd->erasesize) / mtd->writesize;
+    pageinblock = (mtd->erasesize) / mtd->writesize;
+    /*if(total_page == pageinblock)
+     * {
+     * page = 0;
+     * total_page = 0;
+     * }*/
+    printf("block=%d ; lastblock=%d ; page=%d ; pageinblock=%d\r\n",block,lastblock,page,pageinblock);
+    while (block <= lastblock) {
+        if (!nand_is_bad_block(mtd, block)) {
+            /*
+             * * Skip bad blocks
+             * */
+            printf("<<<<<<<<<<<<<<<<<<<<<<<<<<start read>>>>>>>>>>>>>>>>>>>>>>>>>>>\r\n");
+            while (page < total_page) {
+                printf("page=%d\r\n",page);
+                nand_read_spl_page(mtd, block, page, dst);
+                dst += mtd->writesize;
+                page++;
+            }
+
+            page = 0;
+        } else {
+            lastblock++;
+        }
+
+        block++;
+        printf("<<<<<<<<<<<<<<<<<<<<<<<<<<start end>>>>>>>>>>>>>>>>>>>>>>>>>>>\r\n");
+    }
+
+    return 0;
+}
+#endif
 
 int nand_write_fdl(unsigned int size, unsigned char *buf)
 {
@@ -1051,9 +1212,9 @@ int nand_read_fdl(struct real_mtd_partition *phypart, unsigned int off, unsigned
 		//ops.ooboffs = 0;
 		memset(buffer, 0xff, FDL_NAND_BUF_LEN);
 		memset(buf, 0xff, size);
-		//if((strcmp(phypart->name, "spl") == 0))
-			//ret = nand_load_spl(nand, (unsigned int)(addr + off),size, buf);
-		//else
+		if((strcmp(phypart->name, "spl") == 0))
+			ret = nand_load_spl(nand, (unsigned int)(addr + off),size, buf);
+		else
 			ret = nand_do_read_ops(nand,(unsigned long long)(addr + off), &ops);
 		if (ret<0) {
 			printf("\nread error, mark bad block : 0x%08x\n", addr);

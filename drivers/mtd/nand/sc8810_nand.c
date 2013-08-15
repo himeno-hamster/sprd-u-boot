@@ -396,7 +396,7 @@ static u32 sc8810_get_decode_sts(void)
 	}
 	return err;
 }
-static u32 sc8810_ecc_decode(struct sc8810_ecc_param *param)
+u32 sc8810_ecc_decode(struct sc8810_ecc_param *param)
 {
 	u32 reg;
 	u32 ret = 0;

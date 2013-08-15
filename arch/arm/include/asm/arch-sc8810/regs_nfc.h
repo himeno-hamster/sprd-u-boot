@@ -149,6 +149,7 @@ struct sc8810_ecc_param {
 	u8 *sts;
 };
 unsigned int sc8810_ecc_encode(struct sc8810_ecc_param *param);
+u32 sc8810_ecc_decode(struct sc8810_ecc_param *param);
 unsigned int ecc_mode_convert(u32 mode);
 
 #endif 
