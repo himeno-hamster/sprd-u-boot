@@ -1606,7 +1606,7 @@ void ddr_external_qos_set()
     //                  port5 wr&rd (CP0W)         =
     //                  port6 wr&rd (CP0 ARM)      =
     //                  port8 wr&rd (CP1 ARM)      = 
-    //                  port9 wr&rd (CP2)          =
+    //                  port9 wr&rd (CP2)          >
     //                  port2 rd    (display/gsp)  =
     //                  port0 wr    (mm/dcam/vsp)  >
     //                  port0 rd    (mm/dcam/vsp)  >
@@ -1614,12 +1614,12 @@ void ddr_external_qos_set()
     //                  port2 wr    (display/gsp)  =
     //                  port7 wr&rd (AP matrix)    >
     //                  port1 wr&rd (GPU)
-	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  0,4,0xf); //chanel 0 wr qos, mm/dcam/vsp
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  0,4,0xc); //chanel 0 wr qos, mm/dcam/vsp
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  4,4,0x6); //chanel 0 rd qos, mm/dcam/vsp
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  8,4,0x0); //chanel 1 wr qos, GPU
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 12,4,0x0); //chanel 1 rd qos, GPU
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 16,4,0x2); //chanel 2 wr qos, display/gsp
-	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 20,4,0xf); //chanel 2 rd qos, display/gsp
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 20,4,0xc); //chanel 2 rd qos, display/gsp
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 24,4,0x4); //chanel 3 wr qos	, CA7
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 28,4,0x4); //chanel 3 rd qos, CA7		
 
