@@ -1607,15 +1607,15 @@ void ddr_external_qos_set()
     //                  port6 wr&rd (CP0 ARM)      =
     //                  port8 wr&rd (CP1 ARM)      = 
     //                  port9 wr&rd (CP2)          =
-    //                  port2 rd    (display/gsp)  >
+    //                  port2 rd    (display/gsp)  =
     //                  port0 wr    (mm/dcam/vsp)  >
+    //                  port0 rd    (mm/dcam/vsp)  >
     //                  port3 wr&rd (CA7)          >
-    //                  port0 rd    (mm/dcam/vsp)  =
     //                  port2 wr    (display/gsp)  =
     //                  port7 wr&rd (AP matrix)    >
     //                  port1 wr&rd (GPU)
-	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  0,4,0x8); //chanel 0 wr qos, mm/dcam/vsp
-	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  4,4,0x2); //chanel 0 rd qos, mm/dcam/vsp
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  0,4,0xf); //chanel 0 wr qos, mm/dcam/vsp
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  4,4,0x6); //chanel 0 rd qos, mm/dcam/vsp
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  8,4,0x0); //chanel 1 wr qos, GPU
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 12,4,0x0); //chanel 1 rd qos, GPU
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 16,4,0x2); //chanel 2 wr qos, display/gsp
