@@ -1258,6 +1258,10 @@ sp6820c_config : unconfig
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 	@$(MKCONFIG) $@ arm armv7 sp8810 spreadtrum sc8810
 
+sp8810gb-f4r1_config : unconfig
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@$(MKCONFIG) $@ arm armv7 sp8810 spreadtrum sc8810
+
 sp6820gb-f2r1_config	: unconfig
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 	@$(MKCONFIG) $@ arm armv7 sp8810 spreadtrum sc8810	
