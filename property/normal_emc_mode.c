@@ -17,13 +17,23 @@ static boot_image_required_t const s_boot_image_table[]={
 	{L"tdruntimenv1",L"tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR},
 	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},
 	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
-	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR}, 	
+	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR}, 
+#ifdef CONFIG_SP8830WCN
+	{L"wcnfixnv1",L"wcnfixnv2",FIXNV_SIZE,WCNFIXNV_ADR},
+	{L"wcnruntimenv1",L"wcnruntimenv2",RUNTIMENV_SIZE,WCNRUNTIMENV_ADR},
+	{L"wcnmodem",NULL,MODEM_SIZE,WCNMODEM_ADR},
+#endif		
 #elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC)
 	{L"wfixnv1",L"wfixnv2",FIXNV_SIZE,WFIXNV_ADR},
 	{L"wruntimenv1",L"wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR},
 	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,WPRODINFO_ADR},
 	{L"wmodem",NULL,MODEM_SIZE,WMODEM_ADR},
 	{L"wdsp",NULL,DSP_SIZE,WDSP_ADR},
+#ifdef CONFIG_SP8830WCN
+	{L"wcnfixnv1",L"wcnfixnv2",FIXNV_SIZE,WCNFIXNV_ADR},
+	{L"wcnruntimenv1",L"wcnruntimenv2",RUNTIMENV_SIZE,WCNRUNTIMENV_ADR},
+	{L"wcnmodem",NULL,MODEM_SIZE,WCNMODEM_ADR},
+#endif	
 #else
 	{L"tdfixnv1",L"tdfixnv2",FIXNV_SIZE,TDFIXNV_ADR},
 	{L"tdruntimenv1",L"tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR},
@@ -281,6 +291,28 @@ void addcmdline(char *buf)
 	str_len = strlen(buf);
 	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
 
+#ifdef CONFIG_SP8830WCN
+	/* wcnfixnv=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " wcnfixnv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", WCNFIXNV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", FIXNV_SIZE);
+
+	/* wcnruntimenv=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " wcnruntimenv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", WCNRUNTIMENV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
+#endif
+
 	/* productinfo=0x????????,0x????????*/
 	str_len = strlen(buf);
 	sprintf(&buf[str_len], " productinfo=0x");
@@ -376,9 +408,22 @@ void modem_entry()
 			break;
 	}
 	*((volatile u32*)0x402B0050) &= ~0x10000000;	   /* clear cp1 force deep sleep */
-
+#ifdef CONFIG_SP8830WCN
+	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
+	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
+	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00C0);
+		if (!(state & (0xf<<16)))
+		break;
+	}
+	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
+	*((volatile u32*)0x402B00A8) &= ~0x00000006;       /* clear reset cp0 cp1 cp2 */
+#else
 	*((volatile u32*)0x402B00A8) &= ~0x00000002;	   /* clear reset cp0 cp1 */
-
+#endif
 #elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC)
 	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
 
@@ -392,7 +437,22 @@ void modem_entry()
 			break;
 	}
 	*((volatile u32*)0x402B003C) &= ~0x10000000;	   /* clear cp0 force deep sleep */
+#ifdef CONFIG_SP8830WCN
+	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
+	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
+	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00C0);
+		if (!(state & (0xf<<16)))
+		break;
+	}
+	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
+	*((volatile u32*)0x402B00A8) &= ~0x00000005;       /* clear reset cp0 cp1 cp2 */
+#else	
 	*((volatile u32*)0x402B00A8) &= ~0x00000001;	   /* clear reset cp0 cp1 */
+#endif
 
 #else
 	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
@@ -419,8 +479,22 @@ void modem_entry()
 			break;
 	}
 	*((volatile u32*)0x402B0050) &= ~0x10000000;       /* clear cp1 force deep sleep */
-
+#ifdef CONFIG_SP8830WCN
+	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
+	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
+	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00C0);
+		if (!(state & (0xf<<16)))
+		break;
+	}
+	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
+	*((volatile u32*)0x402B00A8) &= ~0x00000007;       /* clear reset cp0 cp1 cp2 */
+#else
 	*((volatile u32*)0x402B00A8) &= ~0x00000003;       /* clear reset cp0 cp1 */
+#endif	
 #endif	
 #endif
 }
@@ -437,6 +511,9 @@ void sipc_addr_reset()
 #else
 	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+#endif
+#ifdef CONFIG_SP8830WCN
+	memset((void *)SIPC_WCN_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 #endif
 #endif
 }

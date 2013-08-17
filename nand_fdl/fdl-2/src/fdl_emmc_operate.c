@@ -19,7 +19,7 @@
 
 #define SPL_CHECKSUM_LEN	0x6000
 
-#define PARTNER_PARTITION_NUM  (7)
+#define PARTNER_PARTITION_NUM  (9)
 #define MAX_GPT_PARTITION_SUPPORT  (50)
 #define EMMC_ERASE_ALIGN_LENGTH  (0x800)
 
@@ -51,6 +51,8 @@ static PARTNER_PARTITION const s_partner_partition_cfg[PARTNER_PARTITION_NUM]={
 	{{L"tdruntimenv1"},   {L"tdruntimenv2"}},
 	{{L"wfixnv1"},           {L"wfixnv2"}},
 	{{L"wruntimenv1"},    {L"wruntimenv2"}},
+	{{L"wcnfixnv1"},      {L"wcnfixnv2"}},
+	{{L"wcnruntimenv1"},    {L"wcnruntimenv2"}},	
 	{{L"prodinfo1"},         {L"prodinfo2"}}
 };
 
@@ -811,6 +813,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 
 	if ((wcsncmp(L"tdfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"tdfixnv1")) == 0)||
 		(wcsncmp(L"wfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wfixnv1")) == 0)||
+		(wcsncmp(L"wcnfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wcnfixnv1")) == 0)||
 		(wcsncmp(L"fixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"fixnv1")) == 0))
 	{
 		g_dl_eMMCStatus.curEMMCArea = PARTITION_USER;
@@ -926,6 +929,7 @@ PUBLIC int fdl2_emmc_download(unsigned short size, char *buf)
 		{
 			if ((wcsncmp(L"tdfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"tdfixnv1")) == 0)||
 				(wcsncmp(L"wfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wfixnv1")) == 0)||
+				(wcsncmp(L"wcnfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wcnfixnv1")) == 0)||
 				(wcsncmp(L"fixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"fixnv1")) == 0))
 			{
 				if(!_emmc_nv_check_and_write())
@@ -1010,6 +1014,7 @@ PUBLIC int fdl2_emmc_read_start(wchar_t* partition_name, unsigned long size)
 
 	if(wcsncmp(L"tdfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"tdfixnv1")) == 0 ||
 		wcsncmp(L"wfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wfixnv1")) == 0 ||
+		wcsncmp(L"wcnfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wcnfixnv1")) == 0 ||
 		wcsncmp(L"fixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"fixnv1")) == 0)
 	{
 		g_dl_eMMCStatus.part_total_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
@@ -1073,6 +1078,7 @@ PUBLIC int fdl2_emmc_read_midst(unsigned long size, unsigned long off, unsigned 
 
 	if(wcsncmp(L"tdfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"tdfixnv1")) == 0 ||
 		wcsncmp(L"wfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wfixnv1")) == 0 ||
+		wcsncmp(L"wcnfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wcnfixnv1")) == 0 ||
 		wcsncmp(L"fixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"fixnv1")) == 0)
 	{
 		if(_read_partition_with_backup(g_dl_eMMCStatus.curUserPartitionName, g_eMMCBuf, FIXNV_SIZE))

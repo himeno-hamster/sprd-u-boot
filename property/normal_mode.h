@@ -50,6 +50,9 @@ extern unsigned char raw_header[8192];
 #define WRUNTIMENV_ADR  0x90480000
 #define WPRODINFO_ADR   0x904e0000
 #define WMODEM_ADR      0x90500000
+#define WCNMODEM_ADR      0x94080000
+#define WCNFIXNV_ADR      0x94000000
+#define WCNRUNTIMENV_ADR  0x94020000
 #elif defined(CONFIG_TIGER)
 #define DSP_ADR          0x80020000
 #define VMJALUNA_ADR     0x80400000
