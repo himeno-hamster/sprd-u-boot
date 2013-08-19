@@ -9,6 +9,13 @@
 
 #define KERNL_PAGE_SIZE 2048
 
+#ifdef CONFIG_FS_EXT4
+int normal_emc_partition = PARTITION_PROD_INFO3;
+static char     	product_SN1[20+1];
+static char     	product_SN2[20+1];
+static int		product_SN_flag = 0;
+#endif
+
 static boot_image_required_t const s_boot_image_table[]={
 #ifdef CONFIG_SC8830
 
@@ -63,6 +70,9 @@ static boot_image_required_t const s_boot_image_table[]={
 	{NULL,NULL,0,0}
 };
 
+#ifdef CONFIG_FS_EXT4
+static void product_SN_get(void);
+#endif
 
 int get_partition_info (block_dev_desc_t *dev_desc, int part, disk_partition_t *info);
 
@@ -352,6 +362,17 @@ void addcmdline(char *buf)
 	sprintf(&buf[str_len], ",0x");
 	str_len = strlen(buf);
 	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
+
+#ifdef CONFIG_FS_EXT4
+	if(product_SN_flag ==1)
+	{
+		str_len = strlen(buf);
+		sprintf(&buf[str_len], " SN1=%s", product_SN1);
+		str_len = strlen(buf);
+		sprintf(&buf[str_len], " SN2=%s", product_SN2);
+	}
+#endif
+
 #endif
 #endif
 #if BOOT_NATIVE_LINUX_MODEM
@@ -801,6 +822,10 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	//secure check for secure boot
 	_boot_secure_check();
 
+#ifdef CONFIG_FS_EXT4
+	product_SN_get();
+#endif
+
 	buf = creat_cmdline(cmdline,hdr);
 	if (buf != NULL) {
 		free(buf);
@@ -818,3 +843,20 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	vlx_entry();
 }
 
+#ifdef CONFIG_FS_EXT4
+static void product_SN_get(void)
+{
+	SP09_PHASE_CHECK_T phase_check;
+
+		if(!ext4_read_content(1,normal_emc_partition,"/productinfo.bin", phase_check, 0, sizeof(phase_check)))
+		{
+			product_SN_flag =1;
+			memcpy(product_SN1, phase_check.SN1, 21);
+			memcpy(product_SN2, phase_check.SN2, 21);
+		}
+		else{
+			product_SN_flag =0;
+			printf("%s open fail  /productinfo/productinfo.bin ",__FUNCTION__);
+		}
+}
+#endif
