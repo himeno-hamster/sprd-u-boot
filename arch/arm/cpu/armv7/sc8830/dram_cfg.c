@@ -89,7 +89,7 @@ const lpddr2_timing_t LPDDR2_ACTIMING =
     //NS2CLK(8),     //tWTR      unite : tCK    
 	8, 			    //tWR       unite : tCK
     5,              //tWTR      unite : tCK
-    NS2CLK(20),     //tXP       unite : tCK
+    NS2CLK(8),     //tXP       unite : tCK
     NS2CLK(140),     //tXSR      unite : tCK  
     NS2CLK(15),      //tCKESR 	unite : tCK
     2,              //tCCD 		unite : tCK
@@ -119,7 +119,7 @@ const lpddr2_timing_t LPDDR2_ACTIMING_NATIVE =
     (20),     //tRRD      unite : ns
 	8, 		  //tWR       unite : tCK
     5,        //tWTR      unite : tCK
-    (20),     //tXP       unite : ns
+    (8),     //tXP       unite : ns
     (140),    //tXSR      unite : ns  
     (15),     //tCKESR 	unite : ns
     2,        //tCCD 	unite : tCK

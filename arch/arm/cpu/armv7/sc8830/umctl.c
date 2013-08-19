@@ -876,7 +876,7 @@ void umctl2_dramtiming_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
 #if 1
     reg_bits_set(UMCTL_DRAMTMG0, 24, 6, ((WL+(BL>>1)+tWR)+1));/*wr2pre*/
     reg_bits_set(UMCTL_DRAMTMG0, 16, 6, tFAW);    /*t_FAW*/
-    reg_bits_set(UMCTL_DRAMTMG0,  8, 6, tRAS+ns_to_x1024(70000,umctl2_clk));/*t_ras_max,Maxinum time of tRAS,clocks*/
+    reg_bits_set(UMCTL_DRAMTMG0,  8, 6, ns_to_x1024(70000,umctl2_clk));/*t_ras_max,Maxinum time of tRAS,clocks*/
     reg_bits_set(UMCTL_DRAMTMG0,  0, 6, tRAS);/*t_ras_min,Mininum time of tRAS,clocks*/
 
     reg_bits_set(UMCTL_DRAMTMG1, 16, 6, tXP);
@@ -892,7 +892,7 @@ void umctl2_dramtiming_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
     reg_bits_set(UMCTL_DRAMTMG2,  0, 6, (WL+(BL>>1)+tWTR));
 
     /*tMRW, time to wait during load mode register writes.*/
-    reg_bits_set(UMCTL_DRAMTMG3, 16,10,0x05);
+    reg_bits_set(UMCTL_DRAMTMG3, 20,10,0x05);
     reg_bits_set(UMCTL_DRAMTMG3, 12, 3, tMRD);
     reg_bits_set(UMCTL_DRAMTMG3,  0,10, tMOD);
 
