@@ -120,7 +120,6 @@ int main(void)
 #ifdef CONFIG_EMMC_BOOT		
 		if(FDL_BootIsEMMC()) {
 			/* Initialize NAND flash. */
-			extern PARTITION_CFG g_sprd_emmc_partition_cfg[];
 			extern int mmc_legacy_init(int dev);
 			mmc_legacy_init(1);
 		#ifdef CONFIG_EBR_PARTITION

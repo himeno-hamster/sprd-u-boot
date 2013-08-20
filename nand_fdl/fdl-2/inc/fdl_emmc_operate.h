@@ -6,14 +6,30 @@
 #include <asm/arch/packet.h>
 #ifdef CONFIG_EMMC_BOOT
 
+typedef enum _PARTITION_IMG_TYPE
+{
+	IMG_RAW = 0,
+	IMG_WITH_SPARSE = 1,
+	IMG_TYPE_MAX
+}PARTITION_IMG_TYPE;
+
+typedef enum _PARTITION_PURPOSE
+{
+	PARTITION_PURPOSE_NORMAL,
+	PARTITION_PURPOSE_NV,
+	PARTITION_PURPOSE_PROD,
+	PARTITION_PURPOSE_MAX
+}PARTITION_PURPOSE;
+
 typedef struct DL_EMMC_STATUS_TAG
 {
 	uint32 part_total_size ;
 	uint32 base_sector;
 	uint32 curUserPartition;
 	wchar_t *curUserPartitionName;
-	uint8 isLastPakFlag ;
-	uint8 curEMMCArea ;
+	PARTITION_PURPOSE partitionpurpose;
+	uint8 curEMMCArea;
+	PARTITION_IMG_TYPE curImgType; 
 } DL_EMMC_STATUS;
 
 typedef struct DL_FILE_STATUS_TAG
@@ -23,11 +39,13 @@ typedef struct DL_FILE_STATUS_TAG
 	unsigned long   unsave_recv_size;
 } DL_EMMC_FILE_STATUS;
 
-typedef struct
+typedef struct _SPECIAL_PARTITION_CFG
 {
-	wchar_t partition_name[MAX_UTF_PARTITION_NAME_LEN];
-	wchar_t backup_partition_name[MAX_UTF_PARTITION_NAME_LEN];
-}PARTNER_PARTITION;
+	wchar_t* partition;
+	wchar_t* bak_partition;
+	PARTITION_IMG_TYPE imgattr;
+	PARTITION_PURPOSE purpose;
+}SPECIAL_PARTITION_CFG;
 
 #if defined(CONFIG_TIGER) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
 #define BOOTLOADER_HEADER_OFFSET 0x20
