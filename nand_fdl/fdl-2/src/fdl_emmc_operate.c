@@ -19,12 +19,11 @@
 
 #define SPL_CHECKSUM_LEN	0x6000
 
-#define PARTNER_PARTITION_NUM  (9)
 #define MAX_GPT_PARTITION_SUPPORT  (50)
 #define EMMC_ERASE_ALIGN_LENGTH  (0x800)
 
 static DL_EMMC_FILE_STATUS g_status;
-static DL_EMMC_STATUS g_dl_eMMCStatus = {0, 0, 0xffffffff,0, 0, 0};
+static DL_EMMC_STATUS g_dl_eMMCStatus = {0, 0, 0xffffffff,0, 0, 0,0};
 
 static unsigned long g_checksum;
 static unsigned long g_sram_addr;
@@ -44,16 +43,25 @@ static int uefi_part_info_ok_flag = 0;
 static PARTITION_CFG uefi_part_info[MAX_GPT_PARTITION_SUPPORT] = {0};
 static PARTITION_CFG s_sprd_emmc_partition_cfg[MAX_GPT_PARTITION_SUPPORT] = {0};
 
-static PARTNER_PARTITION const s_partner_partition_cfg[PARTNER_PARTITION_NUM]={
-	{{L"fixnv1"},             {L"fixnv2"}},
-	{{L"runtimenv1"},      {L"runtimenv2"}},		
-	{{L"tdfixnv1"},          {L"tdfixnv2"}},
-	{{L"tdruntimenv1"},   {L"tdruntimenv2"}},
-	{{L"wfixnv1"},           {L"wfixnv2"}},
-	{{L"wruntimenv1"},    {L"wruntimenv2"}},
-	{{L"wcnfixnv1"},      {L"wcnfixnv2"}},
-	{{L"wcnruntimenv1"},    {L"wcnruntimenv2"}},	
-	{{L"prodinfo1"},         {L"prodinfo2"}}
+/**
+	partitions not for raw data or normal usage(e.g. nv and prodinfo) should config here.
+	partitions not list here mean raw data/normal usage.
+*/
+static SPECIAL_PARTITION_CFG const s_special_partition_cfg[]={
+	{{L"fixnv1"},{L"fixnv2"},IMG_RAW,PARTITION_PURPOSE_NV},
+	{{L"runtimenv1"},{L"runtimenv2"},IMG_RAW,PARTITION_PURPOSE_NV},
+	{{L"tdfixnv1"},{L"tdfixnv2"},IMG_RAW,PARTITION_PURPOSE_NV},
+	{{L"tdruntimenv1"},{L"tdruntimenv2"},IMG_RAW,PARTITION_PURPOSE_NV},
+	{{L"wfixnv1"},{L"wfixnv2"},IMG_RAW,PARTITION_PURPOSE_NV},
+	{{L"wruntimenv1"},{L"wruntimenv2"},IMG_RAW,PARTITION_PURPOSE_NV},
+	{{L"wcnfixnv1"},{L"wcnfixnv2"},IMG_RAW,PARTITION_PURPOSE_NV},
+	{{L"wcnruntimenv1"},{L"wcnruntimenv2"},IMG_RAW,PARTITION_PURPOSE_NV},
+	{{L"prodinfo1"},{L"prodinfo2"},IMG_RAW,PARTITION_PURPOSE_PROD},
+	{{L"system"},NULL,IMG_WITH_SPARSE,PARTITION_PURPOSE_NORMAL},
+	{{L"userdata"},NULL,IMG_WITH_SPARSE,PARTITION_PURPOSE_NORMAL},
+	{{L"cache"},NULL,IMG_WITH_SPARSE,PARTITION_PURPOSE_NORMAL},
+	{{L"prodnv"},NULL,IMG_WITH_SPARSE,PARTITION_PURPOSE_NORMAL},
+	{NULL,NULL,IMG_TYPE_MAX,PARTITION_PURPOSE_MAX}
 };
 
 static __inline void FDL2_eMMC_SendRep (unsigned long err)
@@ -324,12 +332,38 @@ LOCAL void _parser_repartition_cfg(unsigned short* partition_cfg, unsigned short
 }
 
 /**
+	Get the partition's target image type(raw data or others) and purpose(nv/prodinfo/normal).
+*/
+LOCAL void _get_partition_attribute(wchar_t* partition_name)
+{
+	int i;
+
+	for(i=0;s_special_partition_cfg[i].partition != NULL;i++)
+	{
+		if(wcsncmp(s_special_partition_cfg[i].partition, partition_name, wcslen(partition_name)) == 0)
+		{
+			g_dl_eMMCStatus.curImgType = s_special_partition_cfg[i].imgattr;
+			g_dl_eMMCStatus.partitionpurpose = s_special_partition_cfg[i].purpose;
+			printf("%s:partition %s image type is %d,partitionpurpose:%d\n", __FUNCTION__,_w2c(partition_name),g_dl_eMMCStatus.curImgType,g_dl_eMMCStatus.partitionpurpose);
+			return;
+		}
+	}
+	//default type is IMG_RAW
+	g_dl_eMMCStatus.curImgType = IMG_RAW;
+	g_dl_eMMCStatus.partitionpurpose = PARTITION_PURPOSE_NORMAL;
+	printf("%s:partition %s image type is RAW, normal partition!\n", __FUNCTION__,_w2c(partition_name));
+	return;
+}
+
+/**
 	Check whether the partition to be operated is compatible.
 */
 LOCAL BOOLEAN _get_compatible_partition(wchar_t* partition_name)
 {
 	int i;
 
+	//get special partition attr
+	_get_partition_attribute(partition_name);
 	//Get user partition info from eMMC
 	_uefi_get_part_info();
 
@@ -367,11 +401,11 @@ LOCAL wchar_t * _get_backup_partition_name(wchar_t *partition_name)
 {
 	int i = 0;
 
-	for(i=0;i<PARTNER_PARTITION_NUM;i++)
+	for(i=0;s_special_partition_cfg[i].partition != NULL;i++)
 	{
-		if(wcsncmp(partition_name, s_partner_partition_cfg[i].partition_name, wcslen(partition_name)) == 0)
+		if(wcsncmp(partition_name, s_special_partition_cfg[i].partition, wcslen(partition_name)) == 0)
 		{
-			return s_partner_partition_cfg[i].backup_partition_name;
+			return s_special_partition_cfg[i].bak_partition;
 		}
 	}
 
@@ -567,64 +601,7 @@ LOCAL int _emmc_download_image(unsigned long nSectorCount, unsigned long each_wr
 	unsigned char *point;
 	int retval;
 
-#ifdef DOWNLOAD_IMAGE_WITHOUT_SPARSE
-	if ((wcsncmp(L"userdata", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"userdata")) == 0) \
-		|| (wcsncmp(L"cache", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"cache")) == 0)) {
-		retval = write_simg2emmc("mmc", 1, g_dl_eMMCStatus.curUserPartition, 
-			g_eMMCBuf, g_status.unsave_recv_size);
-		if (retval == -1) {
-			g_status.unsave_recv_size = 0;
-			SEND_ERROR_RSP (BSL_WRITE_ERROR);
-			return 0;
-		} else if (retval > 0) {
-			memmove(g_eMMCBuf, g_eMMCBuf + retval, g_status.unsave_recv_size - retval);
-			g_status.unsave_recv_size -= retval;
-			g_sram_addr = (unsigned long)g_eMMCBuf;
-		} else {
-			g_status.unsave_recv_size = 0;
-			g_sram_addr = (unsigned long)g_eMMCBuf;
-		}
-	} else if (wcsncmp(L"system", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"system")) == 0) {
-		base_sector = g_dl_eMMCStatus.base_sector;
-		point = g_eMMCBuf;
-		trans_times = nSectorCount / each_write_block;
-		remain_block = nSectorCount % each_write_block;
-
-		for (cnt = 0; cnt < trans_times; cnt ++) {
-			if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, base_sector,
-				each_write_block, (unsigned char *) point)) {
- 				g_status.unsave_recv_size = 0;
-				SEND_ERROR_RSP (BSL_WRITE_ERROR);
-				return 0;
-			}
-			base_sector += each_write_block;
-			point += EFI_SECTOR_SIZE * each_write_block;
-		}
-
-		if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, base_sector,
-			remain_block, (unsigned char *)point)) {
- 			g_status.unsave_recv_size = 0;
-			SEND_ERROR_RSP (BSL_WRITE_ERROR);
-			return 0;
-		}
-		base_sector += remain_block;
-		point += EFI_SECTOR_SIZE * remain_block;
-	} else if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector,
-			nSectorCount, (unsigned char *) g_eMMCBuf)) {
-			g_status.unsave_recv_size = 0;
-			SEND_ERROR_RSP (BSL_WRITE_ERROR);
-			return 0;
-	}
-
-	g_status.unsave_recv_size = 0;
-	if(!is_total_recv){
-		g_dl_eMMCStatus.base_sector += nSectorCount;
-		g_sram_addr = (unsigned long)g_eMMCBuf;
-	}
-#else
-	if ((wcsncmp(L"system", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"system")) == 0) \
-		|| (wcsncmp(L"userdata", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"userdata")) == 0) \
-		|| (wcsncmp(L"cache", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"cache")) == 0)) {
+	if (IMG_WITH_SPARSE == g_dl_eMMCStatus.curImgType){
 		retval = write_simg2emmc("mmc", 1, g_dl_eMMCStatus.curUserPartition, 
 			g_eMMCBuf, g_status.unsave_recv_size);
 		if (retval == -1) {
@@ -639,9 +616,7 @@ LOCAL int _emmc_download_image(unsigned long nSectorCount, unsigned long each_wr
 			return 0;
 	}
 
-	if ((wcsncmp(L"system", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"system")) == 0) \
-		|| (wcsncmp(L"userdata", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"userdata")) == 0) \
-		|| (wcsncmp(L"cache", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"cache")) == 0)) {
+	if (IMG_WITH_SPARSE == g_dl_eMMCStatus.curImgType){
 		if (retval > 0) {
 			memmove(g_eMMCBuf, g_eMMCBuf + retval, g_status.unsave_recv_size - retval);
 			g_status.unsave_recv_size -= retval;
@@ -657,83 +632,41 @@ LOCAL int _emmc_download_image(unsigned long nSectorCount, unsigned long each_wr
 			g_sram_addr = (unsigned long)g_eMMCBuf;
 		}
 	}
-#endif
 	return 1;
 }
 
-LOCAL int _emmc_nv_check_and_write(void)
-{
-	unsigned long  fix_nv_checksum, nSectorCount, nSectorBase;
-	unsigned short sum = 0, *dataaddr;
-	wchar_t *backup_partition_name = NULL;
-	
-	fix_nv_checksum = Get_CheckSum((unsigned char *) g_eMMCBuf, g_status.total_recv_size);
-	if (fix_nv_checksum != g_checksum) {
-		//may data transfer error
-		printf("%s:nv data transfer error,checksum error!\n", __FUNCTION__);
-        	SEND_ERROR_RSP(BSL_CHECKSUM_DIFF);
-		return 0;
-        }
-
-	if (0 == ((FIXNV_SIZE + 4) % EFI_SECTOR_SIZE))
-		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE;
-	else
-		nSectorCount = (FIXNV_SIZE + 4) / EFI_SECTOR_SIZE + 1;
-
-	_makEcc(g_eMMCBuf,FIXNV_SIZE);
-
-	//write the original partition
-	_emmc_real_erase_partition(g_dl_eMMCStatus.curUserPartitionName);
-	if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector,
-		nSectorCount, (unsigned char *)g_eMMCBuf)) {
-		printf("%s:original nv write error! \n", __FUNCTION__);
-		SEND_ERROR_RSP (BSL_WRITE_ERROR);
-		return 0;
-	}
-
-	//write the backup partition
-	backup_partition_name = _get_backup_partition_name(g_dl_eMMCStatus.curUserPartitionName);
-	nSectorBase = efi_GetPartBaseSec(backup_partition_name);
-	_emmc_real_erase_partition(backup_partition_name);
-	if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, nSectorBase, nSectorCount,
-		(unsigned char *)g_eMMCBuf)) {
-		printf("%s:backup nv write error! \n", __FUNCTION__);
-		SEND_ERROR_RSP (BSL_WRITE_ERROR);
-		return 0;
-	}
-
-	g_status.unsave_recv_size = 0;
-	return 1;
-}
-
-LOCAL int _emmc_prodinfo_check_and_write(void)
+/**
+	Calc checksum and write data to emmc for nv and prodinfo partitions.
+*/
+LOCAL int _emmc_img_check_and_write(wchar_t* partition, unsigned long size)
 {
 	unsigned long  nSectorCount, nSectorBase;
 	unsigned short sum = 0, *dataaddr;
 	wchar_t *backup_partition_name = NULL;
-	
-	if (0 == ((PRODUCTINFO_SIZE + 8) % EFI_SECTOR_SIZE))
-		nSectorCount = (PRODUCTINFO_SIZE + 8) / EFI_SECTOR_SIZE;
-	else
-		nSectorCount = (PRODUCTINFO_SIZE + 8) / EFI_SECTOR_SIZE + 1;
 
-	_makEcc(g_eMMCBuf,PRODUCTINFO_SIZE);
+	if (0 == ((size + 4) % EFI_SECTOR_SIZE))
+		nSectorCount = (size + 4) / EFI_SECTOR_SIZE;
+	else
+		nSectorCount = (size + 4) / EFI_SECTOR_SIZE + 1;
+
+	_makEcc(g_eMMCBuf,size);
+
 	//write the original partition
-	_emmc_real_erase_partition(g_dl_eMMCStatus.curUserPartitionName);
+	_emmc_real_erase_partition(partition);
 	if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector,
 		nSectorCount, (unsigned char *)g_eMMCBuf)) {
-		//write error
-		printf("%s:original prodinfo write error! \n", __FUNCTION__);
+		printf("%s:original %s write error! \n", __FUNCTION__,_w2c(partition));
 		SEND_ERROR_RSP (BSL_WRITE_ERROR);
 		return 0;
 	}
+
 	//write the backup partition
-	backup_partition_name = _get_backup_partition_name(g_dl_eMMCStatus.curUserPartitionName);
+	backup_partition_name = _get_backup_partition_name(partition);
 	nSectorBase = efi_GetPartBaseSec(backup_partition_name);
 	_emmc_real_erase_partition(backup_partition_name);
-	if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, nSectorBase, nSectorCount, 
+	if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, nSectorBase, nSectorCount,
 		(unsigned char *)g_eMMCBuf)) {
-		printf("%s:backup prodinfo write error! \n", __FUNCTION__);
+		printf("%s:backup %s write error! \n", __FUNCTION__,_w2c(partition));
 		SEND_ERROR_RSP (BSL_WRITE_ERROR);
 		return 0;
 	}
@@ -801,20 +734,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 		return 0;
 	}
 
-#ifndef DOWNLOAD_IMAGE_WITHOUT_SPARSE
-	if (((wcsncmp(L"system", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"system")) != 0) && \
-		(wcsncmp(L"userdata", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"userdata")) != 0) && \
-		(wcsncmp(L"cache", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"cache")) != 0)) && (size > EMMC_BUF_SIZE)) {
-		printf("image file size : 0x%08x is bigger than EMMC_BUF_SIZE : 0x%08x\n", size, EMMC_BUF_SIZE);
-		FDL2_eMMC_SendRep (EMMC_INVALID_SIZE);
-		return 0;
-	}
-#endif
-
-	if ((wcsncmp(L"tdfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"tdfixnv1")) == 0)||
-		(wcsncmp(L"wfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wfixnv1")) == 0)||
-		(wcsncmp(L"wcnfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wcnfixnv1")) == 0)||
-		(wcsncmp(L"fixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"fixnv1")) == 0))
+	if (PARTITION_PURPOSE_NV == g_dl_eMMCStatus.partitionpurpose)
 	{
 		g_dl_eMMCStatus.curEMMCArea = PARTITION_USER;
 		g_dl_eMMCStatus.part_total_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
@@ -828,7 +748,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 		memset(g_eMMCBuf, 0xff, FIXNV_SIZE + EFI_SECTOR_SIZE);
 		g_checksum = nv_checksum;
 	}
-	else if (wcsncmp(L"prodinfo1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"prodinfo1")) == 0)
+	else if (PARTITION_PURPOSE_PROD == g_dl_eMMCStatus.partitionpurpose)
 	{
 		g_dl_eMMCStatus.curEMMCArea = PARTITION_USER;
 
@@ -873,9 +793,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 	{
 		g_dl_eMMCStatus.curEMMCArea = PARTITION_USER;
 
-		if (!((wcsncmp(L"system", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"system")) == 0) \
-			|| (wcsncmp(L"userdata", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"userdata")) == 0) \
-			|| (wcsncmp(L"cache", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"cache")) == 0)))
+		if (IMG_WITH_SPARSE != g_dl_eMMCStatus.curImgType)
 			_emmc_real_erase_partition(g_dl_eMMCStatus.curUserPartitionName);
 		else
 			memset(g_eMMCBuf, 0, EMMC_BUF_SIZE);
@@ -927,17 +845,22 @@ PUBLIC int fdl2_emmc_download(unsigned short size, char *buf)
 		}
 		else if (g_status.total_recv_size == g_status.total_size) 
 		{
-			if ((wcsncmp(L"tdfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"tdfixnv1")) == 0)||
-				(wcsncmp(L"wfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wfixnv1")) == 0)||
-				(wcsncmp(L"wcnfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wcnfixnv1")) == 0)||
-				(wcsncmp(L"fixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"fixnv1")) == 0))
+			if (PARTITION_PURPOSE_NV == g_dl_eMMCStatus.partitionpurpose)
 			{
-				if(!_emmc_nv_check_and_write())
+				unsigned long  fix_nv_checksum;
+				fix_nv_checksum = Get_CheckSum((unsigned char *) g_eMMCBuf, g_status.total_recv_size);
+				if (fix_nv_checksum != g_checksum) {
+					//may data transfer error
+					printf("%s:nv data transfer error,checksum error!\n", __FUNCTION__);
+					SEND_ERROR_RSP(BSL_CHECKSUM_DIFF);
+					return 0;
+				}
+				if(!_emmc_img_check_and_write(g_dl_eMMCStatus.curUserPartitionName,FIXNV_SIZE))
 					return 0;
 			}
-			else if(wcsncmp(L"prodinfo1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"prodinfo1")) == 0)
+			else if(PARTITION_PURPOSE_PROD == g_dl_eMMCStatus.partitionpurpose)
 			{
-				if(!_emmc_prodinfo_check_and_write())
+				if(!_emmc_img_check_and_write(g_dl_eMMCStatus.curUserPartitionName,PRODUCTINFO_SIZE))
 					return 0;
 			}
 			else
@@ -1012,10 +935,7 @@ PUBLIC int fdl2_emmc_read_start(wchar_t* partition_name, unsigned long size)
 
 	g_dl_eMMCStatus.curEMMCArea = PARTITION_USER;
 
-	if(wcsncmp(L"tdfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"tdfixnv1")) == 0 ||
-		wcsncmp(L"wfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wfixnv1")) == 0 ||
-		wcsncmp(L"wcnfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wcnfixnv1")) == 0 ||
-		wcsncmp(L"fixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"fixnv1")) == 0)
+	if(PARTITION_PURPOSE_NV == g_dl_eMMCStatus.partitionpurpose)
 	{
 		g_dl_eMMCStatus.part_total_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
 		if ((size > g_dl_eMMCStatus.part_total_size) /*|| (size > FIXNV_SIZE)*/){
@@ -1025,7 +945,7 @@ PUBLIC int fdl2_emmc_read_start(wchar_t* partition_name, unsigned long size)
 		}
 		g_dl_eMMCStatus.base_sector = efi_GetPartBaseSec(g_dl_eMMCStatus.curUserPartitionName);
 	}
-	else if (wcsncmp(L"prodinfo1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"prodinfo1")) == 0)
+	else if (PARTITION_PURPOSE_PROD == g_dl_eMMCStatus.partitionpurpose)
 	{
 		g_dl_eMMCStatus.part_total_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
 		if ((size > g_dl_eMMCStatus.part_total_size)/* || (size > PRODUCTINFO_SIZE)*/) {
@@ -1076,10 +996,7 @@ PUBLIC int fdl2_emmc_read_midst(unsigned long size, unsigned long off, unsigned 
 		return FALSE;
 	}
 
-	if(wcsncmp(L"tdfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"tdfixnv1")) == 0 ||
-		wcsncmp(L"wfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wfixnv1")) == 0 ||
-		wcsncmp(L"wcnfixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"wcnfixnv1")) == 0 ||
-		wcsncmp(L"fixnv1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"fixnv1")) == 0)
+	if(PARTITION_PURPOSE_NV == g_dl_eMMCStatus.partitionpurpose)
 	{
 		if(_read_partition_with_backup(g_dl_eMMCStatus.curUserPartitionName, g_eMMCBuf, FIXNV_SIZE))
 		{
@@ -1092,7 +1009,7 @@ PUBLIC int fdl2_emmc_read_midst(unsigned long size, unsigned long off, unsigned 
 			return FALSE;
 		}
 	}
-	else if (wcsncmp(L"prodinfo1", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"prodinfo1")) == 0)
+	else if (PARTITION_PURPOSE_PROD == g_dl_eMMCStatus.partitionpurpose)
 	{
 		if(_read_partition_with_backup(g_dl_eMMCStatus.curUserPartitionName, g_eMMCBuf, PRODUCTINFO_SIZE))
 		{
@@ -1169,7 +1086,7 @@ PUBLIC int fdl2_emmc_erase(wchar_t* partition_name, unsigned long size)
 			part_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
 			make_ext4fs_main(g_eMMCBuf, part_size);
 
-			retval = write_simg2emmc("mmc", 1, PARTITION_PROD_INFO3, g_eMMCBuf, EMMC_BUF_SIZE);
+			retval = write_simg2emmc("mmc", 1, g_dl_eMMCStatus.curUserPartition, g_eMMCBuf, EMMC_BUF_SIZE);
 			if (retval == -1) {
 				SEND_ERROR_RSP (BSL_WRITE_ERROR);
 				return 0;
