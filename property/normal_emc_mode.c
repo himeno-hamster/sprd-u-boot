@@ -848,7 +848,7 @@ static void product_SN_get(void)
 {
 	SP09_PHASE_CHECK_T phase_check;
 
-		if(!ext4_read_content(1,normal_emc_partition,"/productinfo.bin", phase_check, 0, sizeof(phase_check)))
+		if(!ext4_read_content(1,normal_emc_partition,"/productinfo.bin", &phase_check, 0, sizeof(phase_check)))
 		{
 			product_SN_flag =1;
 			memcpy(product_SN1, phase_check.SN1, 21);
