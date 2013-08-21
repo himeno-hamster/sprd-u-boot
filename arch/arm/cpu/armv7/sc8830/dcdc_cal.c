@@ -220,18 +220,29 @@ static dcdc_cali_t* get_cali_addr()
 }
 
 /* standard dcdc ops*/
+static int __dcdc_is_orig(struct regulator_desc *desc)
+{
+	if (0 == strcmp(desc->name, "vddmem") || 0 == strcmp(desc->name, "vddwrf"))
+		if (ANA_REG_GET(ANA_REG_GLB_CHIP_ID_LOW) & 0xff) /* BA CHIP */
+			return 0;
+	return 1;
+}
+
 static int dcdc_get_trimming_step(struct regulator_desc *desc, int to_vol)
 {
-	if (0 == strcmp(desc->name, "vddmem")) {	/* FIXME: vddmem step 200/32mV */
+	/* FIXME: vddmem step 200/32mV */
+	if (0 == strcmp(desc->name, "vddmem") || 0 == strcmp(desc->name, "vddwrf")) {
 		return 1000 * 200 / 32;	/*uV */
 	}
 	return 1000 * 100 / 32;	/*uV */
 }
 
-static int __match_dcdc_vol(const struct regulator_regs *regs, u32 vol)
+static int __match_dcdc_vol(struct regulator_desc *desc, u32 vol)
 {
 	int i, j = -1;
 	int ds, min_ds = 100;	/* mV, the max range of small voltage */
+	const struct regulator_regs *regs = desc->regs;
+
 	for (i = 0; i < regs->vol_sel_cnt; i++) {
 		ds = vol - regs->vol_sel[i];
 		if (ds >= 0 && ds < min_ds) {
@@ -239,6 +250,17 @@ static int __match_dcdc_vol(const struct regulator_regs *regs, u32 vol)
 			j = i;
 		}
 	}
+
+	if (j < 0 && !__dcdc_is_orig(desc)) {
+		for (i = 0; i < regs->vol_sel_cnt; i++) {
+			ds = abs(vol - regs->vol_sel[i]);
+			if (ds < min_ds) {
+				min_ds = ds;
+				j = i;
+			}
+		}
+	}
+
 	return j;
 }
 
@@ -248,7 +270,7 @@ static int dcdc_set_voltage(struct regulator_desc *desc, int min_mV, int max_mV)
 	int i, mv = min_mV;
 
 	/* found the closely vol ctrl bits */
-	i = __match_dcdc_vol(regs, mv);
+	i = __match_dcdc_vol(desc, mv);
 	if (i < 0)
 		return -1;
 
@@ -258,10 +280,14 @@ static int dcdc_set_voltage(struct regulator_desc *desc, int min_mV, int max_mV)
 	/* dcdc calibration control bits (default 0) small adjust voltage: 100/32mv ~= 3.125mv */
 	{
 		int shft = __ffs(regs->vol_ctl_bits);
-		int j = (mv - regs->vol_sel[i]) * 1000 / dcdc_get_trimming_step(desc, mv) % 32;
+		int j = (mv - (int)regs->vol_sel[i]) * 1000 / dcdc_get_trimming_step(desc, mv);
 
-		ANA_REG_MSK_OR(regs->vol_ctl, j | (i << shft),
-			regs->vol_trm_bits | regs->vol_ctl_bits);
+		if (!__dcdc_is_orig(desc))
+			j += 0x10;
+
+		if (j >= 0 && j < 32)
+			ANA_REG_MSK_OR(regs->vol_ctl, j | (i << shft),
+				regs->vol_trm_bits | regs->vol_ctl_bits);
 	}
 	return 0;
 }
@@ -342,13 +368,16 @@ exit:
 	return ret;
 }
 
-static u16 dcdc_get_trimming_vol(struct regulator_desc *desc)
+static int dcdc_get_trimming_vol(struct regulator_desc *desc)
 {
 	int shft, trm_vol = 0;
-	u16 tmpVal;
+	int tmpVal;
 
 	shft = __ffs(desc->regs->vol_trm_bits);
 	tmpVal = (ANA_REG_GET(desc->regs->vol_trm) & desc->regs->vol_trm_bits) >> shft;
+
+	if (!__dcdc_is_orig(desc))
+		tmpVal -= 0x10;
 
 	trm_vol = tmpVal * (dcdc_get_trimming_step(desc, trm_vol))/1000;
 
@@ -372,7 +401,7 @@ static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 	shft = __ffs(regs->vol_ctl_bits);
 	tmpVal = (ANA_REG_GET(regs->vol_ctl) & regs->vol_ctl_bits) >> shft;
 	if (regs->typ == 2)
-		def_vol = to_vol = regs->vol_sel[tmpVal] + dcdc_get_trimming_vol(desc);
+		def_vol = to_vol = (int)regs->vol_sel[tmpVal] + dcdc_get_trimming_vol(desc);
 	else if (regs->typ == 0)
 		def_vol = to_vol = regs->vol_sel[tmpVal];
 
