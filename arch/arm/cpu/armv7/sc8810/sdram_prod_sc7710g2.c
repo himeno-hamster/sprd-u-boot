@@ -38,6 +38,7 @@ LOCAL CONST EMC_PARAM_T s_emc_parm[] =
 	//{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        2,		2,          0,      2,          15, 	{0, 0, 0, 0, 0}},  // PCB_V1.0.0
 	//{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        2,		3,          1,      2,          12, 	{0, 0, 0, 0, 0}},  // 4+2 nandmcp
 	//{CHIP_CLK_1000MHZ, EMC_CLK_333MHZ, DDR_DRV_STR_TR_Q,        1,		1,          1,      2,          19, 	{0, 0, 0, 0, 0}},  // openphone
+//	{CHIP_CLK_1000MHZ, EMC_CLK_133MHZ, DDR_DRV_STR_TR_Q,        2,		1,          2,      1,          15,			{0, 0, 0, 0, 0}},  // auto slt soket
 	{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        1,		2,          1,      2,          12,			{0, 0, 0, 0, 0}},  // PCB_V1.1.0
   //{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,		1,		2,			1,		2,			12, 		{0x2c, 0xb3, 0x90, 0x66, 0x64}},  // custom para, just example
 
