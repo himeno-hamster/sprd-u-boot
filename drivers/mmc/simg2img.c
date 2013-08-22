@@ -181,7 +181,7 @@ int process_crc32_chunk(void *buf, u32 crc32)
 }
 
 /* -1 : error; x : buf is finished to write */
-int write_simg2emmc(char* interface, int  dev, int part, u8* buf, unsigned long length)
+int write_simg2emmc(char* interface, int  dev, wchar_t* partname, u8* buf, unsigned long length)
 {
 	unsigned int i;
 
@@ -196,7 +196,7 @@ int write_simg2emmc(char* interface, int  dev, int part, u8* buf, unsigned long 
 		printf("Block device %s %d not supported\n", interface, dev);
 		goto fail;
 	}
-	if (get_partition_info(g_emmc_handle.pdev, part, &g_emmc_handle.info))
+	if (get_partition_info_by_name(g_emmc_handle.pdev, partname, &g_emmc_handle.info))
 		goto fail;
 	g_emmc_handle.cardPartiton = 0;
 	
