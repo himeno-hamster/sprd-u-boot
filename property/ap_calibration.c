@@ -15,11 +15,13 @@
 #ifdef CONFIG_EMMC_BOOT
 #include <part.h>
 #include "../disk/part_uefi.h"
-extern int Calibration_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, char *buf, int len);
+extern int Calibration_read_partition(block_dev_desc_t *p_block_dev, wchar_t* partition_name, char *buf, int len);
 extern int Calibration_write_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, char *buf, int len);
 static unsigned int nv_buffer[256]={0};
 static nv_read_flag = 0;
 #endif
+
+static wchar_t *ap_calibration_partition = L"prodinfo4";
 
 extern int nand_part_write(char *partname,char *buffer, int size);
 extern int nand_part_read(char *partname,char *buffer, int size);
@@ -59,8 +61,9 @@ static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
 	return 0;
     }
     if(nv_read_flag == 0){
-	if(-1 == Calibration_read_partition(p_block_dev, PARTITION_PROD_INFO4, (char *)nv_buffer,sizeof(nv_buffer)))
-		return 0;
+	if(-1 == Calibration_read_partition(p_block_dev, ap_calibration_partition, (char *)nv_buffer,sizeof(nv_buffer)))
+			return 0;
+
 	nv_read_flag = 1;
     }
     printf("EMC_Read:nv_buffer[255]=0x%x \n",nv_buffer[255]);
@@ -73,10 +76,10 @@ static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
             nv_buffer[255] = 0x5a5a5a5a;
 	    memcpy(&nv_buffer[0],lpBuff,size);
             if(-1 == Calibration_write_partition(p_block_dev, PARTITION_PROD_INFO4, (char *)nv_buffer,sizeof(nv_buffer)))
-	        return 0;
+			return 0;
         }
     }
-    return size;       
+    return size;
 #else
     char *file_partition = "modem";
     int ret = 0;
