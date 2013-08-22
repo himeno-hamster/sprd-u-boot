@@ -364,6 +364,8 @@ LOCAL void  _irqCardProc (uint32 msg, uint32 errCode, SDHOST_SLOT_NO slotNum)
     }
     if (0 != (SIG_TRANS_CMP&msg))       // transmission complete
     {
+	/* clear transfer complete timeout bit! */
+	s_CardErrCode &= ~ERR_DATA_TIMEOUT;
         _SetCardEvent (handle,SIG_TRANS_CMP);
     }
     else if (0 != (SIG_DMA_INT&msg)) // during the transmission ,the dma buffer is out of used ,we must set new dma buffer to continue the transmission
@@ -383,6 +385,7 @@ LOCAL void  _irqCardProc (uint32 msg, uint32 errCode, SDHOST_SLOT_NO slotNum)
 
     if (0 != (SIG_CMD_CMP&msg))     // during the transmission ,the command has be confirmed by card
     {
+	s_CardErrCode &= ~ERR_CMD_TIMEOUT;
         _SetCardEvent (handle,SIG_CMD_CMP);
     }
 }
@@ -799,7 +802,7 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 )
 {
     uint32 tmpIntFilter;
-	int tmOut;
+	int tmOut = 0;
 	const CMD_CTL_FLG* curCmdInfo = NULL;
 #if defined CONFIG_SC8830
 	if (handle->sdio_type == SDIO_CARD_PAL_TYPE_SD)
@@ -910,7 +913,7 @@ PUBLIC SDIO_CARD_PAL_ERROR_E SDIO_Card_Pal_SendCmd (
 		{
 			SDHOST_Delayus(200);
 			tmOut++;
-			if(tmOut > 30000)
+			if(tmOut > 50000)
 			{
 				s_CardErrCode = ERR_DATA_TIMEOUT;
 				break;
