@@ -12,8 +12,8 @@
  ** DATE           NAME             DESCRIPTION                               *
  ** 01/06/2013     changde.li       Create.                                   *
  ******************************************************************************/
-#include <asm/arch-sc8830/umctl2_reg.h>
-#include <asm/arch-sc8830/dram_phy.h>
+#include <asm/arch-scx15/umctl2_reg.h>
+#include <asm/arch-scx15/dram_phy.h>
 
 /*With unit of Mhz*/
 #define          SDRAM_CORE_CLK 200
