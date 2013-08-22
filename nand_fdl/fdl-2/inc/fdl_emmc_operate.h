@@ -25,7 +25,6 @@ typedef struct DL_EMMC_STATUS_TAG
 {
 	uint32 part_total_size ;
 	uint32 base_sector;
-	uint32 curUserPartition;
 	wchar_t *curUserPartitionName;
 	PARTITION_PURPOSE partitionpurpose;
 	uint8 curEMMCArea;

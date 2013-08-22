@@ -383,7 +383,6 @@ LOCAL BOOLEAN _get_compatible_partition(wchar_t* partition_name)
 	{
 		if(wcsncmp(partition_name, uefi_part_info[i].partition_name, wcslen(partition_name)) == 0)
 		{
-			g_dl_eMMCStatus.curUserPartition = uefi_part_info[i].partition_index;
 			g_dl_eMMCStatus.curUserPartitionName = uefi_part_info[i].partition_name;
 			return TRUE;
 		}
@@ -602,7 +601,7 @@ LOCAL int _emmc_download_image(unsigned long nSectorCount, unsigned long each_wr
 	int retval;
 
 	if (IMG_WITH_SPARSE == g_dl_eMMCStatus.curImgType){
-		retval = write_simg2emmc("mmc", 1, g_dl_eMMCStatus.curUserPartition, 
+		retval = write_simg2emmc("mmc", 1, g_dl_eMMCStatus.curUserPartitionName,
 			g_eMMCBuf, g_status.unsave_recv_size);
 		if (retval == -1) {
 			g_status.unsave_recv_size = 0;
@@ -1086,7 +1085,7 @@ PUBLIC int fdl2_emmc_erase(wchar_t* partition_name, unsigned long size)
 			part_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
 			make_ext4fs_main(g_eMMCBuf, part_size);
 
-			retval = write_simg2emmc("mmc", 1, g_dl_eMMCStatus.curUserPartition, g_eMMCBuf, EMMC_BUF_SIZE);
+			retval = write_simg2emmc("mmc", 1, g_dl_eMMCStatus.curUserPartitionName, g_eMMCBuf, EMMC_BUF_SIZE);
 			if (retval == -1) {
 				SEND_ERROR_RSP (BSL_WRITE_ERROR);
 				return 0;

@@ -43,6 +43,7 @@
 #include <android_boot.h>
 #include <android_bootimg.h>
 #include <boot_mode.h>
+#include <asm/arch/secure_boot.h>
 
 
 #ifdef CONFIG_EXT4_SPARSE_DOWNLOAD
@@ -61,6 +62,7 @@ PARTITION_CFG uefi_part_info[MAX_PARTITION_INFO];
 #define EFI_SECTOR_SIZE 		(512)
 #define ERASE_SECTOR_SIZE		((64 * 1024) / EFI_SECTOR_SIZE)
 #define EMMC_BUF_SIZE			(((216 * 1024 * 1024) / EFI_SECTOR_SIZE) * EFI_SECTOR_SIZE)
+#define FB_ERASE_ALIGN_LENGTH  (0x800)
 #if defined (CONFIG_SC8825) || defined (CONFIG_TIGER)
 unsigned char *g_eMMCBuf = (unsigned char*)0x82000000;
 #else
@@ -77,48 +79,43 @@ typedef struct{
 }EMMC_BootHeader;
 #endif
 
+
+typedef enum
+{
+	FB_IMG_RAW = 0,
+	FB_IMG_WITH_SPARSE = 1,
+	FB_IMG_TYPE_MAX
+}FB_PARTITION_IMG_TYPE;
+
+typedef enum
+{
+	FB_PARTITION_PURPOSE_NORMAL,
+	FB_PARTITION_PURPOSE_NV,
+	FB_PARTITION_PURPOSE_PROD,
+	FB_PARTITION_PURPOSE_MAX
+}FB_PARTITION_PURPOSE;
+
 typedef struct
 {
-	unsigned int partition_index;
-	unsigned int partition_type;
-	char *partition_str;
-} eMMC_Parttion;
+	CARD_EMMC_PARTITION_TPYE type;
+	FB_PARTITION_PURPOSE purpose;
+	FB_PARTITION_IMG_TYPE img_format;
+	wchar_t* partition_name;
+}FB_PARTITION_INFO;
 
-#ifdef CONFIG_SC8830
-eMMC_Parttion const _sprd_emmc_partition[]={
-	{PARTITION_TDMODEM, PARTITION_USER, "tdmodem"},
-	{PARTITION_WMODEM, PARTITION_USER, "wmodem"},
-	{PARTITION_TDDSP, PARTITION_USER, "tddsp"},
-	{PARTITION_WDSP, PARTITION_USER, "wdsp"},
-	{PARTITION_TDFIX_NV1, PARTITION_USER, "tdfixnv"},
-	{PARTITION_WFIX_NV1, PARTITION_USER, "wfixnv"},
-	{PARTITION_KERNEL, PARTITION_USER, "boot"},
-	{PARTITION_RECOVERY, PARTITION_USER, "recovery"},
-	{PARTITION_SYSTEM, PARTITION_USER, "system"},
-	{PARTITION_LOGO, PARTITION_USER, "boot_logo"},
-	{PARTITION_USER_DAT, PARTITION_USER, "userdata"},
-	{PARTITION_CACHE, PARTITION_USER, "cache"},
-	{0, PARTITION_BOOT1, "params"},
-	{0, PARTITION_BOOT2, "2ndbl"},
-	{0,0,0}
+static FB_PARTITION_INFO const s_fb_special_partition_cfg[]={
+	{PARTITION_BOOT1,FB_PARTITION_PURPOSE_NORMAL,FB_IMG_RAW,L"params"},
+	{PARTITION_BOOT2,FB_PARTITION_PURPOSE_NORMAL,FB_IMG_RAW,L"2ndbl"},
+	{PARTITION_USER,FB_PARTITION_PURPOSE_NORMAL,FB_IMG_WITH_SPARSE,L"system"},
+	{PARTITION_USER,FB_PARTITION_PURPOSE_NORMAL,FB_IMG_WITH_SPARSE,L"userdata"},
+	{PARTITION_USER,FB_PARTITION_PURPOSE_NORMAL,FB_IMG_WITH_SPARSE,L"cache"},
+	{PARTITION_USER,FB_PARTITION_PURPOSE_NORMAL,FB_IMG_WITH_SPARSE,L"prodnv"},
+	{PARTITION_USER,FB_PARTITION_PURPOSE_NV,FB_IMG_RAW,L"fixnv1"},
+	{PARTITION_USER,FB_PARTITION_PURPOSE_NV,FB_IMG_RAW,L"tdfixnv1"},
+	{PARTITION_USER,FB_PARTITION_PURPOSE_NV,FB_IMG_RAW,L"wfixnv1"},
+	{PARTITION_MAX,FB_PARTITION_PURPOSE_MAX,FB_IMG_TYPE_MAX,NULL}
 };
-#else
-eMMC_Parttion const _sprd_emmc_partition[]={
-	{PARTITION_VM, PARTITION_USER, "vmjaluna"},
-	{PARTITION_MODEM, PARTITION_USER, "modem"},
-	{PARTITION_DSP, PARTITION_USER, "dsp"},
-	{PARTITION_FIX_NV1, PARTITION_USER, "fixnv"},
-	{PARTITION_KERNEL, PARTITION_USER, "boot"},
-	{PARTITION_RECOVERY, PARTITION_USER, "recovery"},
-	{PARTITION_SYSTEM, PARTITION_USER, "system"},
-	{PARTITION_LOGO, PARTITION_USER, "boot_logo"},
-	{PARTITION_USER_DAT, PARTITION_USER, "userdata"},
-	{PARTITION_CACHE, PARTITION_USER, "cache"},
-	{0, PARTITION_BOOT1, "params"},
-	{0, PARTITION_BOOT2, "2ndbl"},
-	{0,0,0}
-};
-#endif
+
 #endif
 
 typedef struct {
@@ -466,41 +463,6 @@ unsigned short fastboot_eMMCCheckSum(const unsigned int *src, int len)
 	return (unsigned short) (~sum);
 }
 
-void _add_4s(unsigned char *data, unsigned char add_word, int base_size){
-	data[base_size + 0] = data[base_size + 1] = add_word;
-	data[base_size + 2] = data[base_size + 3] = add_word;
-}
-
-int fastboot_flashNVParttion(EFI_PARTITION_INDEX part, void *data, size_t sz)
-{
-	unsigned long  fix_nv_checksum;
-	unsigned long len, nblocknum;
-	block_dev_desc_t *pdev;
-	disk_partition_t info;
-
-	//Set write para.
-	len = FIXNV_SIZE + 4;
-	_add_4s(data, 0x5a, FIXNV_SIZE);
-
-	//Write to eMMC
-	pdev = get_dev("mmc", 1);
-	if (pdev == NULL) {
-		fastboot_fail("Block device not supported!");
-		return 0;
-	}
-	if (get_partition_info(pdev, part, &info)){
-		fastboot_fail("eMMC get partition ERROR!");
-		return 0;
-	}
-	if (sz % 512)
-		nblocknum = sz / 512 + 1;
-	else
-		nblocknum = sz / 512;
-	if (!Emmc_Write(PARTITION_USER, info.start,  nblocknum, data))
-		return 0;
-
-	return 1; /* success */
-}
 
 void fastboot_splFillCheckData(unsigned int * splBuf,  int len)
 {
@@ -518,174 +480,216 @@ void fastboot_splFillCheckData(unsigned int * splBuf,  int len)
 #endif
 }
 
+LOCAL void _makEcc(uint8* buf, uint32 size)
+{
+	uint16 crc;
+	crc = calc_checksum(buf,size-4);
+	buf[size-4] = (uint8)(0xFF&crc);
+	buf[size-3] = (uint8)(0xFF&(crc>>8));
+	buf[size-2] = 0;
+	buf[size-1] = 0;
+
+	return;
+}
+
+/**
+	Erase the whole partition.
+*/
+LOCAL int _fb_erase_partition(wchar_t *partition_name,unsigned int curArea,unsigned long base,unsigned long count)
+{
+	if(NULL == partition_name)
+		return 0;
+
+	if(count < FB_ERASE_ALIGN_LENGTH)
+	{
+		unsigned char buf[FB_ERASE_ALIGN_LENGTH*EFI_SECTOR_SIZE] = {0xFF};
+		if (!Emmc_Write(curArea, base,count,buf))
+			return 0;
+	}
+	else
+	{
+		if(base%FB_ERASE_ALIGN_LENGTH)
+		{
+			unsigned char buf[FB_ERASE_ALIGN_LENGTH*EFI_SECTOR_SIZE] = {0xFF};
+			unsigned long base_sector_offset = 0;
+
+			base_sector_offset = FB_ERASE_ALIGN_LENGTH - base%FB_ERASE_ALIGN_LENGTH;
+			if (!Emmc_Write(curArea, base,base_sector_offset,buf))
+				return 0;
+			count = ((count-base_sector_offset)/FB_ERASE_ALIGN_LENGTH)*FB_ERASE_ALIGN_LENGTH;
+			base = base + base_sector_offset;
+		}
+		else
+			count = (count/FB_ERASE_ALIGN_LENGTH)*FB_ERASE_ALIGN_LENGTH;
+
+		if(count == 0)
+			return 1;
+
+		if (!Emmc_Erase(curArea, base,count))
+			return 0;
+	}
+
+	return 1;
+}
 
 void cmd_flash(const char *arg, void *data, unsigned sz)
 {
-	size_t size = 0;
-	u8 pnum = 0;
-	unsigned int nblocknum;
-	int pos;
+	int i;
+	wchar_t partition_name[MAX_UTF_PARTITION_NAME_LEN];
+	unsigned int partition_type = PARTITION_USER;
+	unsigned int partition_purpose = FB_PARTITION_PURPOSE_NORMAL;
+	unsigned int img_format = FB_IMG_RAW;
+	uint32 startblock;
+	uint32 count;
+	disk_partition_t info;
+	block_dev_desc_t *dev = NULL;
 
 	data = download_base;
-	size = sz;
-	//Seek partition form _sprd_emmc_partition table
-	for (pos = 0; pos < (sizeof(_sprd_emmc_partition) / sizeof(eMMC_Parttion)); pos++){
-		if (!strcmp(_sprd_emmc_partition[pos].partition_str, arg))
-			break;
-		pnum++;
-	}
-	printf("Flash emmc partition:%s check:%s-%d\n", _sprd_emmc_partition[pos-1].partition_str, arg, pnum);
-	if (pnum >= sizeof(_sprd_emmc_partition) / sizeof(eMMC_Parttion)){
-		fastboot_fail("unknown partition name");
+
+	dev = get_dev("mmc", 1);
+	if(NULL == dev){
+		fastboot_fail("Block device not supported!");
 		return;
 	}
-	//Check boot&recovery img's magic
-	if (!strcmp(_sprd_emmc_partition[pnum].partition_str, "boot")
-		 ||!strcmp(_sprd_emmc_partition[pnum].partition_str, "recovery")) {
-		if (memcmp((void *)data, BOOT_MAGIC, BOOT_MAGIC_SIZE)) {
-			fastboot_fail("image is not a boot image");
-			return;
+
+	printf("Cmd Flash partition:%s \n", arg);
+	for(i=0;i<MAX_UTF_PARTITION_NAME_LEN;i++)
+	{
+		partition_name[i] = arg[i];
+		if(0 == arg[i])
+			break;
+	}
+	//get the special partition info
+	for(i=0;NULL != s_fb_special_partition_cfg[i].partition_name;i++)
+	{
+		if(wcsncmp(s_fb_special_partition_cfg[i].partition_name, partition_name, wcslen(partition_name)) == 0)
+		{
+			partition_type = s_fb_special_partition_cfg[i].type;
+			partition_purpose = s_fb_special_partition_cfg[i].purpose;
+			img_format = s_fb_special_partition_cfg[i].img_format;
+			break;
 		}
 	}
 
-	if ((_sprd_emmc_partition[pnum].partition_index== PARTITION_SYSTEM) \
-		|| (_sprd_emmc_partition[pnum].partition_index == PARTITION_USER_DAT) \
-		|| (_sprd_emmc_partition[pnum].partition_index == PARTITION_CACHE)){
-		//Flash system&userdata - RAW ext4 img with sprase
-		/* richardfeng add size to the function */
-		if (write_simg2emmc("mmc", 1, _sprd_emmc_partition[pnum].partition_index, data, size) != 0){
-			fastboot_fail("eMMC WRITE_ERROR!");
-			return;
-		}
-	}else if (!strcmp(_sprd_emmc_partition[pnum].partition_str, "params")
-			||!strcmp(_sprd_emmc_partition[pnum].partition_str, "2ndbl")){
-		//Flash u-boot&spl in BOOT area
-		if(size%512)
-			nblocknum = size/512 + 1;
-		else
-			nblocknum = size/512;
-		if(!strcmp(_sprd_emmc_partition[pnum].partition_str, "params")){
-			fastboot_splFillCheckData(data, size);
-			nblocknum = SPL_CHECKSUM_LEN/512;
-		}
-		if(!Emmc_Write(_sprd_emmc_partition[pnum].partition_type, 0,  nblocknum, data)){
-			fastboot_fail("eMMC WRITE_ERROR!");
-			return;
-		}
-	}
-#ifdef CONFIG_SC8830
-	else if (!strcmp(_sprd_emmc_partition[pnum].partition_str, "tdfixnv")) {
-		if (!fastboot_flashNVParttion(_sprd_emmc_partition[pnum].partition_index, data, size)) {
-			fastboot_fail("eMMC TDNV WRITE_ERROR!");
-			return;
-		}
-	}
-	else if (!strcmp(_sprd_emmc_partition[pnum].partition_str, "wfixnv")) {
-		if (!fastboot_flashNVParttion(_sprd_emmc_partition[pnum].partition_index, data, size)) {
-			fastboot_fail("eMMC WNV WRITE_ERROR!");
-			return;
-		}
-	}
-#else
-	else if (!strcmp(_sprd_emmc_partition[pnum].partition_str, "fixnv")) {
-		if (!fastboot_flashNVParttion(_sprd_emmc_partition[pnum].partition_index, data, size)) {
-			fastboot_fail("eMMC NV WRITE_ERROR!");
-			return;
-		}
-	}
-#endif
-	else{
-		//Flash other partitions - RAW img without sprase or filesystem
-		block_dev_desc_t *pdev;
-		disk_partition_t info;
+	count = ((sz +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1)))/EMMC_SECTOR_SIZE;
 
-		pdev = get_dev("mmc", 1);
-		if (pdev == NULL) {
-			fastboot_fail("Block device not supported!");
+	switch(partition_type)
+	{
+		case PARTITION_BOOT1:
+			fastboot_splFillCheckData(data, sz);
+			count = ((SPL_CHECKSUM_LEN +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1)))/EMMC_SECTOR_SIZE;
+			startblock = 0;
+			goto emmc_write;
+		case PARTITION_BOOT2:
+			startblock = 0;
+			goto emmc_write;
+		case PARTITION_USER:
+			{
+				//Check boot&recovery img's magic
+				if (!strcmp(arg, "boot") ||!strcmp(arg, "recovery")) {
+					if (memcmp((void *)data, BOOT_MAGIC, BOOT_MAGIC_SIZE)) {
+						fastboot_fail("image is not a boot image");
+						return;
+					}
+				}
+				//get partition info from emmc
+				if(0 != get_partition_info_by_name(dev, partition_name, &info))
+				{
+					fastboot_fail("eMMC get partition ERROR!");
+					return;
+				}
+
+				startblock = info.start;
+
+				if(FB_IMG_WITH_SPARSE == img_format)
+				{
+					if (write_simg2emmc("mmc", 1, partition_name, (uint8*)data, sz) != 0){
+						fastboot_fail("eMMC WRITE_ERROR!");
+						return;
+					}
+					else
+						goto end;
+				}
+				else
+				{
+					if(FB_PARTITION_PURPOSE_NV == partition_purpose)
+					{
+						_makEcc((uint8*)data, FIXNV_SIZE);
+						count = ((FIXNV_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1)))/EMMC_SECTOR_SIZE;
+					}
+					goto emmc_write;
+				}
+			}
+		default:
+			fastboot_fail("Partition Type ERROR!");
 			return;
-		}
-		if (get_partition_info(pdev, _sprd_emmc_partition[pnum].partition_index, &info)){
-			fastboot_fail("eMMC get partition ERROR!");
-			return;
-		}
-		if(size%512)
-			nblocknum = size/512 + 1;
-		else
-			nblocknum = size/512;
-		if(!Emmc_Write(_sprd_emmc_partition[pnum].partition_type, info.start,  nblocknum, data)){
-			fastboot_fail("eMMC WRITE_ERROR!");
-			return;
-		}
 	}
 
+emmc_write:
+	if(!Emmc_Write(partition_type, startblock, count,(uint8*)data)){
+		fastboot_fail("eMMC WRITE_ERROR!");
+		return;
+	}
+end:
 	fastboot_okay("");
 }
 
 void cmd_erase(const char *arg, void *data, unsigned sz)
 {
-	u8 pnum = 0;
-	unsigned int nblocknum;
-	int pos;
-	unsigned long len;
-	unsigned long count;
 	int i;
-	size_t size;
-
-	memset(g_eMMCBuf, 0xff, EMMC_BUF_SIZE);
-	//Seek partition form _sprd_emmc_partition table
-	for (pos = 0; pos < (sizeof(_sprd_emmc_partition) / sizeof(eMMC_Parttion)); pos++){
-		if (!strcmp(_sprd_emmc_partition[pos].partition_str, arg))
-			break;
-		pnum++;
-	}
-	printf("Flash emmc partition:%s check:%s-%d\n", _sprd_emmc_partition[pos-1].partition_str, arg, pnum);
-	if (pnum >= sizeof(_sprd_emmc_partition) / sizeof(eMMC_Parttion)){
-		fastboot_fail("unknown partition name");
-		return;
-	}
-
-	block_dev_desc_t *pdev;
+	wchar_t partition_name[MAX_UTF_PARTITION_NAME_LEN];
+	unsigned long count=0, base_sector=0;
+	unsigned int curArea = 0;
 	disk_partition_t info;
+	block_dev_desc_t *dev = NULL;
 
-	pdev = get_dev("mmc", 1);
-	if (pdev == NULL) {
+	dev = get_dev("mmc", 1);
+	if(NULL == dev){
 		fastboot_fail("Block device not supported!");
 		return;
 	}
-	if (get_partition_info(pdev, _sprd_emmc_partition[pnum].partition_index, &info)){
-		fastboot_fail("eMMC get partition ERROR!");
-		return;
-	}
 
-	size = info.size;
-	
-	if (size < EMMC_BUF_SIZE) {
-		if(size%512)
-			nblocknum = size/512 + 1;
-		else
-			nblocknum = size/512;
-		if(!Emmc_Write(_sprd_emmc_partition[pnum].partition_type, info.start,  nblocknum, (unsigned char *)g_eMMCBuf)){
-			fastboot_fail("eMMC WRITE_ERROR!");
+	printf("Cmd Erase partition:%s \n", arg);
+
+	if (strcmp("params", arg) == 0){
+		if(secureboot_enabled()){
+			fastboot_fail("secureboot enable!");
 			return;
 		}
+		count = Emmc_GetCapacity(PARTITION_BOOT1);
+		curArea = PARTITION_BOOT1;
+		base_sector = 0;
+	}else if (strcmp("2ndbl", arg) == 0){
+		count = Emmc_GetCapacity(PARTITION_BOOT2);
+		curArea = PARTITION_BOOT2;
+		base_sector = 0;
 	}
-	else {
-		count = size / (EMMC_BUF_SIZE / EFI_SECTOR_SIZE);
-		for (i = 0; i < count; i++) {
-			if (!Emmc_Write(_sprd_emmc_partition[pnum].partition_type, info.start + i * (EMMC_BUF_SIZE / EFI_SECTOR_SIZE),
-				EMMC_BUF_SIZE / EFI_SECTOR_SIZE, (unsigned char *)g_eMMCBuf))
-				fastboot_fail("eMMC ERASE_ERROR!");
-				return 0;
+	else{
+		for(i=0;i<MAX_UTF_PARTITION_NAME_LEN;i++)
+		{
+			partition_name[i] = arg[i];
+			if(0 == arg[i])
+				break;
 		}
-
-		count = len % (EMMC_BUF_SIZE / EFI_SECTOR_SIZE);
-		if (count) {
-			if (!Emmc_Write(_sprd_emmc_partition[pnum].partition_type, info.start + i * (EMMC_BUF_SIZE / EFI_SECTOR_SIZE),
-				count, (unsigned char *)g_eMMCBuf))
-				return 0;
-			}
+		//get partition info from emmc
+		if(0 != get_partition_info_by_name(dev, partition_name, &info))
+		{
+			fastboot_fail("eMMC get partition ERROR!");
+			return;
+		}
+		curArea = PARTITION_USER;
+		count = info.size;
+		base_sector = info.start;
 	}
+
+	if(!_fb_erase_partition(partition_name, curArea, base_sector, count))
+	{
+		fastboot_fail("eMMC Erase Partition ERROR!");
+		return;
+	}
+	printf("Cmd Erase OK\n");
 	fastboot_okay("");
+	return;
 }
 
 #else
