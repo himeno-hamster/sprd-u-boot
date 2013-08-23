@@ -51,6 +51,10 @@ void board_keypad_init(void)
     sprd_key_map->key_map = board_key_map;
     sprd_key_map->total_row = CONFIG_KEYPAD_ROW_CNT;
     sprd_key_map->total_col = CONFIG_KEYPAD_COL_CNT;
+#ifdef CONFIG_SC7710G2
+    sprd_key_map->cols_choose_hw = CONFIG_KEYPAD_ROW_CHOOSE_HW;
+    sprd_key_map->rows_choose_hw = CONFIG_KEYPAD_COL_CHOOSE_HW;
+#endif
 
     if(sprd_key_map->total_size % sprd_key_map->keycode_size){
         printf("%s: board_key_map config error, it should be %d aligned\n", __FUNCTION__, sprd_key_map->keycode_size);
@@ -66,9 +70,15 @@ void board_keypad_init(void)
     REG_KPD_CLK_DIV_CNT = CFG_CLK_DIV & KPDCLK0_CLK_DIV0;
     REG_KPD_LONG_KEY_CNT = CONFIG_KEYPAD_LONG_CNT;
     REG_KPD_DEBOUNCE_CNT = CONFIG_KEYPAD_DEBOUNCE_CNT;//0x8;0x13
+
+#ifdef CONFIG_SC7710G2
+    key_type = (sprd_key_map->rows_choose_hw & KPDCTL_ROW_MSK) | (sprd_key_map->cols_choose_hw & KPDCTL_COL_MSK);
+#else
     key_type = ((((~(0xffffffff << (sprd_key_map->total_col - KPD_COL_MIN_NUM))) << 20) | ((~(0xffffffff << (sprd_key_map->total_row- KPD_ROW_MIN_NUM))) << 16)) & (KPDCTL_ROW | KPDCTL_COL));
+#endif
+
     REG_KPD_CTRL = 0x7 | key_type;
-    
+
     //open all press & release & long key operation flags
     REG_KPD_INT_EN = KPD_INT_ALL;
 #if 0

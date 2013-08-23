@@ -14,6 +14,10 @@ struct key_map_info{
     unsigned char *key_map;
     unsigned int total_row;
     unsigned int total_col;
+#ifdef CONFIG_SC7710G2
+    unsigned int rows_choose_hw;
+    unsigned int cols_choose_hw;
+#endif
 };
 
 /*
