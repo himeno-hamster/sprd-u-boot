@@ -15,6 +15,7 @@
 
 static unsigned int nv_buffer[256]={0};
 static int s_is_calibration_mode = 0;
+static wchar_t *calibration_detect_partition = L"prodinfo4";
 /* calibration support uart only */
 #ifdef CONFIG_MODEM_CALI_UART
 
@@ -486,7 +487,7 @@ int cali_file_check(void)
 	p_block_dev = get_dev("mmc", 1);
 	if(NULL == p_block_dev)
 		return 0;
-	if(-1 == Calibration_read_partition(p_block_dev, PARTITION_PROD_INFO4, (char *)nv_buffer,sizeof(nv_buffer))){
+	if(-1 == Calibration_read_partition(p_block_dev, calibration_detect_partition, (char *)nv_buffer,sizeof(nv_buffer))){
 		printf("%s: read PARTITION_PROD_INFO4 error\n", __func__);
 		return 0;
 	}
@@ -546,7 +547,8 @@ int read_adc_calibration_data(char *buffer,int size)
 	p_block_dev = get_dev("mmc", 1);
 	if(NULL == p_block_dev)
 		return 0;
-	if(-1 == Calibration_read_partition(p_block_dev, PARTITION_PROD_INFO4, (char *)nv_buffer,sizeof(nv_buffer)))
+
+	if(-1 == Calibration_read_partition(p_block_dev, calibration_detect_partition, (char *)nv_buffer,sizeof(nv_buffer)))
 		return 0;
 	if(size>48)
 		size=48;

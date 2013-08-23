@@ -39,7 +39,7 @@ int move2timebuf(unsigned char *src, unsigned char *dst)
 	return 1;
 }
 #ifdef CONFIG_FS_EXT4
-int alarm_partition = PARTITION_PROD_INFO3;
+static wchar_t *alarm_partition = L"prodinfo3";
 int alarm_file_check(char *time_buf)
 {
 	if ( !ext4_read_content(1,alarm_partition,"/alarm_flag",time_buf,0,200))	{

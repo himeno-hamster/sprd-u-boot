@@ -10,7 +10,7 @@
 #define KERNL_PAGE_SIZE 2048
 
 #ifdef CONFIG_FS_EXT4
-int normal_emc_partition = PARTITION_PROD_INFO3;
+static wchar_t *normal_emc_partition = L"prodinfo3";
 static char     	product_SN1[20+1];
 static char     	product_SN2[20+1];
 static int		product_SN_flag = 0;
@@ -93,13 +93,13 @@ int nv_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, c
 	return ret;
 }
 
-int Calibration_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, char *buf, int len)
+int Calibration_read_partition(block_dev_desc_t *p_block_dev, wchar_t* partition_name, char *buf, int len)
 {
 	disk_partition_t info;
 	unsigned long size = (len +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
 	int ret = 0; /* success */
 
-	if (!get_partition_info(p_block_dev, part, &info)) {
+	if (!get_partition_info_by_name(p_block_dev, partition_name, &info)) {
 		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, size / EMMC_SECTOR_SIZE, (uint8*)buf)) {
 			printf("emmc image read error \n");
 			ret = -1; /* fail */
