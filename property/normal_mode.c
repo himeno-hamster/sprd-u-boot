@@ -1,6 +1,7 @@
 #include "normal_mode.h"
 #include <mmc.h>
 #include <fat.h>
+#include <asm/arch/wdt_monitor.h>
 
 unsigned spl_data_buf[0x1000] __attribute__((align(4)))={0};
 unsigned harsh_data_buf[8]__attribute__((align(4)))={0};
@@ -894,6 +895,10 @@ void watchdog_mode(void)
 		write_modem_memory();
 #endif
 #endif
+
+	/*dump watchodog registers, then stall*/
+	dump_wdtmonitor_reg();
+
 #if BOOT_NATIVE_LINUX
 	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=wdgreboot", BACKLIGHT_OFF);
 #else
