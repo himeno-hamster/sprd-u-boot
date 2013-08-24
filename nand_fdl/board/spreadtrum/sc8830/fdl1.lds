@@ -44,8 +44,8 @@ SECTIONS
 	__bss0_start = .;
 	.bss0 :
 	{
-		umctl.o	        (.bss)
-		dram_cfg.o      (.bss)
+		scx15_umctl.o	        (.bss)
+		scx15_dram_cfg.o      (.bss)
 		drv_usb.o 	(.bss)
 		virtual_com.o 	(.bss)
 		adi.o	(.bss)

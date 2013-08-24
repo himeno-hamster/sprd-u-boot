@@ -61,7 +61,7 @@
 
 #define CONFIG_RAM512M
 
-//#define CONFIG_EMMC_BOOT
+#define CONFIG_EMMC_BOOT
 
 #ifdef  CONFIG_EMMC_BOOT
 #define EMMC_SECTOR_SIZE 512
@@ -217,7 +217,7 @@
 
 //---these three macro below,only one can be open
 //#define DDR_LPDDR1
-//#define DDR_LPDDR2
+#define DDR_LPDDR2
 //#define DDR_DDR3
 
 //#define DDR_AUTO_DETECT
@@ -243,9 +243,9 @@
 
 /* NAND */
 #define CONFIG_NAND_SC8830
-#define CONFIG_SPRD_NAND_REGS_BASE	(0x20B00000)
+#define CONFIG_SPRD_NAND_REGS_BASE	(0x21100000)
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define CONFIG_SYS_NAND_BASE		(0x20B00000)
+#define CONFIG_SYS_NAND_BASE		(0x21100000)
 //#define CONFIG_JFFS2_NAND
 //#define CONFIG_SPRD_NAND_HWECC
 #define CONFIG_SYS_NAND_HW_ECC

@@ -39,7 +39,12 @@ CPU_OBJ_FILE += sdram.o adi_drv.o emc.o mcu.o efuse_drv.o
 endif
 
 ifdef CONFIG_SC8830
+ifdef CONFIG_FPGA
+CPU_OBJ_FILE += adi.o dram_cfg_fpga.o umctl_fpga.o mcu.o chg_phy.o
+else
 CPU_OBJ_FILE += adi.o dram_cfg.o umctl.o ddr_scan.o mcu.o chg_phy.o
+
+endif
 endif
 
 ifdef CONFIG_SC7710G2

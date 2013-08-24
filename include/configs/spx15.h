@@ -50,7 +50,7 @@
 /*
  * SPREADTRUM BIGPHONE board - SoC Configuration
  */
-#define CONFIG_SP8830
+#define CONFIG_SPX15
 #define CONFIG_SC8830
 
 #define CHIP_ENDIAN_LITTLE
@@ -58,7 +58,7 @@
 
 #define CONFIG_RAM512M
 
-//#define CONFIG_EMMC_BOOT
+#define CONFIG_EMMC_BOOT
 
 #ifdef  CONFIG_EMMC_BOOT
 #define EMMC_SECTOR_SIZE 512
