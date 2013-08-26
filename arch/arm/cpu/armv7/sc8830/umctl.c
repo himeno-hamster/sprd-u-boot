@@ -681,8 +681,8 @@ void umctl2_allport_en()
 void umctl2_port_auto_gate()
 {
 	//for kevin
-	//REG32(0x402B00F0) = 0X3ff03FF;
-	REG32(0x402B00F0) = 0X3FF;
+	REG32(0x402B00F0) = 0X3ff03FF;
+	//REG32(0x402B00F0) = 0X3FF;
 }
 
 void umctl2_ctl_auto_gate()
