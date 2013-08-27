@@ -25,6 +25,13 @@
 
 #define MEM_TOTAL_SIZE 0x40000000
 
+#ifdef SYSDUMP_BYPASS
+void write_sysdump_before_boot(int rst_mode)
+{
+	return;
+}
+#else
+
 extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
 extern lcd_display(void);
 extern void set_backlight(uint32_t value);
@@ -424,6 +431,6 @@ FINISH:
 	return;
 }
 
-
+#endif
 
 
