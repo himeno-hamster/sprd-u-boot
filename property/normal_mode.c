@@ -1202,10 +1202,13 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	}
 	str_len = strlen(buf);
 #ifdef RAM512M
-    sprintf(&buf[str_len], " ram=512M");
+		sprintf(&buf[str_len], " ram=512M");
+#elif RAM128M
+		sprintf(&buf[str_len], " ram=128M");
 #else
-    sprintf(&buf[str_len], " ram=256M");
+		sprintf(&buf[str_len], " ram=256M");
 #endif
+
 
 	chip = (struct nand_chip *)(nand->priv);
 	str_len = strlen(buf);

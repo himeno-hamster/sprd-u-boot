@@ -255,6 +255,8 @@
 #define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),128k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),150m(system),280m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),2m(productinfo),512k(kpanic)"
 #ifdef RAM512M
 #define CONFIG_BOOTARGS "mem=512M console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
+#elif RAM128
+#define CONFIG_BOOTARGS "mem=128M console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
 #else
 #define CONFIG_BOOTARGS "mem=256M console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
 #endif

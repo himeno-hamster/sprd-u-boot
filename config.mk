@@ -193,7 +193,11 @@ CFLAGS += $(call cc-option,-fno-stack-protector)
 ifeq ($(ANDROID_3RDPARTY_RAM_SIZE), 512M)
 CFLAGS += -DRAM512M
 else
+ifeq ($(ANDROID_3RDPARTY_RAM_SIZE), 128M)
+CFLAGS += -DRAM128M
+else
 CFLAGS += -DRAM256M
+endif
 endif
 
 ifeq ($(AUTOBOOT_FLAG), true)
