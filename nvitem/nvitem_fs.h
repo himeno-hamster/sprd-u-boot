@@ -8,8 +8,8 @@ typedef struct
 {
 	uint32	partId;
 #ifdef CONFIG_EMMC_BOOT
-	int		image_path;
-	int		imageBak_path;
+	wchar_t*	image_path;
+	wchar_t*	imageBak_path;
 #else
 	char		image_path[100];
 	char		imageBak_path[100];
