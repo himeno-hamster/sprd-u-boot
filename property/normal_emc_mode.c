@@ -74,25 +74,6 @@ static boot_image_required_t const s_boot_image_table[]={
 static void product_SN_get(void);
 #endif
 
-int get_partition_info (block_dev_desc_t *dev_desc, int part, disk_partition_t *info);
-
-
-int nv_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, char *buf, int len)
-{
-	disk_partition_t info;
-	unsigned long size = (len +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
-	int ret = 0; /* success */
-
-	if (!get_partition_info(p_block_dev, part, &info)) {
-		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, size / EMMC_SECTOR_SIZE, (uint8*)buf)) {
-			printf("emmc image read error \n");
-			ret = 1; /* fail */
-		}
-	}
-
-	return ret;
-}
-
 int Calibration_read_partition(block_dev_desc_t *p_block_dev, wchar_t* partition_name, char *buf, int len)
 {
 	disk_partition_t info;
@@ -135,7 +116,7 @@ unsigned long char2u32(unsigned char *buf, int offset)
 	return ret;
 }
 
-int prodinfo_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, int offset, char *buf, int len)
+int prodinfo_read_partition(block_dev_desc_t *p_block_dev, wchar_t *partition, int offset, char *buf, int len)
 {
 	disk_partition_t info;
 	unsigned long size = (len +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
@@ -143,7 +124,7 @@ int prodinfo_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX p
 	unsigned long crc;
 	unsigned long offset_block = offset / EMMC_SECTOR_SIZE;
 
-	if (!get_partition_info(p_block_dev, part, &info)) {
+	if (!get_partition_info_by_name(p_block_dev, partition, &info)) {
 		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start + offset_block, size / EMMC_SECTOR_SIZE, (uint8*)buf)) {
 			printf("emmc image read error : %d\n", offset);
 			ret = 1; /* fail */
@@ -190,22 +171,6 @@ int prodinfo_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX p
 	return ret;
 }
 
-int nv_write_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, char *buf, int len)
-{
-	disk_partition_t info;
-	unsigned long size = (len +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
-	int ret = 0; /* success */
-
-	if (!get_partition_info(p_block_dev, part, &info)) {
-		if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, size / EMMC_SECTOR_SIZE, (uint8*)buf)) {
-			printf("emmc image read error \n");
-			ret = 1; /* fail */
-		}
-	}
-
-	return ret;
-}
-
 
 int read_logoimg(char *bmp_img,size_t size)
 {
@@ -216,7 +181,7 @@ int read_logoimg(char *bmp_img,size_t size)
 	if(NULL == p_block_dev){
 		return -1;
 	}
-	if (!get_partition_info(p_block_dev, PARTITION_LOGO, &info)) {
+	if (!get_partition_info_by_name(p_block_dev, L"logo", &info)) {
 		if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, size/EMMC_SECTOR_SIZE, bmp_img)){
 			printf("function: %s nand read error\n", __FUNCTION__);
 			return -1;
@@ -244,9 +209,9 @@ int is_factorymode()
 	unsigned char factoryalarmarray2[PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE];
 
 	memset((unsigned char *)factoryalarmarray1, 0xff, PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE);
-	factoryalarmret1 = prodinfo_read_partition(p_block_dev, PARTITION_PROD_INFO1, 4 * 1024, (char *)factoryalarmarray1, PRODUCTINFO_SIZE + 8);
+	factoryalarmret1 = prodinfo_read_partition(p_block_dev, L"prodinfo1", 4 * 1024, (char *)factoryalarmarray1, PRODUCTINFO_SIZE + 8);
 	memset((unsigned char *)factoryalarmarray2, 0xff, PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE);
-	factoryalarmret2 = prodinfo_read_partition(p_block_dev, PARTITION_PROD_INFO2, 4 * 1024, (char *)factoryalarmarray2, PRODUCTINFO_SIZE + 8);
+	factoryalarmret2 = prodinfo_read_partition(p_block_dev, L"prodinfo2", 4 * 1024, (char *)factoryalarmarray2, PRODUCTINFO_SIZE + 8);
 
 	if ((factoryalarmret1 == 0) && (factoryalarmret2 == 0)) {
 		factoryalarmcnt1 = char2u32(factoryalarmarray1, 3 * 1024 + 4);

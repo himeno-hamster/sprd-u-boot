@@ -19,7 +19,7 @@
 #include <ext_common.h>
 #include <ext4fs.h>
 #define PRODUCTINFO_SIZE	(3 * 1024)
-extern int prodinfo_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, int offset, char *buf, int len);
+extern int prodinfo_read_partition(block_dev_desc_t *p_block_dev, wchar_t *partition, int offset, char *buf, int len);
 extern unsigned long char2u32(unsigned char *buf, int offset);
 
 
@@ -72,9 +72,9 @@ int alarm_file_check(char *time_buf)
 		ret = 0;
 	if (ret == -1) {
 		memset((unsigned char *)factoryalarmarray1, 0xff, PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE);
-		factoryalarmret1 = prodinfo_read_partition(p_block_dev, PARTITION_PROD_INFO1, 8 * 1024, (char *)factoryalarmarray1, PRODUCTINFO_SIZE + 8);
+		factoryalarmret1 = prodinfo_read_partition(p_block_dev, L"prodinfo1", 8 * 1024, (char *)factoryalarmarray1, PRODUCTINFO_SIZE + 8);
 		memset((unsigned char *)factoryalarmarray2, 0xff, PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE);
-		factoryalarmret2 = prodinfo_read_partition(p_block_dev, PARTITION_PROD_INFO2, 8 * 1024, (char *)factoryalarmarray2, PRODUCTINFO_SIZE + 8);
+		factoryalarmret2 = prodinfo_read_partition(p_block_dev, L"prodinfo2", 8 * 1024, (char *)factoryalarmarray2, PRODUCTINFO_SIZE + 8);
 	}
 
 	if ((factoryalarmret1 == 0) && (factoryalarmret2 == 0)) {
@@ -110,9 +110,9 @@ int poweron_file_check(char *time_buf)
 		ret = 0;
 	if (ret == -1) {
 		memset((unsigned char *)factorypowerarray1, 0xff, PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE);
-		factorypowerret1 = prodinfo_read_partition(p_block_dev, PARTITION_PROD_INFO1, 12 * 1024, (char *)factorypowerarray1, PRODUCTINFO_SIZE + 8);
+		factorypowerret1 = prodinfo_read_partition(p_block_dev, L"prodinfo1", 12 * 1024, (char *)factorypowerarray1, PRODUCTINFO_SIZE + 8);
 		memset((unsigned char *)factorypowerarray2, 0xff, PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE);
-		factorypowerret2 = prodinfo_read_partition(p_block_dev, PARTITION_PROD_INFO2, 12 * 1024, (char *)factorypowerarray2, PRODUCTINFO_SIZE + 8);
+		factorypowerret2 = prodinfo_read_partition(p_block_dev, L"prodinfo2", 12 * 1024, (char *)factorypowerarray2, PRODUCTINFO_SIZE + 8);
 	}
 
 	if ((factorypowerret1 == 0) && (factorypowerret2 == 0)) {

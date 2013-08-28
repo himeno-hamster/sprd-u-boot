@@ -23,7 +23,6 @@
 #include "normal_mode.h"
 
 #define msleep(a) udelay(a * 1000)
-extern int prodinfo_read_partition(block_dev_desc_t *p_block_dev, EFI_PARTITION_INDEX part, int offset, char *buf, int len);
 
 
 #ifdef dprintf
@@ -46,7 +45,7 @@ int get_recovery_message(struct recovery_message *out)
 	if(NULL == p_block_dev){
 		return -1;
 	}
-	if (!get_partition_info(p_block_dev, PARTITION_MISC, &info)) {
+	if (!get_partition_info_by_name(p_block_dev, L"misc", &info)) {
 		if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, size/EMMC_SECTOR_SIZE, (void *)buf)){
 			printf("function: %s emcc read error\n", __FUNCTION__);
 			return -1;
@@ -66,7 +65,7 @@ int set_recovery_message(const struct recovery_message *in)
 	if(NULL == p_block_dev){
 		return -1;
 	}
-	if (!get_partition_info(p_block_dev, PARTITION_MISC, &info)) {
+	if (!get_partition_info_by_name(p_block_dev, L"misc", &info)) {
 		memset(buf, 0, sizeof(buf));
 		if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, size/EMMC_SECTOR_SIZE, (void *)buf)){
 			printf("function: %s emcc read error\n", __FUNCTION__);
@@ -302,7 +301,7 @@ void try_update_modem(void)
 		//sc8830 do it later
 #else
 		memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
-		if(0 == nv_read_partition(p_block_dev, PARTITION_FIX_NV1, (char *)FIXNV_ADR, FIXNV_SIZE + 4)){
+		if(_boot_partition_read(p_block_dev, L"fixnv1", 0, FIXNV_SIZE + 4, (char *)FIXNV_ADR)){
 			if (1 == fixnv_is_correct_endflag((unsigned char *)FIXNV_ADR, FIXNV_SIZE)){
 				update_fixnv(FIXNV_ADR,BUF_ADDR);	
 				goto SKIP;
@@ -319,7 +318,7 @@ NEXT:
 			//sc8830 do it later
 #else
 		memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE + EMMC_SECTOR_SIZE);
-		if(0 == nv_read_partition(p_block_dev, PARTITION_FIX_NV2, (char *)FIXNV_ADR, FIXNV_SIZE + 4)){
+		if(_boot_partition_read(p_block_dev, L"fixnv2", 0, FIXNV_SIZE + 4, (char *)FIXNV_ADR)){
 			if (1 == fixnv_is_correct_endflag((unsigned char *)FIXNV_ADR, FIXNV_SIZE)){
 				update_fixnv(FIXNV_ADR,BUF_ADDR);	
 			}else{
@@ -336,8 +335,8 @@ SKIP:
 #ifdef CONFIG_SC8830
 				//sc8830 do it later
 #else
-		nv_write_partition(p_block_dev, PARTITION_FIX_NV1, (char *)BUF_ADDR, size);
-		nv_write_partition(p_block_dev, PARTITION_FIX_NV2, (char *)BUF_ADDR, size);
+		_boot_partition_write(p_block_dev, L"fixnv1", size, (char *)BUF_ADDR);
+		_boot_partition_write(p_block_dev, L"fixnv2", size, (char *)BUF_ADDR);
 #endif
 		file_fat_rm(SD_NV_NAME);
 	}while(0);
@@ -351,7 +350,6 @@ SKIP:
 		}
 		size = ret;
 		splFillCheckData((unsigned int *) spl_eMMCBuf, (int)size);
-		//nv_write_partition(p_block_dev, PARTITION_MODEM, (char *)BUF_ADDR, size);
 		if (TRUE !=  Emmc_Write(PARTITION_BOOT1, 0, CONFIG_SPL_LOAD_LEN / EMMC_SECTOR_SIZE, (uint8*)spl_eMMCBuf)) {
 			printf("emmc image read error \n");
 			ret = 1; /* fail */
@@ -371,7 +369,7 @@ SKIP:
 #ifdef CONFIG_SC8830
 				//sc8830 do it later
 #else
-		nv_write_partition(p_block_dev, PARTITION_MODEM, (char *)BUF_ADDR, size);
+		_boot_partition_write(p_block_dev, L"modem", size, (char *)BUF_ADDR);
 #endif
 		file_fat_rm(SD_MODEM_NAME);
 	}while(0);
@@ -387,7 +385,7 @@ SKIP:
 #ifdef CONFIG_SC8830
 				//sc8830 do it later
 #else
-		nv_write_partition(p_block_dev, PARTITION_DSP, (char *)BUF_ADDR, size);
+		_boot_partition_write(p_block_dev, L"dsp", size, (char *)BUF_ADDR);
 #endif
 		file_fat_rm(SD_DSP_NAME);
 	}while(0);
@@ -401,7 +399,7 @@ SKIP:
 		}
 		size = ret;
 #ifndef CONFIG_SC8830
-		nv_write_partition(p_block_dev, PARTITION_VM, (char *)BUF_ADDR, size);
+		_boot_partition_write(p_block_dev, L"vm", size, (char *)BUF_ADDR);
 #endif
 		file_fat_rm(SD_VM_NAME);
 	}while(0);
