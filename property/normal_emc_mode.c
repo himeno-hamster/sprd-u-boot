@@ -342,6 +342,8 @@ void addcmdline(char *buf)
 	sprintf(&buf[str_len], ",0x");
 	str_len = strlen(buf);
 	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
+#endif
+#endif
 
 #ifdef CONFIG_FS_EXT4
 	if(product_SN_flag ==1)
@@ -353,8 +355,6 @@ void addcmdline(char *buf)
 	}
 #endif
 
-#endif
-#endif
 #if BOOT_NATIVE_LINUX_MODEM
 	str_len = strlen(buf);
 	buf[str_len] = '\0';
@@ -833,6 +833,7 @@ static void product_SN_get(void)
 			product_SN_flag =1;
 			memcpy(product_SN1, phase_check.SN1, 21);
 			memcpy(product_SN2, phase_check.SN2, 21);
+			printf("%s ext4 open ok  /productinfo/productinfo.bin  sn1= %s ; sn2 = %s \n",__FUNCTION__, product_SN1, product_SN2);
 		}
 		else{
 			product_SN_flag =0;
