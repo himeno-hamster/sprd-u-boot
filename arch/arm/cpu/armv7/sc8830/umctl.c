@@ -1157,6 +1157,13 @@ void sdram_clk_set(CLK_TYPE_E clock)
 	//disable ddr_phy_eb
 	reg_bits_set(0x402b00c8,2,1,0);
 
+	//disable address/command/data dll
+	reg_bits_set(PUBL_ACDLLCR,30,1,0);
+	reg_bits_set(PUBL_DX0DLLCR,30,1,0);
+	reg_bits_set(PUBL_DX1DLLCR,30,1,0);
+	reg_bits_set(PUBL_DX2DLLCR,30,1,0);
+	reg_bits_set(PUBL_DX3DLLCR,30,1,0);	
+
     //set divide
     reg_val = UMCTL2_REG_GET(0x402E0018);
     reg_val &=~0x7ff;
@@ -1177,6 +1184,14 @@ void sdram_clk_set(CLK_TYPE_E clock)
 	//enable ddr_phy_eb
 	reg_bits_set(0x402b00c8,2,1,1);
 	
+	//enable address/command/data dll
+	reg_bits_set(PUBL_ACDLLCR,30,1,1);
+	reg_bits_set(PUBL_DX0DLLCR,30,1,1);
+	reg_bits_set(PUBL_DX1DLLCR,30,1,1);
+	reg_bits_set(PUBL_DX2DLLCR,30,1,1);
+	reg_bits_set(PUBL_DX3DLLCR,30,1,1);	
+	wait_pclk(263);//publ apb clk=26m-38ns, 263*38ns = 10us
+
 	
 }
 
