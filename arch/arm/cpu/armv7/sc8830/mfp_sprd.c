@@ -61,22 +61,12 @@ static unsigned long __mfp_get_pin_reg(int pin_offset)
 
 #ifdef DEBUG
 #define MFP_DBG(fmt...) pr_debug(fmt)
-static unsigned long __mfp_get_physical(int pin_offset)
-{
-	if (!(pin_offset & A_DIE_PIN)) {
-		return (unsigned long)SPRD_CPC_PHYS + pin_offset;
-	} else {
-		pin_offset &= ~A_DIE_PIN;
-		return (unsigned long)SPRD_MISC_PHYS + 0x180 + pin_offset;
-	}
-}
 #else
 #define	MFP_DBG(fmt...)
 #endif
 
 static int __mfp_config_pin(unsigned long c)
 {
-	unsigned long flags;
 	unsigned long pin_reg;
 	unsigned long pin_cfg;
 	int pin_offset;
@@ -122,7 +112,6 @@ static unsigned long spi_cs1_gpio_cfg = MFP_CFG_X(SPI_CSN0, GPIO, DS1, F_PULL_NO
 
 void sprd_mfp_config(unsigned long *mfp_cfgs, int num)
 {
-	unsigned long flags;
 	unsigned long *c;
 	int res;
 	int i;
