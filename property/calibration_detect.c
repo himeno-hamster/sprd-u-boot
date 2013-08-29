@@ -488,7 +488,7 @@ int cali_file_check(void)
 	if(NULL == p_block_dev)
 		return 0;
 #ifdef CONFIG_FS_EXT4
-	if(ext4_read_content(1, L"prodinfo3", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
+	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
 	{
 #endif
 		if(-1 == Calibration_read_partition(p_block_dev, calibration_detect_partition, (char *)nv_buffer,sizeof(nv_buffer))){
@@ -555,7 +555,7 @@ int read_adc_calibration_data(char *buffer,int size)
 	if(NULL == p_block_dev)
 		return 0;
 #ifdef CONFIG_FS_EXT4
-	if(ext4_read_content(1, L"prodinfo3", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
+	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
 	{
 #endif
 		if(-1 == Calibration_read_partition(p_block_dev, calibration_detect_partition, (char *)nv_buffer,sizeof(nv_buffer)))

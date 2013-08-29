@@ -62,7 +62,7 @@ static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
     }
     if(nv_read_flag == 0){
 #ifdef CONFIG_FS_EXT4
-	if(ext4_read_content(1, L"prodinfo3", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
+	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
 	{
 #endif
 		if(-1 == Calibration_read_partition(p_block_dev, ap_calibration_partition, (char *)nv_buffer,sizeof(nv_buffer)))
@@ -82,7 +82,7 @@ static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
             nv_buffer[255] = 0x5a5a5a5a;
 	    memcpy(&nv_buffer[0],lpBuff,size);
 #ifdef CONFIG_FS_EXT4
-	    if(ext4_write_content(1, L"prodinfo3", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
+	    if(ext4_write_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
 	     {
 #endif
 		    if(-1 == Calibration_write_partition(p_block_dev, ap_calibration_partition, (char *)nv_buffer,sizeof(nv_buffer)))

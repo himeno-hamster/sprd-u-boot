@@ -1081,17 +1081,6 @@ PUBLIC int fdl2_emmc_erase(wchar_t* partition_name, unsigned long size)
 			}
 		}
 
-		if (wcsncmp(L"prodinfo3", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"prodinfo3")) == 0) {
-			part_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
-			make_ext4fs_main(g_eMMCBuf, part_size);
-
-			retval = write_simg2emmc("mmc", 1, g_dl_eMMCStatus.curUserPartitionName, g_eMMCBuf, EMMC_BUF_SIZE);
-			if (retval == -1) {
-				SEND_ERROR_RSP (BSL_WRITE_ERROR);
-				return 0;
-			}
-		}
-
 		if (wcsncmp(L"sd", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"sd")) == 0) {
 			printf("formating sd partition, waiting for a while!\n");
 			if (_format_sd_partition() == -1){

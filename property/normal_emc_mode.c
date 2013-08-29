@@ -10,7 +10,7 @@
 #define KERNL_PAGE_SIZE 2048
 
 #ifdef CONFIG_FS_EXT4
-static wchar_t *normal_emc_partition = L"prodinfo3";
+static wchar_t *normal_emc_partition = L"prodnv";
 static char     	product_SN[20+1];
 static int		product_SN_flag = 0;
 #endif

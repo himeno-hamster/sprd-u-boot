@@ -100,39 +100,6 @@ gpt_header gpt_head __attribute__ ((aligned(4))) = {0};
 static unsigned long long int _cur_lba_num = 0; 
 static unsigned long long int all_used_size = 0;
 
-#ifndef CONFIG_SC8830
-PARTITION_CFG g_partition_cfg[]={
-	{PARTITION_VM, 		512, 		PARTITION_RAW,	0,	L"vm"		},/* 512KB */
-	{PARTITION_MODEM, 	10 * 1024, 	PARTITION_RAW,	0,	L"modem"		},/* 10 * 1024KB */
-	{PARTITION_DSP, 	5 * 1024, 	PARTITION_RAW,	0,	L"dsp"		},
-	{PARTITION_FIX_NV1, 	3840, 		PARTITION_RAW,	0,	L"fixnv1"	},
-	{PARTITION_FIX_NV2, 	3840, 		PARTITION_RAW,	0,	L"fixnv2"	},
-	{PARTITION_RUNTIME_NV1, 3840, 		PARTITION_RAW,	0,	L"runtimenv1"	},
-	{PARTITION_RUNTIME_NV2, 3840, 		PARTITION_RAW,	0,	L"runtimenv2"	},
-	{PARTITION_PROD_INFO1, 	3840, 		PARTITION_RAW,	0,	L"prodinfo1"	},
-	{PARTITION_PROD_INFO2, 	3840, 		PARTITION_RAW,	0,	L"prodinfo2"	},
-	{PARTITION_PROD_INFO3, 	5 * 1024, 	PARTITION_RAW,	0,	L"prodinfo3"	}, /*must be large or equal than 5MB*/
-	{PARTITION_KERNEL, 	10 * 1024, 	PARTITION_RAW,	0,	L"kernel"	},
-	{PARTITION_SYSTEM, 	250 * 1024, 	PARTITION_RAW,	0,	L"system"	},
-	{PARTITION_USER_DAT, 	MAX_SIZE_FLAG, 	PARTITION_RAW,	0,	L"userdata"	},
-	{PARTITION_CACHE, 	20 * 1024, 	PARTITION_RAW,	0,	L"cache"		},
-	{PARTITION_LOGO, 	1 * 1024, 	PARTITION_RAW,	0,	L"logo"		},
-	{PARTITION_RECOVERY, 	10 * 1024, 	PARTITION_RAW,	0,	L"recovery"	},
-	{PARTITION_FASTBOOT_LOGO, 1 * 1024, 	PARTITION_RAW,	0,	L"fbootlogo"	},
-	{PARTITION_MISC, 	256, 		PARTITION_RAW,	0,	L"misc"		},
-#if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined (CONFIG_SC7710G2)
-	{PARTITION_FIRMWARE, 	10*1024, 	PARTITION_RAW,	0,	L"firmware"	},/*save modem image in samsung stingray0*/
-#else
-	{PARTITION_SD, 		1000 * 1024, 	PARTITION_RAW,	0,	L"sd"		},
-#endif
-#ifdef CONFIG_AP_ADC_CALIBRATION
-	{PARTITION_PROD_INFO4, 	256, 		PARTITION_RAW,	0,	L"prodinfo4"	},/*save modem image in samsung stingray0*/
-#endif
-	{0,0,0}
-};
-#endif
-
-
 /* Convert char[2] in little endian format to the host format integer
  */
 static inline unsigned short le16_to_int(unsigned char *le16)
@@ -414,13 +381,12 @@ unsigned int write_uefi_partition_table(PARTITION_CFG *p_partition_cfg)
 	//write pmbr
 	_gen_pmbr(&pmbr.pmbr);
 	_write_pmbr(&pmbr.pmbr);
-#ifndef CONFIG_SC8830
-	//write gpt
+
 	if( NULL == p_partition_cfg )
 	{
-		p_partition_cfg = &g_partition_cfg;  
+		return 0;  
 	}
-#endif
+	//write gpt
 	_gen_gpt(&gpt_head,p_partition_cfg);
 	_write_gpt(&gpt_head);
 
