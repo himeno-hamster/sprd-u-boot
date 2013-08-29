@@ -361,7 +361,7 @@ void umctl2_basic_mode_init(DRAM_INFO* dram)
                                     (IS_LPDDR1(dram_type)?0x02:0x00) |
                                     (IS_LPDDR2(dram_type)?0x04:0x00));
 
-    UMCTL2_REG_SET(UMCTL_SCHED,0x00070b01);
+    UMCTL2_REG_SET(UMCTL_SCHED,0x00071a01);
 
     /*Only present for multi-rank configurations.
     *[11:8]:rank_wr_gap,clks of gap in data responses when performing consecutive writes to different ranks.
@@ -1630,7 +1630,7 @@ void ddr_external_qos_set()
     //                  port7 wr&rd (AP matrix)    >
     //                  port1 wr&rd (GPU)
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  0,4,0xc); //chanel 0 wr qos, mm/dcam/vsp
-	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  4,4,0x6); //chanel 0 rd qos, mm/dcam/vsp
+	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  4,4,0x8); //chanel 0 rd qos, mm/dcam/vsp
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C,  8,4,0x0); //chanel 1 wr qos, GPU
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 12,4,0x0); //chanel 1 rd qos, GPU
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 16,4,0x2); //chanel 2 wr qos, display/gsp
@@ -1639,18 +1639,18 @@ void ddr_external_qos_set()
 	reg_bits_set(CTL_BASE_PUB_APB + 0x9C, 28,4,0x4); //chanel 3 rd qos, CA7		
 
 	reg_bits_set(CTL_BASE_PUB_APB + 0xA0,  0,4,0xf); //chanel 4 wr qos, CPx DSP
-	reg_bits_set(CTL_BASE_PUB_APB + 0xA0,  4,4,0xf); //chanel 4 rd qos, CPx DSP
-	reg_bits_set(CTL_BASE_PUB_APB + 0xA0,  8,4,0xf); //chanel 5 wr qos, CP0W
-	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 12,4,0xf); //chanel 5 rd qos, CP0W
-	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 16,4,0xf); //chanel 6 wr qos, CP0 ARM
-	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 20,4,0xf); //chanel 6 rd qos, CP0 ARM
-	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 24,4,0x2); //chanel 7 wr qos, AP matrix 
-	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 28,4,0x2); //chanel 7 rd qos, AP matrix 	
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0,  4,4,0xf); //chanel 4 rd qos, CPx DSP  HPR no use
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0,  8,4,0xe); //chanel 5 wr qos, CP0W
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 12,4,0xe); //chanel 5 rd qos, CP0W
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 16,4,0xe); //chanel 6 wr qos, CP0 ARM
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 20,4,0xe); //chanel 6 rd qos, CP0 ARM
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 24,4,0x6); //chanel 7 wr qos, AP matrix 
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA0, 28,4,0x6); //chanel 7 rd qos, AP matrix 	
 
-	reg_bits_set(CTL_BASE_PUB_APB + 0xA4,  0,4,0xf); //chanel 8 wr qos, CP1 ARM
-	reg_bits_set(CTL_BASE_PUB_APB + 0xA4,  4,4,0xf); //chanel 8 rd qos, CP1 ARM
-	reg_bits_set(CTL_BASE_PUB_APB + 0xA4,  8,4,0xf); //chanel 9 wr qos, CP2
-	reg_bits_set(CTL_BASE_PUB_APB + 0xA4, 12,4,0xf); //chanel 9 rd qos, CP2
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA4,  0,4,0xe); //chanel 8 wr qos, CP1 ARM
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA4,  4,4,0xe); //chanel 8 rd qos, CP1 ARM
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA4,  8,4,0xe); //chanel 9 wr qos, CP2
+	reg_bits_set(CTL_BASE_PUB_APB + 0xA4, 12,4,0xe); //chanel 9 rd qos, CP2
 	
 }
 

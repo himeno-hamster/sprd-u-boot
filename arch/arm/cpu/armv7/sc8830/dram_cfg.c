@@ -174,7 +174,7 @@ DRAM_INFO DRAM_INFO_ARRAY[] =
   {DRAM_LPDDR2_1CS_8G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	
   //{DRAM_LPDDR2_2CS_4G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	  	
   {DRAM_LPDDR2_2CS_6G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	
-  {DRAM_LPDDR2_2CS_8G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
+  {DRAM_LPDDR2_2CS_8G_X32,   2,   8,      32,        8,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
   //{DRAM_LPDDR2_2CS_12G_X32,  2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	
   //{DRAM_LPDDR2_2CS_16G_X32,  2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
   {DRAM_DDR3_1CS_2G_X8_4P,   1,   8,	  32,		 8,   6,  5, 0, (void *)(&DDR3_ACTIMING)},
@@ -184,16 +184,16 @@ DRAM_INFO DRAM_INFO_ARRAY[] =
 umctl2_port_info_t UMCTL2_PORT_CONFIG[] = 
 {
 //rw_order r_hpr r_pg  r_ugent r_age r_rord_bp r_age_cnt, w_pg  w_ugent w_age  w_age_cnt
-    {TRUE, FALSE,TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port0,mm/dcam/vsp
-    {TRUE, FALSE,TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port1,GPU
-    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port2,display/gsp
-    {TRUE, FALSE,TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port3,CA7
-    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port4,CPx DSP
-    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port5,CP0W
-    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port6,CP0 ARM
-    {TRUE, FALSE,TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port7,AP matrix    
-    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10},//port8,CP1 ARM
-    {TRUE, TRUE, TRUE, FALSE,  FALSE, FALSE,     0,        TRUE, FALSE,  TRUE, 0x10}, //port9,CP2
+    {TRUE, FALSE,TRUE, FALSE,  TRUE,  FALSE,     0x040,   TRUE, FALSE,  TRUE, 0x040},//port0,mm/dcam/vsp
+    {TRUE, FALSE,TRUE, FALSE,  FALSE, FALSE,     0x100,   TRUE, FALSE,  FALSE,0x100},//port1,GPU
+    {TRUE, TRUE, TRUE, FALSE,  TRUE,  FALSE,     0x020,   TRUE, FALSE,  TRUE, 0x020},//port2,display/gsp
+    {TRUE, FALSE,TRUE, FALSE,  FALSE, FALSE,     0x100,   TRUE, FALSE,  FALSE,0x100},//port3,CA7
+    {TRUE, TRUE, TRUE, FALSE,  TRUE,  FALSE,     0x002,   TRUE, FALSE,  TRUE, 0x002},//port4,CPx DSP
+    {TRUE, FALSE,TRUE, FALSE,  TRUE,  FALSE,     0x008,   TRUE, FALSE,  TRUE, 0x008},//port5,CP0W
+    {TRUE, FALSE,TRUE, FALSE,  TRUE,  FALSE,     0x010,   TRUE, FALSE,  TRUE, 0x010},//port6,CP0 ARM
+    {TRUE, FALSE,TRUE, FALSE,  TRUE,  FALSE,     0x080,   TRUE, FALSE,  TRUE, 0x080},//port7,AP matrix    
+    {TRUE, FALSE,TRUE, FALSE,  TRUE,  FALSE,     0x008,   TRUE, FALSE,  TRUE, 0x008},//port8,CP1 ARM
+    {TRUE, FALSE,TRUE, FALSE,  TRUE,  FALSE,     0x010,   TRUE, FALSE,  TRUE, 0x010}, //port9,CP2
     {0xff},
 };
 
