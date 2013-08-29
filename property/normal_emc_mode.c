@@ -11,8 +11,7 @@
 
 #ifdef CONFIG_FS_EXT4
 static wchar_t *normal_emc_partition = L"prodinfo3";
-static char     	product_SN1[20+1];
-static char     	product_SN2[20+1];
+static char     	product_SN[20+1];
 static int		product_SN_flag = 0;
 #endif
 
@@ -349,9 +348,7 @@ void addcmdline(char *buf)
 	if(product_SN_flag ==1)
 	{
 		str_len = strlen(buf);
-		sprintf(&buf[str_len], " SN1=%s", product_SN1);
-		str_len = strlen(buf);
-		sprintf(&buf[str_len], " SN2=%s", product_SN2);
+		sprintf(&buf[str_len], " androidboot.serialno=%s", product_SN);
 	}
 #endif
 
@@ -831,9 +828,8 @@ static void product_SN_get(void)
 		if(!ext4_read_content(1,normal_emc_partition,"/productinfo.bin", &phase_check, 0, sizeof(phase_check)))
 		{
 			product_SN_flag =1;
-			memcpy(product_SN1, phase_check.SN1, 21);
-			memcpy(product_SN2, phase_check.SN2, 21);
-			printf("%s ext4 open ok  /productinfo/productinfo.bin  sn1= %s ; sn2 = %s \n",__FUNCTION__, product_SN1, product_SN2);
+			memcpy(product_SN, phase_check.SN1, 21);
+			printf("%s ext4 open ok  /productinfo/productinfo.bin  sn1= %s \n",__FUNCTION__, product_SN);
 		}
 		else{
 			product_SN_flag =0;
