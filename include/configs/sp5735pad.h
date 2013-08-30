@@ -362,7 +362,10 @@
 #endif // CONFIG_LCD
 
 #define CONFIG_SPRD_SYSDUMP
-#define SYSDUMP_CORE_HDR  0x98300000 /*0x8c400000*/  /* SPRD_IO_MEM_BASE in kernel */
+#include <asm/sizes.h>
+#define SPRD_SYSDUMP_MAGIC      ((PHYS_OFFSET_ADDR & (~(SZ_512M - 1))) + SZ_512M - SZ_1M)
+
+
 
 #define CALIBRATE_ENUM_MS 15000
 #define CALIBRATE_IO_MS 10000

@@ -23,6 +23,7 @@
 
 #define CONFIG_PHYS_OFFSET 0x80000000
 #define PAGE_OFFSET 0xC0000000
+#define MEM_TOTAL_SIZE 0x40000000
 
 #define PAGE_SHIFT 12
 #ifndef PAGE_SIZE
@@ -47,6 +48,7 @@ struct sysdump_info {
 	int elfhdr_size;
 	int mem_num;
 	unsigned long dump_mem_paddr;
+	int crash_key;
 };
 
 

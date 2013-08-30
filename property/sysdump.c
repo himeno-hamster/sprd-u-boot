@@ -23,14 +23,7 @@
 #include <linux/key_code.h>
 #include "sysdump.h"
 
-#define MEM_TOTAL_SIZE 0x40000000
 
-#ifdef SYSDUMP_BYPASS
-void write_sysdump_before_boot(int rst_mode)
-{
-	return;
-}
-#else
 
 extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
 extern lcd_display(void);
@@ -328,7 +321,7 @@ void write_sysdump_before_boot(int rst_mode)
 	struct rtc_time rtc;
 	char *waddr;
 	struct sysdump_mem *mem;
-	struct sysdump_info *infop = (struct sysdump_info *)SYSDUMP_CORE_HDR;
+	struct sysdump_info *infop = (struct sysdump_info *)SPRD_SYSDUMP_MAGIC;
 
 	struct sysdump_mem sprd_dump_mem[] = {
 		{
@@ -343,13 +336,21 @@ void write_sysdump_before_boot(int rst_mode)
 	int sprd_dump_mem_num = 1;
 
 	printf("rst_mode:0x%x, Check if need to write sysdump info of 0x%08lx to file...\t", rst_mode,
-		SYSDUMP_CORE_HDR);
+		SPRD_SYSDUMP_MAGIC);
 
 	if ((rst_mode == WATCHDOG_REBOOT) || (rst_mode == UNKNOW_REBOOT_MODE) || \
 		((rst_mode == PANIC_REBOOT) && !memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic)))) {
 		printf("\n");
 
 		memset(infop->magic, 0, sizeof(infop->magic));
+
+#ifdef SYSDUMP_BYPASS
+		printf("infop->crash_key: %d\n", infop->crash_key);
+		if ((rst_mode != PANIC_REBOOT) || (infop->crash_key == 0)) {
+			printf("skip sysdump for user build\n");
+			goto FINISH;
+		}
+#endif
 
 		if (init_mmc_fat())
 			goto FINISH;
@@ -363,6 +364,7 @@ void write_sysdump_before_boot(int rst_mode)
 			infop->dump_mem_paddr = (unsigned long)sprd_dump_mem;
 			strcpy(infop->time, "hw_watchdog");
 			infop->elfhdr_size = get_elfhdr_size(infop->mem_num);
+			infop->crash_key = 0;
 
 			sysdump_fill_core_hdr(NULL,
 					sprd_dump_mem,
@@ -431,6 +433,6 @@ FINISH:
 	return;
 }
 
-#endif
+
 
 
