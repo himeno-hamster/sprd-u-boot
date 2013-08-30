@@ -31,13 +31,16 @@
 #define OPERATION_MODE_SR 0x04
 #define OPERATION_MODE_DPD 0x05
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-#define IS_SHARK_CS  ((REG32(0x402E00FC) == 0)?0:1)
-
+#define SHARK_CHIP_ID_ADDR 0x402E00FC
+#define IS_SHARK_CS  ((REG32(SHARK_CHIP_ID_ADDR) == 0)?0:1)
+#define SHARK_DDR_CTL_EB_ADDR 0x402B00C8
+#define SHARK_DDR_CTL_CLK_DIV_ADDR 0x402E0018
+#define SHARK_DDR_CTL_CLK_SEL_ADDR 0x402D0024
 
 /**---------------------------------------------------------------------------*
  **                            Extern Declare
  **---------------------------------------------------------------------------*/
-extern MEM_IODS_E       MEM_IO_DS;
+//extern MEM_IODS_E       MEM_IO_DS;
 extern DRAM_BURSTTYPE_E MEM_BURST_TYPE;
 extern DRAM_WC_E        MEM_WC_TYPE;
 
@@ -45,11 +48,7 @@ extern DRAM_WC_E        MEM_WC_TYPE;
 extern uint32 SDRAM_BASE;
 extern uint32 DQS_PDU_RES;	//dqs pull up and pull down resist
 extern uint32 DQS_GATE_EARLY_LATE; 
-    
-extern uint32 PUBL_LPDDR1_DS;
-extern uint32 PUBL_LPDDR2_DS;
-extern uint32 PUBL_DDR3_DS;
-    
+       
 extern uint32 B0_SDLL_PHS_DLY;
 extern uint32 B1_SDLL_PHS_DLY;
 extern uint32 B2_SDLL_PHS_DLY;
@@ -69,7 +68,7 @@ static DRAM_TYPE_E DDR_TYPE_LOCAL;
  **                            Local Functions
  **---------------------------------------------------------------------------*/
 
-static uint32 reg_bits_set(uint32 addr, 
+uint32 reg_bits_set(uint32 addr, 
                            uint32 start_bitpos,
                            uint32 bit_num,
                            uint32 value)
@@ -193,16 +192,16 @@ void umctl2_ctl_en(BOOLEAN is_en)
     if(is_en) 
     {
         // Assert soft reset
-        reg_value =   UMCTL2_REG_GET(0x402b00c8);
+        reg_value =   UMCTL2_REG_GET(SHARK_DDR_CTL_EB_ADDR);
         reg_value |=  0x07;
-        UMCTL2_REG_SET(0x402b00c8, reg_value);
+        UMCTL2_REG_SET(SHARK_DDR_CTL_EB_ADDR, reg_value);
         for(i = 0; i <= 1000; i++);
     } 
     else 
     {
-        reg_value =   UMCTL2_REG_GET(0x402b00c8);
+        reg_value =   UMCTL2_REG_GET(SHARK_DDR_CTL_EB_ADDR);
         reg_value &=  ~0x07;
-        UMCTL2_REG_SET(0x402b00c8, reg_value);
+        UMCTL2_REG_SET(SHARK_DDR_CTL_EB_ADDR, reg_value);
         for(i = 0; i <= 1000; i++);
     } 
 }
@@ -213,16 +212,16 @@ void umctl2_soft_reset(BOOLEAN is_en)
     if(is_en) 
     {
         // Assert soft reset
-        reg_value =   UMCTL2_REG_GET(0x402b00c8);
+        reg_value =   UMCTL2_REG_GET(SHARK_DDR_CTL_EB_ADDR);
 		reg_value |=   (0x1f00);
-        UMCTL2_REG_SET(0x402b00c8, reg_value);
+        UMCTL2_REG_SET(SHARK_DDR_CTL_EB_ADDR, reg_value);
         for(i = 0; i <= 1000; i++);
     } 
     else 
     {
-        reg_value =   UMCTL2_REG_GET(0x402b00c8);
+        reg_value =   UMCTL2_REG_GET(SHARK_DDR_CTL_EB_ADDR);
         reg_value &=  ~(0x1f00);
-        UMCTL2_REG_SET(0x402b00c8, reg_value);
+        UMCTL2_REG_SET(SHARK_DDR_CTL_EB_ADDR, reg_value);
         for(i = 0; i <= 1000; i++);
     } 
 }
@@ -231,9 +230,9 @@ void umctl2_publ_reg_open()
 {
 	uint32 reg_val = 0;
 
-	reg_val   = UMCTL2_REG_GET(0x402b00c8);
+	reg_val   = UMCTL2_REG_GET(SHARK_DDR_CTL_EB_ADDR);
 	reg_val  &= ~(0x1d00);
-	UMCTL2_REG_SET(0x402b00c8, reg_val);
+	UMCTL2_REG_SET(SHARK_DDR_CTL_EB_ADDR, reg_val);
 }
 
 //tempurature derate configuration
@@ -694,9 +693,9 @@ void umctl2_ctl_auto_gate()
 	else
 	{
 		//enable ddr phy,ctl,publ clock auto gate, only shark cs chip have
-    	reg_bits_set(0x402b00c8,4,3,7);    
+    	reg_bits_set(SHARK_DDR_CTL_EB_ADDR,4,3,7);    
 		//disable ddr phy,ctl,publ clock force eb,because auto gate had been enable
-		reg_bits_set(0x402b00c8,0,3,0);    
+		reg_bits_set(SHARK_DDR_CTL_EB_ADDR,0,3,0);    
 	}		
 }
 
@@ -1155,7 +1154,7 @@ void sdram_clk_set(CLK_TYPE_E clock)
 	uint32 volatile i = 0;
 
 	//disable ddr_phy_eb
-	reg_bits_set(0x402b00c8,2,1,0);
+	reg_bits_set(SHARK_DDR_CTL_EB_ADDR,2,1,0);
 
 	//disable address/command/data dll
 	reg_bits_set(PUBL_ACDLLCR,30,1,0);
@@ -1165,24 +1164,24 @@ void sdram_clk_set(CLK_TYPE_E clock)
 	reg_bits_set(PUBL_DX3DLLCR,30,1,0);	
 
     //set divide
-    reg_val = UMCTL2_REG_GET(0x402E0018);
+    reg_val = UMCTL2_REG_GET(SHARK_DDR_CTL_CLK_DIV_ADDR);
     reg_val &=~0x7ff;
     reg_val |= (clock>>2);
-    UMCTL2_REG_SET(0x402E0018,reg_val);
+    UMCTL2_REG_SET(SHARK_DDR_CTL_CLK_DIV_ADDR,reg_val);
     
     //select DPLL 533MHZ source clock
-    reg_val = UMCTL2_REG_GET(0x402D0024);
+    reg_val = UMCTL2_REG_GET(SHARK_DDR_CTL_CLK_SEL_ADDR);
     reg_val &= ~0x3;
 //    reg_val |= 0; //default:XTL_26M
 //    reg_val |= 1; //TDPLL_256M
 //    reg_val |= 2; //TDPLL_384M
     reg_val |= 3; //DPLL_533M
-    UMCTL2_REG_SET(0x402D0024,reg_val);
+    UMCTL2_REG_SET(SHARK_DDR_CTL_CLK_DIV_ADDR,reg_val);
 
 	wait_pclk(5263);//publ apb clk=26m-38ns, 5263*38ns = 200us
 
 	//enable ddr_phy_eb
-	reg_bits_set(0x402b00c8,2,1,1);
+	reg_bits_set(SHARK_DDR_CTL_EB_ADDR,2,1,1);
 	
 	//enable address/command/data dll
 	reg_bits_set(PUBL_ACDLLCR,30,1,1);
@@ -1195,9 +1194,30 @@ void sdram_clk_set(CLK_TYPE_E clock)
 	
 }
 
+#if 0
 void sdram_vddmem_set(VDDMEM_TYPE_E vddmem)
 {
 	UMCTL2_REG_SET(0x40038968,vddmem);
+}
+#endif
+
+#define UART1_TX_BUF_ADDR 0X70100000
+#define UART1_TX_BUF_CNT ((REG32(0x70100000 + 0xc)>>8)&0xff)
+void ddr_print(const unsigned char *string)
+{
+    unsigned char *s1 = NULL;
+
+    s1 = string;
+
+    while (*s1 != NULL)
+    {
+		//wait until uart1 tx fifo empty
+		while(UART1_TX_BUF_CNT != 0);
+
+		//put out char by uart1 tx fifo
+		REG32(UART1_TX_BUF_ADDR) = *s1;
+		s1++;
+	}
 }
 
 
@@ -1760,6 +1780,7 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
     //do training
     if(!publ_do_training())
     {
+		ddr_print("ERROR!!! DDR TRAINING ERROR");
         return FALSE;
     }    
 
@@ -2128,6 +2149,10 @@ void sdram_init()
 	__sdram_init(DDR_CLK, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
 	#endif;
 
+
+	#ifdef DDR_SCAN_SUPPORT
+		ddr_scan(dram_info);
+	#endif
 	umctl2_low_power_open();
 	
 }

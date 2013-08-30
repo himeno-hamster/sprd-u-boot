@@ -20,17 +20,20 @@
 /*----------------------------------------------------------------------------*
  *Configuration for SDRAM used --*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*
 **----------------------------------------------------------------------------*/
+#if 0
 #ifdef  CONFIG_SP8830EC
 /*--*/   MEM_IODS_E       MEM_IO_DS          =LPDDR2_DS_48R; //DS_34R3(lpddr2 used)                 /*--*--*--*/
 #else
 /*--*/   MEM_IODS_E       MEM_IO_DS          =LPDDR2_DS_40R; //DS_34R3(lpddr2 used)                 /*--*--*--*/
+#endif
 #endif
 /*--*/   DRAM_BURSTTYPE_E MEM_BURST_TYPE     =DRAM_BT_SEQ;              /*--*--*--*/
 /*--*/   DRAM_WC_E        MEM_WC_TYPE        =DRAM_WRAP;              /*--*--*--*/
 
 /*--*/   uint32 DQS_PDU_RES = DQS_PDU_500OHM;	//dqs pull up and pull down resist
 /*--*/   uint32 DQS_GATE_EARLY_LATE = 2;	                      
-    
+
+#if 0    
 /*--*/   uint32 PUBL_LPDDR1_DS = PUBL_LPDDR1_DS_48OHM; //lpddr1 driver strength,refer to multiPHY p155
 #ifdef  CONFIG_SP8830EC
 /*--*/   uint32 PUBL_LPDDR2_DS = PUBL_LPDDR2_DS_48OHM; //lpddr2 driver strength,
@@ -38,7 +41,7 @@
 /*--*/   uint32 PUBL_LPDDR2_DS = PUBL_LPDDR2_DS_40OHM; //lpddr2 driver strength,
 #endif
 /*--*/   uint32 PUBL_DDR3_DS   = PUBL_DDR3_DS_34OHM;   //ddr3 driver strength,
-
+#endif
     
 /*--*/   uint32 B0_SDLL_PHS_DLY = PUBL_SDLL_PHS_DEF; //byte0 sll dll phase delay 
 /*--*/   uint32 B1_SDLL_PHS_DLY = PUBL_SDLL_PHS_DEF; //byte1 sll dll phase delay 
@@ -174,7 +177,7 @@ DRAM_INFO DRAM_INFO_ARRAY[] =
   {DRAM_LPDDR2_1CS_8G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	
   //{DRAM_LPDDR2_2CS_4G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	  	
   {DRAM_LPDDR2_2CS_6G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	
-  {DRAM_LPDDR2_2CS_8G_X32,   2,   8,      32,        8,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
+  {DRAM_LPDDR2_2CS_8G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
   //{DRAM_LPDDR2_2CS_12G_X32,  2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	
   //{DRAM_LPDDR2_2CS_16G_X32,  2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
   {DRAM_DDR3_1CS_2G_X8_4P,   1,   8,	  32,		 8,   6,  5, 0, (void *)(&DDR3_ACTIMING)},
