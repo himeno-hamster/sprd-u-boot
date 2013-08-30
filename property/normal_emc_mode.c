@@ -555,7 +555,7 @@ LOCAL void _boot_secure_check(void)
 /**
 	Function for reading user partition.
 */
-LOCAL __inline int _boot_partition_read(block_dev_desc_t *dev, wchar_t* partition_name, u32 offsetsector, u32 size, u8* buf)
+PUBLIC int _boot_partition_read(block_dev_desc_t *dev, wchar_t* partition_name, u32 offsetsector, u32 size, u8* buf)
 {
 	disk_partition_t info;
 
@@ -583,9 +583,9 @@ LOCAL __inline int _boot_partition_read(block_dev_desc_t *dev, wchar_t* partitio
 }
 
 /**
-	Function for reading user partition.
+	Function for writing user partition.
 */
-LOCAL __inline int _boot_partition_write(block_dev_desc_t *dev, wchar_t* partition_name, u32 size, u8* buf)
+PUBLIC int _boot_partition_write(block_dev_desc_t *dev, wchar_t* partition_name, u32 size, u8* buf)
 {
 	disk_partition_t info;
 
