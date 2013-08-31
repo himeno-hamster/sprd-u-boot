@@ -55,7 +55,7 @@ static struct wdt_monitor_struct wdt_monitor_regs[] = {
 };
 
 extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
-extern lcd_display(void);
+extern void lcd_display(void);
 extern void set_backlight(uint32_t value);
 
 int  dump_wdtmonitor_reg(void)
@@ -93,9 +93,6 @@ int  dump_wdtmonitor_reg(void)
         cmd_yaffs_mwrite_file(wdtmonitor_file, buffer, strlen(buffer));
         cmd_yaffs_umount(productinfopoint);
 
-        /**/
-	printf("wdt reboot dump registers ok in %s, go to die\n", wdtmonitor_file);
-
         /*display watchdog rest on screen*/
 	bmp_img = malloc(size);
 	if(!bmp_img){
@@ -108,10 +105,17 @@ int  dump_wdtmonitor_reg(void)
 		return -1;
 
 	lcd_display_bitmap((ulong)bmp_img, 0, 0);
-	lcd_printf("   watchdog mode");
+        memset(bmp_img, 0, size);
+        sprintf(bmp_img, "%s", "   watchdog mode\n\n");
+        strcat(bmp_img, buffer);
+
+        /*display*/
+        lcd_printf(bmp_img);
 	lcd_display();
 	set_backlight(255);
 
+        /**/
+	printf("wdt reboot dump registers ok in %s, go to die\n", wdtmonitor_file);
 	hang();
 
         /*never reach here*/

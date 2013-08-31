@@ -896,8 +896,10 @@ void watchdog_mode(void)
 #endif
 #endif
 
+#ifdef CONFIG_WDT_MONITOR
 	/*dump watchodog registers, then stall*/
 	dump_wdtmonitor_reg();
+#endif
 
 #if BOOT_NATIVE_LINUX
 	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=wdgreboot", BACKLIGHT_OFF);

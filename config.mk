@@ -204,6 +204,10 @@ ifeq ($(ROM_8G_SUPPORT), true)
 CFLAGS += -DCONFIG_ROM_8G_SUPPORT
 endif
 
+ifeq ($(WDT_MONITOR_SUPPORT), true)
+CFLAGS += -DCONFIG_WDT_MONITOR
+endif
+
 ifneq ($(AP_VERSION), )
 CFLAGS += -DCONFIG_AP_VERSION='"$(AP_VERSION)"'
 endif
