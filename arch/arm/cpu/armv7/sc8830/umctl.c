@@ -1176,7 +1176,7 @@ void sdram_clk_set(CLK_TYPE_E clock)
 //    reg_val |= 1; //TDPLL_256M
 //    reg_val |= 2; //TDPLL_384M
     reg_val |= 3; //DPLL_533M
-    UMCTL2_REG_SET(SHARK_DDR_CTL_CLK_DIV_ADDR,reg_val);
+    UMCTL2_REG_SET(SHARK_DDR_CTL_CLK_SEL_ADDR,reg_val);
 
 	wait_pclk(5263);//publ apb clk=26m-38ns, 5263*38ns = 200us
 
