@@ -5,6 +5,11 @@
 #include "special_nvitemd.h"
 #endif
 
+//don't update runtimenv in calibration
+//in order to save some time.
+//we left runtimenv sync work to CP
+#define SKIP_RUNTIMENV_UPDATE 1
+
 #define CRC_16_L_SEED   0x80
 #define CRC_16_L_POLYNOMIAL 0x8000
 #define CRC_16_POLYNOMIAL  0x1021
@@ -282,30 +287,30 @@ static int fixnv_mounted = 0;
 static int backupfixnv_mounted = 0;
 static int runtimenv_mounted = 0;
 static int productinfo_mounted = 0;
-static int ensure_path_mounted(const char * mountpoint){
+int ensure_path_mounted(const char * mountpoint){
     printf("%s::mountpoint == %s\n",__func__,mountpoint);
-    if(!strcmp("/backupfixnv/",mountpoint)){
+    if(!strncmp("/backupfixnv/",mountpoint,12)){
         if(backupfixnv_mounted == 1){
             goto MOUNT_OK;
         }else{
             backupfixnv_mounted = 1;
             goto TRY_MOUNT;
         }
-    }else if(!strcmp("/fixnv/",mountpoint)){
+    }else if(!strncmp("/fixnv/",mountpoint,6)){
         if(fixnv_mounted == 1){
             goto MOUNT_OK;
         }else{
             fixnv_mounted = 1;
             goto TRY_MOUNT;
         }
-    }else if(!strcmp("/runtimenv/",mountpoint)){
+    }else if(!strncmp("/runtimenv/",mountpoint,10)){
         if(runtimenv_mounted == 1){
             goto MOUNT_OK;
         }else{
             runtimenv_mounted = 1;
             goto TRY_MOUNT;
         }
-    }else if(!strcmp("/productinfo/",mountpoint)){
+    }else if(!strncmp("/productinfo/",mountpoint,12)){
         if(productinfo_mounted == 1){
             goto MOUNT_OK;
         }else{
@@ -324,30 +329,30 @@ MOUNT_OK:
     printf("%s::exit\n",__func__);
     return 0;
 }
-static int ensure_path_umounted(const char * mountpoint){
+int ensure_path_umounted(const char * mountpoint){
     printf("%s::mountpoint == %s\n",__func__,mountpoint);
-    if(!strcmp("/backupfixnv/",mountpoint)){
+    if(!strncmp("/backupfixnv/",mountpoint,12)){
         if(backupfixnv_mounted == 0){
             goto UMOUNT_OK;
         }else{
             backupfixnv_mounted = 0;
             goto TRY_UMOUNT;
         }
-    }else if(!strcmp("/fixnv/",mountpoint)){
+    }else if(!strncmp("/fixnv/",mountpoint,6)){
         if(fixnv_mounted == 0){
             goto UMOUNT_OK;
         }else{
             fixnv_mounted = 0;
             goto TRY_UMOUNT;
         }
-    }else if(!strcmp("/runtimenv/",mountpoint)){
+    }else if(!strncmp("/runtimenv/",mountpoint,10)){
         if(runtimenv_mounted == 0){
             goto UMOUNT_OK;
         }else{
             runtimenv_mounted = 0;
             goto TRY_UMOUNT;
         }
-    }else if(!strcmp("/productinfo/",mountpoint)){
+    }else if(!strncmp("/productinfo/",mountpoint,12)){
         if(productinfo_mounted == 0){
             goto UMOUNT_OK;
         }else{
@@ -424,6 +429,11 @@ BOOLEAN  ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
     if(-1 == idx){
         return 0;
     }
+#ifdef SKIP_RUNTIMENV_UPDATE
+    if(handle == RAMBSD_RUNNV_ID){
+        return 1;
+    }
+#endif
     // 0 get read order
     if(1){
         firstName = _ramdiskCfg[idx].image_path;
@@ -442,7 +452,7 @@ BOOLEAN  ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
     //check crc
     if(_chkEcc(buf, size)){
         printf("NVITEM partId%x:%s read success!\n",_ramdiskCfg[idx].partId,firstName);
-        ensure_path_umounted(path);
+//        ensure_path_umounted(path);
         return 1;
     }
     printf("NVITEM partId%x:%s ECC error......!\n",_ramdiskCfg[idx].partId,firstName);
@@ -456,7 +466,7 @@ BOOLEAN  ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
     if(!_chkEcc(buf, size)){
         printf("NVITEM partId%x:%s ECC error!\n",_ramdiskCfg[idx].partId,secondName);
         memset(buf, 0xFF, size);
-        ensure_path_umounted(path);
+//        ensure_path_umounted(path);
         return 1;
     }
 
@@ -465,7 +475,7 @@ BOOLEAN  ramDisk_Read(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
     cmd_yaffs_mwrite_file(firstName, (char*)buf, _ramdiskCfg[idx].image_size);
 
     printf("NVITEM  partId%x:%s read success!\n",_ramdiskCfg[idx].partId,secondName);
-    ensure_path_umounted(path);
+//    ensure_path_umounted(path);
     return 1;
 
 }
@@ -504,6 +514,13 @@ BOOLEAN  ramDisk_Write(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
     if(handle == RAMBSD_FIXNV_ID){
         nvitemd_add_fixnv_len(buf,size);
     }
+
+#ifdef SKIP_RUNTIMENV_UPDATE
+    if(handle == RAMBSD_RUNNV_ID){
+        return 1;
+    }
+#endif
+
 #endif
     _makEcc( buf, size);
 #ifdef CONFIG_SC7710G2
@@ -537,11 +554,11 @@ BOOLEAN  ramDisk_Write(RAMDISK_HANDLE handle, uint8* buf, uint32 size)
         while(0 == try_read_back("/backupfixnv/","/backupfixnv/fixnv.bin",buf,size)){
             printf("Fatal error,readback failed!\n");
         }
-        ensure_path_umounted("/backupfixnv/");
+//        ensure_path_umounted("/backupfixnv/");
     }
 #endif
 
-    ensure_path_umounted(path);
+//    ensure_path_umounted(path);
     return 1;
 
 }

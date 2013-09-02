@@ -34,4 +34,9 @@ int try_load_productinfo(void);
 *	description: get uart log flag 
 ****************************************************/
 int is_uart_log_off(void);
+
+
+int update_fixnv_by_id(unsigned char*addr,unsigned short id,
+        unsigned char* data,int offset,unsigned short len,unsigned short size);
+int update_fixnv_by_id_flush(unsigned char*addr);
 #endif
