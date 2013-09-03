@@ -445,14 +445,14 @@ void calibration_detect(int key)
             printf("%s: out of memory\n", __func__);
             return;
         }
-	sprintf(cmd_buf, "calibration=%d,%d", caliberate_mode&0xff, (caliberate_mode&(~0xff))>>8);
+	sprintf(cmd_buf, " androidboot.mode=cali calibration=%d,%d", caliberate_mode&0xff, (caliberate_mode&(~0xff))>>8);
         s_is_calibration_mode=1;
 #if defined( CONFIG_SP7702) || defined(CONFIG_SP8810W) || defined(CONFIG_SC7710G2)
 		vlx_nand_boot(BOOT_PART, buf, BACKLIGHT_OFF);
 #else
 	#if defined(BOOT_NATIVE_LINUX_MODEM)
 		int str_len;
-		sprintf(cmd_buf, "calibration=%d,%d,146", caliberate_mode&0xff, (caliberate_mode&(~0xff))>>8);
+		sprintf(cmd_buf, " androidboot.mode=cali calibration=%d,%d,146", caliberate_mode&0xff, (caliberate_mode&(~0xff))>>8);
 		str_len = strlen(cmd_buf);
 		sprintf(&cmd_buf[str_len], " %s", CONFIG_BOOTARGS);
 		vlx_nand_boot(RECOVERY_PART,cmd_buf, BACKLIGHT_OFF);        
