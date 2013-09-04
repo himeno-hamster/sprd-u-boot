@@ -8,12 +8,11 @@
 #include <ext4fs.h>
 
 #define KERNL_PAGE_SIZE 2048
-
-#ifdef CONFIG_FS_EXT4
-static wchar_t *normal_emc_partition = L"prodnv";
+#define PRODUCTINFO_FILE_PATITION  L"miscdata"
+#define SP09_SPPH_MAGIC             (0X53503039)    // "SP09"
 static char     	product_SN[20+1];
 static int		product_SN_flag = 0;
-#endif
+
 
 static boot_image_required_t const s_boot_image_table[]={
 #ifdef CONFIG_SC8830
@@ -69,9 +68,7 @@ static boot_image_required_t const s_boot_image_table[]={
 	{NULL,NULL,0,0}
 };
 
-#ifdef CONFIG_FS_EXT4
 static void product_SN_get(void);
-#endif
 
 int Calibration_read_partition(block_dev_desc_t *p_block_dev, wchar_t* partition_name, char *buf, int len)
 {
@@ -344,13 +341,11 @@ void addcmdline(char *buf)
 #endif
 #endif
 
-#ifdef CONFIG_FS_EXT4
 	if(product_SN_flag ==1)
 	{
 		str_len = strlen(buf);
 		sprintf(&buf[str_len], " androidboot.serialno=%s", product_SN);
 	}
-#endif
 
 #if BOOT_NATIVE_LINUX_MODEM
 	str_len = strlen(buf);
@@ -798,11 +793,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		return;
 	//secure check for secure boot
 	_boot_secure_check();
-
-#ifdef CONFIG_FS_EXT4
 	product_SN_get();
-#endif
-
 	buf = creat_cmdline(cmdline,hdr);
 	if (buf != NULL) {
 		free(buf);
@@ -820,20 +811,31 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	vlx_entry();
 }
 
-#ifdef CONFIG_FS_EXT4
 static void product_SN_get(void)
 {
-	SP09_PHASE_CHECK_T phase_check;
+   SP09_PHASE_CHECK_T phase_check;
+   block_dev_desc_t *p_block_dev = NULL;
 
-		if(!ext4_read_content(1,normal_emc_partition,"/productinfo.bin", &phase_check, 0, sizeof(phase_check)))
-		{
-			product_SN_flag =1;
-			memcpy(product_SN, phase_check.SN1, 21);
-			printf("%s ext4 open ok  /productinfo/productinfo.bin  sn1= %s \n",__FUNCTION__, product_SN);
-		}
-		else{
-			product_SN_flag =0;
-			printf("%s open fail  /productinfo/productinfo.bin ",__FUNCTION__);
-		}
+	p_block_dev = get_dev("mmc", 1);
+	if(NULL == p_block_dev){
+		printf("%s:  get_dev() error\n", __FUNCTION__);
+		product_SN_flag =0;
+		return;
+	}
+
+	if(-1 == Calibration_read_partition(p_block_dev, PRODUCTINFO_FILE_PATITION, (char *)&phase_check,sizeof(phase_check))){
+		printf("%s:  read miscdata error\n", __FUNCTION__);
+		product_SN_flag =0;
+		return ;
+	}
+
+	if(phase_check.Magic == SP09_SPPH_MAGIC){
+		product_SN_flag =1;
+		memcpy(product_SN, phase_check.SN1, 21);
+	}else{
+		product_SN_flag =0;
+	}
+	printf("%s   read miscdata ok,  phase_check.Magic= %d \n",__FUNCTION__, phase_check.Magic);
+	printf("%s   read miscdata ok,  phase_check.SN1= %s \n",__FUNCTION__, phase_check.SN1);
+	printf("%s   read miscdata ok,  sn= %s \n",__FUNCTION__, product_SN);
 }
-#endif
