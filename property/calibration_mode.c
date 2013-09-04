@@ -276,22 +276,69 @@ typedef struct{
     unsigned char main_cmd;
     unsigned char sub_cmd;
 }packet_head_t;
+static int untranslate_packet_header(char *dest,char *src,int size, int unpackSize){
+    int i;
+    int translated_size = 0;
+    int status = 0;
+    int flag = 0;
+    for(i=0;i<size;i++){
+        switch(status){
+            case 0:
+                if(src[i] == 0x7e)
+                    status = 1;
+                break;
+            case 1:
+                if(src[i] != 0x7e){
+                    status = 2;
+                    dest[translated_size++] = src[i];
+                }
+                break;
+            case 2:
+                if(src[i] == 0x7E){
+                    unsigned short crc;
+                    crc = crc_16_l_calc((char const *)dest,translated_size-2);
+                    return translated_size;
+                }else{
+                    if((dest[translated_size-1] == 0x7D)&&(!flag)){
+                        flag = 1;
+                        if(src[i] == 0x5E){
+                            dest[translated_size-1] = 0x7E;
+                        }else if(src[i] == 0x5D){
+                            dest[translated_size-1] = 0x7D;
+                        }
+                    }else{
+                        flag = 0;
+                        dest[translated_size++] = src[i];
+                    }
+
+                    if (translated_size >= unpackSize+1 && unpackSize != -1){
+                        return translated_size;
+                    }
+                }
+                break;
+        }
+    }
+
+    return translated_size;
+}
 static int is_get_whole_cmd(unsigned char* cmd_buf,unsigned short* count){
     static int is_head = 1;
     static unsigned short cmd_len = 0,got_len = 0;
     unsigned short len = *count;
+    unsigned char* tail = NULL;
 
     if(is_head&&len < 64){
         //in this condition we do not check!
         return 1;
     }
 
+    tail = cmd_buf + len -1;
     if(is_head){
         packet_head_t Head;
         packet_head_t* pHead = &Head;
 
         printf("PARSE A NEW COMMEND ...\n");
-        memcpy(pHead,cmd_buf+1,sizeof(Head));
+        untranslate_packet_header(pHead, cmd_buf, *count, sizeof(Head));
         printf("seq:0x%x,len:0x%x,main_cmd:0x%x,sub_cmd:0x%x\n",
                 pHead->seq,
                 pHead->len,
@@ -301,8 +348,8 @@ static int is_get_whole_cmd(unsigned char* cmd_buf,unsigned short* count){
     }
     got_len += len;
     printf("cmd_len = %d,got_len = %d\n",cmd_len,got_len);
-    if(got_len < cmd_len){
-        printf("tmp store the in-completed cmd ...\n");
+    if(got_len < cmd_len||*tail != 0x7e){
+        printf("tmp store the in-completed cmd ...tail character is 0x%x\n",*tail);
         memcpy(g_usb_buf_ex+got_len-len,g_usb_buf,len);
         is_head = 0;
         *count = 0;
@@ -311,10 +358,10 @@ static int is_get_whole_cmd(unsigned char* cmd_buf,unsigned short* count){
         if(got_len > len){
             printf("sync cmd ...\n");
             memcpy(g_usb_buf_ex+got_len-len,g_usb_buf,len);
-            memcpy(g_usb_buf,g_usb_buf_ex,cmd_len);
+            memcpy(g_usb_buf,g_usb_buf_ex,got_len);
         }
         printf("got an completed cmd!!!\n");
-        *count = cmd_len;
+        *count = got_len;
         is_head = 1;
         cmd_len = 0;
         got_len = 0;
@@ -382,7 +429,7 @@ void calibration_mode(const uint8_t *pcmd, int length)
             goto SKIP_CMD_PROCESS;
         }
 
-        
+
         if((index = ap_calibration_proc( g_usb_buf, count,g_uart_buf)) == 0){
             if(get_nv_sync_flag()){
                 //printf("NV_SYNC,get_nv_sync_flag so enable nvitem sync ...\n");
