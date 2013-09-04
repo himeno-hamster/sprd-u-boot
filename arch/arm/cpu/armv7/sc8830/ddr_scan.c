@@ -86,7 +86,7 @@ void publ_do_itmsrst()
 	reg_bits_set(PUBL_PIR,0,1,1);
 	wait_pclk(10);
 	while((REG32(PUBL_PIR)&BIT_1) == BIT_1);
-	wait_pclk(1000);	
+	wait_pclk(1500);
 }
 
 void publ_do_bist_stop()
@@ -283,6 +283,7 @@ void ddr_scan(DRAM_INFO* dram_info)
 	    REG32(IRAM_DDR_DATA_ADDR+byte*0x10+0xc) = G_STP;
 #endif
 	}
+
 }
 
 
