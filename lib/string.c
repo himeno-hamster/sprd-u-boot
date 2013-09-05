@@ -642,3 +642,14 @@ size_t wcslen(const wchar_t *s)
 }
 #endif
 
+#ifndef __HAVE_ARCH_WCSCMP
+int wcscmp(const wchar_t *s1, const wchar_t *s2)
+{
+        while (*s1 == *s2++)
+                if (*s1++ == '\0')
+                        return (0);
+        /* XXX assumes wchar_t = int */
+        return (*(const unsigned int *)s1 - *(const unsigned int *)--s2);
+}
+#endif
+

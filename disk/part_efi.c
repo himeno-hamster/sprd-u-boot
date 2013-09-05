@@ -242,7 +242,7 @@ int get_partition_info_by_name_efi(block_dev_desc_t * dev_desc, wchar_t* partiti
 			disk_parition[j] = (wchar_t)pgpt_pte[i].partition_name[j];
 		}
 
-		if(0 == wcsncmp(disk_parition, partition_name, wcslen(partition_name)))
+		if(0 == wcscmp(disk_parition, partition_name))
 		{
 			/* The ulong casting limits the maximum disk size to 2 TB */
 			info->start = (ulong) le64_to_int((pgpt_pte)[i].starting_lba);

@@ -274,7 +274,7 @@ LOCAL unsigned long efi_GetPartBaseSec(wchar_t *partition_name)
 
 	for(i=0;i<g_total_partition_number;i++)
 	{
-		if(wcsncmp(partition_name, uefi_part_info[i].partition_name, wcslen(partition_name)) == 0)
+		if(wcscmp(partition_name, uefi_part_info[i].partition_name) == 0)
 		{
 			return uefi_part_info[i].partition_offset;
 		}
@@ -294,7 +294,7 @@ LOCAL unsigned long efi_GetPartSize(wchar_t *partition_name)
 
 	for(i=0;i<g_total_partition_number;i++)
 	{
-		if(wcsncmp(partition_name, uefi_part_info[i].partition_name, wcslen(partition_name)) == 0)
+		if(wcscmp(partition_name, uefi_part_info[i].partition_name) == 0)
 			return (EFI_SECTOR_SIZE * uefi_part_info[i].partition_size);
 	}
 
@@ -340,7 +340,7 @@ LOCAL void _get_partition_attribute(wchar_t* partition_name)
 
 	for(i=0;s_special_partition_cfg[i].partition != NULL;i++)
 	{
-		if(wcsncmp(s_special_partition_cfg[i].partition, partition_name, wcslen(partition_name)) == 0)
+		if(wcscmp(s_special_partition_cfg[i].partition, partition_name) == 0)
 		{
 			g_dl_eMMCStatus.curImgType = s_special_partition_cfg[i].imgattr;
 			g_dl_eMMCStatus.partitionpurpose = s_special_partition_cfg[i].purpose;
@@ -368,12 +368,12 @@ LOCAL BOOLEAN _get_compatible_partition(wchar_t* partition_name)
 	_uefi_get_part_info();
 
 	//Try to find the partition specified
-	if(wcsncmp(partition_name, L"uboot", wcslen(L"uboot")) == 0)
+	if(wcscmp(partition_name, L"uboot") == 0)
 	{
 		g_dl_eMMCStatus.curUserPartitionName = s_uboot_partition;
 		return TRUE;
 	}
-	if(wcsncmp(partition_name, L"splloader", wcslen(L"splloader")) == 0)
+	if(wcscmp(partition_name, L"splloader") == 0)
 	{
 		g_dl_eMMCStatus.curUserPartitionName = s_spl_loader_partition;
 		return TRUE;
@@ -381,7 +381,7 @@ LOCAL BOOLEAN _get_compatible_partition(wchar_t* partition_name)
 
 	for(i=0;i<g_total_partition_number;i++)
 	{
-		if(wcsncmp(partition_name, uefi_part_info[i].partition_name, wcslen(partition_name)) == 0)
+		if(wcscmp(partition_name, uefi_part_info[i].partition_name) == 0)
 		{
 			g_dl_eMMCStatus.curUserPartitionName = uefi_part_info[i].partition_name;
 			return TRUE;
@@ -402,7 +402,7 @@ LOCAL wchar_t * _get_backup_partition_name(wchar_t *partition_name)
 
 	for(i=0;s_special_partition_cfg[i].partition != NULL;i++)
 	{
-		if(wcsncmp(partition_name, s_special_partition_cfg[i].partition, wcslen(partition_name)) == 0)
+		if(wcscmp(partition_name, s_special_partition_cfg[i].partition) == 0)
 		{
 			return s_special_partition_cfg[i].bak_partition;
 		}
@@ -437,7 +437,7 @@ LOCAL int _fdl2_check_partition_table(PARTITION_CFG* new_cfg, PARTITION_CFG* old
 	{
 		for(i=0;i<total_partition_num;i++)
 		{
-			if(0 !=wcsncmp(new_cfg[i].partition_name,old_cfg[i].partition_name,wcslen(old_cfg[i].partition_name)))
+			if(0 !=wcscmp(new_cfg[i].partition_name,old_cfg[i].partition_name))
 			{
 				return 0;
 			}
@@ -494,14 +494,14 @@ LOCAL int _emmc_real_erase_partition(wchar_t *partition_name)
 	if(NULL == partition_name)
 		return 0;
 
-	if (wcsncmp(L"splloader", partition_name, wcslen(L"splloader")) == 0){
+	if (wcscmp(L"splloader", partition_name) == 0){
 		if(secureboot_enabled()){
 			return 1;
 		}
 		count = Emmc_GetCapacity(PARTITION_BOOT1);
 		curArea = PARTITION_BOOT1;
 		base_sector = 0;
-	}else if (wcsncmp(L"uboot", partition_name, wcslen(L"uboot")) == 0){
+	}else if (wcscmp(L"uboot", partition_name) == 0){
 		count = Emmc_GetCapacity(PARTITION_BOOT2);
 		curArea = PARTITION_BOOT2;
 		base_sector = 0;
@@ -761,7 +761,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 		_emmc_real_erase_partition(g_dl_eMMCStatus.curUserPartitionName);
 		memset(g_eMMCBuf, 0xff, PRODUCTINFO_SIZE + EFI_SECTOR_SIZE);
 	} 
-	else if (wcsncmp(L"splloader", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"splloader")) == 0)
+	else if (wcscmp(L"splloader", g_dl_eMMCStatus.curUserPartitionName) == 0)
 	{
 		if(secureboot_enabled()){
 			return 1;
@@ -776,7 +776,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 			return 0;
 		}
 	}
-	else if (wcsncmp(L"uboot", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"uboot")) == 0)
+	else if (wcscmp(L"uboot", g_dl_eMMCStatus.curUserPartitionName) == 0)
 	{
 		g_dl_eMMCStatus.curEMMCArea = PARTITION_BOOT2;
 		g_dl_eMMCStatus.part_total_size = EFI_SECTOR_SIZE * Emmc_GetCapacity(PARTITION_BOOT2);
@@ -870,7 +870,7 @@ PUBLIC int fdl2_emmc_download(unsigned short size, char *buf)
 					else
 						nSectorCount = g_status.unsave_recv_size / EFI_SECTOR_SIZE + 1;
 					
-					if (wcsncmp(L"splloader", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"splloader")) == 0){
+					if (wcscmp(L"splloader", g_dl_eMMCStatus.curUserPartitionName) == 0){
 						if(secureboot_enabled()){
 							return 1;
 						}
@@ -954,13 +954,13 @@ PUBLIC int fdl2_emmc_read_start(wchar_t* partition_name, unsigned long size)
 		}
 		g_dl_eMMCStatus.base_sector = efi_GetPartBaseSec(g_dl_eMMCStatus.curUserPartitionName);
 	}
-	else  if (wcsncmp(L"splloader", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"splloader")) == 0)
+	else  if (wcscmp(L"splloader", g_dl_eMMCStatus.curUserPartitionName) == 0)
 	{
 		g_dl_eMMCStatus.curEMMCArea = PARTITION_BOOT1;
 		g_dl_eMMCStatus.part_total_size = EFI_SECTOR_SIZE * Emmc_GetCapacity(PARTITION_BOOT1);
 		g_dl_eMMCStatus.base_sector =  0;
 	}
-	else if (wcsncmp(L"uboot", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"uboot")) == 0)
+	else if (wcscmp(L"uboot", g_dl_eMMCStatus.curUserPartitionName) == 0)
 	{
 		g_dl_eMMCStatus.curEMMCArea = PARTITION_BOOT2;
 		g_dl_eMMCStatus.part_total_size = EFI_SECTOR_SIZE * Emmc_GetCapacity(PARTITION_BOOT2);
@@ -1052,7 +1052,7 @@ PUBLIC int fdl2_emmc_erase(wchar_t* partition_name, unsigned long size)
 	unsigned long part_size;
 	wchar_t *backup_partition_name = NULL;
 
-	if ((wcsncmp(partition_name, L"erase_all", wcslen(L"erase_all")) == 0) && (size = 0xffffffff)) {
+	if ((wcscmp(partition_name, L"erase_all") == 0) && (size = 0xffffffff)) {
 		printf("%s:Erase all!\n", __FUNCTION__);
 		if (!_emmc_erase_allflash()) {
 			SEND_ERROR_RSP (BSL_WRITE_ERROR);			
@@ -1081,7 +1081,7 @@ PUBLIC int fdl2_emmc_erase(wchar_t* partition_name, unsigned long size)
 			}
 		}
 
-		if (wcsncmp(L"sd", g_dl_eMMCStatus.curUserPartitionName, wcslen(L"sd")) == 0) {
+		if (wcscmp(L"sd", g_dl_eMMCStatus.curUserPartitionName) == 0) {
 			printf("formating sd partition, waiting for a while!\n");
 			if (_format_sd_partition() == -1){
 				printf("format sd partition failed\n");

@@ -562,7 +562,7 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 	//get the special partition info
 	for(i=0;NULL != s_fb_special_partition_cfg[i].partition_name;i++)
 	{
-		if(wcsncmp(s_fb_special_partition_cfg[i].partition_name, partition_name, wcslen(partition_name)) == 0)
+		if(wcscmp(s_fb_special_partition_cfg[i].partition_name, partition_name) == 0)
 		{
 			partition_type = s_fb_special_partition_cfg[i].type;
 			partition_purpose = s_fb_special_partition_cfg[i].purpose;

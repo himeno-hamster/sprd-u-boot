@@ -90,6 +90,10 @@ extern int wcsncmp(const wchar_t *s1, const wchar_t *s2, size_t n);
 extern size_t wcslen(const wchar_t *s);
 #endif
 
+#ifndef __HAVE_ARCH_WCSCMP
+extern int wcscmp(const wchar_t *s1, const wchar_t *s2);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
