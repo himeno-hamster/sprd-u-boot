@@ -702,7 +702,7 @@ LOCAL void set_emc_pad(uint32 dqs_drv,uint32 data_drv,uint32 ctl_drv, uint32 clk
     }
 
     //addr
-    for(i = 0; i < 14; i++)
+    for(i = 0; i < 15; i++)
     {
         REG32((CHIPPIN_CTL_BEGIN + PIN_EMA0_REG_OFFS) + i*4) &= (~0x30F);
         REG32((CHIPPIN_CTL_BEGIN + PIN_EMA0_REG_OFFS) + i*4) |= ((ctl_drv<<8) | 0x4);
