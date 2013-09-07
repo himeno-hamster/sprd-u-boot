@@ -60,6 +60,8 @@ COBJS-$(CONFIG_SC7710G2) += ap_calibration.o
 
 COBJS-$(CONFIG_SC7710G2) += spl_writer.o
 COBJS-$(CONFIG_SC7710G2) += special_loading.o 
+COBJS-$(CONFIG_AUTODLOADER) += autodloader_mode.o
+COBJS-$(CONFIG_SC7710G2) += nv_access.o
 
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c) $(XCOBJS:.o=.c)

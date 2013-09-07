@@ -13,41 +13,37 @@
 #include <boot_mode.h>
 
 
-extern void cmd_yaffs_mount(char *mp);
-extern void cmd_yaffs_umount(char *mp);
 extern int cmd_yaffs_ls_chk(const char *dirfilename);
-
+extern int ensure_path_mounted(const char * mountpoint);
+extern int ensure_path_umounted(const char * mountpoint);
 int alarm_file_check(char *time_buf)
 {
-	char *file_partition = "/productinfo";
-	char *file_name = "/productinfo/alarm_flag";
-	int ret = 0;
-	cmd_yaffs_mount(file_partition);
-	ret = cmd_yaffs_ls_chk(file_name);
-	if(ret >=0){
-		printf("file: %s exist\n", file_name);
-		cmd_yaffs_mread_file(file_name, (unsigned char *)time_buf);
+    char *file_partition = "/productinfo";
+    char *file_name = "/productinfo/alarm_flag";
+    int ret = 0;
+    ensure_path_mounted(file_partition);
+    ret = cmd_yaffs_ls_chk(file_name);
+    if(ret >=0){
+        printf("file: %s exist\n", file_name);
+        cmd_yaffs_mread_file(file_name, (unsigned char *)time_buf);
 
-	}
-	cmd_yaffs_umount(file_partition);
-	return ret;
+    }
+    // ensure_path_umounted(file_partition);
+    return ret;
 
 }
 int poweron_file_check(char *time_buf)
 {
-	char *file_partition = "/productinfo";
-	char *file_name = "/productinfo/poweron_timeinmillis";
- 	int ret = 0;
-	cmd_yaffs_mount(file_partition);
-	ret = cmd_yaffs_ls_chk(file_name);
-	if(ret >=0){
-		printf("file: %s exist\n", file_name);
-		cmd_yaffs_mread_file(file_name, (unsigned char *)time_buf);
-	}
-	cmd_yaffs_umount(file_partition);
-	return ret;
+    char *file_partition = "/productinfo";
+    char *file_name = "/productinfo/poweron_timeinmillis";
+    int ret = 0;
+    ensure_path_mounted(file_partition);
+    ret = cmd_yaffs_ls_chk(file_name);
+    if(ret >=0){
+        printf("file: %s exist\n", file_name);
+        cmd_yaffs_mread_file(file_name, (unsigned char *)time_buf);
+    }
+    // ensure_path_umounted(file_partition);
+    return ret;
 
 }
-
-
-

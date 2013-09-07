@@ -27,22 +27,23 @@
 #define MAX_UART_BUF_LEN 1024
 
 
-#define TOOL_CHANNEL	(1)
-#define mdelay(n)	udelay((n) * 1000)
+#define TOOL_CHANNEL (1)
+#define mdelay(n) udelay((n) * 1000)
 
 
 typedef struct _Mode_Data
 {
-	uint32 sn;
-	uint16 length;
-	uint8 type;
-	uint8 subtype;
+    uint32 sn;
+    uint16 length;
+    uint8 type;
+    uint8 subtype;
 }Mode_Data_Type;
 
 
 
 struct FDL_ChannelHandler *gUsedChannel;
 static unsigned char g_usb_buf[MAX_USB_BUF_LEN];
+static unsigned char g_usb_buf_ex[MAX_USB_BUF_LEN];
 static unsigned char g_uart_buf[MAX_UART_BUF_LEN];
 extern int __dl_log_share__ ;
 extern int usb_trans_status;
@@ -102,9 +103,9 @@ static struct FDL_ChannelHandler *Calibration_ChannelGet(int nchannel)
         case 0:
             channel = &gUart0Channel;
             break;
-		case 3:
-			channel = &gUart3Channel;
-			break;
+        case 3:
+            channel = &gUart3Channel;
+            break;
         default:
             channel = &gUart0Channel;
             break;
@@ -114,154 +115,154 @@ static struct FDL_ChannelHandler *Calibration_ChannelGet(int nchannel)
 }
 static int Calibration_ParseRequsetMode(const unsigned char *buf, int len)
 {
-	Mode_Data_Type *pReqType = NULL;
-	char tempbuf[MODE_REQUEST_LENGTH - 2] = {0};
-	if(buf[0] != 0x7e || buf[len - 1] != 0x7e)
-		return -1;
-	memcpy((void*)tempbuf, (void*)&buf[1], len-2);
-	pReqType = (Mode_Data_Type*)tempbuf;
-	if(pReqType->type != RUNMODE_REQUESET_CMD || pReqType->subtype != CALIBRATION_REQUEST_SUBCMD){
-		return -1;
-	}
-	return 0;
+    Mode_Data_Type *pReqType = NULL;
+    char tempbuf[MODE_REQUEST_LENGTH - 2] = {0};
+    if(buf[0] != 0x7e || buf[len - 1] != 0x7e)
+        return -1;
+    memcpy((void*)tempbuf, (void*)&buf[1], len-2);
+    pReqType = (Mode_Data_Type*)tempbuf;
+    if(pReqType->type != RUNMODE_REQUESET_CMD || pReqType->subtype != CALIBRATION_REQUEST_SUBCMD){
+        return -1;
+    }
+    return 0;
 }
 
 static int Calibration_SetMode(const uint8_t *pcmd, int length)
 {
-	if(pcmd[0] != 0x7e || pcmd[length - 1] != 0x7e)
-		return -1;
-	if(gUsedChannel->Write(gUsedChannel, pcmd, length) != length)
-		return -1;
-	return 0;
+    if(pcmd[0] != 0x7e || pcmd[length - 1] != 0x7e)
+        return -1;
+    if(gUsedChannel->Write(gUsedChannel, pcmd, length) != length)
+        return -1;
+    return 0;
 }
 
 static int Calibration_ReinitUsb(void)
 {
-	unsigned long long start_time, end_time;
-	gs_reset_usb_param();
-	calibration_reset_composite();
-	dwc_otg_driver_init();
-	usb_serial_init();
-	start_time = get_timer_masked();
-	while(!usb_is_configured()){
-		end_time = get_timer_masked();
-		if(end_time - start_time > get_cal_enum_ms())
-			return -1;
-	}
-	printf("USB SERIAL CONFIGED\n");
+    unsigned long long start_time, end_time;
+    gs_reset_usb_param();
+    calibration_reset_composite();
+    dwc_otg_driver_init();
+    usb_serial_init();
+    start_time = get_timer_masked();
+    while(!usb_is_configured()){
+        end_time = get_timer_masked();
+        if(end_time - start_time > get_cal_enum_ms())
+            return -1;
+    }
+    printf("USB SERIAL CONFIGED\n");
 
-	start_time = get_timer_masked();
-	while(!usb_is_port_open()){
-		end_time = get_timer_masked();
-		if(end_time - start_time > get_cal_io_ms())
-			return -1;
-	}
-	return 0;
+    start_time = get_timer_masked();
+    while(!usb_is_port_open()){
+        end_time = get_timer_masked();
+        if(end_time - start_time > get_cal_io_ms())
+            return -1;
+    }
+    return 0;
 }
 
 
 
-static int	calibration_device=0;
+static int calibration_device=0;
 int  tool_channel_open(void)
 {
-	calibration_device = poweron_by_calibration();
-	switch(calibration_device)
-	{
-		case 1: //USB calibration ;
-			printf("USB calibration\n");
-			if(-1 == Calibration_ReinitUsb())
-				return -1;
-			gs_open();
-		break;
-		case 2: //UART calibration;
-			printf("UART calibration:...\n");
-		break;
-		default:
-		break;
-	}
-        return 0;
+    calibration_device = poweron_by_calibration();
+    switch(calibration_device)
+    {
+        case 1: //USB calibration ;
+            printf("USB calibration\n");
+            if(-1 == Calibration_ReinitUsb())
+                return -1;
+            gs_open();
+            break;
+        case 2: //UART calibration;
+            printf("UART calibration:...\n");
+            break;
+        default:
+            break;
+    }
+    return 0;
 }
 int  tool_channel_write(char *buffer,int count)
 {
-	int ret;
-	switch(calibration_device)
-	{
-		case 1: //USB calibration ;
-		{
-			while(count > 0){
-				ret = gs_write(g_uart_buf, count);
+    int ret;
+    switch(calibration_device)
+    {
+        case 1: //USB calibration ;
+            {
+                while(count > 0){
+                    ret = gs_write(g_uart_buf, count);
 #if 0
-				printf("func: %s waitting %d write done\n", __func__, count);
-				if(usb_trans_status)
-					printf("func: %s line %d usb trans with error %d\n", __func__, __LINE__, usb_trans_status);
+                    printf("func: %s waitting %d write done\n", __func__, count);
+                    if(usb_trans_status)
+                        printf("func: %s line %d usb trans with error %d\n", __func__, __LINE__, usb_trans_status);
 #endif
-				usb_wait_trans_done(1);
-				if(ret > 0)
-					count -= ret;
-			}
-		}
-		break;
-		case 2: //UART calibration;
-		{
-			struct FDL_ChannelHandler *UartChannel;
-		       UartChannel = Calibration_ChannelGet(TOOL_CHANNEL);
-			UartChannel->Write(UartChannel,buffer,count);
-		}
-		break;
-		default:
-		break;
-	}
+                    usb_wait_trans_done(1);
+                    if(ret > 0)
+                        count -= ret;
+                }
+            }
+            break;
+        case 2: //UART calibration;
+            {
+                struct FDL_ChannelHandler *UartChannel;
+                UartChannel = Calibration_ChannelGet(TOOL_CHANNEL);
+                UartChannel->Write(UartChannel,buffer,count);
+            }
+            break;
+        default:
+            break;
+    }
 }
 
 int  tool_channel_read_status = 0;
 int  tool_channel_read(char *buffer,int count)
 {
-	int index;
-        int size = count;
-	int	ch;
+    int index;
+    int size = count;
+    int ch;
 
-	index = 0;
-	switch(calibration_device)
-	{
-		case 1: //USB calibration ;
-		{
-			if(usb_is_trans_done(0)){
-				int ret;
+    index = 0;
+    switch(calibration_device)
+    {
+        case 1: //USB calibration ;
+            {
+                if(usb_is_trans_done(0)){
+                    int ret;
 #if 0
-				if(usb_trans_status)
-					printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
+                    if(usb_trans_status)
+                        printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
 #endif
-				ret = gs_read(buffer, &size);
-				if(ret)
-					index = size;
+                    ret = gs_read(buffer, &size);
+                    if(ret)
+                        index = size;
 #if 0
-				if(usb_trans_status)
-					printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
+                    if(usb_trans_status)
+                        printf("func: %s line %d read error %d\n", __func__, __LINE__, usb_trans_status);
 #endif
-			}
-		}
-		break;
-		case 2:
-		{
-			struct FDL_ChannelHandler *UartChannel;
+                }
+            }
+            break;
+        case 2:
+            {
+                struct FDL_ChannelHandler *UartChannel;
 
-		        UartChannel = Calibration_ChannelGet(TOOL_CHANNEL);
+                UartChannel = Calibration_ChannelGet(TOOL_CHANNEL);
 
-			ch = UartChannel->GetSingleChar(UartChannel);
-			if(0x7E == ch )
-			{
-				do
-				{
-					buffer[index++] = ch;
-				}while(0x7E != (ch = UartChannel->GetChar(UartChannel)));
+                ch = UartChannel->GetSingleChar(UartChannel);
+                if(0x7E == ch )
+                {
+                    do
+                    {
+                        buffer[index++] = ch;
+                    }while(0x7E != (ch = UartChannel->GetChar(UartChannel)));
 
-				buffer[index++] = ch;
-			}
-		}
-		default:
-		break;
-	}
-	return index;
+                    buffer[index++] = ch;
+                }
+            }
+        default:
+            break;
+    }
+    return index;
 }
 extern int nvitem_sync_enable(void);
 extern int nvitem_sync_disable(void);
@@ -269,6 +270,57 @@ extern int nvitem_is_sync_done(void);
 extern void nvitem_sync_reset(void);
 extern int get_nv_sync_flag(void);
 extern void set_nv_sync_flag(int flag);
+typedef struct{
+    unsigned int seq;
+    unsigned short len;
+    unsigned char main_cmd;
+    unsigned char sub_cmd;
+}packet_head_t;
+static int is_get_whole_cmd(unsigned char* cmd_buf,unsigned short* count){
+    static int is_head = 1;
+    static unsigned short cmd_len = 0,got_len = 0;
+    unsigned short len = *count;
+
+    if(is_head&&len < 64){
+        //in this condition we do not check!
+        return 1;
+    }
+
+    if(is_head){
+        packet_head_t Head;
+        packet_head_t* pHead = &Head;
+
+        printf("PARSE A NEW COMMEND ...\n");
+        memcpy(pHead,cmd_buf+1,sizeof(Head));
+        printf("seq:0x%x,len:0x%x,main_cmd:0x%x,sub_cmd:0x%x\n",
+                pHead->seq,
+                pHead->len,
+                pHead->main_cmd,
+                pHead->sub_cmd);
+        cmd_len = pHead->len+2;
+    }
+    got_len += len;
+    printf("cmd_len = %d,got_len = %d\n",cmd_len,got_len);
+    if(got_len < cmd_len){
+        printf("tmp store the in-completed cmd ...\n");
+        memcpy(g_usb_buf_ex+got_len-len,g_usb_buf,len);
+        is_head = 0;
+        *count = 0;
+        return 0;
+    }else{
+        if(got_len > len){
+            printf("sync cmd ...\n");
+            memcpy(g_usb_buf_ex+got_len-len,g_usb_buf,len);
+            memcpy(g_usb_buf,g_usb_buf_ex,cmd_len);
+        }
+        printf("got an completed cmd!!!\n");
+        *count = cmd_len;
+        is_head = 1;
+        cmd_len = 0;
+        got_len = 0;
+        return 1;
+    }
+}
 void calibration_mode(const uint8_t *pcmd, int length)
 {
     int ret;
@@ -323,7 +375,14 @@ void calibration_mode(const uint8_t *pcmd, int length)
     printf("calibration_mode step5\n");
 
     while(TRUE){
+
         count = tool_channel_read(g_usb_buf, MAX_USB_BUF_LEN);
+
+        if(count > 0 && 0 == is_get_whole_cmd(g_usb_buf,&count)){
+            goto SKIP_CMD_PROCESS;
+        }
+
+        
         if((index = ap_calibration_proc( g_usb_buf, count,g_uart_buf)) == 0){
             if(get_nv_sync_flag()){
                 //printf("NV_SYNC,get_nv_sync_flag so enable nvitem sync ...\n");
@@ -353,7 +412,12 @@ void calibration_mode(const uint8_t *pcmd, int length)
                 index += gUsedChannel->Read(gUsedChannel, g_uart_buf, MAX_UART_BUF_LEN);
             }
 #endif
+        }else{
+            count = 0;
         }
+
+SKIP_CMD_PROCESS:
+
         if(gpio_get_value(CP_AP_LIV) == 1) {
             nvitem_sync();
         }
