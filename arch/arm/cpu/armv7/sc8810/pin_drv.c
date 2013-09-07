@@ -23,9 +23,9 @@
 void set_cp_emc_pad(void)
 {
     u32 dqs_drv = 1;
-    u32 data_drv = 2;
-    u32 ctl_drv = 2;
-    u32 clk_drv = 0;
+    u32 data_drv = 1;
+    u32 ctl_drv = 1;
+    u32 clk_drv = 1;
 
     u32 i = 0;
 
