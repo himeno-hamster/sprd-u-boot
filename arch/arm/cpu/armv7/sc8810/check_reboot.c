@@ -35,6 +35,10 @@ unsigned check_reboot_mode(void)
 		return SPECIAL_MODE;
 	else if(rst_mode == HWRST_STATUS_PANIC)
 		return PANIC_REBOOT;
+#ifdef CONFIG_KDUMP
+        else if(rst_mode == HWRST_STATUS_NW_PANIC)
+            return PANIC_NW_REBOOT;
+#endif
 	else
 		return 0;
 }

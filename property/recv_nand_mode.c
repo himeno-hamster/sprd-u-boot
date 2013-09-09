@@ -31,7 +31,11 @@
 #endif
 #define dprintf(fmt, args...) printf(fmt, ##args)
 
-#define CONFIG_SYS_SPL_ECC_POS  8
+#ifdef CONFIG_ROCKBOX_FAT
+#define do_fat_read(a, b, c, d) file_fat_read(a, b, c)
+#endif
+
+#define CONFIG_SYS_SPL_ECC_POS		8
 #define MAX_SPL_SIZE    0x6000
 #define BOOTLOADER_HEADER_OFFSET   32
 #define NAND_PAGE_LEN              512

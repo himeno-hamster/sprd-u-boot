@@ -27,6 +27,7 @@ int read_adc_calibration_data(char *buffer,int size);
 #define SPECIAL_MODE 0x77665507
 #define UNKNOW_REBOOT_MODE 0x77665508
 #define PANIC_REBOOT 0x77665509
+#define PANIC_NW_REBOOT 0x7766550a
 #define CALIBRATION_MODE 0x7766550a
 
 #define BOOT_NORAML 0xf1

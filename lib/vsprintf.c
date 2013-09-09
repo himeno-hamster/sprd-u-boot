@@ -18,7 +18,7 @@
 #if !defined (CONFIG_PANIC_HANG)
 #include <command.h>
 /*cmd_boot.c*/
-extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 #endif
 
 #include <div64.h>
@@ -130,6 +130,15 @@ static int skip_atoi(const char **s)
 
 	while (is_digit(**s))
 		i = i*10 + *((*s)++) - '0';
+	return i;
+}
+
+int atoi(const char *s)
+{
+	int i=0;
+
+	while (is_digit(*s))
+		i = i*10 + *(s++) - '0';
 	return i;
 }
 

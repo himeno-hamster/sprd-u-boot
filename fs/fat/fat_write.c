@@ -41,6 +41,7 @@ static void uppercase(char *str, int len)
 }
 
 static int total_sector;
+#if !defined(CONFIG_ROCKBOX_FAT)
 static int disk_write(__u32 block, __u32 nr_blocks, void *buf)
 {
 	if (!cur_dev || !cur_dev->block_write)
@@ -55,6 +56,7 @@ static int disk_write(__u32 block, __u32 nr_blocks, void *buf)
 	return cur_dev->block_write(cur_dev->dev,
 			cur_part_info.start + block, nr_blocks,	buf);
 }
+#endif
 
 /*
  * Set short name in directory entry

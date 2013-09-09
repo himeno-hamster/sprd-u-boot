@@ -25,6 +25,7 @@ extern void CHG_TurnOn (void);
 extern void CHG_ShutDown (void);
 extern void CHG_Init (void);
 extern int cali_file_check(void);
+extern unsigned check_reboot_mode();
 
 int boot_pwr_check(void)
 {
@@ -41,6 +42,14 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     uint32_t key_mode = 0;
     uint32_t key_code = 0;
     volatile int i;
+    unsigned rst_mode= check_reboot_mode();
+
+	printf("%s: rst_mode==%#08x\n", __func__, rst_mode);
+#ifdef CONFIG_KDUMP
+    if( rst_mode == PANIC_NW_REBOOT) {
+         do_checkcrash(NULL, 0, 1, NULL);
+    }
+#endif
 
     if(argc > 2)
       goto usage;
@@ -120,8 +129,6 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	    normal_mode();
     }
 
-    unsigned check_reboot_mode(void);
-    unsigned rst_mode= check_reboot_mode();
     if(rst_mode == RECOVERY_MODE){
         DBG("func: %s line: %d\n", __func__, __LINE__);
         recovery_mode();
@@ -143,6 +150,10 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 			alarm_mode();
               else if(flag == 2)
 			normal_mode();
+#ifdef CONFIG_KDUMP
+    } else if(rst_mode == PANIC_NW_REBOOT){
+        panic_reboot_mode();
+#endif
     }else if(rst_mode == SLEEP_MODE){
 		sleep_mode();
     }else if(rst_mode == SPECIAL_MODE){

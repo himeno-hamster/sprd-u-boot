@@ -290,8 +290,11 @@ void try_update_modem(void)
 	}
 	do{
 		printf("reading %s\n", SD_NV_NAME);
-
+#if !defined(CONFIG_ROCKBOX_FAT)
 		ret = do_fat_read(SD_NV_NAME, BUF_ADDR, 0, LS_NO);
+#else
+		ret = file_fat_read(SD_NV_NAME, BUF_ADDR, 0);
+#endif
 		if(ret <= 0){
 			printf("sd file read error %d\n", ret);
 			break;
@@ -344,7 +347,11 @@ SKIP:
 #ifndef CONFIG_SC8830
 	do{
 		printf("reading %s\n", SD_SPL_NAME);
-		ret = do_fat_read(SD_SPL_NAME, spl_eMMCBuf, 0, LS_NO);
+#if !defined(CONFIG_ROCKBOX_FAT)
+                ret = do_fat_read(SD_SPL_NAME, spl_eMMCBuf, 0, LS_NO);
+#else
+                ret = file_fat_read(SD_SPL_NAME, spl_eMMCBuf, 0);
+#endif
 		if(ret <= 0){
 			printf("sd file read error %d\n", ret);
 			break;
@@ -362,7 +369,11 @@ SKIP:
 #endif
 	do{
 		printf("reading %s\n", SD_MODEM_NAME);
+#if !defined(CONFIG_ROCKBOX_FAT)
 		ret = do_fat_read(SD_MODEM_NAME, BUF_ADDR, 0, LS_NO);
+#else
+		ret = file_fat_read(SD_MODEM_NAME, BUF_ADDR, 0);
+#endif
 		if(ret <= 0){
 			printf("sd file read error %d\n", ret);
 			break;
@@ -378,7 +389,11 @@ SKIP:
 
 	do{
 		printf("reading %s\n", SD_DSP_NAME);
+#if !defined(CONFIG_ROCKBOX_FAT)
 		ret = do_fat_read(SD_DSP_NAME, BUF_ADDR, 0, LS_NO);
+#else
+		ret = file_fat_read(SD_DSP_NAME, BUF_ADDR, 0);
+#endif
 		if(ret <= 0){
 			printf("sd file read error %d\n", ret);
 			break;
@@ -394,7 +409,11 @@ SKIP:
 
 	do{
 		printf("reading %s\n", SD_VM_NAME);
+#if !defined(CONFIG_ROCKBOX_FAT)
 		ret = do_fat_read(SD_VM_NAME, BUF_ADDR, 0, LS_NO);
+#else
+		ret = file_fat_read(SD_VM_NAME, BUF_ADDR, 0);
+#endif
 		if(ret <= 0){
 			printf("sd file read error %d\n", ret);
 			break;

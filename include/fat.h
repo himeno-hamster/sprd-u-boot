@@ -3,6 +3,8 @@
  *
  * 2002-07-28 - rjones@nexus-tech.net - ported to ppcboot v1.1.6
  * 2003-03-10 - kharris@nexus-tech.net - ported to u-boot
+ * 2006-01-18 - Keith Outwater (outwater@comcast.net) - added write support
+ *    using FAT driver from rockbox project (www.rockbox.org)
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -29,19 +31,40 @@
 
 #include <asm/byteorder.h>
 
+#ifndef CONFIG_SUPPORT_VFAT
 #define CONFIG_SUPPORT_VFAT
+#endif
+
+#ifdef CONFIG_ROCKBOX_FAT
+#define SECTOR_SIZE FS_BLOCK_SIZE
+#define FS_BLOCK_SIZE 512
+#if FS_BLOCK_SIZE != SECTOR_SIZE
+#error FS_BLOCK_SIZE != SECTOR_SIZE - This code needs to be fixed!
+#endif
+
+#else
 /* Maximum Long File Name length supported here is 128 UTF-16 code units */
 #define VFAT_MAXLEN_BYTES	256 /* Maximum LFN buffer in bytes */
 #define VFAT_MAXSEQ		9   /* Up to 9 of 13 2-byte UTF-16 entries */
 #define PREFETCH_BLOCKS		2
-
+#endif
 #define MAX_CLUSTSIZE	65536
-#define DIRENTSPERBLOCK	(mydata->sect_size / sizeof(dir_entry))
+#ifdef CONFIG_ROCKBOX_FAT
+#define DIRENTSPERBLOCK	(FS_BLOCK_SIZE/sizeof(dir_entry))
+#define DIRENTSPERCLUST	((mydata->clust_size*SECTOR_SIZE)/sizeof(dir_entry))
+#else
+#define DIRENTSPERBLOCK         (mydata->sect_size / sizeof(dir_entry))
 #define DIRENTSPERCLUST	((mydata->clust_size * mydata->sect_size) / \
 			 sizeof(dir_entry))
+#endif
 
 #define FATBUFBLOCKS	6
-#define FATBUFSIZE	(mydata->sect_size * FATBUFBLOCKS)
+#ifdef CONFIG_ROCKBOX_FAT
+#define FATBUFSIZE	(FS_BLOCK_SIZE*FATBUFBLOCKS)
+#else
+#define FATBUFSIZE     (mydata->sect_size * FATBUFBLOCKS)
+#endif
+
 #define FAT12BUFSIZE	((FATBUFSIZE*2)/3)
 #define FAT16BUFSIZE	(FATBUFSIZE/2)
 #define FAT32BUFSIZE	(FATBUFSIZE/4)
@@ -52,22 +75,25 @@
 #define FAT16_SIGN	"FAT16   "
 #define FAT32_SIGN	"FAT32   "
 #define SIGNLEN		8
-
+//#ifndef CONFIG_ROCKBOX_FAT 
+//#define CONFIG_ROCKBOX_FAT /* rockbox redefine these */
+//#endif
 /* File attributes */
-#define ATTR_RO	1
-#define ATTR_HIDDEN	2
-#define ATTR_SYS	4
-#define ATTR_VOLUME	8
-#define ATTR_DIR	16
-#define ATTR_ARCH	32
+#ifndef CONFIG_ROCKBOX_FAT /* rockbox redefine these */
+#define ATTR_RO      1
+#define ATTR_HIDDEN  2
+#define ATTR_SYS     4
+#define ATTR_VOLUME  8
+#define ATTR_DIR     16
+#define ATTR_ARCH    32
+#endif
 
 #define ATTR_VFAT	(ATTR_RO | ATTR_HIDDEN | ATTR_SYS | ATTR_VOLUME)
 
 #define DELETED_FLAG	((char)0xe5) /* Marks deleted files when in name[0] */
 #define aRING		0x05	     /* Used as special character in name[0] */
 
-/*
- * Indicates that the entry is the last long entry in a set of long
+ /* Indicates that the entry is the last long entry in a set of long
  * dir entries
  */
 #define LAST_LONG_ENTRY_MASK	0x40
@@ -78,7 +104,16 @@
 #define LS_DIR		1
 #define LS_ROOT		2
 
-#define ISDIRDELIM(c)	((c) == '/' || (c) == '\\')
+#ifdef CONFIG_ROCKBOX_FAT
+#if (defined(DEBUG) || defined(FAT_DEBUG))
+#define FAT_DPRINT(args...)	printf(args)
+#else
+#define FAT_DPRINT(args...)
+#endif
+#define FAT_ERROR(arg)		printf(arg)
+#endif
+
+#define ISDIRDELIM(c)   ((c) == '/' || (c) == '\\')
 
 #define FSTYPE_NONE	(-1)
 
@@ -99,13 +134,23 @@
 #endif
 
 #define TOLOWER(c)	if((c) >= 'A' && (c) <= 'Z'){(c)+=('a' - 'A');}
+#ifndef CONFIG_ROCKBOX_FAT 
 #define TOUPPER(c)	if ((c) >= 'a' && (c) <= 'z') \
 				(c) -= ('a' - 'A');
+#endif
 #define START(dent)	(FAT2CPU16((dent)->start) \
 			+ (mydata->fatsize != 32 ? 0 : \
 			  (FAT2CPU16((dent)->starthi) << 16)))
 #define CHECK_CLUST(x, fatsize) ((x) <= 1 || \
 				(x) >= ((fatsize) != 32 ? 0xfff0 : 0xffffff0))
+
+#ifdef CONFIG_ROCKBOX_FAT
+/*
+ * Remember the current working directory for the four primary partitions.
+ */
+#define	NUM_PARTS_WITH_CWD	4
+#define CWD_LEN			511
+#endif
 
 typedef struct boot_sector {
 	__u8	ignored[3];	/* Bootstrap code */
@@ -169,12 +214,24 @@ typedef struct dir_slot {
 	__u8	name11_12[4];	/* Last 2 characters in name */
 } dir_slot;
 
-/*
- * Private filesystem parameters
+/* Private filesystem parameters
  *
  * Note: FAT buffer has to be 32 bit aligned
  * (see FAT32 accesses)
  */
+ 
+#ifdef CONFIG_ROCKBOX_FAT 
+typedef struct {
+	__u8	fatbuf[FATBUFSIZE]; /* Current FAT buffer */
+	int	    fatsize;	/* Size of FAT in bits */
+	__u16	fatlength;	/* Length of FAT in sectors */
+	__u16	fat_sect;	/* Starting sector of the FAT */
+	__u16	rootdir_sect;	/* Start sector of root directory */
+	__u16	clust_size;	/* Size of clusters in sectors */
+	short	data_begin;	/* The sector of the first cluster, can be negative */
+	int	fatbufnum;	/* Used by get_fatent, init to -1 */
+} fsdata;
+#else
 typedef struct {
 	__u8	*fatbuf;	/* Current FAT buffer */
 	int	fatsize;	/* Size of FAT in bits */
@@ -186,6 +243,19 @@ typedef struct {
 	short	data_begin;	/* The sector of the first cluster, can be negative */
 	int	fatbufnum;	/* Used by get_fatent, init to -1 */
 } fsdata;
+#endif
+
+#ifdef CONFIG_ROCKBOX_FAT 
+/*
+ * This struct encapsulates partiton and device info for the currently active
+ * block device.
+ */
+typedef struct cur_block_dev {
+	block_dev_desc_t *cur_dev;
+	unsigned long part_offset;
+	int cur_part;
+} cur_block_dev_t;
+#endif
 
 typedef int	(file_detectfs_func)(void);
 typedef int	(file_ls_func)(const char *dir);
@@ -209,9 +279,26 @@ int file_cd(const char *path);
 int file_fat_detectfs(void);
 int file_fat_ls(const char *dir);
 long file_fat_read(const char *filename, void *buffer, unsigned long maxsize);
+#ifdef CONFIG_ROCKBOX_FAT
+long file_fat_write(const char *filename, void *buffer, unsigned long filesize);
+int file_fat_rm(const char *filename);
+int file_fat_mkdir(const char *dirname);
+int file_fat_rmdir(const char *dirname);
+int file_fat_pwd(void);
+int file_fat_cd(const char *dirname);
+int file_fat_mv(const char *oldname, const char *newname);
+#endif
 const char *file_getfsname(int idx);
 int fat_register_device(block_dev_desc_t *dev_desc, int part_no);
 
+
+#ifdef CONFIG_ROCKBOX_FAT
+#ifndef ROCKBOX_FAT_H
+#include <rockbox_fat.h>
+#endif
+#else
 int file_fat_write(const char *filename, void *buffer, unsigned long maxsize);
 int file_fat_rm(const char *filename);
+#endif
+
 #endif /* _FAT_H_ */

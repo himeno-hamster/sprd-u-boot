@@ -58,6 +58,11 @@
 #define EXT_MEM_TYPE_DDR 1
 #endif
 
+/*
+ * KDUMP definition
+ * !!!Must keep up with the CONFIG_SPRD_KDUMP which is be defined in the Kernel.
+ */
+#define CONFIG_KDUMP
 //#define CONFIG_RAM512M
 #define BB_DRAM_TYPE_256MB_32BIT
 #define  CONFIG_MTD_NAND_SC8810 1
@@ -368,6 +373,14 @@
 #define CONFIG_EFI_PARTITION         1
 #define CONFIG_SYS_MMC_NUM           1
 #define CONFIG_SYS_MMC_BASE          {0x20500000}
+#endif
+
+#ifdef CONFIG_KDUMP
+#define CONFIG_ROCKBOX_FAT              1
+#define CONFIG_U_BOOT                   1 /* needed by Rockbox code */
+#define CONFIG_SUPPORT_VFAT             1 /* Rockbox */
+#undef CONFIG_CMD_FAT
+#undef CONFIG_FAT_WRITE
 #endif
 
 #define CALIBRATE_ENUM_MS 15000

@@ -68,6 +68,12 @@
 #define CONFIG_EXT4_SPARSE_DOWNLOAD
 //#define CONFIG_EMMC_SPL
 
+/*
+ * KDUMP definition
+ * !!!Must keep up with the CONFIG_SPRD_KDUMP which is be defined in the Kernel.
+ */
+#define CONFIG_KDUMP
+
 #define EMMC_SECTOR_SIZE 512
 #define CONFIG_SYS_EMMC_U_BOOT_SECTOR_NUM 0x400 
 #endif
@@ -354,6 +360,14 @@
 #define CONFIG_DOS_PARTITION		1
 #define CONFIG_SYS_MMC_NUM		2
 #define CONFIG_SYS_MMC_BASE		{0x20500000,0x20510000}
+#endif
+
+#ifdef CONFIG_KDUMP
+#define CONFIG_ROCKBOX_FAT              1
+#define CONFIG_U_BOOT                   1 /* needed by Rockbox code */
+#define CONFIG_SUPPORT_VFAT             1 /* Rockbox */
+#undef CONFIG_CMD_FAT
+#undef CONFIG_FAT_WRITE
 #endif
 
 #define CALIBRATE_ENUM_MS 15000

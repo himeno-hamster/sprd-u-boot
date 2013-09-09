@@ -890,10 +890,13 @@ void watchdog_mode(void)
 	printf("watchdog_mode\n");
 #ifdef CONFIG_GENERIC_MMC
 #ifndef CONFIG_SC8830
+#ifndef CONFIG_KDUMP
 	if(fatal_dump_enabled())
 		write_modem_memory();
 #endif
 #endif
+#endif
+
 #if BOOT_NATIVE_LINUX
 	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=wdgreboot", BACKLIGHT_OFF);
 #else
@@ -906,8 +909,10 @@ void unknow_reboot_mode(void)
 	printf("unknow_reboot_mode\n");
 #ifdef CONFIG_GENERIC_MMC
 #ifndef CONFIG_SC8830
+#ifndef CONFIG_KDUMP
 	if(fatal_dump_enabled())
 		write_modem_memory();
+#endif
 #endif
 #endif
 #if BOOT_NATIVE_LINUX
@@ -921,8 +926,10 @@ void panic_reboot_mode(void)
 	printf("%s\n", __func__);
 #ifdef CONFIG_GENERIC_MMC
 #ifndef CONFIG_SC8830
+#ifndef CONFIG_KDUMP
 	if(fatal_dump_enabled())
 		write_modem_memory();
+#endif
 #endif
 #endif
 #if BOOT_NATIVE_LINUX
