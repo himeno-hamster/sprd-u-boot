@@ -11,10 +11,16 @@
 #include <asm/arch/packet.h>
 #include <asm/arch/regs_ahb.h>
 //#include "../drivers/mmc/card_sdio.h"
+#include <asm/arch/adi_hal_internal.h>
+#include <asm/arch/sprd_reg.h>
 
 
 #define USB_ENUM_MS 15000
 #define USB_IO_MS 100000
+#ifdef HWRST_STATUS_AUTODLOADER
+#undef HWRST_STATUS_AUTODLOADER
+#endif
+#define HWRST_STATUS_AUTODLOADER (0xa0)
 
 
 typedef struct _DL_FILE_STATUS
@@ -145,6 +151,7 @@ int autodloader_end(PACKET_T *packet, void *arg)
 int autodloader_exec(PACKET_T *packet, void *arg)
 {
     FDL_SendAckPacket(BSL_REP_ACK);
+    ANA_REG_SET(ANA_REG_GLB_POR_RST_MONITOR, HWRST_STATUS_AUTODLOADER);
 //    JumpToTarget(g_file.start_address);
     typedef void(*entry)(void);
     entry entry_func = (entry)((void*)g_file.start_address);

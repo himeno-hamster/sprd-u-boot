@@ -5,8 +5,8 @@
  *
  *  ----- Adapted for OMAP1610 OMAP730 from ARM925t code ------
  *
- *  Copyright (c) 2001	Marius Gröger <mag@sysgo.de>
- *  Copyright (c) 2002	Alex Züpke <azu@sysgo.de>
+ *  Copyright (c) 2001	Marius GrÃ¶ger <mag@sysgo.de>
+ *  Copyright (c) 2002	Alex ZÃ¼pke <azu@sysgo.de>
  *  Copyright (c) 2002	Gary Jennejohn <garyj@denx.de>
  *  Copyright (c) 2003	Richard Woodruff <r-woodruff2@ti.com>
  *  Copyright (c) 2003	Kshitij <kshitij@ti.com>
@@ -98,6 +98,9 @@ _bss_end:
 .local _armboot_start
 _armboot_start:
 	.word _start
+#if defined (CONFIG_AUTODLOADER)
+.extern fdl1_check_autodloader
+#endif
 
 /*
  * the actual reset code
@@ -138,8 +141,14 @@ reset:
 	MOV R3, #0
 	bl  Chip_Init
 #elif defined(CONFIG_SC8830)		//Shark
+#if defined (CONFIG_AUTODLOADER)
+	bl  fdl1_check_autodloader
+	cmp r0, #1
+	blne  Chip_Init
+#else
 	/* bl  sdram_init */
 	bl  Chip_Init
+#endif
 #else					//Tiger
 	#if 0
 	LDR R0, =400000000
