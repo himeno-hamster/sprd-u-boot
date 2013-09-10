@@ -708,7 +708,7 @@ LOCAL int _boot_load_kernel_ramdisk_image(block_dev_desc_t *dev, char* bootmode,
 		partition = L"recovery";
 		printf("enter recovery mode!\n");
 	}else{
-		partition = L"kernel";
+		partition = L"boot";
 		printf("enter boot mode!\n");
 	}
 
