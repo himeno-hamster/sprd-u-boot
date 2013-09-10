@@ -31,7 +31,7 @@ void init_ldo_sleep_gr(void)
 	 *   Following is AP LDO A DIE Sleep Control  *
 	 *********************************************/
 	ANA_REG_SET(ANA_REG_GLB_LDO_SLP_CTRL0,
-		//BIT_SLP_IO_EN |
+		BIT_SLP_IO_EN |
 		BIT_SLP_DCDC_OTP_PD_EN |
 		//BIT_SLP_DCDCGEN_PD_EN |
 		BIT_SLP_DCDCWPA_PD_EN |
@@ -66,11 +66,11 @@ void init_ldo_sleep_gr(void)
 	);
 
 	ANA_REG_SET(ANA_REG_GLB_LDO_SLP_CTRL2,
-		//BIT_SLP_DCDC_BG_LP_EN |
-		//BIT_SLP_DCDCCORE_LP_EN |
-		//BIT_SLP_DCDCMEM_LP_EN |
+		BIT_SLP_DCDC_BG_LP_EN |
+		BIT_SLP_DCDCCORE_LP_EN |
+		BIT_SLP_DCDCMEM_LP_EN |
 		//BIT_SLP_DCDCARM_LP_EN |
-		//BIT_SLP_DCDCGEN_LP_EN |
+		BIT_SLP_DCDCGEN_LP_EN |
 		//BIT_SLP_DCDCWPA_LP_EN |
 		//BIT_SLP_DCDCWRF_LP_EN |
 		//BIT_SLP_LDOEMMCCORE_LP_EN |
@@ -103,6 +103,22 @@ void init_ldo_sleep_gr(void)
 	/****************************************
 	*   Following is CP LDO Sleep Control  *
 	****************************************/
+
+	ANA_REG_SET(ANA_REG_GLB_LDO1828_XTL_CTL,
+		//BIT_LDO_VDD18_EXT_XTL2_EN |
+		//BIT_LDO_VDD18_EXT_XTL1_EN |
+		//BIT_LDO_VDD18_EXT_XTL0_EN |  
+		//BIT_LDO_VDD18_XTL2_EN     |
+		//BIT_LDO_VDD18_XTL1_EN     |
+		//BIT_LDO_VDD18_XTL0_EN     |
+		//BIT_LDO_VDD28_EXT_XTL2_EN |
+		//BIT_LDO_VDD28_EXT_XTL1_EN |
+		//BIT_LDO_VDD28_EXT_XTL0_EN |
+		//BIT_LDO_VDD28_XTL2_EN     |
+		//BIT_LDO_VDD28_XTL1_EN     |
+		//BIT_LDO_VDD28_XTL0_EN     |
+		0
+	); 
 
 	ANA_REG_SET(ANA_REG_GLB_PWR_XTL_EN0,
 		BIT_LDO_XTL_EN |
@@ -157,9 +173,9 @@ void init_ldo_sleep_gr(void)
 		//BIT_DCDC_BG_EXT_XTL2_EN |
 		//BIT_DCDC_BG_EXT_XTL1_EN |
 		//BIT_DCDC_BG_EXT_XTL0_EN |
-		//BIT_DCDC_BG_XTL2_EN |
-		//BIT_DCDC_BG_XTL1_EN |
-		//BIT_DCDC_BG_XTL0_EN |
+		BIT_DCDC_BG_XTL2_EN |
+		BIT_DCDC_BG_XTL1_EN |
+		BIT_DCDC_BG_XTL0_EN |
 		//BIT_BG_EXT_XTL2_EN |
 		//BIT_BG_EXT_XTL1_EN |
 		//BIT_BG_EXT_XTL0_EN |
@@ -175,16 +191,16 @@ void init_ldo_sleep_gr(void)
 		BIT_DCDC_WRF_XTL0_EN |
 		//BIT_DCDC_WPA_XTL2_EN |
 		//BIT_DCDC_WPA_XTL1_EN |
-		//BIT_DCDC_WPA_XTL0_EN |
-		//BIT_DCDC_MEM_XTL2_EN |
-		//BIT_DCDC_MEM_XTL1_EN |
-		//BIT_DCDC_MEM_XTL0_EN |
-		//BIT_DCDC_GEN_XTL2_EN |
-		//BIT_DCDC_GEN_XTL1_EN |
-		//BIT_DCDC_GEN_XTL0_EN |
-		//BIT_DCDC_CORE_XTL2_EN |
-		//BIT_DCDC_CORE_XTL1_EN |
-		//BIT_DCDC_CORE_XTL0_EN |
+		BIT_DCDC_WPA_XTL0_EN |
+		BIT_DCDC_MEM_XTL2_EN |
+		BIT_DCDC_MEM_XTL1_EN |
+		BIT_DCDC_MEM_XTL0_EN |
+		BIT_DCDC_GEN_XTL2_EN |
+		BIT_DCDC_GEN_XTL1_EN |
+		BIT_DCDC_GEN_XTL0_EN |
+		BIT_DCDC_CORE_XTL2_EN |
+		BIT_DCDC_CORE_XTL1_EN |
+		BIT_DCDC_CORE_XTL0_EN |
 		0
 	);
 
@@ -268,6 +284,7 @@ void init_ldo_sleep_gr(void)
 		BIT_DPLL_AP_SEL  |
 		0
 	);
+
 	CHIP_REG_SET(REG_PMU_APB_TDPLL_REL_CFG,
 		//BIT_TDPLL_REF_SEL |
 		BIT_TDPLL_CP2_SEL |
