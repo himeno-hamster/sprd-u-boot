@@ -24,6 +24,10 @@
 #include "fdl_command.h"
 #include <asm/arch/usb_boot.h>
 #include <asm/arch/sc_reg.h>
+#if defined (CONFIG_AUTODLOADER)
+#include <asm/arch/adi_hal_internal.h>
+#include <asm/arch/sprd_reg.h>
+#endif/*CONFIG_AUTODLOADER*/
 
 static const char VERSION_STR[] = {"Spreadtrum Boot Block version 1.1"};
 
@@ -34,6 +38,22 @@ static void error(void)
 }
 
 
+#if defined (CONFIG_AUTODLOADER)
+#ifdef HWRST_STATUS_AUTODLOADER
+#undef HWRST_STATUS_AUTODLOADER
+#endif
+#define HWRST_STATUS_AUTODLOADER (0xa0)
+int fdl1_check_autodloader(void)
+{
+	unsigned rst_mode= 0;
+	rst_mode = ANA_REG_GET(ANA_REG_GLB_POR_RST_MONITOR);
+	if(rst_mode == HWRST_STATUS_AUTODLOADER){
+		ANA_REG_SET(ANA_REG_GLB_POR_RST_MONITOR, 0); //clear flag
+		return 1;
+	}
+	return 0;
+}
+#endif/*CONFIG_AUTODLOADER*/
 int main(void)
 {
     PACKET_T *packet;
