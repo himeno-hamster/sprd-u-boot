@@ -308,7 +308,7 @@ void init_ldo_sleep_gr(void)
 		BIT_CPLL_CP2_SEL |
 		BIT_CPLL_CP1_SEL |
 		//BIT_CPLL_CP0_SEL |
-		BIT_CPLL_AP_SEL  |
+		//BIT_CPLL_AP_SEL  |
 		0
 	);
 
