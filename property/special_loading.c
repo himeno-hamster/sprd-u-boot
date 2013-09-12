@@ -38,6 +38,8 @@ extern struct mtd_info nand_info[];
 #define FIXNV_WIFI_ID        0x199
 //MMITEST 0x19a
 #define FIXNV_MMITEST_ID        0x19a
+//wcdma calibration 0x12d
+#define WCDMA_CALIBRATION_ID   0x12d
 
 ///////////////////////////////////////////////////////////////////
 //CRC Table
@@ -406,6 +408,7 @@ static void update_fixnv(unsigned char *old_addr,unsigned char*new_addr){
         FIXNV_BAND_SELECT_ID,
         FIXNV_WIFI_ID,
         FIXNV_MMITEST_ID,
+        WCDMA_CALIBRATION_ID,
         0x0};
     unsigned int old_item_base = 0,new_item_base = 0,length = 0;
     unsigned short old_item_len=0, new_item_len=0;
