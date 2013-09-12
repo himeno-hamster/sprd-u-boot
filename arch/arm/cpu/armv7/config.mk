@@ -32,3 +32,5 @@ PLATFORM_CPPFLAGS += $(PF_CPPFLAGS_ARMV7)
 # =========================================================================
 PLATFORM_RELFLAGS +=$(call cc-option,-mshort-load-bytes,\
 		    $(call cc-option,-malignment-traps,))
+
+PLATFORM_RELFLAGS +=$(call cc-option,-mno-unaligned-access)
