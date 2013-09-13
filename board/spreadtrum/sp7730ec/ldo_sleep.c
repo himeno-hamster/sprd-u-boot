@@ -49,7 +49,7 @@ void init_ldo_sleep_gr(void)
 	);
 
 	ANA_REG_SET(ANA_REG_GLB_LDO_SLP_CTRL1,
-		//BIT_SLP_LDO_PD_EN |
+		BIT_SLP_LDO_PD_EN |
 		BIT_SLP_LDOLPREF_PD_EN |
 		BIT_SLP_LDOCLSG_PD_EN |
 		BIT_SLP_LDOUSB_PD_EN |
