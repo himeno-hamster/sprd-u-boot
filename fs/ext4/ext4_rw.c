@@ -51,7 +51,11 @@ int ext4_read_content(int dev, wchar_t* partition_name, const char *filename, vo
 		return 1;
 	}
 
-	get_partition_info_by_name (dev_desc, partition_name, &info);
+	if(get_partition_info_by_name (dev_desc, partition_name, &info) == -1){
+		printf("## Valid EFI partition not found ##\n");
+		return 1;
+	}
+
 	/* set the device as block device */
 	ext4fs_set_blk_dev(dev_desc, &info);
 
@@ -87,7 +91,11 @@ int ext4_write_content(int dev, wchar_t* partition_name,char* filename,unsigned 
 		return 1;
 	}
 
-	get_partition_info_by_name (dev_desc, partition_name, &info);
+	if(get_partition_info_by_name (dev_desc, partition_name, &info) == -1){
+		printf("## Valid EFI partition not found ##\n");
+		return 1;
+	}
+
 	/* set the device as block device */
 	ext4fs_set_blk_dev(dev_desc, &info);
 
