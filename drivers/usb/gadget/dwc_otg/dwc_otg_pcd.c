@@ -1704,26 +1704,24 @@ int dwc_otg_pcd_ep_queue(dwc_otg_pcd_t * pcd, void *ep_handle,
 		}
 	}
 
-	if ((req != 0) || prevented) {
-		++pcd->request_pending;
-		DWC_CIRCLEQ_INSERT_TAIL(&ep->queue, req, queue_entry);
-		if (ep->dwc_ep.is_in && ep->stopped
-		    && !(GET_CORE_IF(pcd)->dma_enable)) {
-			/** @todo NGS Create a function for this. */
-			diepmsk_data_t diepmsk = {.d32 = 0 };
-			diepmsk.b.intktxfemp = 1;
-			if (GET_CORE_IF(pcd)->multiproc_int_enable) {
-				dwc_modify_reg32(&GET_CORE_IF(pcd)->dev_if->
-						 dev_global_regs->
-						 diepeachintmsk[ep->dwc_ep.num],
-						 0, diepmsk.d32);
-			} else {
-				dwc_modify_reg32(&GET_CORE_IF(pcd)->dev_if->
-						 dev_global_regs->diepmsk, 0,
-						 diepmsk.d32);
-			}
-
+	++pcd->request_pending;
+	DWC_CIRCLEQ_INSERT_TAIL(&ep->queue, req, queue_entry);
+	if (ep->dwc_ep.is_in && ep->stopped
+	    && !(GET_CORE_IF(pcd)->dma_enable)) {
+		/** @todo NGS Create a function for this. */
+		diepmsk_data_t diepmsk = {.d32 = 0 };
+		diepmsk.b.intktxfemp = 1;
+		if (GET_CORE_IF(pcd)->multiproc_int_enable) {
+			dwc_modify_reg32(&GET_CORE_IF(pcd)->dev_if->
+					 dev_global_regs->
+					 diepeachintmsk[ep->dwc_ep.num],
+					 0, diepmsk.d32);
+		} else {
+			dwc_modify_reg32(&GET_CORE_IF(pcd)->dev_if->
+					 dev_global_regs->diepmsk, 0,
+					 diepmsk.d32);
 		}
+
 	}
 
 	DWC_SPINUNLOCK_IRQRESTORE(pcd->lock, flags);
