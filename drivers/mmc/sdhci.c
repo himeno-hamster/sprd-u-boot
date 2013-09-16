@@ -195,7 +195,8 @@ int sdhci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 			if (data->flags != MMC_DATA_READ)
 				memcpy(aligned_buffer, data->src, trans_bytes);
 		}
-
+		Dcache_CleanRegion(start_addr, trans_bytes);
+		Dcache_InvalRegion(start_addr, trans_bytes);
 		sdhci_writel(host, start_addr, SDHCI_DMA_ADDRESS);
 		mode |= SDHCI_TRNS_DMA;
 #endif
