@@ -565,7 +565,7 @@ int read_adc_calibration_data(char *buffer,int size)
 #endif
 	if(size>48)
 		size=48;
-	memcpy(buffer,&nv_buffer[2],size);
+	memcpy(buffer,nv_buffer,size);
 	return size;
 #elif defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8825)
 	#define FIXNV_ADR        0x80480000
