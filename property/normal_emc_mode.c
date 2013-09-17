@@ -835,7 +835,4 @@ static void product_SN_get(void)
 	}else{
 		product_SN_flag =0;
 	}
-	printf("%s   read miscdata ok,  phase_check.Magic= %d \n",__FUNCTION__, phase_check.Magic);
-	printf("%s   read miscdata ok,  phase_check.SN1= %s \n",__FUNCTION__, phase_check.SN1);
-	printf("%s   read miscdata ok,  sn= %s \n",__FUNCTION__, product_SN);
 }
