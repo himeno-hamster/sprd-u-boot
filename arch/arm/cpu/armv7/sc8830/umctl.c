@@ -360,7 +360,7 @@ void umctl2_basic_mode_init(DRAM_INFO* dram)
                                     (IS_LPDDR1(dram_type)?0x02:0x00) |
                                     (IS_LPDDR2(dram_type)?0x04:0x00));
 
-    UMCTL2_REG_SET(UMCTL_SCHED,0x00071a01);
+    UMCTL2_REG_SET(UMCTL_SCHED,0x00071501);
 
     /*Only present for multi-rank configurations.
     *[11:8]:rank_wr_gap,clks of gap in data responses when performing consecutive writes to different ranks.

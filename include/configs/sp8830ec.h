@@ -208,7 +208,7 @@
 */
 
 /* DDR */
-#define DDR_CLK 400
+#define DDR_CLK 500
 //---these three macro below,only one can be open
 //#define DDR_LPDDR1
 #define DDR_LPDDR2
@@ -229,10 +229,10 @@
 #define DDR_DFS_VAL_BASE 0X1c00
 
 #define DDR_SCAN_SUPPORT
-#define MEM_IO_DS LPDDR2_DS_48R
+#define MEM_IO_DS LPDDR2_DS_40R
 
 #define PUBL_LPDDR1_DS PUBL_LPDDR1_DS_48OHM
-#define PUBL_LPDDR2_DS PUBL_LPDDR2_DS_48OHM
+#define PUBL_LPDDR2_DS PUBL_LPDDR2_DS_40OHM
 #define PUBL_DDR3_DS   PUBL_DDR3_DS_34OHM
 
 
