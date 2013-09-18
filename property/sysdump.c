@@ -345,8 +345,8 @@ void write_sysdump_before_boot(int rst_mode)
 		memset(infop->magic, 0, sizeof(infop->magic));
 
 #ifdef SYSDUMP_BYPASS
-		printf("infop->crash_key: %d\n", infop->crash_key);
-		if ((rst_mode != PANIC_REBOOT) || (infop->crash_key == 0)) {
+		//printf("infop->crash_key: %d\n", infop->crash_key);
+		if ((rst_mode != PANIC_REBOOT)) {
 			printf("skip sysdump for user build\n");
 			goto FINISH;
 		}
