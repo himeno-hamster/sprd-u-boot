@@ -126,7 +126,7 @@ static uint32 ArmCoreConfig(uint32 arm_clk)
     //1.0V  800M
     //1.1V  1100M
     //1.2V  1200M
-#if (defined(CONFIG_SP8830EB)||defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB) ||defined(CONFIG_SP7730EC))
+#if (defined(CONFIG_SP8830EB)||defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735))
     if (arm_clk <= ARM_CLK_900M)
     {
         dcdc_arm |= (6<<5); //set dcdcarmcore voltage 1.1V->1.2V
@@ -175,7 +175,7 @@ static uint32 ClkConfig(uint32 arm_clk)
 
 uint32 MCU_Init()
 {
-#if (defined(CONFIG_SP8830EB)||defined(CONFIG_SP8830EC)||defined(CONFIG_SP8835EB)||defined(CONFIG_SP7730EC))
+#if (defined(CONFIG_SP8830EB)||defined(CONFIG_SP8830EC)||defined(CONFIG_SP8835EB)||defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735))
     if (ClkConfig(ARM_CLK_1000M))
 #else
     if (ClkConfig(ARM_CLK_800M))
