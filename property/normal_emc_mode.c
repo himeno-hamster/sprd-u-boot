@@ -67,36 +67,106 @@ static boot_image_required_t const s_boot_image_table[]={
 #endif
 	{NULL,NULL,0,0}
 };
-
 static void product_SN_get(void);
-
 int Calibration_read_partition(block_dev_desc_t *p_block_dev, wchar_t* partition_name, char *buf, int len)
 {
 	disk_partition_t info;
-	unsigned long size = (len +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
+	unsigned long size = len % EMMC_SECTOR_SIZE;
+	uint32 numb = len / EMMC_SECTOR_SIZE;
 	int ret = 0; /* success */
+	char * buffer =NULL;
 
-	if (!get_partition_info_by_name(p_block_dev, partition_name, &info)) {
-		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, size / EMMC_SECTOR_SIZE, (uint8*)buf)) {
-			printf("emmc image read error \n");
-			ret = -1; /* fail */
-		}
+	if ( 0 != get_partition_info_by_name(p_block_dev, partition_name, &info)) {
+		printf("## %s partition not found ##\n", partition_name);
+		return -1;
 	}
+	printf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
+
+	if(len == 0){
+		printf("The size for reading error \n");
+		return -1;
+	}
+
+	if(size == 0){
+		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
+			printf("emmc image0 read error \n");
+			return -1;
+		}
+		return ret;
+	}
+
+	if(numb >0){
+		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
+			printf("emmc image1 read error \n");
+			return -1;
+		}
+		info.start = info.start + numb * EMMC_SECTOR_SIZE;
+	}
+
+	buffer = malloc(EMMC_SECTOR_SIZE);
+	if(buffer == NULL){
+		printf("malloc memory  error \n");
+		return -1;
+	}
+	memset(buffer, 0xf, EMMC_SECTOR_SIZE);
+	if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
+		printf("emmc image2 read error \n");
+		free(buffer);
+		return -1;
+	}
+	memcpy((buf+numb*EMMC_SECTOR_SIZE),buffer,size);
+	free(buffer);
 	return ret;
 }
 
 int Calibration_write_partition(block_dev_desc_t *p_block_dev, wchar_t* partition_name, char *buf, int len)
 {
 	disk_partition_t info;
-	unsigned long size = (len +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
+	unsigned long size = len % EMMC_SECTOR_SIZE;
+	uint32 numb = len / EMMC_SECTOR_SIZE;
 	int ret = 0; /* success */
+	char * buffer =NULL;
 
-	if (!get_partition_info_by_name(p_block_dev, partition_name, &info)) {
-		if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, size / EMMC_SECTOR_SIZE, (uint8*)buf)) {
-			printf("emmc image write error \n");
-			ret = -1; /* fail */
-		}
+	if ( 0 != get_partition_info_by_name(p_block_dev, partition_name, &info)) {
+		printf("## %s partition not found ##\n", partition_name);
+		return -1;
 	}
+	printf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
+
+	if(len == 0){
+		printf("The size for writing error \n");
+		return -1;
+	}
+
+	if(size == 0){
+		if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, numb, (uint8*)buf)) {
+			printf("emmc image0 write error \n");
+			return -1;
+		}
+		return ret;
+	}
+
+	if(numb >0){
+		if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, numb, (uint8*)buf)) {
+			printf("emmc image1 write error \n");
+			return -1;
+		}
+		info.start = info.start + numb * EMMC_SECTOR_SIZE;
+	}
+
+	buffer = malloc(EMMC_SECTOR_SIZE);
+	if(buffer == NULL){
+		printf("malloc memory  error \n");
+		return -1;
+	}
+	memset(buffer, 0xf, EMMC_SECTOR_SIZE);
+	memcpy(buffer,(buf+numb*EMMC_SECTOR_SIZE),size);
+	if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
+		printf("emmc image2 write error \n");
+		free(buffer);
+		return -1;
+	}
+	free(buffer);
 	return ret;
 }
 
@@ -115,21 +185,52 @@ unsigned long char2u32(unsigned char *buf, int offset)
 int prodinfo_read_partition(block_dev_desc_t *p_block_dev, wchar_t *partition, int offset, char *buf, int len)
 {
 	disk_partition_t info;
-	unsigned long size = (len +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
+	unsigned long size = len % EMMC_SECTOR_SIZE;
+	uint32 numb = len / EMMC_SECTOR_SIZE;
 	int ret = 0; /* success */
 	unsigned long crc;
 	unsigned long offset_block = offset / EMMC_SECTOR_SIZE;
+	char * buffer =NULL;
 
-	if (!get_partition_info_by_name(p_block_dev, partition, &info)) {
-		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start + offset_block, size / EMMC_SECTOR_SIZE, (uint8*)buf)) {
-			printf("emmc image read error : %d\n", offset);
-			ret = 1; /* fail */
+	if ( 0 != get_partition_info_by_name(p_block_dev, partition, &info)) {
+		printf("## %s partition not found ##\n", partition);
+		return 1;
+	}
+	printf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
+	if(len == 0){
+		printf("The size for reading error \n");
+		return 1;
+	}
+	info.start = info.start + offset_block;
+	if(size != 0){
+		if(numb >0){
+			if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
+				printf("emmc image1 read error \n");
+				return 1;
+			}
+			info.start = info.start + numb * EMMC_SECTOR_SIZE;
 		}
-	} else
-		ret = 1;
 
-	if (ret == 1)
-		return ret;
+		buffer = malloc(EMMC_SECTOR_SIZE);
+		if(buffer == NULL){
+			printf("malloc memory  error \n");
+			return 1;
+		}
+		memset(buffer, 0xf, EMMC_SECTOR_SIZE);
+		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
+			printf("emmc image2 read error \n");
+			free(buffer);
+			return 1;
+		}
+		memcpy((buf+numb*EMMC_SECTOR_SIZE),buffer,size);
+		free(buffer);
+	}
+	else{
+		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
+			printf("emmc image3 read error \n");
+			return 1;
+		}
+	}
 
 	crc = crc32b(0xffffffff, buf, len);
 	if (offset == 0) {
@@ -166,6 +267,7 @@ int prodinfo_read_partition(block_dev_desc_t *p_block_dev, wchar_t *partition, i
 
 	return ret;
 }
+
 
 
 int read_logoimg(char *bmp_img,size_t size)
@@ -828,7 +930,7 @@ static void product_SN_get(void)
 		product_SN_flag =0;
 		return ;
 	}
-
+	printf("%s: phase_check.Magic = %d \n", __FUNCTION__, phase_check.Magic);
 	if(phase_check.Magic == SP09_SPPH_MAGIC){
 		product_SN_flag =1;
 		memcpy(product_SN, phase_check.SN1, 21);
