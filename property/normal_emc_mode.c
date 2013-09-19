@@ -108,7 +108,7 @@ int Calibration_read_partition(block_dev_desc_t *p_block_dev, wchar_t* partition
 		printf("malloc memory  error \n");
 		return -1;
 	}
-	memset(buffer, 0xf, EMMC_SECTOR_SIZE);
+	memset(buffer, 0xff, EMMC_SECTOR_SIZE);
 	if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
 		printf("emmc image2 read error \n");
 		free(buffer);
@@ -159,7 +159,7 @@ int Calibration_write_partition(block_dev_desc_t *p_block_dev, wchar_t* partitio
 		printf("malloc memory  error \n");
 		return -1;
 	}
-	memset(buffer, 0xf, EMMC_SECTOR_SIZE);
+	memset(buffer, 0xff, EMMC_SECTOR_SIZE);
 	memcpy(buffer,(buf+numb*EMMC_SECTOR_SIZE),size);
 	if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
 		printf("emmc image2 write error \n");
@@ -216,7 +216,7 @@ int prodinfo_read_partition(block_dev_desc_t *p_block_dev, wchar_t *partition, i
 			printf("malloc memory  error \n");
 			return 1;
 		}
-		memset(buffer, 0xf, EMMC_SECTOR_SIZE);
+		memset(buffer, 0xff, EMMC_SECTOR_SIZE);
 		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
 			printf("emmc image2 read error \n");
 			free(buffer);
