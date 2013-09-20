@@ -87,6 +87,7 @@
 #define CONFIG_MMC			1
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_SDHCI			1
+#define CONFIG_SDHCI_CTRL_NO_HISPD     1 /* disable high speed control */
 #define CONFIG_SYS_MMC_MAX_BLK_COUNT	0x1000
 #define CONFIG_MMC_SDMA			1
 #define CONFIG_MV_SDHCI			1
@@ -94,6 +95,7 @@
 #define CONFIG_EFI_PARTITION		1
 #define CONFIG_SYS_MMC_NUM		1
 #define CONFIG_SYS_MMC_BASE		{0x20600000}
+#define CONFIG_SYS_SD_BASE		0x20300000
 #endif
 
 #define BB_DRAM_TYPE_256MB_32BIT
@@ -391,5 +393,7 @@
 #define CONFIG_SOUND_CODEC_SPRD_V3 1
 #define CONFIG_SOUND_DAI_VBC_R2P0 1
 /* #define CONFIG_SPRD_AUDIO_DEBUG */
+
+#define CONFIG_RAMDUMP_NO_SPLIT 1 /* Don't split sysdump file */
 
 #endif /* __CONFIG_H */
