@@ -27,6 +27,8 @@
 
 void init_ldo_sleep_gr(void)
 {
+#if defined (CONFIG_SPX15)
+#else
 	/**********************************************
 	 *   Following is AP LDO A DIE Sleep Control  *
 	 *********************************************/
@@ -416,4 +418,5 @@ void init_ldo_sleep_gr(void)
 		BITS_SLP_OUT_WAIT_DCDCARM(8)		|
 		0
 	);
+#endif
 }

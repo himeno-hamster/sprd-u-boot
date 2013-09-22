@@ -42,6 +42,8 @@ static uint32 SetMPllClk (uint32 clk)
 
 static uint32 AhbClkConfig()
 {
+#if defined(CONFIG_SPX15)
+#else
     uint32 ahb_cfg;
     ahb_cfg  = REG32(REG_AP_CLK_AP_AHB_CFG);
     ahb_cfg &=~3;
@@ -52,13 +54,15 @@ static uint32 AhbClkConfig()
     ahb_cfg &=~3;
     ahb_cfg |= 3;  //pub ahb select 153M      0:26M 1:76M 2:128M 3:153M
     REG32(REG_AON_CLK_PUB_AHB_CFG) = ahb_cfg;
-
+#endif
     delay();
     return 0;
 }
 
 static uint32 ApbClkConfig()
 {
+#if defined(CONFIG_SPX15)
+#else
     uint32 apb_cfg;
     apb_cfg  = REG32(REG_AP_CLK_AP_APB_CFG);
     apb_cfg &=~3;
@@ -69,30 +73,35 @@ static uint32 ApbClkConfig()
     apb_cfg &=~3;
     apb_cfg |= 3;  //aon apb select 128M        0:26M 1:76M 2:96M 3:128M
     REG32(REG_AON_CLK_AON_APB_CFG) = apb_cfg;
-
+#endif
     delay();
     return 0;
 }
 
 static uint32 AxiClkConfig(uint32 arm_clk)
 {
+#if defined(CONFIG_SPX15)
+#else
     uint32 ca7_ckg_cfg;
     ca7_ckg_cfg  = REG32(REG_AP_AHB_CA7_CKG_CFG);
     ca7_ckg_cfg &= ~(7<<8);
     ca7_ckg_cfg |= ((arm_clk/(ARM_CLK_500M+1))&0x7)<<8;
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
+#endif
     delay();
     return 0;
 }
 
 static uint32 DbgClkConfig(uint32 arm_clk)
 {
+#if defined(CONFIG_SPX15)
+#else
     uint32 ca7_ckg_cfg;
     ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);
     ca7_ckg_cfg &= ~(7<<16);
     ca7_ckg_cfg |=  ((arm_clk/(ARM_CLK_200M+1))&0x7)<<16;
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
-
+#endif
     delay();
     return 0;
 }
@@ -100,7 +109,8 @@ static uint32 DbgClkConfig(uint32 arm_clk)
 static uint32 McuClkConfig(uint32 arm_clk)
 {
     uint32 ca7_ckg_cfg;
-
+#if defined(CONFIG_SPX15)
+#else
     ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);
     ca7_ckg_cfg &= ~7; //a7 core select 26M
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
@@ -113,7 +123,7 @@ static uint32 McuClkConfig(uint32 arm_clk)
     ca7_ckg_cfg &= ~7;
     ca7_ckg_cfg |=  6; //a7 core select mcu MPLL       0:26M 1:(DPLL)533M 2:(CPLL)624M 3:(TDPLL)768M 4:(WIFIPLL)880M 5:(WPLL)921M 6:(MPLL)1200M
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
-
+#endif
     delay();
     return 0;
 }
@@ -121,6 +131,9 @@ static uint32 McuClkConfig(uint32 arm_clk)
 static uint32 ArmCoreConfig(uint32 arm_clk)
 {
     uint32 dcdc_arm;
+#if defined(CONFIG_SPX15)
+#else
+
     dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_ARM_ADI);
     dcdc_arm &= ~0xFF;
     //1.0V  800M
@@ -150,8 +163,10 @@ static uint32 ArmCoreConfig(uint32 arm_clk)
         dcdc_arm |= (6<<5); //set dcdcarmcore voltage 1.1V->1.2V
     }
 #endif
+
     ANA_REG_SET(ANA_REG_GLB_DCDC_ARM_ADI, dcdc_arm);
     REG32(REG_AP_APB_APB_EB) |= BIT_AP_CKG_EB;        // CKG enable
+#endif
     delay();
     return 0;
 }

@@ -516,9 +516,12 @@ static inline int arch_audio_codec_analog_reg_enable(void)
 	int ret = 0;
 
 #if FIXED_AUDIO
+#if defined(CONFIG_SPX15)
+#else
 	ret =
 		sci_adi_write(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_AUD_EN,
 						BIT_ANA_AUD_EN);
+#endif
 #endif
 
 	return ret;
@@ -529,7 +532,10 @@ static inline int arch_audio_codec_analog_reg_disable(void)
 	int ret = 0;
 
 #if FIXED_AUDIO
+#if defined(CONFIG_SPX15)
+#else
 	ret = sci_adi_write(ANA_REG_GLB_ARM_MODULE_EN, 0, BIT_ANA_AUD_EN);
+#endif
 #endif
 
 	return ret;
@@ -540,6 +546,8 @@ static inline int arch_audio_codec_enable(void)
 	int ret = 0;
 
 #if FIXED_AUDIO
+#if defined(CONFIG_SPX15)
+#else
 	/*AUDIF , 6.5M*/
 	int mask = BIT_CLK_AUD_6P5M_EN | BIT_CLK_AUDIF_EN;
 	sci_adi_write(ANA_REG_GLB_ARM_CLK_EN, mask, mask);
@@ -550,7 +558,7 @@ static inline int arch_audio_codec_enable(void)
 	sci_adi_write(ANA_REG_GLB_XTL_WAIT_CTRL, BIT_XTL_EN, BIT_XTL_EN);
 	/*internal digital 26M enable*/
 	sci_glb_write(REG_AON_APB_SINDRV_CTRL,  (BIT_SINDRV_ENA |BIT_SINDRV_ENA_SQUARE), (BIT_SINDRV_ENA |BIT_SINDRV_ENA_SQUARE));
-
+#endif
 #endif
 
 	return ret;
@@ -561,6 +569,8 @@ static inline int arch_audio_codec_disable(void)
 	int ret = 0;
 
 #if FIXED_AUDIO
+#if defined(CONFIG_SPX15)
+#else
 	/*AUDIF , 6.5M*/
 	int mask = BIT_CLK_AUD_6P5M_EN | BIT_CLK_AUDIF_EN;
 	sci_adi_write(ANA_REG_GLB_ARM_CLK_EN, 0, mask);
@@ -571,7 +581,7 @@ static inline int arch_audio_codec_disable(void)
 	sci_adi_write(ANA_REG_GLB_XTL_WAIT_CTRL, 0, BIT_XTL_EN);
 	/*internal digital 26M enable*/
 	sci_glb_write(REG_AON_APB_SINDRV_CTRL,  0,  (BIT_SINDRV_ENA |BIT_SINDRV_ENA_SQUARE));
-
+#endif
 #endif
 
 	return ret;
@@ -626,6 +636,8 @@ static inline int arch_audio_codec_reset(void)
 	int ret = 0;
 
 #if FIXED_AUDIO
+#if defined(CONFIG_SPX15)
+#else
 	int mask =
 	    BIT_ANA_AUD_SOFT_RST | BIT_ANA_AUDTX_SOFT_RST |
 	    BIT_ANA_AUDRX_SOFT_RST;
@@ -638,18 +650,24 @@ static inline int arch_audio_codec_reset(void)
 	if (ret >= 0)
 		ret = sci_adi_write(ANA_REG_GLB_ARM_RST, 0, mask);
 #endif
-
+#endif
 	return ret;
 }
 
 static inline int arch_audio_codec_loop_enable(void)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	sci_adi_write(ANA_REG_GLB_ARM_CLK_EN, BIT_CLK_AUD_LOOP_EN, BIT_CLK_AUD_LOOP_EN);
+	#endif
 }
 
 static inline int arch_audio_codec_loop_disable(void)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	sci_adi_write(ANA_REG_GLB_ARM_CLK_EN, 0, BIT_CLK_AUD_LOOP_EN);
+	#endif
 }
 
 /* ------------------------------------------------------------------------- */

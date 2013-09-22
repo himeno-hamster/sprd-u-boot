@@ -179,6 +179,8 @@ void sprd_rtc_set_alarm_sec(unsigned long secs)
 
 int sprd_clean_rtc(void)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	int err;
 	ANA_REG_AND(ANA_RTC_INT_EN, ~(RTC_INT_ALL_MSK)); // disable all interrupt
 
@@ -190,12 +192,15 @@ int sprd_clean_rtc(void)
 	sprd_rtc_set_alarm_sec(0);
 	printf("now time sec %lu\n", sprd_rtc_get_sec());
 	printf("now alarm sec %lu\n", sprd_rtc_get_alarm_sec());
-
+	#endif
 	return 0;
 }
 void sprd_rtc_init(void)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_RTC_EN); //rtc enable
 	ANA_REG_OR(ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_RTC_EN); //rtc rtc clock enable
+	#endif
 }
 

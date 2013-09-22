@@ -2630,6 +2630,8 @@ PUBLIC uint32 SDHOST_BaseClk_Set(SDHOST_SLOT_NO slot_NO,uint32 sdio_base_clk)
     uint32 clk = 0;
 
 #if   defined(CONFIG_SC8830)
+#if   defined(CONFIG_SPX15)
+#else
 	if (slot_NO == SDHOST_SLOT_6)
 	{
 		if (sdio_base_clk >= SDIO_BASE_CLK_312M)
@@ -2680,6 +2682,7 @@ PUBLIC uint32 SDHOST_BaseClk_Set(SDHOST_SLOT_NO slot_NO,uint32 sdio_base_clk)
 			clk = SDIO_BASE_CLK_26M;
 		}
 	}
+#endif
 #elif defined(CONFIG_TIGER)
     REG32 (GR_CLK_GEN5) &= ~ (BIT_23|BIT_24);
     //Select the clk source of SDIO

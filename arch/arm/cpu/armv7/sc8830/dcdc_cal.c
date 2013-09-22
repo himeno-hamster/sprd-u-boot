@@ -229,9 +229,12 @@ static dcdc_cali_t* get_cali_addr()
 /* standard dcdc ops*/
 static int __dcdc_is_orig(struct regulator_desc *desc)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	if (0 == strcmp(desc->name, "vddmem") || 0 == strcmp(desc->name, "vddwrf"))
 		if (ANA_REG_GET(ANA_REG_GLB_CHIP_ID_LOW) & 0xff) /* BA CHIP */
 			return 0;
+	#endif
 	return 1;
 }
 
@@ -454,15 +457,21 @@ int DCDC_Cal_ArmCore(void)
 	debug("%s\n", __FUNCTION__);
 	debug("Enable dcdc_arm, dcdc_core, dcdc_mem\n\r");
 
+#if defined(CONFIG_SPX15)
+#else
 	/* mem arm core bits are [11:9]*/
 	regVal = ANA_REG_GET(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR);
 	regVal |= BIT(11) | BIT(10) | BIT(9);
 	ANA_REG_SET(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR, regVal);
 
+
 	/* enable sim0, sim2. */
 	regVal = ANA_REG_GET(ANA_REG_GLB_LDO_PD_CTRL);
 	regVal &= ~(BIT(2) | BIT(4));
 	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, regVal);
+
+
+#endif
 
 	/* FIXME: Update CHGMNG_AdcvalueToVoltage table before setup vbat ratio. */
 	/*ADC_CHANNEL_VBAT is 5*/
@@ -567,4 +576,5 @@ int DCDC_Cal_All(int reserved)
 
 	return 0;
 }
+
 #endif

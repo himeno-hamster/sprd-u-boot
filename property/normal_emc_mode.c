@@ -912,7 +912,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #endif
 	set_vibrator(FALSE);
 
-#if((!BOOT_NATIVE_LINUX)||(BOOT_NATIVE_LINUX_MODEM))
+#if ((!BOOT_NATIVE_LINUX)||(BOOT_NATIVE_LINUX_MODEM))
 	//load required image which config in table
 	for(i=0;s_boot_image_table[i].partition != NULL;i++)
 	{
@@ -967,3 +967,4 @@ static void product_SN_get(void)
 		product_SN_flag =0;
 	}
 }
+#endif

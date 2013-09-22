@@ -106,7 +106,8 @@ int sprd_charger_is_adapter(void)
 {
 	int ret = ADP_TYPE_UNKNOW;
 	int charger_status;
-
+#if defined(CONFIG_SPX15)
+#else
 	charger_status = sci_adi_read(ANA_REG_GLB_CHGR_STATUS)
 	    & (BIT_CDP_INT | BIT_DCP_INT | BIT_SDP_INT);
 
@@ -123,7 +124,7 @@ int sprd_charger_is_adapter(void)
 	default:
 		break;
 	}
-
+#endif
 	return ret;
 }
 

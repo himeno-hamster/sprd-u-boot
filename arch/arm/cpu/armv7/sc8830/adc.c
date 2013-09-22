@@ -10,6 +10,8 @@
 
 void ADC_Init(void)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_ADC_EN); //ADC enable
 	ANA_REG_OR(ANA_REG_GLB_ARM_CLK_EN,    BIT_CLK_AUXAD_EN|BIT_CLK_AUXADC_EN); //enable auxad clock
 	ANA_REG_OR(ANA_REG_GLB_XTL_WAIT_CTRL,    BIT_XTL_EN);	//enable clk
@@ -17,6 +19,7 @@ void ADC_Init(void)
 
 	ANA_REG_OR(ADC_CTRL, ADC_EN_BIT);
 	ANA_REG_OR(ADC_CTRL, ADC_MODE_12B);
+	#endif
 }
 
 void ADC_SetCs(adc_channel id)

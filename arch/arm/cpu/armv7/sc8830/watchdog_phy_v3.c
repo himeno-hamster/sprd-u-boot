@@ -65,7 +65,8 @@ PUBLIC int32 WDG_PHY_CONFIG (WDG_CONFIG_T *cfg)
     uint32 val  = 0;
 
     ///WDG_TRACE("Watch Dog Trace: Watch Dog Value 0x%8.8x", CHIP_REG_GET(WDG_VALUE));
-
+#if defined(CONFIG_SPX15)
+#else
     ANA_REG_SET (WDG_LOCK, WDG_UNLOCK_KEY);
 
     switch (cfg->mode)
@@ -104,7 +105,7 @@ PUBLIC int32 WDG_PHY_CONFIG (WDG_CONFIG_T *cfg)
     WDG_TRACE ("Watch Dog Trace: Watch Dog Control 0x%8.8x", ANA_REG_GET (WDG_CTRL));
 
     ANA_REG_SET (WDG_LOCK, (~WDG_UNLOCK_KEY));
-
+#endif
     return 0;
 }
 
@@ -116,20 +117,29 @@ PUBLIC int32 WDG_PHY_CONFIG (WDG_CONFIG_T *cfg)
 /*****************************************************************************/
 PUBLIC int32 WDG_PHY_INT_CLR (void)
 {
+    #if defined(CONFIG_SPX15)
+    #else	
     ANA_REG_SET (WDG_LOCK, WDG_UNLOCK_KEY);
     CLEAR_WDG_INT (WDG_INT_CLEAR_BIT | WDG_INT_RST_BIT);
     ANA_REG_SET (WDG_LOCK, (~WDG_UNLOCK_KEY));
+    #endif
     return 0;
 }
 PUBLIC void WDG_ClockOn(void)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	ANA_REG_OR (ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_WDG_EN); //WDG enable
 	ANA_REG_OR (ANA_REG_GLB_RTC_CLK_EN,    BIT_RTC_WDG_EN); //WDG Rtc enable
+	#endif
 }
 
 PUBLIC uint32 WDG_PHY_RST_RAW_INT(void)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	return ANA_REG_GET(WDG_INT_RAW);
+	#endif
 }
 
 /**---------------------------------------------------------------------------*

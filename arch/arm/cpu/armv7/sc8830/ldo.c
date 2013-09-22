@@ -69,6 +69,9 @@ struct ldo_ctl_info {
 
 static struct ldo_ctl_info ldo_ctl_data[] =
 {
+#if defined(CONFIG_SPX15)
+
+#else
 	{
 		.id           = LDO_LDO_EMMCCORE,
 		.bp_reg       = ANA_REG_GLB_LDO_DCDC_PD_RTCSET,
@@ -532,6 +535,7 @@ static struct ldo_ctl_info ldo_ctl_data[] =
 		.b1_rst       = BIT_15,
 		.init_level   = LDO_VOLT_LEVEL_FAULT_MAX,
 	},
+#endif
 };
 
 /**---------------------------------------------------------------------------*
@@ -746,12 +750,18 @@ int LDO_Init(void)
 
 static void LDO_TurnOffCoreLDO(void)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	ANA_REG_SET(ANA_REG_GLB_LDO_DCDC_PD_RTCSET, 0x7FFF);
+	#endif
 }
 
 static void LDO_TurnOffAllModuleLDO(void)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, 0xFFF); 
+	#endif
 }
 
 void LDO_TurnOffAllLDO(void)

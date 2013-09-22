@@ -134,7 +134,8 @@ int sci_efuse_calibration_get(unsigned int * p_cal_data)
 	int timeout;
 	unsigned int data;
 	unsigned short adc_temp;
-
+#if defined(CONFIG_SPX15)
+#else
 	/* wait for maximum of 100 msec */
 	sci_adi_raw_write(ANA_REG_GLB_AFUSE_CTRL, BIT_AFUSE_READ_REQ);
 	efuse_udelay(1);
@@ -167,7 +168,7 @@ int sci_efuse_calibration_get(unsigned int * p_cal_data)
 	/* adc 4.2V */
 	adc_temp = (data & 0xFF) + BASE_ADC_P1 - ADC_DATA_OFFSET;
 	p_cal_data[0] = (VOL_P1)|((adc_temp << 2) << 16);
-
+#endif
 	return 1;
 }
 

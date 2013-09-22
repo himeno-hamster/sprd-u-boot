@@ -18,6 +18,8 @@
 
 void set_vibrator(int on)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	int i = 0;
 	ANA_REG_SET(ANA_REG_GLB_VIBR_WR_PROT_VALUE, VIBRATOR_REG_UNLOCK); //unlock vibrator registor
 	if(on == 0)
@@ -30,6 +32,7 @@ void set_vibrator(int on)
 		ANA_REG_OR (ANA_REG_GLB_VIBR_CTRL0, BIT_VIBR_PON);
 	}
 	ANA_REG_SET(ANA_REG_GLB_VIBR_WR_PROT_VALUE, VIBRATOR_REG_LOCK);   //lock vibrator registor
+	#endif
 }
 
 #define VIBR_STABLE_V_SHIFT 12
@@ -41,6 +44,8 @@ void set_vibrator(int on)
 
 void vibrator_hw_init(void)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	ANA_REG_SET(ANA_REG_GLB_VIBR_WR_PROT_VALUE, VIBRATOR_REG_UNLOCK); //unlock vibrator registor
 	ANA_REG_OR(ANA_REG_GLB_RTC_CLK_EN, BIT_RTC_VIBR_EN);
 	ANA_REG_MSK_OR(ANA_REG_GLB_VIBR_CTRL0, (VIBRATOR_INIT_LEVEL << VIBR_INIT_V_SHIFT), VIBR_INIT_V_MSK); //set init current level
@@ -48,6 +53,8 @@ void vibrator_hw_init(void)
 	ANA_REG_SET(ANA_REG_GLB_VIBR_CTRL1, VIBRATOR_INIT_STATE_CNT);   //set convert count
 
 	ANA_REG_SET(ANA_REG_GLB_VIBR_WR_PROT_VALUE, VIBRATOR_REG_LOCK);   //lock vibrator registor
+	#endif
 }
+
 
 

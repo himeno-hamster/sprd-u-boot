@@ -35,6 +35,9 @@ extern   "C"
 ///
 //Analog die register define
 ///
+
+#if 1
+
 #define   ANA_APB_MOD_EN         (ANA_REGS_GLB_PHYS + 0x00)
 #define   ANA_APB_CLK_EN         (ANA_REGS_GLB_PHYS + 0x04)
 #define   ANA_APB_RTC_CLK_EN     (ANA_REGS_GLB_PHYS + 0x08)
@@ -151,7 +154,7 @@ extern   "C"
 #define VIBR_BP_EN      BIT_1
 #define VIBR_RTC_EN     BIT_0
 
-
+#endif
 
 #ifdef   __cplusplus
 }

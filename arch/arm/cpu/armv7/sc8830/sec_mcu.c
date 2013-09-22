@@ -12,6 +12,8 @@
 
 static void AhbClkConfig()
 {
+#if defined(CONFIG_SPX15)
+#else	
     uint32 ahb_cfg, i;
     ahb_cfg  = REG32(REG_AP_CLK_AP_AHB_CFG);
     ahb_cfg &=~3;
@@ -24,10 +26,13 @@ static void AhbClkConfig()
     REG32(REG_AON_CLK_PUB_AHB_CFG) = ahb_cfg;
 
     for (i=0; i<0x100; i++);
+#endif
 }
 
 static void ApbClkConfig()
 {
+#if defined(CONFIG_SPX15)
+#else
     uint32 apb_cfg, i;
     apb_cfg  = REG32(REG_AP_CLK_AP_APB_CFG);
     apb_cfg &=~3;
@@ -40,10 +45,13 @@ static void ApbClkConfig()
     REG32(REG_AON_CLK_AON_APB_CFG) = apb_cfg;
 
     for (i=0; i<0x100; i++);
+#endif
 }
 
 static void SetMPllClk (uint32 clk)
 {
+#if defined(CONFIG_SPX15)
+#else
     uint32 mpll_cfg, pll_sft_cnt, i;
 
     REG32(REG_AON_APB_PLL_SOFT_CNT_DONE) &= ~1;
@@ -59,10 +67,13 @@ static void SetMPllClk (uint32 clk)
     for (i=0; i<0x1000; i++){}
 
     REG32(REG_AON_APB_PLL_SOFT_CNT_DONE) |=  1;
+#endif
 }
 
 static void McuClkConfig(uint32 arm_clk)
 {
+#if defined(CONFIG_SPX15)
+#else
     uint32 ca7_ckg_cfg, i;
 
     SetMPllClk(arm_clk);
@@ -74,10 +85,13 @@ static void McuClkConfig(uint32 arm_clk)
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
 
     for (i=0; i<0x100; i++){}
+#endif
 }
 
 void SecClkConfig()
 {
+#if defined(CONFIG_SPX15)
+#else
     uint32 ca7_ckg_cfg, i;
     REG32(REG_AP_APB_APB_EB) |= BIT_AP_CKG_EB;		// CKG enable
     //AxiClkConfig
@@ -93,7 +107,7 @@ void SecClkConfig()
     ca7_ckg_cfg |=  3<<16;							//DBG=ARM/4
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
     for (i=0; i<0x100; i++){}
-
+#endif
     McuClkConfig(ARM_CLK_1000M);
 
     AhbClkConfig();

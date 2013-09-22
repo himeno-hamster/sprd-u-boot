@@ -970,6 +970,9 @@ __init void sprd_gpio_init(void)
 #endif
 void sprd_gpio_init(void)
 {
+	#if defined(CONFIG_SPX15)
+	#else
 	REG32(REG_AON_APB_APB_EB0) |= BIT_GPIO_EB;
 	ANA_REG_OR(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_GPIO_EN);
+	#endif
 }

@@ -15,6 +15,8 @@
  * Automatically generated C header: do not edit *
  *************************************************
 */
+#if defined (CONFIG_SPX15)
+#else
 
 SCI_CLK_ADD(ext_26m, 26000000, 0, 0,
 	0, 0, 0, 0, 0);
@@ -437,4 +439,4 @@ SCI_CLK_ADD(clk_avs1, 0, REG_AON_APB_APB_EB0, BIT(7),
 	0, 0, REG_AON_CLK_AVS1_CFG, BIT(0)|BIT(1),
 	4, &clk_26m_rf0, &clk_48m, &clk_51m2, &clk_96m);
 #endif	
-
+#endif
