@@ -503,16 +503,16 @@ void umctl2_addrmap_init(DRAM_INFO* dram)
             break;
         }
         case DRAM_LPDDR2_1CS_4G_X32:
-		{
-			UMCTL2_REG_SET(UMCTL_ADDRMAP0, 0x00001F1F);
-			UMCTL2_REG_SET(UMCTL_ADDRMAP1, 0x00070707);
-			UMCTL2_REG_SET(UMCTL_ADDRMAP2, 0x00000000);
-			UMCTL2_REG_SET(UMCTL_ADDRMAP3, 0x0F000000);
-			UMCTL2_REG_SET(UMCTL_ADDRMAP4, 0x00000F0F);
-			UMCTL2_REG_SET(UMCTL_ADDRMAP5, 0x06060606);
-			UMCTL2_REG_SET(UMCTL_ADDRMAP6, 0x0F0F0606);
-			break;
-		}			
+	{
+	    UMCTL2_REG_SET(UMCTL_ADDRMAP0, 0x00001F1F);
+	    UMCTL2_REG_SET(UMCTL_ADDRMAP1, 0x00070707);
+	    UMCTL2_REG_SET(UMCTL_ADDRMAP2, 0x00000000);
+	    UMCTL2_REG_SET(UMCTL_ADDRMAP3, 0x0F000000);
+	    UMCTL2_REG_SET(UMCTL_ADDRMAP4, 0x00000F0F);
+	    UMCTL2_REG_SET(UMCTL_ADDRMAP5, 0x06060606);
+	    UMCTL2_REG_SET(UMCTL_ADDRMAP6, 0x0F0F0606);
+	    break;
+	}
         case DRAM_LPDDR2_2CS_8G_X32:
         {
             UMCTL2_REG_SET(UMCTL_ADDRMAP0, 0x00001F14);
@@ -548,7 +548,7 @@ void umctl2_addrmap_init(DRAM_INFO* dram)
             UMCTL2_REG_SET(UMCTL_ADDRMAP6, 0x0F0F0505);
             break;
         }
-		#if 0
+	#if 0
         case DRAM_DDR3_1CS_1G_X16:
         case DRAM_DDR3_2CS_2G_X16:
         {
@@ -597,19 +597,29 @@ void umctl2_addrmap_init(DRAM_INFO* dram)
             UMCTL2_REG_SET(UMCTL_ADDRMAP6, 0x0F0F0F06);
             break;
         }
-		#endif
-		case DRAM_DDR3_1CS_2G_X8_4P:
-		case DRAM_DDR3_1CS_4G_X16_2P:
-		{
-            UMCTL2_REG_SET(UMCTL_ADDRMAP0, 0x00001F15);
+	#endif
+	case DRAM_DDR3_1CS_2G_X8_4P:
+	{
+            UMCTL2_REG_SET(UMCTL_ADDRMAP0, 0x00001F1F);
             UMCTL2_REG_SET(UMCTL_ADDRMAP1, 0x00070707);
             UMCTL2_REG_SET(UMCTL_ADDRMAP2, 0x00000000);
             UMCTL2_REG_SET(UMCTL_ADDRMAP3, 0x0F000000);
             UMCTL2_REG_SET(UMCTL_ADDRMAP4, 0x00000F0F);
             UMCTL2_REG_SET(UMCTL_ADDRMAP5, 0x06060606);
-            UMCTL2_REG_SET(UMCTL_ADDRMAP6, 0x0F0F0F06);
-            break;		
-		}
+            UMCTL2_REG_SET(UMCTL_ADDRMAP6, 0x06060606);
+            break;
+	}
+	case DRAM_DDR3_1CS_4G_X16_2P:
+	{
+            UMCTL2_REG_SET(UMCTL_ADDRMAP0, 0x00001F14);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP1, 0x00070707);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP2, 0x00000000);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP3, 0x0F000000);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP4, 0x00000F0F);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP5, 0x06060606);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP6, 0x0F0F0606);
+            break;
+	}
         defalut:
         {
             UMCTL2_REG_SET(UMCTL_ADDRMAP0, 0x00001F14);
@@ -869,6 +879,7 @@ void umctl2_dramtiming_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
 	uint32 tXS =ddr3_timing->tXS;
 	uint32 tXP =ddr3_timing->tXP;
 	uint32 tCKE=ddr3_timing->tCKE;
+	uint32 tDQSCKmax=ddr3_timing->tDQSCK;
 	#endif
 	
 	#endif
@@ -887,7 +898,7 @@ void umctl2_dramtiming_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
     reg_bits_set(UMCTL_DRAMTMG2, 24, 6, WL);
     reg_bits_set(UMCTL_DRAMTMG2, 16, 5, RL);
     /*Minimam time from read command to write command*/
-    reg_bits_set(UMCTL_DRAMTMG2,  8, 5, IS_LPDDR2(dram_type)?(RL+(BL>>1)+tDQSCKmax+1-WL):(RL+(BL>>1)+2-WL));
+    reg_bits_set(UMCTL_DRAMTMG2,  8, 5, IS_LPDDR2(dram_type)?(RL+(BL>>1)+tDQSCKmax+1-WL):(RL+(BL>>1)+4-WL));
     reg_bits_set(UMCTL_DRAMTMG2,  0, 6, (WL+(BL>>1)+tWTR));
 
     /*tMRW, time to wait during load mode register writes.*/
