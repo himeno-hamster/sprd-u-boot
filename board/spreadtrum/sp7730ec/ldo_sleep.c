@@ -295,7 +295,7 @@ void init_ldo_sleep_gr(void)
 	);
 
 	CHIP_REG_SET(REG_PMU_APB_WPLL_REL_CFG,
-		//BIT_WPLL_REF_SEL |
+		BIT_WPLL_REF_SEL |
 		//BIT_WPLL_CP2_SEL |
 		//BIT_WPLL_CP1_SEL |
 		BIT_WPLL_CP0_SEL |
