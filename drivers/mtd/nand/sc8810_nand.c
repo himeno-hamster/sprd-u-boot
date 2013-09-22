@@ -212,6 +212,7 @@ static struct sc8810_nand_page_oob nand_config_table[] =
 	{0xec, 0xb3, 0x01, 0x66, 0x5a, 4096, 128, 512, 4},
     	{0xec, 0xbc, 0x00, 0x6a, 0x56, 4096, 256, 512, 8},
 	{0x98, 0xbc, 0x90, 0x66, 0x76, 4096, 224, 512, 8},
+        {0x98, 0xba, 0x90, 0x55, 0x76, 2048, 128, 512, 4},
     	{0x2c, 0xbc, 0x90, 0x55, 0x56, 2048, 64,  512, 4},
         {0x2c, 0xb3, 0xd1, 0x55, 0x56, 2048, 64,  512, 4},
 	{0xc8, 0xbc, 0x90, 0x55, 0x54, 2048, 64,  512, 4}
@@ -238,6 +239,7 @@ static const struct nand_spec_str nand_spec_table[] = {
     {0x98, 0xac, 0x90, 0x15, 0x76, {12, 15, 15, 10, 20, 50}},// TYBC0A111392KC
     {0x98, 0xbc, 0x90, 0x55, 0x76, {12, 15, 15, 10, 20, 50}},// TYBC0A111430KC, KSLCBBL1FB4G3A, KSLCBBL1FB2G3A
     {0x98, 0xbc, 0x90, 0x66, 0x76, {12, 15, 15, 10, 20, 50}},// KSLCCBL1FB2G3A
+    {0x98, 0xba, 0x90, 0x55, 0x76, {12, 15, 15, 10, 20, 50}},
 
     {0xad, 0xbc, 0x90, 0x11, 0x00, {25, 15, 25, 10, 20, 50}},// H9DA4VH4JJMMCR-4EMi, H9DA4VH2GJMMCR-4EM
     {0xad, 0xbc, 0x90, 0x55, 0x54, {25, 15, 25, 10, 20, 50}},//
@@ -920,7 +922,7 @@ void ddr_para_reset(u8 id[5])
 		emc_para[2] = (ddr_config_table[index].ctl_drv << 8);
 		emc_para[3] = (ddr_config_table[index].clk_drv << 8);
 		emc_para[4] = (ddr_config_table[index].clk_wr);
-		emc_para[5] = (ddr_config_table[index].read_value & 0xff);
+		emc_para[5] = (REG32(0x20000174) & 0xff);//(ddr_config_table[index].read_value & 0xff);
 		emc_para[6] = (ddr_config_table[index].emc_clk);
 
 		//set DPLL of EMC to 400MHz

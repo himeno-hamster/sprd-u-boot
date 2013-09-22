@@ -1826,6 +1826,11 @@ PUBLIC void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*
 	g_ahb_clk = 200000000;
 	for (i=0; i<0xff1; i++);
 
+	// reconfig clkwr
+	s_emc_config.read_value = (REG32(0x20000174) & 0xff);
+	REG32(0x2000010C) = (0x8000|((64*s_emc_config.clk_wr)/(s_emc_config.read_value/2)));
+	for (i=0; i<0xff1; i++);
+	
 	// AHB master priority:  DSP > lcdc > other > GPU
 	REG32(0x20000020) = 0x7D;
 	REG32(0x20000024) = 0x4D;
