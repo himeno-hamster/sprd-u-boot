@@ -30,7 +30,7 @@
 #include "sprdfb.h"
 
 
-void *lcd_base;		/* Start of framebuffer memory	*/
+void *lcd_base = NULL;		/* Start of framebuffer memory	*/
 void *lcd_console_address;	/* Start of console buffer	*/
 
 int lcd_line_length;

@@ -9,6 +9,8 @@ void *harsh_data = harsh_data_buf;
 unsigned char raw_header[8192];
 const int SP09_MAX_PHASE_BUFF_SIZE = sizeof(SP09_PHASE_CHECK_T);
 
+extern void* lcd_base;
+
 int eng_getphasecheck(SP09_PHASE_CHECK_T* phase_check)
 {
 	int aaa;
@@ -671,6 +673,7 @@ void lcd_display_logo(int backlight_set,ulong bmp_img,size_t size)
 #endif
 }
 
+
 char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 {
 	int str_len;
@@ -712,6 +715,15 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 			str_len = strlen(buf);
 			buf[str_len] = '\0';
 		}
+	}
+	if(lcd_base != NULL){
+		//add lcd frame buffer base, length should be lcd w*h*2(RGB565)
+		str_len = strlen(buf);
+		sprintf(&buf[str_len], " lcd_base=");
+		str_len = strlen(buf);
+		sprintf(&buf[str_len], "%x",lcd_base);
+		str_len = strlen(buf);
+		buf[str_len] = '\0';
 	}
 
 	int ret=is_factorymode();
