@@ -245,7 +245,7 @@ static void sc_init_chipid(void)
 
 		ANA_REG_OR(ANA_AUDIO_CTL, BIT_15 | BIT_0);
 
-		if (ANA_REG_GET(VOICE_BAND_CODEC_BEGIN + 0xC0) & BIT_6) {
+		if (!(ANA_REG_GET(VOICE_BAND_CODEC_BEGIN + 0xC0) & BIT_6)) {
 			glb_ana_chipid = (unsigned int)ANA_CHIP_ID_BB;
 		}
 
