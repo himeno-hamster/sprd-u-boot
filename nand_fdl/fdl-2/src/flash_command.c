@@ -77,9 +77,9 @@ static int read_nv_flag = 0;
 static int read_bkupnv_flag = 0;
 static int read_dlstatus_flag = 0;
 
-
-__align(4) unsigned char g_fixnv_buf[FIXNV_SIZE + 4];
-__align(4) unsigned char g_fixnv_buf_yaffs[FIXNV_SIZE + 4];
+//latest fixnv size is 256K,so the following global buffers must no less than 256K
+__align(4) unsigned char g_fixnv_buf[0x40004];
+__align(4) unsigned char g_fixnv_buf_yaffs[0x40004];
 
 #define CHECKSUM_OTHER_DATA       0x5555aaaa
 static DL_FILE_STATUS g_status;

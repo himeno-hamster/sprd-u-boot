@@ -8,7 +8,7 @@
 //don't update runtimenv in calibration
 //in order to save some time.
 //we left runtimenv sync work to CP
-#define SKIP_RUNTIMENV_UPDATE 1
+//#define SKIP_RUNTIMENV_UPDATE 1
 
 #define CRC_16_L_SEED   0x80
 #define CRC_16_L_POLYNOMIAL 0x8000

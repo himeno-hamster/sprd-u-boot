@@ -199,8 +199,21 @@ TRY_BACKUP_FILE:
 		//read file to mem
 		cmd_yaffs_mread_file(curr_file, mem_addr);
 		ret = file_check(mem_addr, size-4);
-	}
-	else{
+    }else if(ret == 0x20000 || ret == (0x20000+4)){
+        //read file to mem
+        printf("fixnv in phone is old format!\n");
+        cmd_yaffs_mread_file(curr_file, mem_addr);
+        printf("check it use compatibale mode!\n");
+        ret = file_check(mem_addr, 0x20000);
+        printf("clear file ends!\n");
+        memset(mem_addr+0x20000-8, 0xff,8);
+    }else if(ret == 0x40000 || ret == (0x40000+4)){
+        //read file to mem
+        printf("fixnv in phone is new format!\n");
+        cmd_yaffs_mread_file(curr_file, mem_addr);
+        printf("check it use compatibale mode!\n");
+        ret = file_check(mem_addr, 0x40000);
+    }else{
 		ret = -1;
 	}
 
