@@ -282,6 +282,11 @@
 #define CONSOLE_COLOR_CYAN 0x001f
 #endif
 #endif // CONFIG_LCD
+
+#define CONFIG_SPRD_SYSDUMP
+#define SPRD_SYSDUMP_MAGIC      (128*1024*1024 - SZ_1M)
+#define CONFIG_RAMDUMP_NO_SPLIT 1 /* Don't split sysdump file */
+
 /*
  * MMC definition
  */

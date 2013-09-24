@@ -182,6 +182,10 @@ CPPFLAGS += -I$(TOPDIR)/include
 CPPFLAGS += -fno-builtin -ffreestanding -nostdinc	\
 	-isystem $(gccincdir) -pipe $(PLATFORM_CPPFLAGS)
 
+ifeq ($(TARGET_BUILD_VARIANT),user)
+CPPFLAGS += -DSYSDUMP_BYPASS
+endif
+
 ifdef BUILD_TAG
 CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes \
 	-DBUILD_TAG='"$(BUILD_TAG)"'

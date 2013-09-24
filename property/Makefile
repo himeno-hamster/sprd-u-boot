@@ -26,6 +26,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)libproperty.o
 
 COBJS-y += cmd_cboot.o
+COBJS-$(CONFIG_SPRD_SYSDUMP) += sysdump.o
 COBJS-y += normal_mode.o
 COBJS-y += recv_mode.o
 COBJS-y += fastboot_mode.o

@@ -17,13 +17,21 @@ unsigned check_reboot_mode(void)
 	ANA_REG_SET(ANA_HWRST_STATUS, (rst_mode&0xf00)); //clear flag
 	rst_mode &= HWRST_STATUS_POWERON_MASK;
 //	ANA_REG_SET(ANA_HWRST_STATUS, 0); //clear flag
+
+	printf("rst_mode: %d\n", rst_mode);
+
 	if(rst_mode == HWRST_STATUS_RECOVERY)
 		return RECOVERY_MODE;
 	else if(rst_mode == HWRST_STATUS_FASTBOOT)
 		return FASTBOOT_MODE;
-	else if(rst_mode == HWRST_STATUS_NORMAL ||
-		rst_mode == HWRST_STATUS_NORMAL2)
+	else if(rst_mode == HWRST_STATUS_NORMAL)
 		return NORMAL_MODE;
+	else if(rst_mode == HWRST_STATUS_NORMAL2)
+		return WATCHDOG_REBOOT;
+	else if(rst_mode == HWRST_STATUS_PANIC)
+		return PANIC_REBOOT;
+	else if(rst_mode == HWRST_STATUS_SPECIAL)
+		return SPECIAL_MODE;
 	else if(rst_mode == HWRST_STATUS_ALARM)
 		return ALARM_MODE;
 	else if(rst_mode == HWRST_STATUS_SLEEP)

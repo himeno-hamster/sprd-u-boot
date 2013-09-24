@@ -14,55 +14,63 @@
 extern int dwc_otg_driver_init(void);
 extern int usb_fastboot_initialize(void);
 
-
-void fastboot_mode(void)
+int read_logoimg(char *bmp_img,size_t size)
 {
-    printf("%s\n", __FUNCTION__);
-#ifdef CONFIG_SPLASH_SCREEN
 	struct mtd_info *nand;
 	struct mtd_device *dev;
 	struct part_info *part;
 	u8 pnum;
 	int ret;
-	size_t size;
-	const char *cmdline;
 	loff_t off = 0;
 
 	ret = mtdparts_init();
 	if (ret != 0){
 		printf("mtdparts init error %d\n", ret);
-		return;
+		return -1;
 	}
 #define SPLASH_PART "fastboot_logo"
 
 	ret = find_dev_and_part(SPLASH_PART, &dev, &pnum, &part);
 	if(ret){
 		printf("No partition named %s\n", SPLASH_PART);
-		return;
+		return -1;
 	}else if(dev->id->type != MTD_DEV_TYPE_NAND){
 		printf("Partition %s not a NAND device\n", SPLASH_PART);
-		return;
+		return -1;
 	}
 
 	off=part->offset;
 	nand = &nand_info[dev->id->num];
-	//read boot image header
-	size = 1<<20;
+
+	ret = nand_read_offset_ret(nand, off, &size, (void *)bmp_img, &off);
+	if(ret != 0){
+		printf("function: %s nand read error %d\n", __FUNCTION__, ret);
+		return -1;
+	}
+	return 0;
+}
+
+extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
+extern lcd_display(void);
+extern void set_backlight(uint32_t value);
+
+void fastboot_mode(void)
+{
+    printf("%s\n", __FUNCTION__);
+#ifdef CONFIG_SPLASH_SCREEN
+    const char *cmdline;
+    size_t size;
+
+    //read boot image header
+    size = 1<<20;
     char * bmp_img = malloc(size);
     if(!bmp_img){
         printf("not enough memory for splash image\n");
         return;
     }
-	ret = nand_read_offset_ret(nand, off, &size, (void *)bmp_img, &off);
-	if(ret != 0){
-		printf("function: %s nand read error %d\n", __FUNCTION__, ret);
-		return;
-	}
-	 extern int drv_lcd_init(void);
-    extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
-    extern lcd_display(void);
-    extern void set_backlight(uint32_t value);
-	 drv_lcd_init();
+
+    read_logoimg(bmp_img, size);
+
     lcd_display_bitmap((ulong)bmp_img, 0, 0);
     lcd_printf("   fastboot mode");
     lcd_display();

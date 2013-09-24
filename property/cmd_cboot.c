@@ -79,6 +79,11 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
     unsigned check_reboot_mode(void);
     unsigned rst_mode= check_reboot_mode();
+
+#ifdef CONFIG_SPRD_SYSDUMP
+    write_sysdump_before_boot(rst_mode);
+#endif 
+
     if(rst_mode == RECOVERY_MODE){
         DBG("func: %s line: %d\n", __func__, __LINE__);
         recovery_mode();
@@ -88,6 +93,12 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
         fastboot_mode();
     }else if(rst_mode == NORMAL_MODE){
         normal_mode();
+    }else if(rst_mode == WATCHDOG_REBOOT){
+        watchdog_mode();
+    }else if(rst_mode == UNKNOW_REBOOT_MODE){
+        unknow_reboot_mode();
+    }else if(rst_mode == PANIC_REBOOT){
+        panic_reboot_mode();
     }else if(rst_mode == ALARM_MODE){
               int flag =alarm_flag_check();
               if(flag == 1)
@@ -96,7 +107,9 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
                  normal_mode();
     }else if(rst_mode == SLEEP_MODE){
 		sleep_mode();
-	}
+    }else if(rst_mode == SPECIAL_MODE){
+		special_mode();
+    }
 #ifdef CONFIG_SC8810
 //    normal_mode();
 #endif

@@ -880,7 +880,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #ifdef CONFIG_LCD
 	extern int drv_lcd_init(void);
 	if(normal_shutdown == true){
-		drv_lcd_init();
+		//drv_lcd_init();
 	}else if(lcd_resume == true){
       set_backlight(100);
 	}
@@ -1285,4 +1285,49 @@ void normal_mode(void)
     vlx_nand_boot(BOOT_PART, NULL, BACKLIGHT_ON);
 #endif
 
+}
+
+void special_mode(void)
+{
+    printf("special_mode\n");
+    normal_shutdown = false;
+#if BOOT_NATIVE_LINUX
+    vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=special", BACKLIGHT_OFF);
+#else
+    vlx_nand_boot(BOOT_PART, "androidboot.mode=special", BACKLIGHT_OFF);
+#endif
+
+}
+
+void unknow_reboot_mode(void)
+{
+	printf("unknow_reboot_mode\n");
+	normal_shutdown = false;
+#if BOOT_NATIVE_LINUX
+	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=unknowreboot", BACKLIGHT_OFF);
+#else
+	vlx_nand_boot(BOOT_PART, "androidboot.mode=unknowreboot", BACKLIGHT_OFF);
+#endif
+}
+
+void panic_reboot_mode(void)
+{
+	printf("%s\n", __func__);
+	normal_shutdown = false;
+#if BOOT_NATIVE_LINUX
+	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=panic", BACKLIGHT_OFF);
+#else
+	vlx_nand_boot(BOOT_PART, "androidboot.mode=panic", BACKLIGHT_OFF);
+#endif
+}
+
+void watchdog_mode(void)
+{
+	printf("watchdog_mode\n");
+	normal_shutdown = false;
+#if BOOT_NATIVE_LINUX
+	vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=wdgreboot", BACKLIGHT_OFF);
+#else
+	vlx_nand_boot(BOOT_PART, "androidboot.mode=wdgreboot", BACKLIGHT_OFF);
+#endif
 }

@@ -215,7 +215,7 @@ int stdio_init (void)
 	i2c_init (CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 #endif
 #ifdef CONFIG_LCD
-	//drv_lcd_init ();  /* move to normal_mode.c */
+	drv_lcd_init ();  /* move to normal_mode.c */
 #endif
 #if defined(CONFIG_VIDEO) || defined(CONFIG_CFB_CONSOLE)
 	drv_video_init ();
