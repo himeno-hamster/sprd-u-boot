@@ -180,6 +180,7 @@ static uint32_t ssd2075_readid(struct panel_spec *self)
 
 		if((0x20 == read_data[0])&&(0x75 == read_data[1])){
 			printk("lcd_ssd2075_mipi read id success!\n");
+			mipi_eotp_set(1,1);
 			return 0x2075;
 		}
 	}
