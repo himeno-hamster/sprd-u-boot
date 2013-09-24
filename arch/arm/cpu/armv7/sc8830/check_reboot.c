@@ -20,10 +20,15 @@
 #define   HWRST_STATUS_AUTODLOADER (0Xa0)
 #define   HWRST_STATUS_NORMAL2			(0Xf0)
 
+#define   HW_7SRST_STATUS			(0x80)
+#define   SW_7SRST_STATUS			(0x1000)
+
 extern int hw_watchdog_rst_pending(void);
 unsigned check_reboot_mode(void)
 {
-	unsigned rst_mode= 0;
+	unsigned val, rst_mode= 0;
+	unsigned hw_rst_mode = ANA_REG_GET(ANA_REG_GLB_POR_SRC_FLAG);
+	printf("hw_rst_mode==%x\n", hw_rst_mode);
 
 	rst_mode = ANA_REG_GET(ANA_REG_GLB_POR_RST_MONITOR);
 	rst_mode &= 0x7FFF;
@@ -60,6 +65,10 @@ unsigned check_reboot_mode(void)
 		printf("no hw watchdog rst int pending\n");
 		if(rst_mode == HWRST_STATUS_NORMAL2)
 			return UNKNOW_REBOOT_MODE;
+		else if(hw_rst_mode & HW_7SRST_STATUS)
+		{
+			return UNKNOW_REBOOT_MODE;
+		}
 		else
 			return 0;
 	}
