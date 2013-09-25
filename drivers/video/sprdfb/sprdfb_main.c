@@ -116,7 +116,11 @@ void set_backlight(uint32_t value)
 
 #else
 	/*backlight is driven by whiteled */
-	ANA_REG_SET(0x40038894,(ANA_REG_GET(0x40038894)|(0x3 << 7)));
+	if (value == 0) {
+		ANA_REG_SET(0x40038894,0);
+	} else {
+		ANA_REG_SET(0x40038894,(ANA_REG_GET(0x40038894)|(0x3 << 7)));
+	}
 #endif
 #endif
 #if defined (CONFIG_SP8825) || defined (CONFIG_SP8825EA) || defined (CONFIG_SP8825EB) ||defined(CONFIG_GARDA)
@@ -197,6 +201,8 @@ static int tiger_probe(void * lcdbase)
 	struct sprdfb_device *dev = &tigerdev;
 
 	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
+
+	set_backlight(0);
 
 #ifdef CONFIG_MACH_CORI
 	LDO_SetVoltLevel(LDO_LDO_SIM3, LDO_VOLT_LEVEL1);
