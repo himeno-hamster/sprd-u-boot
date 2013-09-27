@@ -199,6 +199,38 @@ static inline void console_doenv(int file, struct stdio_dev *dev)
 }
 #endif /* defined(CONFIG_CONSOLE_MUX) */
 
+#ifdef CONFIG_RAM_CONSOLE
+static uint used_size = 0;
+
+void ram_puts(const char* s)
+{
+	uint *p = NULL;
+	uint  wlen = strlen(s) + 1;
+
+	p = (unsigned char*)CONFIG_RAM_CONSOLE_START +  used_size;
+
+	if (used_size >= CONFIG_RAM_CONSOLE_SIZE) {
+		serial_puts("ram console: space overflow!\n");
+		return;
+	}
+	else if ((used_size + wlen) > CONFIG_RAM_CONSOLE_SIZE) {
+		serial_puts("ram console: no enough ram space !\n");
+
+		/* fill available space */
+		wlen = CONFIG_RAM_CONSOLE_SIZE - used_size;
+		memcpy((void*)p, (void*)s, wlen);
+
+		used_size = CONFIG_RAM_CONSOLE_SIZE;
+		return;
+	}
+
+	memcpy((void*)p, (void*)s, wlen);
+
+	used_size += wlen;
+}
+
+#endif
+
 /** U-Boot INITIAL CONSOLE-NOT COMPATIBLE FUNCTIONS *************************/
 
 int serial_printf(const char *fmt, ...)
@@ -363,6 +395,10 @@ void puts(const char *s)
 		/* Send directly to the handler */
 		serial_puts(s);
 	}
+
+#ifdef CONFIG_RAM_CONSOLE
+	ram_puts(s);
+#endif
 }
 
 int printf(const char *fmt, ...)

@@ -746,6 +746,15 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 	str_len = strlen(buf);
 	sprintf(&buf[str_len], " no_console_suspend");
 
+#ifdef CONFIG_RAM_CONSOLE
+	/* Fill ram log base address and size to cmdline.
+	It will be used when assigning reserve memory in kernel and dump ram log
+	*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " boot_ram_log=%#010x,%#x",
+		CONFIG_RAM_CONSOLE_START, CONFIG_RAM_CONSOLE_SIZE);
+#endif
+
 	addcmdline(buf);
 	ret =read_spldata();
 	if(ret != 0){
