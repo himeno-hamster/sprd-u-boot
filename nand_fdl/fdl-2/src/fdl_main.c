@@ -38,6 +38,10 @@ extern unsigned long _bss_start;
 static int bss_end_end;
 static int bss_start_start;
 char mempool[1024*1024] = {0};
+
+extern void get_adc_cali_data (void);
+extern uint32_t CHG_GetAdcCalType(void);
+extern int DCDC_Cal_ArmCore(void);
 #endif
 #ifdef FPGA_TRACE_DOWNLOAD
 #define BIN_TABLE_ADDR	0x80a00000
@@ -112,6 +116,12 @@ int main(void)
 #endif	   
 	timer_init();
 #if defined (CONFIG_SC8830)
+	/* add calibration in fdl-2 */
+	get_adc_cali_data();
+	if (CHG_GetAdcCalType() != 0)
+	{
+		DCDC_Cal_ArmCore();
+	}
 #else
 	sprd_clean_rtc();
 #endif

@@ -68,7 +68,7 @@ ARCH_LIB =
 
 CPU_OBJ = timer.o chip_cfg.o chip_phy_v3.o boot_mode.o watchdog_hal.o watchdog_phy_v3.o adi_drv.o mmu.o mmu_asm.o rtc-sprd.o sec_boot.o
 ifdef CONFIG_SC8830
-CPU_OBJ+= gpio.o gpio_phy.o
+CPU_OBJ+= gpio.o gpio_phy.o adi.o efuse_drv.o chg_phy.o adc.o dcdc_cal.o
 endif
 CPU_LIB = $(addprefix $(obj),$(CPU_OBJ))
 

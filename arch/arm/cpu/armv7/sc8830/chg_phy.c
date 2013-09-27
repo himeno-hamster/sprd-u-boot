@@ -52,6 +52,44 @@ uint32_t CHG_GetAdcCalType(void)
 	return adc_cal_flag;
 }
 
+#ifndef CONFIG_FDL1
+/* used to get adc calibration data from nv or efuse */
+void get_adc_cali_data(void)
+{
+	unsigned int adc_data[64];
+	int ret=0;
+
+	adc_cal_flag = ADC_CAL_TYPE_NO;
+
+#ifndef FDL_CHG_SP8830
+	/* get voltage values from nv */
+	ret = read_adc_calibration_data(adc_data,48);
+	if((ret > 0) &&
+			((adc_data[2] & 0xFFFF) < 4500 ) && ((adc_data[2] & 0xFFFF) > 3000) &&
+			((adc_data[3] & 0xFFFF) < 4500 ) && ((adc_data[3] & 0xFFFF) > 3000)){
+		printf("adc_para from nv is 0x%x 0x%x \n",adc_data[2],adc_data[3]);
+		adc_voltage_table[0][1]=adc_data[2] & 0xFFFF;
+		adc_voltage_table[0][0]=(adc_data[2] >> 16) & 0xFFFF;
+		adc_voltage_table[1][1]=adc_data[3] & 0xFFFF;
+		adc_voltage_table[1][0]=(adc_data[3] >> 16) & 0xFFFF;
+		adc_cal_flag = ADC_CAL_TYPE_NV;
+	}
+#endif
+	/* get voltage values from efuse */
+	if (adc_cal_flag == ADC_CAL_TYPE_NO){
+		ret = sci_efuse_calibration_get(adc_data);
+		if (ret > 0) {
+			printf("adc_para from efuse is 0x%x 0x%x \n",adc_data[0],adc_data[1]);
+			adc_voltage_table[0][1]=adc_data[0] & 0xFFFF;
+			adc_voltage_table[0][0]=(adc_data[0]>>16) & 0xFFFF;
+			adc_voltage_table[1][1]=adc_data[1] & 0xFFFF;
+			adc_voltage_table[1][0]=(adc_data[1] >> 16) & 0xFFFF;
+			adc_cal_flag = ADC_CAL_TYPE_EFUSE;
+		}
+	}
+}
+#endif
+
 #ifndef FDL_CHG_SP8830
 enum sprd_adapter_type {
 	ADP_TYPE_UNKNOW = 0,	//unknow adapter type
@@ -86,11 +124,6 @@ int sprd_charger_is_adapter(void)
 
 void CHG_Init(void)
 {
-	unsigned int *adc_data;
-	int ret=0;
-
-	adc_cal_flag = ADC_CAL_TYPE_NO;
-
 	//set charge current 500mA(USB) or 600mA(AC)
 	if (charger_connected()) {
 		enum sprd_adapter_type adp_type = sprd_charger_is_adapter();
@@ -110,35 +143,6 @@ void CHG_Init(void)
 	CHG_SetRecharge();
 	ANA_REG_OR(ANA_APB_CHGR_CTL2, CHGR_CC_EN_BIT);
 
-	adc_data = malloc(64);
-	if(adc_data){
-		/* get voltage values from nv */
-		ret = read_adc_calibration_data(adc_data,48);
-		if((ret > 0) &&
-				((adc_data[2] & 0xFFFF) < 4500 ) && ((adc_data[2] & 0xFFFF) > 3000) &&
-				((adc_data[3] & 0xFFFF) < 4500 ) && ((adc_data[3] & 0xFFFF) > 3000)){
-			printf("adc_para from nv is 0x%x 0x%x \n",adc_data[2],adc_data[3]);
-			adc_voltage_table[0][1]=adc_data[2] & 0xFFFF;
-			adc_voltage_table[0][0]=(adc_data[2] >> 16) & 0xFFFF;
-			adc_voltage_table[1][1]=adc_data[3] & 0xFFFF;
-			adc_voltage_table[1][0]=(adc_data[3] >> 16) & 0xFFFF;
-			adc_cal_flag = ADC_CAL_TYPE_NV;
-		}
-
-		/* get voltage values from efuse */
-		if (adc_cal_flag == ADC_CAL_TYPE_NO){
-			ret = sci_efuse_calibration_get(adc_data);
-			if (ret > 0) {
-				printf("adc_para from efuse is 0x%x 0x%x \n",adc_data[0],adc_data[1]);
-				adc_voltage_table[0][1]=adc_data[0] & 0xFFFF;
-				adc_voltage_table[0][0]=(adc_data[0]>>16) & 0xFFFF;
-				adc_voltage_table[1][1]=adc_data[1] & 0xFFFF;
-				adc_voltage_table[1][0]=(adc_data[1] >> 16) & 0xFFFF;
-				adc_cal_flag = ADC_CAL_TYPE_EFUSE;
-			}
-		}
-
-		free(adc_data);
-	}
+	get_adc_cali_data();
 }
 #endif
