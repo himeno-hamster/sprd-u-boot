@@ -15,7 +15,7 @@ endif
 FDL1_LDFLAGS  = -Bstatic -T $(LDSCRIPT) $(PLATFORM_LDFLAGS)
 
 AFLAGS       += -I $(OBJTREE)/include/asm/arch
-CFLAGS       += -D CONFIG_FRMCHECK -I $(OBJTREE)/include/asm/arch
+CFLAGS       += -D CONFIG_FDL1 -D CONFIG_FRMCHECK -I $(OBJTREE)/include/asm/arch
 
 FDL1_PATH     = $(TOPDIR)/nand_fdl/fdl-1
 COM_PATH      = $(TOPDIR)/nand_fdl/common
