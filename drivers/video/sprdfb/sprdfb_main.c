@@ -85,23 +85,46 @@ static void LCD_SetPwmRatio(unsigned short value)
 #endif
 }
 
-#define WHTLED_PD_SET           BIT_0
-#define WHTLED_PD_RST           BIT_1
-#define WHTLED_SER_ENB          BIT_2
-#define WHTLED_BOOST_ENB        BIT_4
+
+#ifndef BIT
+#define BIT(x)  (1<<(x))
+#endif
+
 #define WHTLED_V_SHIFT          0
 #define WHTLED_V_MSK            (0x1F << WHTLED_V_SHIFT)
+
+#define BIT_WHTLED_BOOST_EN_RST         ( BIT(5) )
+#define BIT_WHTLED_BOOST_EN             ( BIT(4) )
+#define BIT_WHTLED_SERIES_EN_RST        ( BIT(3) )
+#define BIT_WHTLED_SERIES_EN            ( BIT(2) )
+#define BIT_WHTLED_PON                  ( BIT(1) )
+#define BIT_WHTLED_PWM_SEL              ( BIT(0) )
 
 void LCD_SetBackLightBrightness( unsigned long  value)
 {
 
 #ifdef CONFIG_BACKLIGHT_WHTLED_SER
-    ANA_REG_OR(ANA_WHTLED_CTL0, WHTLED_BOOST_ENB);
+    if (ANA_CHIP_ID_BB == CHIP_PHY_GetANAChipID()) {
+        /*ANA_CHIP_ID_BB version */
+        ANA_REG_BIC(ANA_WHTLED_CTL0, BIT_WHTLED_SERIES_EN);
+        ANA_REG_OR(ANA_WHTLED_CTL0, BIT_WHTLED_BOOST_EN);
+    } else {
+        /*ANA_CHIP_ID_AA and ANA_CHIP_ID_BA version */
+        ANA_REG_OR(ANA_WHTLED_CTL0, BIT_WHTLED_SERIES_EN);
+        ANA_REG_OR(ANA_WHTLED_CTL0, BIT_WHTLED_BOOST_EN);
+    }
 #else
 #ifdef CONFIG_BACKLIGHT_WHTLED_PARA
-    ANA_REG_AND(ANA_WHTLED_CTL0, ~(WHTLED_PD_SET | WHTLED_PD_RST | WHTLED_SER_ENB));
-    ANA_REG_OR(ANA_WHTLED_CTL0,  WHTLED_PD_RST);
-    ANA_REG_MSK_OR (ANA_WHTLED_CTL1, ( (value << WHTLED_V_SHIFT) &WHTLED_V_MSK), WHTLED_V_MSK);
+        if (ANA_CHIP_ID_BB == CHIP_PHY_GetANAChipID()) {
+            /*ANA_CHIP_ID_BB version */
+            ANA_REG_OR(ANA_WHTLED_CTL0, BIT_WHTLED_SERIES_EN);
+            ANA_REG_OR(ANA_WHTLED_CTL0, BIT_WHTLED_PON);
+        } else {
+            /*ANA_CHIP_ID_AA and ANA_CHIP_ID_BA version */
+            ANA_REG_BIC(ANA_WHTLED_CTL0, BIT_WHTLED_SERIES_EN);
+            ANA_REG_OR(ANA_WHTLED_CTL0, BIT_WHTLED_PON);
+        }
+        ANA_REG_MSK_OR (ANA_WHTLED_CTL1, ( (value << WHTLED_V_SHIFT) &WHTLED_V_MSK), WHTLED_V_MSK);
 #else
 
 	unsigned long duty_mod= 0;
