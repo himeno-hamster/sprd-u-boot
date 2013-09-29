@@ -118,14 +118,15 @@ static struct lcd_cfg lcd_panel[] = {
 };
 
 #else
-
-extern struct lcd_spec lcd_panel_hx8369;
+//@6821a
+extern struct lcd_spec lcd_panel_hx8357;
 static struct lcd_cfg lcd_panel[] = {
 	[0]={
-		.lcd_id = 0x69,
-		.panel = &lcd_panel_hx8369,
+		.lcd_id = 0x57,
+		.panel = &lcd_panel_hx8357,
 		},
 };
+
 #endif
 
 #ifdef CONFIG_LCD_WVGA
@@ -669,6 +670,10 @@ void set_backlight(uint32_t value)
 	//__raw_bits_or((1<<15), 0x8A000384);
 	//__raw_bits_or((1<<15), 0x8A000388);
 	//__raw_bits_or((1<<15), 0x8A000380);
+	//@6821a
+	ANA_REG_AND(WHTLED_CTL, ~(WHTLED_PD_SET | WHTLED_PD_RST));
+	ANA_REG_OR(WHTLED_CTL,  WHTLED_PD_RST);
+	ANA_REG_MSK_OR (WHTLED_CTL, ( (value << WHTLED_V_SHIFT) &WHTLED_V_MSK), WHTLED_V_MSK);
 	LCD_SetBackLightBrightness(value);
 
 #endif
