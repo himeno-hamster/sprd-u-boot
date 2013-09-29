@@ -780,6 +780,10 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 				str_len = strlen(buf);
 				sprintf(&buf[str_len], " adc_cal=%d,%d",adc_data[2],adc_data[3]);
 			}
+			if((0x00000002 == adc_data[9])&&(0x00000003 == adc_data[11])){
+				str_len = strlen(buf);
+				sprintf(&buf[str_len], " fgu_cal=%d,%d,%d",adc_data[4],adc_data[5],adc_data[6]);
+			}
 
 		#if (defined(CONFIG_SC8825) && (!(BOOT_NATIVE_LINUX)))
 			CHG_SetADCCalTbl(adc_data);
@@ -791,7 +795,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 	}
 }
 #endif
-    printf("pass cmdline: %s \n",buf);
+    printf("cmdline_len = %d \n pass cmdline: %s \n",strlen(buf), buf);
     //lcd_printf(" pass cmdline : %s\n",buf);
     //lcd_display();
     creat_atags(VLX_TAG_ADDR, buf, NULL, 0);
