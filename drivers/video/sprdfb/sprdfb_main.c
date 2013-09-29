@@ -28,6 +28,7 @@
 #include <asm/arch/regs_cpc.h>
 
 #include "sprdfb.h"
+#include <asm/arch/misc_api.h>
 
 
 void *lcd_base;		/* Start of framebuffer memory	*/
@@ -86,19 +87,16 @@ static void LCD_SetPwmRatio(unsigned short value)
 }
 
 
-#ifndef BIT
-#define BIT(x)  (1<<(x))
-#endif
-
 #define WHTLED_V_SHIFT          0
 #define WHTLED_V_MSK            (0x1F << WHTLED_V_SHIFT)
 
-#define BIT_WHTLED_BOOST_EN_RST         ( BIT(5) )
-#define BIT_WHTLED_BOOST_EN             ( BIT(4) )
-#define BIT_WHTLED_SERIES_EN_RST        ( BIT(3) )
-#define BIT_WHTLED_SERIES_EN            ( BIT(2) )
-#define BIT_WHTLED_PON                  ( BIT(1) )
-#define BIT_WHTLED_PWM_SEL              ( BIT(0) )
+#define BIT_WHTLED_BOOST_EN_RST         ( BIT_5 )
+#define BIT_WHTLED_BOOST_EN             ( BIT_4 )
+#define BIT_WHTLED_SERIES_EN_RST        ( BIT_3 )
+#define BIT_WHTLED_SERIES_EN            ( BIT_2 )
+#define BIT_WHTLED_PON                  ( BIT_1 )
+#define BIT_WHTLED_PWM_SEL              ( BIT_0 )
+
 
 void LCD_SetBackLightBrightness( unsigned long  value)
 {

@@ -65,14 +65,7 @@ unsigned int CHIP_PHY_GetChipID(void)
 #endif
 }
 
-unsigned int CHIP_PHY_GetANAChipID(void)
-{
-#if defined(CONFIG_SC7710G2)
-	return glb_ana_chipid;
-#else
-    return 0;
-#endif
-}
+
 
 LOCAL void mcu_clock_select(MCU_CLK_SOURCE_E mcu_clk_sel)
 {
@@ -231,35 +224,11 @@ __inline LOCAL void Chip_Workaround(void)
 #endif
 }
 
-static void sc_init_chipid(void)
-{
-#ifdef CONFIG_SC7710G2
-	unsigned int reg_val;
-
-	glb_ana_chipid = (ADI_Analogdie_reg_read(ANA_CHIP_ID_HIGH) << 16) |
-					ADI_Analogdie_reg_read(ANA_CHIP_ID_LOW);
-
-	if (glb_ana_chipid == ANA_CHIP_ID_BA) {
-		/* enable audif register in A-die APB */
-		reg_val = ANA_REG_GET(ANA_AUDIO_CTL);
-
-		ANA_REG_OR(ANA_AUDIO_CTL, BIT_15 | BIT_0);
-
-		if (!(ANA_REG_GET(VOICE_BAND_CODEC_BEGIN + 0xC0) & BIT_6)) {
-			glb_ana_chipid = (unsigned int)ANA_CHIP_ID_BB;
-		}
-
-		ANA_REG_SET(ANA_AUDIO_CTL, reg_val);
-	}
-#endif
-}
-
 
 PUBLIC void Chip_Init(void)
 {
 	Chip_Workaround();
 
-	sc_init_chipid();
 
     if (CHIP_PHY_GetANAChipID() == ANA_CHIP_ID_AA)
     {

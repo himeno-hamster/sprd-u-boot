@@ -27,7 +27,7 @@ LIB	= $(obj)lib$(SOC).o
 COBJS	= generic.o timer.o reset.o ldo.o adi_drv.o efuse_drv.o mfp_sprd.o check_reboot.o gpio_phy.o gpio.o chg_phy.o vibrator.o mmu.o rtc-sprd.o reboot_function.o sec_boot.o
 
 ifdef CONFIG_SC7710G2
-COBJS += adc_sc7710g2.o pin_drv.o misc.o
+COBJS += adc_sc7710g2.o pin_drv.o misc.o chip_id.o
 else
 COBJS += adc.o
 endif

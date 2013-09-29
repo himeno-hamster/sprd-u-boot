@@ -47,7 +47,7 @@ CPU_OBJ_FILE += sdram_sc7710g2.o sdram_prod_sc7710g2.o
 endif
 
 ifdef CONFIG_SC7710G2
-CPU_OBJ_FILE += adi_drv.o misc.o chg_phy.o
+CPU_OBJ_FILE += adi_drv.o misc.o chg_phy.o chip_id.o
 endif
 
 CPU_LIB       = $(addprefix $(obj),$(CPU_OBJ_FILE))
