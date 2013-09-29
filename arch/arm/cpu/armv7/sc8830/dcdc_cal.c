@@ -1,3 +1,4 @@
+
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/adc_drvapi.h>
@@ -457,22 +458,29 @@ int DCDC_Cal_ArmCore(void)
 	debug("%s\n", __FUNCTION__);
 	debug("Enable dcdc_arm, dcdc_core, dcdc_mem\n\r");
 
+
 #if defined(CONFIG_SPX15)
+	regVal = ANA_REG_GET(ANA_REG_GLB_LDO_DCDC_PD);
+	regVal &= ~(BIT(12) | BIT(11) | BIT(10) | BIT(9));
+	ANA_REG_SET(ANA_REG_GLB_LDO_DCDC_PD, regVal);
+	ANA_REG_BIC(ANA_REG_GLB_LDO_PD_CTRL, 0x7ff);
+#if 1 //FIXME: vddcamio/vddcamd/vddemmcio/vdd18 real voltage value is greater than design value
+	ANA_REG_SET(ANA_REG_GLB_LDO_V_CTRL9, 0x40D2); //vdd18  //0x68D2 -->0x40D2
+	ANA_REG_SET(ANA_REG_GLB_LDO_V_CTRL2, 0x3C40); //vddemmcio //0x3C68 -->0x3C40
+	ANA_REG_SET(ANA_REG_GLB_LDO_V_CTRL1, 0x4010); //vddcamio/vddcamd  //0x6838 -->0x4010
+	udelay(200 * 1000); //wait 200ms
+#endif
 #else
 	/* mem arm core bits are [11:9]*/
 	regVal = ANA_REG_GET(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR);
 	regVal |= BIT(11) | BIT(10) | BIT(9);
 	ANA_REG_SET(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR, regVal);
 
-
 	/* enable sim0, sim2. */
 	regVal = ANA_REG_GET(ANA_REG_GLB_LDO_PD_CTRL);
 	regVal &= ~(BIT(2) | BIT(4));
 	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, regVal);
-
-
 #endif
-
 	/* FIXME: Update CHGMNG_AdcvalueToVoltage table before setup vbat ratio. */
 	/*ADC_CHANNEL_VBAT is 5*/
 	res = (u32) sci_adc_ratio(5, 0);
@@ -488,6 +496,13 @@ int DCDC_Cal_ArmCore(void)
 	debug("%p (%x) -- %p -- %p (%x)\n", &__init_begin, __init_begin,
 		desc, &__init_end, __init_end);
 
+#if defined(CONFIG_SPX15)
+	desc_end = (struct regulator_desc *)&__init_end;
+	while (--desc_end >= desc) { /* reverse order */
+		printf("\nCalibrate %s ...\n", desc_end->name);
+		DCDC_Cal_One(desc_end, 1);
+	}
+#else
 	while (desc < (struct regulator_desc *)&__init_end) {
 		if ((0 == strcmp("vddmem", desc->name))
 			|| (0 == strcmp("vddarm", desc->name))
@@ -500,13 +515,25 @@ int DCDC_Cal_ArmCore(void)
 		}		
 		desc++;
 	}
+#endif
 
 	/* wait a moment for LDOs ready */
+#if defined(CONFIG_SPX15)
 	udelay(200 * 1000);
+#else
+	udelay(1000 * 1000);
+#endif
 
 	/* TODO: verify all DCDCs */
 	desc = (struct regulator_desc *)(&__init_begin + 1);
 		
+#if defined(CONFIG_SPX15)
+	desc_end = (struct regulator_desc *)&__init_end;
+	while (--desc_end >= desc) { /* reverse order */
+		printf("\nVerify %s ...\n", desc_end->name);
+		DCDC_Cal_One(desc_end, 0);
+	}
+#else
 	while (desc < (struct regulator_desc *)&__init_end) {
 		if ((0 == strcmp("vddmem", desc->name))
 			|| (0 == strcmp("vddarm", desc->name))
@@ -523,6 +550,7 @@ int DCDC_Cal_ArmCore(void)
 	/* disable sim0, sim2. */
 	regVal |= (BIT(2) | BIT(4));
 	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, regVal);
+#endif
 
 	return 0;
 }
@@ -576,5 +604,49 @@ int DCDC_Cal_All(int reserved)
 
 	return 0;
 }
-
+#endif
+#if defined(CONFIG_SPX15)
+int regulator_init(void)
+{
+	return 0;
+}
+struct regulator_desc *regulator_get(void/*struct device*/ *dev, const char *id)
+{
+	struct regulator_desc *desc =
+		(struct regulator_desc *)(&__init_begin + 1);
+	while (desc < (struct regulator_desc *)&__init_end) {
+		if (0 == strcmp(desc->name, id))
+			return desc;
+		desc++;
+	}
+	return 0;
+}
+int regulator_disable_all(void)
+{
+	ANA_REG_OR(ANA_REG_GLB_LDO_PD_CTRL, 0x7ff);
+	ANA_REG_OR(ANA_REG_GLB_LDO_DCDC_PD, 0x1fff);
+}
+int regulator_enable_all(void)
+{
+	ANA_REG_BIC(ANA_REG_GLB_LDO_DCDC_PD, 0x1fff);
+	ANA_REG_BIC(ANA_REG_GLB_LDO_PD_CTRL, 0x7ff);
+}
+int regulator_disable(const char con_id[])
+{
+	struct regulator_desc *desc = regulator_get(0, con_id);
+	if (desc) {
+		struct regulator_regs *regs = desc->regs;
+		ANA_REG_OR(regs->pd_set, regs->pd_set_bit);
+	}
+	return 0;
+}
+int regulator_enable(const char con_id[])
+{
+	struct regulator_desc *desc = regulator_get(0, con_id);
+	if (desc) {
+		struct regulator_regs *regs = desc->regs;
+		ANA_REG_BIC(regs->pd_set, regs->pd_set_bit);
+	}
+	return 0;
+}
 #endif

@@ -209,9 +209,10 @@
 */
 
 /* DDR */
+#define CONFIG_DDR_FPGA_SUPPORT
 #define DDR_CLK 400
 //---these three macro below,only one can be open
-//#define DDR_LPDDR1
+#define DDR_LPDDR1
 //#define DDR_LPDDR2
 //#define DDR_DDR3
 

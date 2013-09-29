@@ -2418,12 +2418,12 @@ PUBLIC SDHOST_HANDLE SDHOST_Register (SDHOST_SLOT_NO slot_NO,SDIO_CALLBACK fun)
 	SDHOST_Reset_Controller(slot_NO);
 	sdio_port_ctl[slot_NO].slotNo = slot_NO;
     // select slot 0
-#if   defined (CONFIG_SC8830)
-	sdio_port_ctl[slot_NO].open_flag = TRUE;
-	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_192M);
-#elif defined (CONFIG_SC8825)
+#if defined (CONFIG_SC8825) || defined(CONFIG_SPX15) /*CONFIG_SPX15 must be before CONFIG_SC8830*/
 	sdio_port_ctl[slot_NO].open_flag = TRUE;
 	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_384M);
+#elif defined (CONFIG_SC8830)
+	sdio_port_ctl[slot_NO].open_flag = TRUE;
+	sdio_port_ctl[slot_NO].baseClock = SDHOST_BaseClk_Set (slot_NO,SDIO_BASE_CLK_192M);
 #elif defined(CONFIG_SC7710G2)
 //    SDHOST_Slot_select(slot_NO); if necessary
 	sdio_port_ctl[slot_NO].open_flag = TRUE;
@@ -2631,6 +2631,54 @@ PUBLIC uint32 SDHOST_BaseClk_Set(SDHOST_SLOT_NO slot_NO,uint32 sdio_base_clk)
 
 #if   defined(CONFIG_SC8830)
 #if   defined(CONFIG_SPX15)
+if (slot_NO == SDHOST_SLOT_6)
+	{
+		REG32(REG_AP_CLK_SDIO0_CFG) &= ~3;
+
+		if (sdio_base_clk >= SDIO_BASE_CLK_384M)
+		{
+			REG32(REG_AP_CLK_SDIO0_CFG) |=  3;
+			clk = SDIO_BASE_CLK_384M;
+		}
+		else if (sdio_base_clk >= SDIO_BASE_CLK_312M)
+		{
+			REG32(REG_AP_CLK_SDIO0_CFG) |=  2;
+			clk = SDIO_BASE_CLK_312M;
+		}
+		else if (sdio_base_clk >= SDIO_BASE_CLK_256M)
+		{
+			REG32(REG_AP_CLK_SDIO0_CFG) |=  1;
+			clk = SDIO_BASE_CLK_256M;
+		}
+		else
+		{
+			clk = SDIO_BASE_CLK_26M;
+		}
+	}
+	else
+	{
+		REG32(REG_AP_CLK_EMMC_CFG) &= ~3;
+
+		if (sdio_base_clk >= SDIO_BASE_CLK_312M)
+		{
+			REG32(REG_AP_CLK_EMMC_CFG) |=  3;
+			clk = SDIO_BASE_CLK_312M;
+		}
+		else if (sdio_base_clk >= SDIO_BASE_CLK_256M)
+		{
+			REG32(REG_AP_CLK_EMMC_CFG) |=  2;
+			clk = SDIO_BASE_CLK_256M;
+		}
+		else if (sdio_base_clk >= SDIO_BASE_CLK_192M)
+		{
+			REG32(REG_AP_CLK_EMMC_CFG) |=  1;
+			clk = SDIO_BASE_CLK_192M;
+		}
+		else
+		{
+			clk = SDIO_BASE_CLK_26M;
+		}
+	}
 #else
 	if (slot_NO == SDHOST_SLOT_6)
 	{

@@ -175,9 +175,6 @@ extern   "C"
 #define UMCTL_PCFGR_14   UMCTL2_REG_(0x0404+(0x0E)*0xB0)
 #define UMCTL_PCFGR_15   UMCTL2_REG_(0x0404+(0x0F)*0xB0)
 
-#if defined(CONFIG_SPX15)
-#define UMCTL_PCFGW(_x_) UMCTL2_REG_(0x0408+(_x_)*0xB0)
-#endif
 
 #define UMCTL_PCFGW_0    UMCTL2_REG_(0x0408+(0x00)*0xB0)/*Port n configuration write reg*/
 #define UMCTL_PCFGW_1    UMCTL2_REG_(0x0408+(0x01)*0xB0)
@@ -196,9 +193,6 @@ extern   "C"
 #define UMCTL_PCFGW_14   UMCTL2_REG_(0x0408+(0x0E)*0xB0)
 #define UMCTL_PCFGW_15   UMCTL2_REG_(0x0408+(0x0F)*0xB0)
 
-#if defined(CONFIG_SPX15)
-#define UMCTL_PORT_EN(_x_) UMCTL2_REG_(0x0490+(_x_)*0xB0)
-#endif
 
 #define UMCTL_PORT_EN_0    UMCTL2_REG_(0x0490+(0x00)*0xB0)/*Port n enable reg*/
 #define UMCTL_PORT_EN_1    UMCTL2_REG_(0x0490+(0x01)*0xB0)/*Port n enable reg*/

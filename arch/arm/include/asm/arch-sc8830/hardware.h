@@ -20,6 +20,8 @@
 #define SCI_ADDR(_b_, _o_)                              ( (u32)(_b_) + (_o_) )
 #endif
 
+#include <asm/sizes.h>
+
 #if defined(CONFIG_SPX15)
 #include "chip_x15/__hardware-sc8830.h"
 #else

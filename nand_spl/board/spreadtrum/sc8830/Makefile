@@ -47,6 +47,7 @@ SPL_COBJS       += mcu.o dram_cfg_fpga.o umctl_fpga.o adi.o chip_cfg.o div0.o st
 else
 SPL_COBJS	+= mcu.o dram_cfg.o umctl.o ddr_scan.o adi.o chip_cfg.o div0.o string.o lowlevel_init.o
 
+
 endif
 
 SEC_COBJS	+= sec_mcu.o sec_boot.o
