@@ -1268,7 +1268,7 @@ sp6820gb-f2r1_config	: unconfig
 
 sp6821a_config	: unconfig
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
-	@$(MKCONFIG) $@ arm armv7 sp8810 spreadtrum sc8810
+	@$(MKCONFIG) $@ arm armv7 sp6821a spreadtrum sc8810
 
 sp8810g-brcm_config	: unconfig
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
