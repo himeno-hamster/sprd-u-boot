@@ -99,14 +99,15 @@ unsigned char board_key_scan(void)
 
 unsigned int check_key_boot(unsigned char key)
 {
-    if(KEY_MENU == key)
+    printf("check_key_boot, sp8830eb key = %d \n", key);
+    if(KEY_VOLUMEUP == key)
       return BOOT_CALIBRATE;
     else if(KEY_HOME == key)
       return BOOT_FASTBOOT;
     else if(KEY_BACK == key)
       return BOOT_RECOVERY;
-    else if(KEY_VOLUMEUP== key)
-      return BOOT_DLOADER;
+    //else if(KEY_VOLUMEUP== key)
+    //  return BOOT_DLOADER;
     else 
       return 0;
 }
