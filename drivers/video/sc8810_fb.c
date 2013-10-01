@@ -120,10 +120,15 @@ static struct lcd_cfg lcd_panel[] = {
 #else
 //@6821a
 extern struct lcd_spec lcd_panel_hx8357;
+extern struct lcd_spec lcd_panel_hx8369;
 static struct lcd_cfg lcd_panel[] = {
 	[0]={
 		.lcd_id = 0x57,
 		.panel = &lcd_panel_hx8357,
+		},
+	[1]={
+		.lcd_id = 0x69,
+		.panel = &lcd_panel_hx8369,
 		},
 };
 

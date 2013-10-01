@@ -404,7 +404,6 @@ static int32_t hx8357_enter_sleep(struct lcd_spec *self, uint8_t is_sleep)
 #endif	
 static int32_t hx8357_read_id(struct lcd_spec *self)
 {
-#if 0
 	Send_data send_cmd = self->info.mcu->ops->send_cmd;
 	Send_data send_data = self->info.mcu->ops->send_data;
 	Read_data read_data = self->info.mcu->ops->read_data;
@@ -418,13 +417,15 @@ static int32_t hx8357_read_id(struct lcd_spec *self)
 	send_cmd(0x30);
 	
 	LCD_DelayMS(10);
-
 	send_cmd(0xD0);
 	chip_id = read_data();
-	LCD_PRINT("hx8357_read_id  u-boot chip_id = %d!\n", chip_id);
+	LCD_PRINT("hx8357_read_id1  u-boot chip_id = 0x%x!\n", chip_id);
+	chip_id = read_data();
+	LCD_PRINT("hx8357_read_id2  u-boot chip_id = 0x%x!\n", chip_id);
+	if(0x99 == chip_id){
+		chip_id=0x57;
+	}
 	return chip_id;
-#endif	
-	return 0x57;
 }
 
 static struct lcd_operations lcd_hx8357_operations = {
