@@ -256,6 +256,14 @@
 #define CONFIG_UART_CONSOLE  " console=null "
 #endif
 
+//Android build variant, user or userdebug
+#ifdef CONFIG_ANDROID_USERDEBUG
+
+#define CONFIG_KERNEL_USRDEBUG   " usrdebug=y"
+#else
+
+#define CONFIG_KERNEL_USRDEBUG   " usrdebug=n"
+#endif
 #define MTDIDS_DEFAULT "nand0=sprd-nand"
 #ifdef  CONFIG_ROM_8G_SUPPORT
 #define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),275m(system),592m(userdata),100m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),3840k(productinfo),512k(kpanic)"
@@ -266,9 +274,9 @@
 
 /*in sp8810, no enouth uart resource, uart1 will be occupied by ap-cp, so kenrel has to disable console */
 #ifdef  CONFIG_RAM_4G_SUPPORT
-#define CONFIG_BOOTARGS "mem=512M init=/init "MTDPARTS_DEFAULT CONFIG_UART_CONSOLE
+#define CONFIG_BOOTARGS "mem=512M init=/init "MTDPARTS_DEFAULT CONFIG_UART_CONSOLE CONFIG_KERNEL_USRDEBUG
 #else
-#define CONFIG_BOOTARGS "mem=256M init=/init "MTDPARTS_DEFAULT CONFIG_UART_CONSOLE
+#define CONFIG_BOOTARGS "mem=256M init=/init "MTDPARTS_DEFAULT CONFIG_UART_CONSOLE CONFIG_KERNEL_USRDEBUG
 #endif
 //for uart console debug only #define CONFIG_BOOTARGS "mem=256M console=ttyS1,115200n8 init=/init "MTDPARTS_DEFAULT
 
