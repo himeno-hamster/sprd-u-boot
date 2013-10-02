@@ -132,6 +132,8 @@ static int32_t hx8357_init(struct lcd_spec *self)
 	send_data(0x48);	  
 	//send_data(0x08);  
 
+	send_cmd(0x35);	// TE on
+	send_data(0x00);
 
 	send_cmd(0x29); // display on
 	LCD_DelayMS(5);
