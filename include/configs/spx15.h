@@ -53,6 +53,8 @@
 #define CONFIG_SPX15
 #define CONFIG_SC8830
 
+#define CONFIG_AUTODLOADER
+
 #define CHIP_ENDIAN_LITTLE
 #define _LITTLE_ENDIAN 1
 
@@ -109,12 +111,12 @@
 #define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 #endif
 
-#define FIXNV_SIZE		(128 * 1024)
-#define PRODUCTINFO_SIZE	(3 * 1024)
+#define FIXNV_SIZE		(2*128 * 1024)
+#define PRODUCTINFO_SIZE	(16 * 1024)
 #define MODEM_SIZE		(0xA00000)
 #define DSP_SIZE		(0x3E0400) /* 3968K */
 #define VMJALUNA_SIZE		(0x64000) /* 400K */
-#define RUNTIMENV_SIZE		(256 * 1024)
+#define RUNTIMENV_SIZE		(3*128 * 1024)
 #define CONFIG_SPL_LOAD_LEN	(0x6000)
 
 #define PRODUCTINFO_ADR		0x80490000
@@ -209,11 +211,26 @@
 */
 
 /* DDR */
+#define CONFIG_CLK_PARA
 #define CONFIG_DDR_FPGA_SUPPORT
-#define DDR_CLK 400
+
+#ifndef CONFIG_CLK_PARA
+#define DDR_CLK 333
+#else
+#define MAGIC_HEADER    0x5A6C1D2F
+#define MAGIC_END       0x1D2F5A6C
+#define CLK_CA7_CORE    ARM_CLK_1000M
+#define CLK_CA7_AXI     ARM_CLK_500M
+#define CLK_CA7_DGB     ARM_CLK_200M
+#define CLK_CA7_AHB     AHB_CLK_192M
+#define CLK_CA7_APB     AHB_CLK_128M
+#define CLK_PUB_AHB     PUB_AHB_CLK_153_6M
+#define CLK_AON_APB     AON_APB_CLK_128M
+#define DDR_FREQ        333000000
+#endif
 //---these three macro below,only one can be open
-#define DDR_LPDDR1
-//#define DDR_LPDDR2
+//#define DDR_LPDDR1
+#define DDR_LPDDR2
 //#define DDR_DDR3
 
 #define DDR_TYPE DRAM_LPDDR2_2CS_8G_X32
@@ -229,6 +246,12 @@
 #define DDR_DFS_SUPPORT
 #define DDR_DFS_VAL_BASE 0X1c00
 
+//#define DDR_SCAN_SUPPORT
+#define MEM_IO_DS LPDDR2_DS_40R
+
+#define PUBL_LPDDR1_DS PUBL_LPDDR1_DS_48OHM
+#define PUBL_LPDDR2_DS PUBL_LPDDR2_DS_40OHM
+#define PUBL_DDR3_DS   PUBL_DDR3_DS_34OHM
 
 /* NAND */
 #define CONFIG_NAND_SC8830
@@ -322,7 +345,7 @@
 //#define CONFIG_USB_ETHER
 #define CONFIG_CMD_FASTBOOT
 #define SCRATCH_ADDR    (CONFIG_SYS_SDRAM_BASE + 0x100000)
-#define FB_DOWNLOAD_BUF_SIZE (250*1024*1024)
+#define FB_DOWNLOAD_BUF_SIZE (350*1024*1024)
 
 #define CONFIG_MODEM_CALIBERATE
 
@@ -353,6 +376,8 @@
 
 #define CONFIG_SPRD_SYSDUMP
 #define SYSDUMP_CORE_HDR  0x98000000 /*0x8c400000*/  /* SPRD_IO_MEM_BASE in kernel */
+//#include <asm/sizes.h>
+//#define SPRD_SYSDUMP_MAGIC      ((PHYS_OFFSET_ADDR & (~(SZ_512M - 1))) + SZ_512M - SZ_1M)
 
 #define CALIBRATE_ENUM_MS 3000
 #define CALIBRATE_IO_MS 2000

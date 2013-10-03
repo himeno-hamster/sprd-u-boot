@@ -10,10 +10,27 @@
 #include <asm/arch/sprd_reg.h>
 #include <asm/arch/chip_drvapi.h>
 
+#if defined(CONFIG_CLK_PARA)
+#include <asm/arch/clk_para_config.h>
+const MCU_CLK_PARA_T mcu_clk_para=
+{
+    MAGIC_HEADER,
+    CLK_CA7_CORE,
+    DDR_FREQ,
+    CLK_CA7_AXI,
+    CLK_CA7_DGB,
+    CLK_CA7_AHB,
+    CLK_CA7_APB,
+    CLK_PUB_AHB,
+    CLK_AON_APB,
+    MAGIC_END
+};
+#endif
+
 static void delay()
 {
-    uint32 i;
-    for (i=0; i<0x20; i++);
+    volatile uint32 i;
+    for (i=0; i<0x2000; i++);
 }
 
 static uint32 SetMPllClk (uint32 clk)
@@ -42,7 +59,17 @@ static uint32 SetMPllClk (uint32 clk)
 
 static uint32 AhbClkConfig()
 {
-#if defined(CONFIG_SPX15)
+#if defined(CONFIG_CLK_PARA)
+    uint32 ahb_cfg;
+    ahb_cfg  = REG32(REG_AP_CLK_AP_AHB_CFG);
+    ahb_cfg &=~3;
+    ahb_cfg |= mcu_clk_para.clk_ca7_ahb;  //ahb select 192M           0:26M 1:76M 2:128M 3:192M
+    REG32(REG_AP_CLK_AP_AHB_CFG) = ahb_cfg;
+
+    ahb_cfg  = REG32(REG_AON_CLK_PUB_AHB_CFG);
+    ahb_cfg &=~3;
+    ahb_cfg |= mcu_clk_para.clk_pub_ahb;  //pub ahb select 153M      0:26M 1:76M 2:128M 3:153M
+    REG32(REG_AON_CLK_PUB_AHB_CFG) = ahb_cfg;
 #else
     uint32 ahb_cfg;
     ahb_cfg  = REG32(REG_AP_CLK_AP_AHB_CFG);
@@ -61,7 +88,17 @@ static uint32 AhbClkConfig()
 
 static uint32 ApbClkConfig()
 {
-#if defined(CONFIG_SPX15)
+#if defined(CONFIG_CLK_PARA)
+    uint32 apb_cfg;
+    apb_cfg  = REG32(REG_AP_CLK_AP_APB_CFG);
+    apb_cfg &=~3;
+    apb_cfg |= mcu_clk_para.clk_ca7_apb;  //apb select 64M            0:26M 1:64M 2:96M 3:128M
+    REG32(REG_AP_CLK_AP_APB_CFG) = apb_cfg;
+
+    apb_cfg = REG32(REG_AON_CLK_AON_APB_CFG);
+    apb_cfg &=~3;
+    apb_cfg |= mcu_clk_para.clk_aon_apb;  //aon apb select 128M        0:26M 1:76M 2:96M 3:128M
+    REG32(REG_AON_CLK_AON_APB_CFG) = apb_cfg;
 #else
     uint32 apb_cfg;
     apb_cfg  = REG32(REG_AP_CLK_AP_APB_CFG);
@@ -80,7 +117,12 @@ static uint32 ApbClkConfig()
 
 static uint32 AxiClkConfig(uint32 arm_clk)
 {
-#if defined(CONFIG_SPX15)
+#if defined(CONFIG_CLK_PARA)
+    uint32 ca7_ckg_cfg;
+    ca7_ckg_cfg  = REG32(REG_AP_AHB_CA7_CKG_CFG);
+    ca7_ckg_cfg &= ~(7<<8);
+    ca7_ckg_cfg |= ((arm_clk/(mcu_clk_para.clk_ca7_axi+1))&0x7)<<8;
+    REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
 #else
     uint32 ca7_ckg_cfg;
     ca7_ckg_cfg  = REG32(REG_AP_AHB_CA7_CKG_CFG);
@@ -94,7 +136,12 @@ static uint32 AxiClkConfig(uint32 arm_clk)
 
 static uint32 DbgClkConfig(uint32 arm_clk)
 {
-#if defined(CONFIG_SPX15)
+#if defined(CONFIG_CLK_PARA)
+    uint32 ca7_ckg_cfg;
+    ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);
+    ca7_ckg_cfg &= ~(7<<16);
+    ca7_ckg_cfg |=  ((arm_clk/(mcu_clk_para.clk_ca7_dgb+1))&0x7)<<16;
+    REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
 #else
     uint32 ca7_ckg_cfg;
     ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);
@@ -109,8 +156,7 @@ static uint32 DbgClkConfig(uint32 arm_clk)
 static uint32 McuClkConfig(uint32 arm_clk)
 {
     uint32 ca7_ckg_cfg;
-#if defined(CONFIG_SPX15)
-#else
+
     ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);
     ca7_ckg_cfg &= ~7; //a7 core select 26M
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
@@ -123,7 +169,7 @@ static uint32 McuClkConfig(uint32 arm_clk)
     ca7_ckg_cfg &= ~7;
     ca7_ckg_cfg |=  6; //a7 core select mcu MPLL       0:26M 1:(DPLL)533M 2:(CPLL)624M 3:(TDPLL)768M 4:(WIFIPLL)880M 5:(WPLL)921M 6:(MPLL)1200M
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
-#endif
+
     delay();
     return 0;
 }
@@ -193,15 +239,41 @@ static uint32 ClkConfig(uint32 arm_clk)
 
 uint32 MCU_Init()
 {
-#if (defined(CONFIG_SP8830EB)||defined(CONFIG_SP8830EC)||defined(CONFIG_SP8835EB)||defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735)) ||defined(CONFIG_SPX15) || defined(CONFIG_SP7730ECTRISIM))
 
+#if defined(CONFIG_CLK_PARA)
+    if (ClkConfig(mcu_clk_para.core_freq))
+#else
+#if (defined(CONFIG_SP8830EB)||defined(CONFIG_SP8830EC)||defined(CONFIG_SP8835EB)||defined(CONFIG_SP7730EC)||defined(CONFIG_SP5735)||defined(CONFIG_SPX15) || defined(CONFIG_SP7730ECTRISIM))
     if (ClkConfig(ARM_CLK_1000M))
 #else
     if (ClkConfig(ARM_CLK_800M))
 #endif
+#endif
         while(1);
     return 0;
 }
+
+#if defined(CONFIG_CLK_PARA)
+void set_ddr_clk(uint32 ddr_clk)
+{
+    volatile uint32 reg_val;
+    reg_val = REG32(REG_AON_APB_DPLL_CFG);
+    reg_val &=~0x7ff;
+    reg_val |= (ddr_clk/4);
+    REG32(REG_AON_APB_DPLL_CFG)= reg_val;
+
+    //select DPLL 533MHZ source clock
+    reg_val = REG32(REG_AON_CLK_EMC_CFG);
+    reg_val &= ~0x3;
+    //    reg_val |= 0; //default:XTL_26M
+    //    reg_val |= 1; //TDPLL_256M
+    //    reg_val |= 2; //TDPLL_384M
+    reg_val |= 3; //DPLL_533M
+    REG32(REG_AON_CLK_EMC_CFG)= reg_val;
+
+    delay();
+}
+#endif
 
 void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 {

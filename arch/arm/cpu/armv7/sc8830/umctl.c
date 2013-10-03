@@ -1192,7 +1192,7 @@ void umctl2_poweron_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
 
 
 
-void sdram_clk_set(CLK_TYPE_E clock) 
+void sdram_clk_set(uint32 clock) 
 {
 
     uint32 reg_val = 0;
@@ -1239,6 +1239,7 @@ void sdram_clk_set(CLK_TYPE_E clock)
     reg_val |= 3; //DPLL_533M
     UMCTL2_REG_SET(SHARK_DDR_CTL_CLK_SEL_ADDR,reg_val);
 #endif
+
 	wait_pclk(5263);//publ apb clk=26m-38ns, 5263*38ns = 200us
 
 	//enable ddr_phy_eb
@@ -2234,7 +2235,7 @@ void sdram_init()
 		#else
 		if(DDR_DFS_POINT[i] >= DDR_CLK)		
 		{
-			DDR_DFS_POINT[i] = DDR_CLK;
+			DDR_DFS_POINT[i] = ddr_clk;
 		}
 		#endif		
 		__cal_actiming(dram_info->ac_timing,ddr_timing_native,DDR_DFS_POINT[i]);
@@ -2263,7 +2264,7 @@ void sdram_init()
 		else
 		{
 			__sdram_init(DDR_DFS_POINT[i], UMCTL2_PORT_CONFIG, dram_info);
-		}				
+		}
 		#else
 		__sdram_init(DDR_DFS_POINT[i], UMCTL2_PORT_CONFIG, dram_info);
 		#endif
