@@ -40,6 +40,66 @@
 		} \
 	}while(0)
 
+#if defined(CONFIG_SPX15)
+struct {
+	LDO_ID_E id;
+	const char *name;
+}__ldo_names[] = {
+	{
+		.id = LDO_LDO_USB, .name = "vddusb",
+	},
+	{
+		.id = LDO_LDO_EMMCCORE, .name = "vddemmccore",
+	},
+	{
+		.id = LDO_LDO_EMMCIO, .name = "vddemmcio",
+	},
+	{
+		.id = LDO_LDO_SDIO3, .name = "vddsd",
+	},
+	{
+		.id = LDO_LDO_SIM0, .name = "vddsim0",
+	},
+	{
+		.id = LDO_LDO_SIM1, .name = "vddsim1",
+	},
+	{
+		.id = LDO_LDO_SIM2, .name = "vddsim2",
+	},
+};
+
+const char* __LDO_NAME(LDO_ID_E ldo_id)
+{
+	int i = 0;
+	for(i = 0; i < ARRAY_SIZE(__ldo_names); i++) {
+		if (ldo_id == __ldo_names[i].id)
+			return __ldo_names[i].name;
+	}
+	return NULL;
+}
+
+int LDO_Init(void)
+{
+	return regulator_init();
+}
+
+void LDO_TurnOffAllLDO(void)
+{
+	regulator_disable_all();
+}
+
+LDO_ERR_E LDO_TurnOffLDO(LDO_ID_E ldo_id)
+{
+	return regulator_disable(__LDO_NAME(ldo_id));
+}
+
+LDO_ERR_E LDO_TurnOnLDO(LDO_ID_E ldo_id)
+{
+	return regulator_enable(__LDO_NAME(ldo_id));
+}
+
+#else
+
 struct ldo_ctl_info {
 	/**
 	  need config area
@@ -69,9 +129,6 @@ struct ldo_ctl_info {
 
 static struct ldo_ctl_info ldo_ctl_data[] =
 {
-#if defined(CONFIG_SPX15)
-
-#else
 	{
 		.id           = LDO_LDO_EMMCCORE,
 		.bp_reg       = ANA_REG_GLB_LDO_DCDC_PD_RTCSET,
@@ -404,7 +461,7 @@ static struct ldo_ctl_info ldo_ctl_data[] =
 		.level_reg_b0 = ANA_REG_GLB_DCDC_MEM_ADI,
 		.b0           = BIT_5,
 		.b0_rst       = BIT_5,
-		.level_reg_b1 = ANA_REG_GLB_DCDC_MEM_ADI, 
+		.level_reg_b1 = ANA_REG_GLB_DCDC_MEM_ADI,
 		.b1           = BIT_6,
 		.b1_rst       = BIT_6,
 		.init_level   = LDO_VOLT_LEVEL_FAULT_MAX,
@@ -535,7 +592,6 @@ static struct ldo_ctl_info ldo_ctl_data[] =
 		.b1_rst       = BIT_15,
 		.init_level   = LDO_VOLT_LEVEL_FAULT_MAX,
 	},
-#endif
 };
 
 /**---------------------------------------------------------------------------*
@@ -577,7 +633,7 @@ LDO_ERR_E LDO_TurnOnLDO(LDO_ID_E ldo_id)
 
 	//if ((ctl->ref++) == 0)
 	{
-		if(ctl->bp_reg == LDO_INVALID_REG_ADDR) 
+		if(ctl->bp_reg == LDO_INVALID_REG_ADDR)
 		{
 			//if (LDO_LDO_USBD == ldo_id)
 			//	CHIP_REG_AND((~LDO_USB_PD), GR_CLK_GEN5);
@@ -611,7 +667,7 @@ LDO_ERR_E LDO_TurnOffLDO(LDO_ID_E ldo_id)
 
 	//local_irq_save(flags);
 
-	//if ((--ctl->ref) == 0) 
+	//if ((--ctl->ref) == 0)
 	{
 		if(ctl->bp_reg == LDO_INVALID_REG_ADDR)
 		{
@@ -712,9 +768,9 @@ LDO_VOLT_LEVEL_E LDO_GetVoltLevel(LDO_ID_E ldo_id)
 	ctl = LDO_GetLdoCtl(ldo_id);
 	SCI_PASSERT(ctl != NULL, ("ldo_id = %d", ldo_id));
 
-	if (ctl->current_volt_level == LDO_VOLT_LEVEL_FAULT_MAX) 
+	if (ctl->current_volt_level == LDO_VOLT_LEVEL_FAULT_MAX)
 	{
-		if(ctl->level_reg_b0 == ctl->level_reg_b1) 
+		if(ctl->level_reg_b0 == ctl->level_reg_b1)
 		{
 			level_ret = 0;
 		}
@@ -735,7 +791,7 @@ LDO_VOLT_LEVEL_E LDO_GetVoltLevel(LDO_ID_E ldo_id)
 int LDO_Init(void)
 {
 	int i;
-	for ( i = 0; i < ARRAY_SIZE(ldo_ctl_data); ++i) 
+	for ( i = 0; i < ARRAY_SIZE(ldo_ctl_data); ++i)
 	{
 		if( ldo_ctl_data[i].init_level != LDO_VOLT_LEVEL_FAULT_MAX)
 		{
@@ -750,18 +806,12 @@ int LDO_Init(void)
 
 static void LDO_TurnOffCoreLDO(void)
 {
-	#if defined(CONFIG_SPX15)
-	#else
 	ANA_REG_SET(ANA_REG_GLB_LDO_DCDC_PD_RTCSET, 0x7FFF);
-	#endif
 }
 
 static void LDO_TurnOffAllModuleLDO(void)
 {
-	#if defined(CONFIG_SPX15)
-	#else
-	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, 0xFFF); 
-	#endif
+	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, 0xFFF);
 }
 
 void LDO_TurnOffAllLDO(void)
@@ -770,3 +820,4 @@ void LDO_TurnOffAllLDO(void)
 	LDO_TurnOffCoreLDO();
 }
 
+#endif/*sc8830*/

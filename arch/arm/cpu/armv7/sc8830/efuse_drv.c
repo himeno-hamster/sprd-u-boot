@@ -123,6 +123,7 @@ int sci_efuse_raw_write(unsigned blk, int data, u32 magic)
 }
 #endif
 
+#define CAL_DATA_BLK					7
 #define BASE_ADC_P0						711			/* 3.6V */
 #define BASE_ADC_P1						830			/* 4.2V */
 #define VOL_P0							3600
@@ -135,6 +136,10 @@ int sci_efuse_calibration_get(unsigned int * p_cal_data)
 	unsigned int data;
 	unsigned short adc_temp;
 #if defined(CONFIG_SPX15)
+	sci_efuse_poweron();
+	data = sci_efuse_read(CAL_DATA_BLK);
+	sci_efuse_poweroff();
+
 #else
 	/* wait for maximum of 100 msec */
 	sci_adi_raw_write(ANA_REG_GLB_AFUSE_CTRL, BIT_AFUSE_READ_REQ);
@@ -155,12 +160,14 @@ int sci_efuse_calibration_get(unsigned int * p_cal_data)
 
 	data = sci_adi_read(ANA_REG_GLB_AFUSE_OUT0);
 	data |= (sci_adi_read(ANA_REG_GLB_AFUSE_OUT1)) << 16;
+#endif
+
 	if (data == 0)
 	{
 		return 0;
 	}
 
-	//printf("afuse: data = 0x%x\n\r",data);
+	printf("afuse: data = 0x%x\n\r",data);
 	/* adc 3.6V  */
 	adc_temp = ((data & 0xFF00) >> 8) + BASE_ADC_P0 - ADC_DATA_OFFSET;
 	p_cal_data[1] = (VOL_P0) | ((adc_temp << 2) << 16);
@@ -168,7 +175,6 @@ int sci_efuse_calibration_get(unsigned int * p_cal_data)
 	/* adc 4.2V */
 	adc_temp = (data & 0xFF) + BASE_ADC_P1 - ADC_DATA_OFFSET;
 	p_cal_data[0] = (VOL_P1)|((adc_temp << 2) << 16);
-#endif
 	return 1;
 }
 

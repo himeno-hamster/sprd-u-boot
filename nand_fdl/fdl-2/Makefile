@@ -30,7 +30,7 @@ gcclibdir := $(shell dirname `$(CC) -print-libgcc-file-name`)
 LDSCRIPT      = $(TOPDIR)/nand_fdl/board/$(VENDOR)/$(SOC)/u-boot.lds
 FDL2_LDFLAGS	= -Bstatic -T $(LDSCRIPT) $(PLATFORM_LDFLAGS)
 AFLAGS	+= -I $(OBJTREE)/include/asm/arch
-CFLAGS	+= -D CONFIG_FRMCHECK -I $(OBJTREE)/include/asm/arch
+CFLAGS	+= -D CONFIG_FRMCHECK -DCONFIG_FDL2_BUILD -I $(OBJTREE)/include/asm/arch
 
 FDL2_PATH = $(TOPDIR)/nand_fdl/fdl-2
 COM_PATH = $(TOPDIR)/nand_fdl/common
@@ -39,7 +39,7 @@ EMMC_PATH = $(TOPDIR)/drivers/mmc
 
 ifdef CONFIG_EMMC_BOOT
 UEFI_LIB = $(OBJTREE)/disk/libdisk.o
-EMMC_LIB = $(OBJTREE)/drivers/mmc/libmmc.o $(OBJTREE)/$(CPUDIR)/$(SOC)/ldo.o
+EMMC_LIB = $(OBJTREE)/drivers/mmc/libmmc.o
 endif
 
 FDL2_SOBJS_LIST = init.o
@@ -47,7 +47,7 @@ FDL2_SOBJS_LIST = init.o
 COM_COBJS	= dl_engine.o fdl_crc.o packet.o fdl_channel.o fdl_stdio.o mcu_command.o usb_boot.o drv_usb.o virtual_com.o
 COM_OBJS = $(addprefix $(obj),$(COM_COBJS))
 
-FDL2_COBJS_LIST = migrate.o fdl2_signature.o fdl_main.o
+FDL2_COBJS_LIST = migrate.o fdl2_signature.o fdl_main.o fdl_ldo.o
 ifdef CONFIG_EMMC_BOOT
 FDL2_COBJS_LIST += newfs_msdos.o fdl_emmc_operate.o fdl_emmc_command.o phasecheck.o
 else
