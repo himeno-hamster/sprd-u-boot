@@ -2629,8 +2629,8 @@ PUBLIC uint32 SDHOST_BaseClk_Set(SDHOST_SLOT_NO slot_NO,uint32 sdio_base_clk)
 {
     uint32 clk = 0;
 
-#if   defined(CONFIG_SC8830)
-#if   defined(CONFIG_SPX15)
+#if defined(CONFIG_SC8830)
+#if defined(CONFIG_SPX15)
 if (slot_NO == SDHOST_SLOT_6)
 	{
 		REG32(REG_AP_CLK_SDIO0_CFG) &= ~3;
@@ -2659,20 +2659,20 @@ if (slot_NO == SDHOST_SLOT_6)
 	{
 		REG32(REG_AP_CLK_EMMC_CFG) &= ~3;
 
-		if (sdio_base_clk >= SDIO_BASE_CLK_312M)
+		if (sdio_base_clk >= SDIO_BASE_CLK_384M)
 		{
 			REG32(REG_AP_CLK_EMMC_CFG) |=  3;
+			clk = SDIO_BASE_CLK_384M;
+		}
+		else if (sdio_base_clk >= SDIO_BASE_CLK_312M)
+		{
+			REG32(REG_AP_CLK_EMMC_CFG) |=  2;
 			clk = SDIO_BASE_CLK_312M;
 		}
 		else if (sdio_base_clk >= SDIO_BASE_CLK_256M)
 		{
-			REG32(REG_AP_CLK_EMMC_CFG) |=  2;
-			clk = SDIO_BASE_CLK_256M;
-		}
-		else if (sdio_base_clk >= SDIO_BASE_CLK_192M)
-		{
 			REG32(REG_AP_CLK_EMMC_CFG) |=  1;
-			clk = SDIO_BASE_CLK_192M;
+			clk = SDIO_BASE_CLK_256M;
 		}
 		else
 		{

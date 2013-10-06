@@ -51,9 +51,8 @@ enum clk_aon_apb_sel
     AON_APB_CLK_96M,
     AON_APB_CLK_128M
 };
-
 typedef struct{
-    uint32 magic_header;
+    uint32 magic_clk;
     uint32 clk_ca7_core;
     uint32 ddr_freq;
     uint32 clk_ca7_axi;
@@ -62,7 +61,9 @@ typedef struct{
     uint32 clk_ca7_apb;
     uint32 clk_pub_ahb;
     uint32 clk_aon_apb;
-    uint32 magic_end;
+    uint32 magic_voltage;
+    uint32 dcdc_arm;
+    uint32 dcdc_core;
 }MCU_CLK_PARA_T;
 
 extern const MCU_CLK_PARA_T mcu_clk_para;

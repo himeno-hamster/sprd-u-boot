@@ -46,13 +46,24 @@
 #define EMMC_SLOT_SEL_BIT				BIT_EMMC_SLOT_SEL
 
 /******* emmc voltage controller *******/
+#if defined (CONFIG_SPX15)
+
+#define EMMC_VOLT_IO_CTRL				ANA_REG_GLB_LDO_V_CTRL2
+#define EMMC_VOLT_CORE_CTRL				ANA_REG_GLB_LDO_V_CTRL7
+
+#define EMMC_VOLT_IO_CTRL_SHIFT				0					/* [6:0] */
+#define EMMC_VOLT_CORE_CTRL_SHIFT			8					/* [15:8] */
+
+#define EMMC_VOLT_IO_MASK				0x7f
+#define EMMC_VOLT_CORE_MASK                             0xff
+#else
 #define EMMC_VOLT_IO_CTRL				ANA_REG_GLB_LDO_V_CTRL0
 #define EMMC_VOLT_CORE_CTRL			ANA_REG_GLB_LDO_V_CTRL0
 
 #define EMMC_VOLT_IO_CTRL_SHIFT			12					/* [13:12] */
 #define EMMC_VOLT_CORE_CTRL_SHIFT		14					/* [15:14] */
-
 #define EMMC_VOLT_MASK					0x3
+#endif
 
 #elif defined(CONFIG_SC8825)
 #define EMMC_CFG_ADDR					EMMC_BASE_ADDR		/* 0x20F0_0000 */
@@ -937,6 +948,29 @@ PUBLIC uint32 SDHOST_BaseClk_Set (uint32 baseClk)
 	uint32 clk = 0;
 
 #if defined (CONFIG_SC8830)
+#if defined (CONFIG_SPX15)
+	REG32(EMMC_BASE_AP_CKG) &= ~(BIT_0 | BIT_1);
+
+	if (baseClk >= SDIO_BASE_CLK_384M)
+	{
+		REG32(EMMC_BASE_AP_CKG) |= 0x3;
+		clk = SDIO_BASE_CLK_384M;
+	}
+	else if (baseClk >= SDIO_BASE_CLK_312M)
+	{
+		REG32(EMMC_BASE_AP_CKG) |= 0x2;
+		clk = SDIO_BASE_CLK_312M;
+	}
+	else if (baseClk >= SDIO_BASE_CLK_256M)
+	{
+		REG32(EMMC_BASE_AP_CKG) |= 0x1;
+		clk = SDIO_BASE_CLK_256M;
+	}
+	else
+	{
+		clk = SDIO_BASE_CLK_26M;						/* default */
+	}
+#else
 	REG32(EMMC_BASE_AP_CKG) &= ~(BIT_0 | BIT_1);
 
 	if (baseClk >= SDIO_BASE_CLK_312M)
@@ -958,7 +992,7 @@ PUBLIC uint32 SDHOST_BaseClk_Set (uint32 baseClk)
 	{
 		clk = SDIO_BASE_CLK_26M;						/* default */
 	}
-
+#endif
 #elif defined (CONFIG_SC8825)
 	REG32 (EMMC_BASE_AP_CKG) &= ~ (BIT_23 | BIT_24);
 
@@ -1049,6 +1083,54 @@ PUBLIC void SDHOST_Volt_Set (SDIO_Vol_e emmcIo, SDIO_Vol_e emmcCore)
 #if defined (CONFIG_SC8830)
 
 #if defined(CONFIG_SPX15)	/* set emmc_io */
+
+	tmpReg = ANA_REG_GET(EMMC_VOLT_IO_CTRL);
+	tmpReg &= ~(EMMC_VOLT_IO_MASK<<EMMC_VOLT_IO_CTRL_SHIFT);
+
+	switch (emmcIo)
+	{
+		case VOL_1_5:
+			tmpReg |= (7<<3) << EMMC_VOLT_IO_CTRL_SHIFT;
+			break;
+		case VOL_1_8:
+			tmpReg |= (13<<3) << EMMC_VOLT_IO_CTRL_SHIFT;
+			break;
+		case VOL_1_3:
+			tmpReg |= (3<<3)<< EMMC_VOLT_IO_CTRL_SHIFT;
+			break;
+		case VOL_1_2:
+			tmpReg |= (1<<3)<< EMMC_VOLT_IO_CTRL_SHIFT;
+			break;
+		default :	/* default used 1.8V */
+			tmpReg |= (13<<3) << EMMC_VOLT_IO_CTRL_SHIFT;
+			break;
+	}
+
+	ANA_REG_SET(EMMC_VOLT_IO_CTRL, tmpReg);
+
+	/* set emmc_core */
+	tmpReg = ANA_REG_GET(EMMC_VOLT_CORE_CTRL);
+	tmpReg &= ~(EMMC_VOLT_CORE_MASK << EMMC_VOLT_CORE_CTRL_SHIFT);
+	switch (emmcCore)
+	{
+		case VOL_2_8:
+			tmpReg |= 160 << EMMC_VOLT_CORE_CTRL_SHIFT;
+			break;
+		case VOL_3_0:
+			tmpReg |= 180 << EMMC_VOLT_CORE_CTRL_SHIFT;
+			break;
+		case VOL_2_5:
+			tmpReg |= 120 << EMMC_VOLT_CORE_CTRL_SHIFT;
+			break;
+		case VOL_1_8:
+			tmpReg |= 60 << EMMC_VOLT_CORE_CTRL_SHIFT;
+			break;
+		default :	/* default used 3.0V */
+			tmpReg |= 180 << EMMC_VOLT_CORE_CTRL_SHIFT;
+			break;
+	}
+
+	ANA_REG_SET(EMMC_VOLT_CORE_CTRL, tmpReg);
 #else
 	tmpReg = ANA_REG_GET(EMMC_VOLT_IO_CTRL);
 	tmpReg &= ~(EMMC_VOLT_MASK << EMMC_VOLT_IO_CTRL_SHIFT);
@@ -1215,8 +1297,12 @@ PUBLIC void SDHOST_Volt_Enable (SDIO_OnOff_e voltFlg)
 	if (SDIO_ON == voltFlg)
 	{
 	#if defined (CONFIG_SC8830)
-#if defined(CONFIG_SPX15)
-#else
+	#if defined(CONFIG_SPX15)
+		ANA_REG_AND(ANA_REG_GLB_LDO_DCDC_PD, ~BIT_7);
+		SDIO_Mdelay(2);
+		ANA_REG_AND(ANA_REG_GLB_LDO_DCDC_PD, ~BIT_6);
+		SDIO_Mdelay(10);
+	#else
 		/* set emmc core first. */
 		ANA_REG_OR(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR, BIT_8);
 		ANA_REG_AND(ANA_REG_GLB_LDO_DCDC_PD_RTCSET, ~ BIT_8);
@@ -1224,7 +1310,7 @@ PUBLIC void SDHOST_Volt_Enable (SDIO_OnOff_e voltFlg)
 		ANA_REG_OR(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR, BIT_7);
 		ANA_REG_AND(ANA_REG_GLB_LDO_DCDC_PD_RTCSET, ~BIT_7);
 		SDIO_Mdelay(10);
-#endif
+	#endif
 	#elif defined (CONFIG_SC8825)
 		/* set emmc core first. */
 		ANA_REG_OR(ANA_LDO_PD_CTL1,  BIT_7);
@@ -1246,13 +1332,16 @@ PUBLIC void SDHOST_Volt_Enable (SDIO_OnOff_e voltFlg)
 	else if (SDIO_OFF == voltFlg)
 	{
 	#if defined (CONFIG_SC8830)
-#if defined(CONFIG_SPX15)
-#else
+	#if defined(CONFIG_SPX15)
+		ANA_REG_OR(ANA_REG_GLB_LDO_DCDC_PD, BIT_7);
+		ANA_REG_OR(ANA_REG_GLB_LDO_DCDC_PD, BIT_6);
+		SDIO_Mdelay(10);
+	#else
 		ANA_REG_AND(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR, ~(BIT_7 | BIT_8));
 		ANA_REG_OR(ANA_REG_GLB_LDO_DCDC_PD_RTCSET, (BIT_7 | BIT_8));
-#endif
 		/* must make sure power off. maybe need delay 200~300 ms. */
 		SDIO_Mdelay(10);
+	#endif
 	#elif defined (CONFIG_SC8825)
 		ANA_REG_AND(ANA_LDO_PD_CTL1,  ~(BIT_7 | BIT_5));
 		ANA_REG_OR(ANA_LDO_PD_CTL1, (BIT_6 | BIT_4));

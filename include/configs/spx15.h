@@ -217,8 +217,8 @@
 #ifndef CONFIG_CLK_PARA
 #define DDR_CLK 333
 #else
-#define MAGIC_HEADER    0x5A6C1D2F
-#define MAGIC_END       0x1D2F5A6C
+#define MAGIC_CLK	0x5555AAAA
+#define MAGIC_VOLTAGE	0xAAAA5555
 #define CLK_CA7_CORE    ARM_CLK_1000M
 #define CLK_CA7_AXI     ARM_CLK_500M
 #define CLK_CA7_DGB     ARM_CLK_200M
@@ -227,6 +227,9 @@
 #define CLK_PUB_AHB     PUB_AHB_CLK_153_6M
 #define CLK_AON_APB     AON_APB_CLK_128M
 #define DDR_FREQ        333000000
+#define DCDC_ARM	1200
+#define DCDC_CORE	1100
+#define CONFIG_VOL_PARA
 #endif
 //---these three macro below,only one can be open
 //#define DDR_LPDDR1

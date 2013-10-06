@@ -14,7 +14,7 @@
 #include <asm/arch/clk_para_config.h>
 const MCU_CLK_PARA_T mcu_clk_para=
 {
-    MAGIC_HEADER,
+    MAGIC_CLK,
     CLK_CA7_CORE,
     DDR_FREQ,
     CLK_CA7_AXI,
@@ -23,7 +23,9 @@ const MCU_CLK_PARA_T mcu_clk_para=
     CLK_CA7_APB,
     CLK_PUB_AHB,
     CLK_AON_APB,
-    MAGIC_END
+    MAGIC_VOLTAGE,
+    DCDC_ARM,
+    DCDC_CORE
 };
 #endif
 
@@ -177,7 +179,82 @@ static uint32 McuClkConfig(uint32 arm_clk)
 static uint32 ArmCoreConfig(uint32 arm_clk)
 {
     uint32 dcdc_arm;
-#if defined(CONFIG_SPX15)
+
+#if  defined(CONFIG_VOL_PARA)
+    dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_ARM_ADI);
+    dcdc_arm &= ~0xFF;
+
+    if(mcu_clk_para.dcdc_arm < 700)
+    {
+	dcdc_arm |= (5<<5);
+    }
+    else if(mcu_clk_para.dcdc_arm < 800)
+    {
+	dcdc_arm |= (1<<5);
+    }
+    else if(mcu_clk_para.dcdc_arm < 900)
+    {
+	dcdc_arm |= (2<<5);
+    }
+    else if(mcu_clk_para.dcdc_arm < 1000)
+    {
+	dcdc_arm |= (3<<5);
+    }
+    else if(mcu_clk_para.dcdc_arm < 1100)
+    {
+	dcdc_arm |= (4<<5);
+    }
+    else if(mcu_clk_para.dcdc_arm < 1200)
+    {
+	dcdc_arm |= (0<<5);
+    }
+    else if(mcu_clk_para.dcdc_arm < 1300)
+    {
+	dcdc_arm |= (6<<5);
+    }
+    else
+    {
+	dcdc_arm |= (7<<5);
+    }
+    ANA_REG_SET(ANA_REG_GLB_DCDC_ARM_ADI, dcdc_arm);
+
+    dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_CORE_ADI);
+    dcdc_arm &= ~0xFF;
+
+    if(mcu_clk_para.dcdc_core < 700)
+    {
+	dcdc_arm |= (5<<5);
+    }
+    else if(mcu_clk_para.dcdc_core < 800)
+    {
+	dcdc_arm |= (1<<5);
+    }
+    else if(mcu_clk_para.dcdc_core < 900)
+    {
+	dcdc_arm |= (2<<5);
+    }
+    else if(mcu_clk_para.dcdc_core < 1000)
+    {
+	dcdc_arm |= (3<<5);
+    }
+    else if(mcu_clk_para.dcdc_core < 1100)
+    {
+	dcdc_arm |= (4<<5);
+    }
+    else if(mcu_clk_para.dcdc_core < 1200)
+    {
+	dcdc_arm |= (0<<5);
+    }
+    else if(mcu_clk_para.dcdc_core < 1300)
+    {
+	dcdc_arm |= (6<<5);
+    }
+    else
+    {
+	dcdc_arm |= (7<<5);
+    }
+    ANA_REG_SET(ANA_REG_GLB_DCDC_CORE_ADI, dcdc_arm);
+    REG32(REG_AP_APB_APB_EB) |= BIT_CKG_EB;
 #else
 
     dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_ARM_ADI);
@@ -213,6 +290,7 @@ static uint32 ArmCoreConfig(uint32 arm_clk)
     ANA_REG_SET(ANA_REG_GLB_DCDC_ARM_ADI, dcdc_arm);
     REG32(REG_AP_APB_APB_EB) |= BIT_AP_CKG_EB;        // CKG enable
 #endif
+
     delay();
     return 0;
 }
