@@ -223,7 +223,7 @@
 #define CLK_CA7_AXI     ARM_CLK_500M
 #define CLK_CA7_DGB     ARM_CLK_200M
 #define CLK_CA7_AHB     AHB_CLK_192M
-#define CLK_CA7_APB     AHB_CLK_128M
+#define CLK_CA7_APB     AHB_CLK_64M
 #define CLK_PUB_AHB     PUB_AHB_CLK_153_6M
 #define CLK_AON_APB     AON_APB_CLK_128M
 #define DDR_FREQ        333000000
