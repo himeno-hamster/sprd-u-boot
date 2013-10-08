@@ -226,7 +226,7 @@
 #define DDR3_DLL_ON TRUE
 //#define DLL_BYPASS
 #define DDR_APB_CLK 128
-//#define DDR_DFS_SUPPORT
+#define DDR_DFS_SUPPORT
 #define DDR_DFS_VAL_BASE 0X1c00
 
 //#define DDR_SCAN_SUPPORT

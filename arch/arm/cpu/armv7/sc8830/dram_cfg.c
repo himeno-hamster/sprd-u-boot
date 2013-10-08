@@ -109,7 +109,10 @@ const lpddr2_timing_t LPDDR2_ACTIMING =
     5,              //tMRW 		unite : tCK
     2               //tMRR 		unite : tCK
 };
+
 #ifdef DDR_DFS_SUPPORT
+
+#ifdef DDR_LPDDR2
 const lpddr2_timing_t LPDDR2_ACTIMING_NATIVE = 
 {
     (3900),   //tREFI     uinte : ns
@@ -140,9 +143,11 @@ const lpddr2_timing_t LPDDR2_ACTIMING_NATIVE =
     2         //tMRR 	unite : tCK
 };
 #endif
-const ddr3_timing_t DDR3_ACTIMING = 
+
+#ifdef DDR_DDR3
+const ddr3_timing_t DDR3_ACTIMING_NATIVE = 
 {
-    NS2CLK(7800),//tREFI		unit : ns
+    (7800),//tREFI		unit : ns
     22,	 		//tRAS 		unit : tCK    
     30,	 		//tRC 		unit : tCK    
     190,	 	//tRFC 		unit : tCK    
@@ -168,6 +173,65 @@ const ddr3_timing_t DDR3_ACTIMING =
     5,    		//tCKSRX   	unit : tCK
     3     		//tCKE	   	unit : tCK
 };
+#endif
+
+#endif
+const ddr3_timing_t DDR3_ACTIMING = 
+{
+#if 1
+	NS2CLK(7800),//tREFI		unit : ns
+	NS2CLK(38), //tRAS		unit : ns
+	NS2CLK(53), //tRC		unit : ns
+	NS2CLK(350),//tRFC		unit : ns
+	NS2CLK(15),	//tRCD		unit : ns
+	NS2CLK(15),	//tRP		unit : ns
+	5,			//tRRD		unit : tCK
+	9,			//tWR		unit : tCK
+	5,			//tWTR		unit : tCK	  
+	512,		//tZQINIT	unit : tCK	  
+	256,		//tZQoper	unit : tCK		  
+	64,			//tZQCS 		unit : tCK				  
+	0,			//tDQSCK		unit : tCK
+	512,		//tDLLK 		unit : tCK
+	5,			//tRTP		unit : tCK
+	5,			//tMRD		unit : tCK
+	13, 		//tMOD		unit : tCK
+	5,			//tCCD		unit : tCK
+	NS2CLK(50), //tFAW		unit : ns
+	NS2CLK(360),//tXS		unit : ns
+	5,			//tXP		unit : tCK
+	13, 		//tXPDLL		unit : tCK
+	6,			//tCKSRE		unit : tCK
+	6,			//tCKSRX		unit : tCK
+	4			//tCKE		unit : tCK
+#else
+    NS2CLK(7800),//tREFI		unit : ns
+    22,	 		//tRAS 		unit : tCK    
+    30,	 		//tRC 		unit : tCK    
+    190,	 	//tRFC 		unit : tCK    
+    9, 	 		//tRCD 		unit : tCK
+    9,    		//tRP 		unit : tCK
+    5, 	 		//tRRD 		unit : tCK
+    9,    		//tWR 		unit : tCK
+    5,	 		//tWTR 		unit : tCK    
+    512,  		//tZQINIT   	unit : tCK    
+    256,  		//tZQoper   	unit : tCK        
+    64,   		//tZQCS   	unit : tCK                
+    5,  	 	//tDQSCK		unit : tCK
+    512,  		//tDLLK		unit : tCK
+    4,  	 	//tRTP  		unit : tCK
+    4,    		//tMRD  		unit : tCK
+    12,   		//tMOD  		unit : tCK
+    4,    		//tCCD  		unit : tCK
+    30, 	 	//tFAW  		unit : tCK    
+    200,	 	//tXS   		unit : tCK    
+    5,    		//tXP   		unit : tCK
+    13,   		//tXPDLL		unit : tCK
+    5,    		//tCKSRE  	unit : tCK
+    5,    		//tCKSRX   	unit : tCK
+    3     		//tCKE	   	unit : tCK
+#endif    
+};
 
 DRAM_INFO DRAM_INFO_ARRAY[] =
 { 
@@ -180,8 +244,8 @@ DRAM_INFO DRAM_INFO_ARRAY[] =
   {DRAM_LPDDR2_2CS_8G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
   //{DRAM_LPDDR2_2CS_12G_X32,  2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	
   //{DRAM_LPDDR2_2CS_16G_X32,  2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
-  {DRAM_DDR3_1CS_2G_X8_4P,   1,   8,	  32,	     8,   7,  6, 0, (void *)(&DDR3_ACTIMING)},
-  {DRAM_DDR3_1CS_4G_X16_2P,  1,   8,	  32,	     8,   7,  6, 0, (void *)(&DDR3_ACTIMING)}  
+  {DRAM_DDR3_1CS_2G_X8_4P,   1,   8,	  32,	     8,   6,  5, 0, (void *)(&DDR3_ACTIMING)},
+  {DRAM_DDR3_1CS_4G_X16_2P,  1,   8,	  32,	     8,   6,  5, 0, (void *)(&DDR3_ACTIMING)}  
 };
 
 umctl2_port_info_t UMCTL2_PORT_CONFIG[] = 

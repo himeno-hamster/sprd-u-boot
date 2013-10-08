@@ -59,6 +59,7 @@ extern uint32 B1_DQS_STEP_DLY;
 extern uint32 B2_DQS_STEP_DLY;
 extern uint32 B3_DQS_STEP_DLY;
 extern lpddr2_timing_t LPDDR2_ACTIMING_NATIVE;
+extern ddr3_timing_t DDR3_ACTIMING_NATIVE;
 static DRAM_TYPE_E DDR_TYPE_LOCAL;
 /**---------------------------------------------------------------------------*
  **                            Local Variables
@@ -1811,6 +1812,8 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 
 
 #ifdef DDR_DFS_SUPPORT
+
+#ifdef DDR_LPDDR2
 CLK_TYPE_E DDR_DFS_POINT[] = 
 {
 	CLK_100MHZ,
@@ -1819,30 +1822,47 @@ CLK_TYPE_E DDR_DFS_POINT[] =
 	CLK_400MHZ, 
 	CLK_533MHZ,
 };
+#else
+CLK_TYPE_E DDR_DFS_POINT[] = 
+{
+	CLK_200MHZ,
+	CLK_333MHZ,
+	CLK_400MHZ, 
+	CLK_533MHZ,
+};
+#endif
+
 #define NS2CLK_T(x_ns,clk) ((clk*x_ns)/1000 + 1)
 
-void  __cal_actiming(lpddr2_timing_t *cal_timing,lpddr2_timing_t *native_timing,CLK_TYPE_E clk)
+void  __cal_actiming(lpddr2_timing_t *cal_timing,void *native_timing,CLK_TYPE_E clk)
 {
-	cal_timing->tREFI = NS2CLK_T(native_timing->tREFI,clk);
-	cal_timing->tRAS  = NS2CLK_T(native_timing->tRAS,clk);
-	cal_timing->tRC   = NS2CLK_T(native_timing->tRC,clk);
-	cal_timing->tRFCab= NS2CLK_T(native_timing->tRFCab,clk);
-	cal_timing->tRFCpb= NS2CLK_T(native_timing->tRFCpb,clk);	
-	cal_timing->tRCD  = NS2CLK_T(native_timing->tRCD,clk);
-	cal_timing->tRP   = NS2CLK_T(native_timing->tRP,clk);
-	cal_timing->tRRD  = NS2CLK_T(native_timing->tRRD,clk);	
-	cal_timing->tXP   = NS2CLK_T(native_timing->tXP,clk);
-	cal_timing->tXSR  = NS2CLK_T(native_timing->tXSR,clk);
-	cal_timing->tCKESR= NS2CLK_T(native_timing->tCKESR,clk);	
-	cal_timing->tRTP  = NS2CLK_T(native_timing->tRTP,clk);
-	cal_timing->tFAW  = NS2CLK_T(native_timing->tFAW,clk);
-	cal_timing->tDPD  = NS2CLK_T(native_timing->tDPD,clk);	
-	cal_timing->tZQINIT= NS2CLK_T(native_timing->tZQINIT,clk);
-	cal_timing->tZQCL   = NS2CLK_T(native_timing->tZQCL,clk);
-	cal_timing->tZQCS   = NS2CLK_T(native_timing->tZQCS,clk);
-	cal_timing->tZQreset= NS2CLK_T(native_timing->tZQreset,clk);
-	cal_timing->tDQSCK  = NS2CLK_T(native_timing->tDQSCK,clk);
-	cal_timing->tDQSCKmax= NS2CLK_T(native_timing->tDQSCKmax,clk);	
+    lpddr2_timing_t* lpddr2_timing = (lpddr2_timing_t*)(native_timing);
+    ddr3_timing_t*   ddr3_timing   = (ddr3_timing_t*)(native_timing);
+
+	#ifdef DDR_LPDDR2	
+	cal_timing->tREFI 	= NS2CLK_T(lpddr2_timing->tREFI,clk);
+	cal_timing->tRAS  	= NS2CLK_T(lpddr2_timing->tRAS,clk);
+	cal_timing->tRC   	= NS2CLK_T(lpddr2_timing->tRC,clk);
+	cal_timing->tRFCab	= NS2CLK_T(lpddr2_timing->tRFCab,clk);
+	cal_timing->tRFCpb	= NS2CLK_T(lpddr2_timing->tRFCpb,clk);	
+	cal_timing->tRCD  	= NS2CLK_T(lpddr2_timing->tRCD,clk);
+	cal_timing->tRP   	= NS2CLK_T(lpddr2_timing->tRP,clk);
+	cal_timing->tRRD  	= NS2CLK_T(lpddr2_timing->tRRD,clk);	
+	cal_timing->tXP   	= NS2CLK_T(lpddr2_timing->tXP,clk);
+	cal_timing->tXSR  	= NS2CLK_T(lpddr2_timing->tXSR,clk);
+	cal_timing->tCKESR	= NS2CLK_T(lpddr2_timing->tCKESR,clk);	
+	cal_timing->tRTP  	= NS2CLK_T(lpddr2_timing->tRTP,clk);
+	cal_timing->tFAW  	= NS2CLK_T(lpddr2_timing->tFAW,clk);
+	cal_timing->tDPD  	= NS2CLK_T(lpddr2_timing->tDPD,clk);	
+	cal_timing->tZQINIT	= NS2CLK_T(lpddr2_timing->tZQINIT,clk);
+	cal_timing->tZQCL   = NS2CLK_T(lpddr2_timing->tZQCL,clk);
+	cal_timing->tZQCS   = NS2CLK_T(lpddr2_timing->tZQCS,clk);
+	cal_timing->tZQreset= NS2CLK_T(lpddr2_timing->tZQreset,clk);
+	cal_timing->tDQSCK  = NS2CLK_T(lpddr2_timing->tDQSCK,clk);
+	cal_timing->tDQSCKmax= NS2CLK_T(lpddr2_timing->tDQSCKmax,clk);
+	#else
+	cal_timing->tREFI 	= NS2CLK_T(ddr3_timing->tREFI,clk);
+	#endif
 	
 }
 #endif
@@ -2081,19 +2101,28 @@ BOOLEAN __ddr_info_detect(DRAM_TYPE_E* ddr_type)
 #endif
 void sdram_init()
 {
-	#ifdef DDR_DFS_SUPPORT
+#ifdef DDR_DFS_SUPPORT
 	uint32 i = 0;
 	DRAM_INFO * dram_info = NULL;
+	void *ddr_timing_native = NULL;
+
+	#ifdef DDR_LPDDR2
+		ddr_timing_native = &LPDDR2_ACTIMING_NATIVE;
+	#else
+		ddr_timing_native = &DDR3_ACTIMING_NATIVE;
+	#endif
+
+	
 
 	#ifdef DDR_AUTO_DETECT	
-	if(IS_SHARK_CS)
-	{
-		DDR_TYPE_LOCAL = DRAM_LPDDR2_1CS_4G_X32;
-	}
-	else
-	{		
-		DDR_TYPE_LOCAL = DDR_TYPE;		
-	}
+		if(IS_SHARK_CS)
+		{
+			DDR_TYPE_LOCAL = DRAM_LPDDR2_1CS_4G_X32;
+		}
+		else
+		{		
+			DDR_TYPE_LOCAL = DDR_TYPE;		
+		}
 	#endif
 	
 	//clear dfs value space
@@ -2105,16 +2134,16 @@ void sdram_init()
 	for(i = 0; i <ARRAY_SIZE(DDR_DFS_POINT); i++)
 	{
 		#ifdef DDR_AUTO_DETECT
-		dram_info = get_dram_cfg(DDR_TYPE_LOCAL);			
+			dram_info = get_dram_cfg(DDR_TYPE_LOCAL);
 		#else
-		dram_info = get_dram_cfg(DDR_TYPE);	
+			dram_info = get_dram_cfg(DDR_TYPE);
 		#endif
 
 		if(DDR_DFS_POINT[i] >= DDR_CLK)		
 		{
 			DDR_DFS_POINT[i] = DDR_CLK;
 		}
-		__cal_actiming(dram_info->ac_timing,&LPDDR2_ACTIMING_NATIVE,DDR_DFS_POINT[i]);
+		__cal_actiming(dram_info->ac_timing,ddr_timing_native,DDR_DFS_POINT[i]);
 
 		#ifdef DDR_AUTO_DETECT		
 		if(IS_SHARK_CS)
@@ -2156,14 +2185,14 @@ void sdram_init()
 	
 	REG32(DDR_DFS_VAL_BASE+sizeof(ddr_dfs_val_t)*ARRAY_SIZE(DDR_DFS_POINT)) = 0x12345678;
 	
-	#else
+#else
 	__sdram_init(DDR_CLK, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
-	#endif;
-
+#endif;
 
 	#ifdef DDR_SCAN_SUPPORT
 		ddr_scan(dram_info);
 	#endif
+	
 	umctl2_low_power_open();
 	
 }
