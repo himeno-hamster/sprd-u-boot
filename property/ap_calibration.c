@@ -459,6 +459,10 @@ uint8 ap_adc_process(int flag, char * src, int size, MSG_AP_ADC_CNF * pMsgADC)
             ap_adc_save(lpApADCReq, pMsgADC);
             break;
         case AP_GET_VOLT:
+             {
+                 extern void CHG_Init (void);
+                 CHG_Init();//re-load adc value
+             }
             ap_get_voltage(6,pMsgADC);
             break;
         default:
