@@ -20,7 +20,7 @@ static boot_image_required_t const s_boot_image_table[]={
 #if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
 	{L"tdfixnv1",L"tdfixnv2",FIXNV_SIZE,TDFIXNV_ADR},
 	{L"tdruntimenv1",L"tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR},
-	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},
+	/*{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},*/
 	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
 	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR}, 
 #ifdef CONFIG_SP8830WCN
