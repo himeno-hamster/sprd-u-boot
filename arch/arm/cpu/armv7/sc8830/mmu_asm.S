@@ -92,7 +92,7 @@ Dcache_CleanRegion:
 
 
 MMU_InvalideICACHEALL:
-    STMFD   sp!, {a1-a4, lr}            @ save lr_USR and non-callee
+    stmfd   sp!, {r0, lr}            @ save lr_USR and non-callee
 
     MOV     r0, #0
     MCR     p15, 0, r0, c7, c5, 0       @Invalidate(flush)the ICache
@@ -103,12 +103,12 @@ MMU_InvalideICACHEALL:
     NOP
     NOP
 
-    LDMFD   sp!, {a1-a4, PC}            
+    ldmfd   sp!, {r0, PC}
 
 
 MMU_EnableIDCM:
 @ save lr_USR and non-callee
-    STMFD   sp!, {a1-a4, lr}
+    stmfd   sp!, {r0-r3, lr}
 
 @   Set the MMU page table address
     LDR     r2, =g_mmu_page_table
@@ -131,10 +131,10 @@ MMU_EnableIDCM:
     NOP
     NOP
     NOP
-    LDMFD   sp!, {a1-a4, PC}             
+    ldmfd   sp!, {r0-r3, PC}
 
 v7_flush_dcache_all:
-	stmfd	sp!,	{a1-a4,lr}
+	stmfd	sp!,	{r0-r3,lr}
 	mov r1, #0x1f0
 	add r1,r1,#0xf
 
@@ -162,11 +162,12 @@ set_loop2:
 
 	.word 0xf57ff04f
 	.word 0xf57ff06f
-	ldmfd sp!, {a1-a4,pc}
+	ldmfd sp!, {r0-r3,pc}
 
 
 v7_flush_dcache_all1:
 	.word 0xf57ff05f
+	stmfd sp!, {r0-r12, lr}
 	mrc	p15, 1, r0, c0, c0, 1		         @ read clidr
 	ands	r3, r0, #0x7000000		@ extract loc from clidr
 	mov	r3, r3, lsr #23			         @ left align loc bit field
@@ -207,12 +208,12 @@ finished:
 	mcr	p15, 2, r10, c0, c0, 0		@ select current cache level in cssr
 	.word 0xf57ff04f
 	.word 0xf57ff06f
-	mov	pc, lr
+	ldmfd sp!, {r0-r12, pc}
 
 
 .globl	MMU_DisableIDCM
 MMU_DisableIDCM:
-	STMFD   sp!, {a1-a4, lr}
+	stmfd   sp!, {r0-r3, lr}
 
 @   Disable the ICache, DCache, write buffer, MMU
 	MRC     p15, 0, r0, c1, c0, 0
@@ -231,5 +232,5 @@ MMU_DisableIDCM:
 	NOP
 	NOP
 @   Return
-	LDMFD   sp!, {a1-a4, PC}             @ restore registers
+	ldmfd   sp!, {r0-r3, PC}             @ restore registers
 
