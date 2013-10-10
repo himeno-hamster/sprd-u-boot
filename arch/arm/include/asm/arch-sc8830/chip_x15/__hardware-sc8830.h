@@ -453,14 +453,13 @@
 #define SPRD_IRAM1_BASE			SCI_IOMAP(0x3e0000)
 #define SPRD_IRAM1_PHYS			0X50000000
 #define SPRD_IRAM1_SIZE			(SZ_32K + SZ_16K + SZ_4K)
-
 /*begin mapping adie master and slave address */
-#define SPRD_ADI_BASE			SCI_IOMAP(0x3f0000)
 #define SPRD_ADI_PHYS			0X40030000
+#define SPRD_ADI_BASE		        SPRD_ADI_PHYS
 #define SPRD_ADI_SIZE			(SZ_4K)
 
-#define SPRD_ADISLAVE_BASE		SCI_IOMAP(0x3f0000 + SZ_32K)
 #define SPRD_ADISLAVE_PHYS		0X40038000
+#define SPRD_ADISLAVE_BASE	 	SPRD_ADISLAVE_PHYS
 #define SPRD_ADISLAVE_SIZE		(SZ_4K)
 /*end*/
 

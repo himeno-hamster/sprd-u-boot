@@ -6,7 +6,7 @@ sinclude $(TOPDIR)/include/idh_config.mk
 
 gcclibdir    := $(shell dirname `$(CC) -print-libgcc-file-name`)
 
-ifdef CONFIG_DDR_FPGA_SUPPORT
+ifdef CONFIG_FPGA
 LDSCRIPT      = $(TOPDIR)/nand_fdl/board/$(VENDOR)/$(SOC)/fdl1_fpga.lds
 else
 ifdef CONFIG_SC7710G2

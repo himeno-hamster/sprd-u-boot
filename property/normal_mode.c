@@ -706,7 +706,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 		sprintf(&buf[str_len], " %s", cmdline);
 	}
 	{
-#ifndef CONFIG_SPX15_FPGA
+#ifndef CONFIG_FPGA
 		extern uint32_t load_lcd_id_to_kernel();
 		uint32_t lcd_id;
 
