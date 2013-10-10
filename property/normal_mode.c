@@ -706,6 +706,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 		sprintf(&buf[str_len], " %s", cmdline);
 	}
 	{
+#ifndef CONFIG_SPX15_FPGA
 		extern uint32_t load_lcd_id_to_kernel();
 		uint32_t lcd_id;
 
@@ -719,6 +720,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 			str_len = strlen(buf);
 			buf[str_len] = '\0';
 		}
+#endif
 	}
 	if(lcd_base != NULL){
 		//add lcd frame buffer base, length should be lcd w*h*2(RGB565)

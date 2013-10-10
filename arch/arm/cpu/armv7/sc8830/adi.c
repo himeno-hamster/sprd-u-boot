@@ -180,6 +180,9 @@ static inline int __adi_read(u32 regPddr)
 
 int sci_adi_read(u32 reg)
 {
+#ifdef CONFIG_SPX15_FPGA
+    return 0;
+#endif
 	unsigned long val;
 	unsigned long flags;
 	ADDR_VERIFY(reg);

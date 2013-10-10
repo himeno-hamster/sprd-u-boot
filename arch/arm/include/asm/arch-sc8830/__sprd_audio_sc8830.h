@@ -866,10 +866,12 @@ static inline int arch_audio_pin_func_i2s_port(int id, int sel)
 		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS0LRCK, 0);
 		break;
 	case 1:
+#ifndef CONFIG_SPX15
 		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS1DI, 0);
 		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS1DO, 0);
 		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS1CLK, 0);
 		pin_func_set(CTL_PIN_BASE + REG_PIN_IIS1LRCK, 0);
+#endif
 		break;
 	case 2:
 		if (sel) {
@@ -878,10 +880,12 @@ static inline int arch_audio_pin_func_i2s_port(int id, int sel)
 			pin_func_set(CTL_PIN_BASE + REG_PIN_NFD13, 2);
 			pin_func_set(CTL_PIN_BASE + REG_PIN_NFD14, 2);
 		} else {
+#ifndef CONFIG_SPX15
 			pin_func_set(CTL_PIN_BASE + REG_PIN_IIS2DI, 0);
 			pin_func_set(CTL_PIN_BASE + REG_PIN_IIS2DO, 0);
 			pin_func_set(CTL_PIN_BASE + REG_PIN_IIS2CLK, 0);
 			pin_func_set(CTL_PIN_BASE + REG_PIN_IIS2LRCK, 0);
+#endif
 		}
 		break;
 	case 3:
