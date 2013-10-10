@@ -44,7 +44,7 @@ static boot_image_required_t const s_boot_image_table[]={
 	{L"tdruntimenv1",L"tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR},
 	{L"wfixnv1",L"wfixnv2",FIXNV_SIZE,WFIXNV_ADR},
 	{L"wruntimenv1",L"wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR},
-	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},
+	/*{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},*/
 	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,WPRODINFO_ADR},
 	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
 	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR},		
