@@ -68,10 +68,10 @@ static void wait_for_keypress()
 	int key_code;
 
 	do {
-		udelay(50 * 1000);
+		//udelay(50 * 1000);
 		key_code = board_key_scan();
-		//printf("key_code: %d, (vd:%d,vu:%d,p:%d)\n", key_code, KEY_VOLUMEDOWN, KEY_VOLUMEUP, KEY_POWER);
-		if (key_code == KEY_VOLUMEDOWN || key_code == KEY_VOLUMEUP || key_code == KEY_HOME)
+		//printf("key_code: %d\n", key_code);
+		if (key_code == KEY_ENGTEST || key_code == KEY_RECOVERY || key_code == KEY_FASTBOOT)
 			break;
 	} while (1);
 	printf("Pressed key: %d\n", key_code);
@@ -427,9 +427,9 @@ void write_sysdump_before_boot(int rst_mode)
 #endif
 
 		printf("\nwriting done.\nPress any key to continue...");
-		//lcd_printf("\nWriting done.\nPress any key (Exp power key) to continue...");
-		//lcd_display();
-		//wait_for_keypress();
+		lcd_printf("\nWriting done.\nPress any key (Exp power key) to continue...");
+		lcd_display();
+		wait_for_keypress();
 	} else
 		printf("no need.\n");
 
