@@ -167,7 +167,6 @@ set_loop2:
 
 v7_flush_dcache_all1:
 	.word 0xf57ff05f
-	stmfd sp!, {r0-r12, lr}
 	mrc	p15, 1, r0, c0, c0, 1		         @ read clidr
 	ands	r3, r0, #0x7000000		@ extract loc from clidr
 	mov	r3, r3, lsr #23			         @ left align loc bit field
@@ -208,12 +207,12 @@ finished:
 	mcr	p15, 2, r10, c0, c0, 0		@ select current cache level in cssr
 	.word 0xf57ff04f
 	.word 0xf57ff06f
-	ldmfd sp!, {r0-r12, pc}
+	mov pc, lr
 
 
 .globl	MMU_DisableIDCM
 MMU_DisableIDCM:
-	stmfd   sp!, {r0-r3, lr}
+	stmfd   sp!, {r0-r12, lr}
 
 @   Disable the ICache, DCache, write buffer, MMU
 	MRC     p15, 0, r0, c1, c0, 0
@@ -232,5 +231,5 @@ MMU_DisableIDCM:
 	NOP
 	NOP
 @   Return
-	ldmfd   sp!, {r0-r3, PC}             @ restore registers
+	ldmfd   sp!, {r0-r12, PC}             @ restore registers
 
