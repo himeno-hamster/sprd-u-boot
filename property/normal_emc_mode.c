@@ -36,7 +36,8 @@ static boot_image_required_t const s_boot_image_table[]={
 	{L"wcnruntimenv1",L"wcnruntimenv2",RUNTIMENV_SIZE,WCNRUNTIMENV_ADR},
 	{L"wcnmodem",NULL,MODEM_SIZE,WCNMODEM_ADR},
 #endif		
-#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SP5735)
+#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15)
+
 	{L"wfixnv1",L"wfixnv2",FIXNV_SIZE,WFIXNV_ADR},
 	{L"wruntimenv1",L"wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR},
 	{L"wmodem",NULL,MODEM_SIZE,WMODEM_ADR},
@@ -500,7 +501,9 @@ void modem_entry()
 #else
 	*((volatile u32*)0x402B00A8) &= ~0x00000002;	   /* clear reset cp0 cp1 */
 #endif
-#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SP5735)
+
+#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15)
+
 	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
 
 	memcpy(0x50000000, cp0data, sizeof(cp0data));	   /* copy cp0 source code */
@@ -590,7 +593,9 @@ void sipc_addr_reset()
 #elif defined (CONFIG_SC8830)
 #if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
 	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SP5735)
+
+#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15)
+
 	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 #else
 #ifndef CONFIG_NOT_BOOT_TD_MODEM

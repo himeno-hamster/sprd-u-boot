@@ -52,11 +52,19 @@ extern unsigned char raw_header[8192];
 #define TDRUNTIMENV_ADR 0x890a0000
 //#define TDPRODINFO_ADR  0x884e0000
 #define TDMODEM_ADR     0x88300000
+#if defined(CONFIG_SPX15)
+#define WDSP_ADR        0x88020000
+#define WFIXNV_ADR      0x88480000
+#define WRUNTIMENV_ADR  0x884a0000
+#define WPRODINFO_ADR   0x884e0000
+#define WMODEM_ADR      0x88500000
+#else
 #define WDSP_ADR        0x90020000
 #define WFIXNV_ADR      0x90440000
 #define WRUNTIMENV_ADR  0x90480000
 #define WPRODINFO_ADR   0x904e0000
 #define WMODEM_ADR      0x90500000
+#endif
 #define WCNMODEM_ADR      0x94060000
 #define WCNFIXNV_ADR      0x94000000
 #define WCNRUNTIMENV_ADR  0x94020000
