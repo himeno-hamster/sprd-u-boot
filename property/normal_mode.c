@@ -802,6 +802,14 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 
 		free(adc_data);
 	}
+#if defined(CONFIG_SC8830)
+	{
+		extern unsigned int fgu_cur;
+		extern unsigned int fgu_vol;
+		str_len = strlen(buf);
+		sprintf(&buf[str_len], " fgu_init=%d,%d",fgu_vol,fgu_cur);
+	}
+#endif
 }
 #endif
     printf("cmdline_len = %d \n pass cmdline: %s \n",strlen(buf), buf);

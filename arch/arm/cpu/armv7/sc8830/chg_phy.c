@@ -122,6 +122,33 @@ int sprd_charger_is_adapter(void)
 	return ret;
 }
 
+#define REGS_FGU_BASE SPRD_ANA_FPU_PHYS
+#define REG_FGU_START                   SCI_ADDR(REGS_FGU_BASE, 0x0000)
+#define REG_FGU_CONFIG                  SCI_ADDR(REGS_FGU_BASE, 0x0004)
+#define REG_FGU_VOLT_VAL                SCI_ADDR(REGS_FGU_BASE, 0x0020)
+#define REG_FGU_OCV_VAL                 SCI_ADDR(REGS_FGU_BASE, 0x0024)
+#define REG_FGU_POCV_VAL                SCI_ADDR(REGS_FGU_BASE, 0x0028)
+#define REG_FGU_CURT_VAL                SCI_ADDR(REGS_FGU_BASE, 0x002c)
+#define BIT_VOLT_H_VALID                ( BIT(12) )
+#define BITS_VOLT_DUTY(_x_)             ( (_x_) << 5 & (BIT(5)|BIT(6)) )
+
+#define mdelay(_ms) udelay(_ms*1000)
+unsigned int fgu_vol, fgu_cur;
+void fgu_init(void)
+{
+	sci_adi_set(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_FGU_EN);
+	sci_adi_set(ANA_REG_GLB_RTC_CLK_EN, BIT_RTC_FGU_EN | BIT_RTC_FGUA_EN);
+	//sci_adi_clr(REG_FGU_CONFIG, BIT_VOLT_H_VALID);
+	//sci_adi_clr(REG_FGU_CONFIG, BIT_AD1_ENABLE);
+	sci_adi_write(REG_FGU_CONFIG, BITS_VOLT_DUTY(3), BITS_VOLT_DUTY(3)|BIT_VOLT_H_VALID);
+	mdelay(1000);
+
+	fgu_vol = sci_adi_read(REG_FGU_VOLT_VAL);
+
+	fgu_cur = sci_adi_read(REG_FGU_CURT_VAL);
+	printf("fgu_init fgu_vol 0x%x fgu_cur 0x%x \n", fgu_vol, fgu_cur);
+}
+
 void CHG_Init(void)
 {
 	//set charge current 500mA(USB) or 600mA(AC)
@@ -144,5 +171,6 @@ void CHG_Init(void)
 	ANA_REG_OR(ANA_APB_CHGR_CTL2, CHGR_CC_EN_BIT);
 
 	get_adc_cali_data();
+	fgu_init();
 }
 #endif
