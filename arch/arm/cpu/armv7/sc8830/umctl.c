@@ -15,6 +15,7 @@
 #include "asm/arch/dram_phy.h"
 #include "asm/arch/umctl2_reg.h"
 #include "asm/arch/sprd_reg_base.h"
+#include "asm/arch/sprd_reg.h"
 
 #if defined(CONFIG_SPX15)
 #include "asm/arch/sprd_reg.h"
@@ -221,6 +222,7 @@ void umctl2_soft_reset(BOOLEAN is_en)
         reg_value =   UMCTL2_REG_GET(SHARK_DDR_CTL_EB_ADDR);
 		reg_value |=   (0x1f00);
         UMCTL2_REG_SET(SHARK_DDR_CTL_EB_ADDR, reg_value);
+
         reg_value = UMCTL2_REG_GET(REG_PMU_APB_DDR_PHY_RET_CFG);
         reg_value |= (1<<16);
         UMCTL2_REG_SET(REG_PMU_APB_DDR_PHY_RET_CFG,reg_value);
@@ -1804,7 +1806,10 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 #if 0
 	sdram_vddmem_set(VDDMEM_1V20);
 #endif
-
+    
+    #if defined(CONFIG_SPX15)
+    REG32(0x402b0128) = 1;
+    #endif
     sdram_clk_set(dmc_clk);
 
     //enable umctl,publ,phy
@@ -1815,6 +1820,12 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 
 	//open umctl and publ reg
 	umctl2_publ_reg_open();
+
+    // EVB FIX for dolphin----------------------------------------------
+    //#if defined(CONFIG_SPX15)
+    //reg_bits_set(PUBL_PGCR,12,2,1);  //dp dm 
+    //reg_bits_set(PUBL_PGCR,14,1,1);  //dp dm 
+    //#endif
 
     //to dis-assert to not prevent sdram init
     UMCTL2_REG_SET(UMCTL_DFIMISC, 0x0);
@@ -1838,17 +1849,20 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
     umctl2_wait_status(OPERATION_MODE_NORMAL); 
 
     //enable AP port
-    umctl2_port_en(UMCTL2_PORT_AP,TRUE);
-
+    //umctl2_port_en(UMCTL2_PORT_AP,TRUE);
+    #if defined(CONFIG_SPX15)
+    umctl2_allport_en();
+    #endif
+    
     //do training
     if(!publ_do_training())
     {
 		ddr_print("ERROR!!! DDR TRAINING ERROR");
         return FALSE;
     }    
-
+    
     //enable all port
-    umctl2_allport_en();
+    
 
 #if 0
 	umctl2_low_power_open();
@@ -2310,5 +2324,9 @@ void sdram_init()
 	
 	umctl2_low_power_open();
 	
+	//{
+	//	volatile uint32 i;
+	//	for(i=0;i<0xffffffff;i++);
+	//}	
 }
 

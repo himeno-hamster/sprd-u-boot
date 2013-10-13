@@ -355,7 +355,24 @@ void set_ddr_clk(uint32 ddr_clk)
 
 void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 {
+    uint32 value;
+    
+    #if defined(CONFIG_SPX15)
+    value = ANA_REG_GET(0x4003883c);
+    value &= ~0x7f00;
+    value |= 0x38 << 8;
+    ANA_REG_SET(0x4003883c,value);
+
+    value = ANA_REG_GET(0x40038820);
+    value &= ~0xff;
+    value |= 0x38 << 0;
+    ANA_REG_SET(0x40038820,value);
+    #endif
+    
     MCU_Init();
+
+    set_ddr_clk(mcu_clk_para.ddr_freq/1000000);	
+    //while(1);
     sdram_init();
 }
 
