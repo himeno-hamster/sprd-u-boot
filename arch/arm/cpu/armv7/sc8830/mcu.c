@@ -370,9 +370,6 @@ void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
     #endif
     
     MCU_Init();
-
-    set_ddr_clk(mcu_clk_para.ddr_freq/1000000);	
-    //while(1);
     sdram_init();
 }
 
