@@ -59,7 +59,7 @@ int main(void)
     PACKET_T *packet;
     usb_boot(1);
     FDL_PacketInit();
-
+    while(gFdlUsedChannel);
     FDL_DlInit();
     FDL_DlReg(BSL_CMD_CONNECT,    sys_connect,  0);
     FDL_DlReg(BSL_CMD_START_DATA, data_start,   0);

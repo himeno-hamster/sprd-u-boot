@@ -33,7 +33,11 @@ extern   "C"
 //AHB Register
 #ifdef CONFIG_SC8830
 #define AHB_CTRL0                           (0x20D00000)
+#ifdef CONFIG_SPX15
+#define USBD_EN                             BIT_4
+#else
 #define USBD_EN                             BIT_5
+#endif
 #else
 #define AHB_CTRL0                           (0x20900200)
 #define USBD_EN                             BIT_4
