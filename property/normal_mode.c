@@ -789,7 +789,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 				str_len = strlen(buf);
 				sprintf(&buf[str_len], " adc_cal=%d,%d",adc_data[2],adc_data[3]);
 			}
-			if((0x00000002 == adc_data[9])&&(0x00000003 == adc_data[11])){
+			if((0x00000002 == adc_data[10])&&(0x00000003 == adc_data[11])){
 				str_len = strlen(buf);
 				sprintf(&buf[str_len], " fgu_cal=%d,%d,%d",adc_data[4],adc_data[5],adc_data[6]);
 			}
