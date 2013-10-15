@@ -264,7 +264,7 @@ static int32_t hx8363_init(struct panel_spec *self)
 	send_cmd(0x36);
 	send_data(0x02); // 
 	send_cmd(0x29); 
-	LCD_DelayMS(10);
+	LCD_DelayMS(120);
 	send_cmd(0x2c);
         return 0; 
 }
