@@ -95,7 +95,6 @@ static struct panel_cfg lcd_panel[] = {
         .panel = &lcd_hx8363_mcu_spec,
         },
 };
-*/
 
 
 */
@@ -118,6 +117,8 @@ static struct panel_cfg lcd_panel[] = {
 #else
 
 
+
+
 extern struct panel_spec lcd_panel_hx8363_rgb_spi_spec;
 static struct panel_cfg lcd_panel[] = {
     [0]={
@@ -125,6 +126,7 @@ static struct panel_cfg lcd_panel[] = {
         .panel = &lcd_panel_hx8363_rgb_spi_spec,
         },
 };
+
 
 
 #endif

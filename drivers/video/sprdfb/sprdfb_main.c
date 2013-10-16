@@ -1,3 +1,4 @@
+
 /******************************************************************************
  ** File Name:    sprdfb_main.h                                            *
  ** Author:                                                           *
@@ -313,4 +314,5 @@ void lcd_show_board_info(void)
     lcd_printf("  Mach-type        : %lu\n", gd->bd->bi_arch_number);
 }
 #endif /* CONFIG_LCD_INFO */
+
 
