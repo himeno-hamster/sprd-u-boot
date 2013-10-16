@@ -18,7 +18,7 @@
 
 #define printk printf
 
-//#define  LCD_DEBUG
+#define  LCD_DEBUG
 #ifdef LCD_DEBUG
 #define LCD_PRINT printk
 #else
@@ -347,10 +347,25 @@ static int32_t hx8363_read_id(struct panel_spec *self)
 	send_data_t send_data = self->info.mcu->ops->send_data;
 
 	//Get ID
-
 	//to be added here
-
-
+/*
+	int32_t   chip_id = 0;
+	send_cmd(0xDA);
+	chip_id = read_data();
+	LCD_PRINT("hx8363_read_id1  0XDA = 0x%x!\n", chip_id);
+	chip_id = read_data();
+	LCD_PRINT("hx8363_read_id2  0XDA = 0x%x!\n", chip_id);
+	send_cmd(0xDB);
+	chip_id = read_data();
+	LCD_PRINT("hx8363_read_id1  0XDB = 0x%x!\n", chip_id);
+	chip_id = read_data();
+	LCD_PRINT("hx8363_read_id2  0XDB = 0x%x!\n", chip_id);
+	send_cmd(0xDC);
+	chip_id = read_data();
+	LCD_PRINT("hx8363_read_id1  0XDB = 0x%x!\n", chip_id);
+	chip_id = read_data();
+	LCD_PRINT("hx8363_read_id2  0XDC = 0x%x!\n", chip_id);
+*/
 	return 0x18; // id;
 }
 

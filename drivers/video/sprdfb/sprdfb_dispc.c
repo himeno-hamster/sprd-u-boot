@@ -231,6 +231,7 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 
         dispc_print_clk();
 
+
 #ifdef CONFIG_SPX15
 	dispc_pll_clk_set(DISPC_PLL_SEL_DEFAULT, 0);
 	dispc_dbi_clk_set(DISPC_DBI_SEL_DEFAULT, 0);
@@ -242,6 +243,7 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 #endif
 	
  	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC /(DISPC_DPI_DIV_DEFAULT + 1);
+
 	printf("zcf:DISPC_CORE_EN:%x,BIT_DISPC_CORE_EN:%x \n",DISPC_CORE_EN,BIT_DISPC_CORE_EN);
 	printf("zcf:BIT_DISPC_EMC_EN:%x,DISPC_EMC_EN:%x \n",BIT_DISPC_EMC_EN,DISPC_EMC_EN);
 	printf("zcf:BIT_DISPC_AHB_EN:%x,DISPC_AHB_EN:%x \n",BIT_DISPC_AHB_EN,DISPC_AHB_EN);
@@ -253,12 +255,14 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	__raw_bits_or(BIT_DISPC_EMC_EN, DISPC_EMC_EN);  //matrix clock en
 
 	__raw_bits_or(BIT_DISPC_AHB_EN, DISPC_AHB_EN);//enable DISPC clock
+
 	FB_PRINT("sprdfb:DISPC_CORE_EN:%x \n",__raw_readl(DISPC_CORE_EN));
 	FB_PRINT("sprdfb:DISPC_EMC_EN:%x \n",__raw_readl(DISPC_EMC_EN));
 	FB_PRINT("sprdfb:DISPC_AHB_EN:%x \n",__raw_readl(DISPC_AHB_EN));
 
 
         dispc_print_clk();
+
 
 	dispc_reset();
 	dispc_module_enable();

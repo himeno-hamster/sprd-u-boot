@@ -254,7 +254,7 @@ static uint32 ArmCoreConfig(uint32 arm_clk)
 	dcdc_arm |= (7<<5);
     }
     ANA_REG_SET(ANA_REG_GLB_DCDC_CORE_ADI, dcdc_arm);
-    REG32(REG_AP_APB_APB_EB) |= BIT_CKG_EB;
+    REG32(REG_AP_APB_APB_EB) |= BIT_AP_CKG_EB;
 #else
 
     dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_ARM_ADI);

@@ -74,6 +74,7 @@ static struct panel_cfg lcd_panel[] = {
 };
 #endif
 
+
 #elif defined CONFIG_SC8830_LVDS //LiWei
 extern struct panel_spec lcd_nt51017_mipi_lvds_spec;
 static struct panel_cfg lcd_panel[] = {
@@ -86,6 +87,7 @@ static struct panel_cfg lcd_panel[] = {
 
 #elif defined CONFIG_SPX15
 /*
+
 extern struct panel_spec lcd_hx8363_mcu_spec;
 static struct panel_cfg lcd_panel[] = {
     [0]={
@@ -93,6 +95,7 @@ static struct panel_cfg lcd_panel[] = {
         .panel = &lcd_hx8363_mcu_spec,
         },
 };
+
 */
 #ifdef CONFIG_SP7715_OPENPHONE
 extern struct panel_spec lcd_nt35516_rgb_spi_spec;
@@ -111,6 +114,7 @@ static struct panel_cfg lcd_panel[] = {
 		},
 };
 #else
+
 extern struct panel_spec lcd_panel_hx8363_rgb_spi_spec;
 static struct panel_cfg lcd_panel[] = {
     [0]={
@@ -118,7 +122,9 @@ static struct panel_cfg lcd_panel[] = {
         .panel = &lcd_panel_hx8363_rgb_spi_spec,
         },
 };
+
 #endif
+
 
 #elif defined CONFIG_SC8830
 extern struct panel_spec lcd_nt35516_mipi_spec;
@@ -144,8 +150,6 @@ static struct panel_cfg lcd_panel[] = {
         },
 #endif
 };
-
-
 
 #elif defined CONFIG_LCD_788
 extern struct panel_spec lcd_panel_hx8357;
