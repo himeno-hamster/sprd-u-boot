@@ -12,6 +12,7 @@
 #include <fat.h>
 #include <exports.h>
 #include <linux/ctype.h>
+#include <linux/time.h>
 #ifdef CONFIG_LCD
 #include <lcd.h>
 #endif
@@ -303,8 +304,14 @@ static int dump_elf(Elf32_Ehdr *elfhdr_addr, char *filename)
 	debug("Crash dump to file %s\n", filename);
 
 	fd = open_create(filename);
-	if (fd < 0)
+	if (fd < 0) {
+#ifdef CONFIG_LCD
+	        lcd_printf("Do not have slog in sdcard\n");
+	        lcd_display();
+	        set_backlight(255);
+#endif
 		return 1;
+        }
 	rc = write_elf(elfhdr_addr, fd);
 	close(fd);
 
@@ -403,21 +410,39 @@ static int find_dump_file_name(bool is_modem)
 	int fd;
 	int prefix = 0;
 	int ret = 0;
+	time_t t;
+	struct tm tm;
 
-	do {
+	/* add timestamp */
+	t = get_timer(0);
+	localtime_r(&t, &tm);
+
+        do {
 		prefix++;
-	    if(is_modem)
-	    {
-            sprintf(crash_modem_filename,"/cdump_modem_%d.mem",prefix);
+	    if (is_modem) {
+                sprintf(crash_modem_filename,"/slog/cdump_modem_%d_%02d_%02d_%02d_%02d_%02d_%02d.mem",
+                        prefix,
+                        tm.tm_year % 100,
+			tm.tm_mon + 1,
+			tm.tm_mday,
+			tm.tm_hour,
+			tm.tm_min,
+			tm.tm_sec
+                );
 			fd = open(crash_modem_filename, O_WRONLY);
-		}
-		else
-		{
-			sprintf(crash_filename,"/cdump_%d.elf",prefix);
+	    } else {
+                sprintf(crash_filename,"/slog/cdump_%d_%02d_%02d_%02d_%02d_%02d_%02d.elf",
+                        prefix,
+                        tm.tm_year % 100,
+			tm.tm_mon + 1,
+			tm.tm_mday,
+			tm.tm_hour,
+			tm.tm_min,
+			tm.tm_sec
+                );
 			fd = open(crash_filename, O_WRONLY);
-		}
-
-		if(fd >= 0)
+            }
+                        if(fd >= 0)
 			close(fd);
 	} while (fd >= 0 && prefix < MAX_PREFIX);
 
