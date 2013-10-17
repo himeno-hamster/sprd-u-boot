@@ -14,7 +14,7 @@
 #ifndef __SYSDUMP_H__
 #define __SYSDUMP_H__
 
-//#include <elf.h>
+#include <config.h>
 #include <linux/types.h>
 
 #define SYSDUMP_CORE_NAME_FMT 	"sysdump.core.%02d" /* time, number */
@@ -23,7 +23,13 @@
 
 #define CONFIG_PHYS_OFFSET 0x80000000
 #define PAGE_OFFSET 0xC0000000
+
+
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP7730EC)
+#define MEM_TOTAL_SIZE 0x20000000
+#else
 #define MEM_TOTAL_SIZE 0x40000000
+#endif
 
 #define PAGE_SHIFT 12
 #ifndef PAGE_SIZE
