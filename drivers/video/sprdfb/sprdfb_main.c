@@ -47,7 +47,7 @@ extern void sprdfb_panel_remove(struct sprdfb_device *dev);
 
 extern struct display_ctrl sprdfb_dispc_ctrl ;
 
-static struct sprdfb_device tigerdev = {0};
+static struct sprdfb_device s_sprdfb_dev = {0};
 
 static uint32_t lcd_id_to_kernel = 0;
 
@@ -196,9 +196,9 @@ static int real_refresh(struct sprdfb_device *dev)
 
 	return 0;
 }
-static int tiger_probe(void * lcdbase)
+static int sprdfb_probe(void * lcdbase)
 {
-	struct sprdfb_device *dev = &tigerdev;
+	struct sprdfb_device *dev = &s_sprdfb_dev;
 
 	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
 
@@ -244,8 +244,8 @@ void lcd_initcolregs(void)
 void lcd_disable(void)
 {
 	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
-	sprdfb_panel_remove(&tigerdev);
-	tigerdev.ctrl->uninit(&tigerdev);
+	sprdfb_panel_remove(&s_sprdfb_dev);
+	s_sprdfb_dev.ctrl->uninit(&s_sprdfb_dev);
 }
 
 
@@ -258,13 +258,13 @@ void lcd_enable(void)
 void lcd_ctrl_init(void *lcdbase)
 {
 	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
-	tiger_probe(lcdbase);
+	sprdfb_probe(lcdbase);
 }
 
 void lcd_display(void)
 {
 	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
-	real_refresh(&tigerdev);
+	real_refresh(&s_sprdfb_dev);
 }
 
 #ifdef CONFIG_LCD_INFO

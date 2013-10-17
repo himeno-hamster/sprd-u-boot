@@ -172,6 +172,7 @@ typedef struct dsih_ctrl_t
 {                                                                                      
     uint32_t address;                                                                  
     dphy_t phy_instance;                                                               
+    uint32_t phy_feq;
     uint8_t max_lanes;                                                                 
     uint8_t max_hs_to_lp_cycles;                                                       
     uint8_t max_lp_to_hs_cycles;                                                       
