@@ -887,10 +887,6 @@ PUBLIC void sdhost_int_st_sig_en (sdio_reg_ptr p_cfg, uint32 msg)
 	tmp_reg = 0;
 
 	/* enable error bit. */
-//	if (0 != (msg & INT_ERR_INT)) {
-//		tmp_reg |= err_msg;
-//	}
-
 	/* enable status and err int bit*/
 	tmp_reg |= msg;
 
@@ -1209,7 +1205,7 @@ PUBLIC uint32 sdhost_set_power (uint32 slot_no, sdio_onoff_e pwr_flg)
 **	Date					Author				Operation
 **	2013/09/11			ypxie				create
 *********************************************************************/
-PUBLIC uint32 sdhost_set_vlotage (uint32 slot_no, uint32 io_volt, uint32 core_volt)
+PUBLIC uint32 sdhost_set_voltage (uint32 slot_no, uint32 io_volt, uint32 core_volt)
 {
 	uint32 i, id;
 	sdio_base_info_t *p_tb;
@@ -1239,7 +1235,42 @@ PUBLIC uint32 sdhost_set_vlotage (uint32 slot_no, uint32 io_volt, uint32 core_vo
 			}
 		}
 	}
-} /* end of sdhost_set_vlotage */
+} /* end of sdhost_set_voltage */
+
+/*********************************************************************
+**	Description :
+**		This function used to get sdio controller version.
+**	Param :
+**		slot_no			: select slot number.
+**						  S1	,S2	,slave		sdio controller
+**						  0	,1	,2			SDIO0 (SD)
+**						  3	,4	,5			SDIO1 (WIFI)
+**						  6	,7	,8			SDIO2 (MASTER)
+**						  9	,10	,11			SDIO3 (EMMC)
+**	Return :
+**		sdio_ver			: sdio version.
+**	Date					Author				Operation
+**	2013/09/22			ypxie				create
+*********************************************************************/
+LOCAL uint32 sdhost_get_sdio_version(uint32 slot_no)
+{
+	uint32 id;
+
+	id = slot_no/3;
+
+	if (id == 0) {
+		return SDIO0_VER;
+	}
+	else if (id == 1) {
+		return SDIO1_VER;
+	}
+	else if (id == 2) {
+		return SDIO2_VER;
+	}
+	else if (id == 3) {
+		return SDIO3_VER;
+	}
+}
 
 /*********************************************************************
 **	Description :

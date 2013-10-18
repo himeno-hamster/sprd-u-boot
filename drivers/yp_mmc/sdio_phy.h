@@ -74,5 +74,4 @@ typedef enum sdio_dma_size_e_tag
 
 
 
-
 #endif /* __SDIO_PHY_H_ */

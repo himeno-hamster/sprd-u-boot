@@ -12,8 +12,8 @@
  ** DATE				NAME				DESCRIPTION
  ** 09/05/2013		ypxie				Create.
  ********************************************************************/
- #ifndef __SDIO_PAL_H_
-#define __SDIO_PAL_H_
+ #ifndef __SDIO_CORE_H_
+#define __SDIO_CORE_H_
 
 typedef enum sdio_slot_e_tag
 {
@@ -53,15 +53,14 @@ typedef enum sdio_type_e_tag
 	SDIO_TYPE_UNKOWN
 } sdio_type_e;
 
-typedef enum sdio_clktype_e_tag
-{
-	SDIO_400KHz,
-	SDIO_13MHz,
-	SDIO_26MHz,
-	SDIO_52MHz,
-	SDIO_104MHz,
-	SDIO_HS200,
-} sdio_clktype_e;
+/* used for sd clock */
+#define SDIO_CLK_400K					400000
+#define SDIO_CLK_13M						13000000
+#define SDIO_CLK_26M						26000000
+#define SDIO_CLK_52M						52000000
+#define SDIO_CLK_104M					104000000
+#define SDIO_CLK_200M					200000000
+
 
 typedef enum sdio_pal_cmd_tag
 {
@@ -132,7 +131,7 @@ typedef enum sdio_pal_cmd_tag
 	CMD53_WRITE_BLOCKS,				/* MS */
 
 	CMD_MAX
-} sdio_pal_cmd_e;
+} sdio_cmd_e;
 
 //typedef void (*sdio_call_back)(uint32 msg, uint32 slot_no);
 
@@ -141,6 +140,7 @@ typedef struct sdio_pal_handle_t_tag
 	volatile sdio_reg_ptr					host_cfg;				/* base address */
 	uint32								slot_no;				/* slot no */
 	sdio_type_e							sdio_type;			/* sdio type */
+	uint32								sdio_version;			/* sdio version */
 
 //	sdio_call_back							sig_call_back;
 	volatile uint32							card_event;
@@ -153,21 +153,37 @@ typedef struct sdio_pal_handle_t_tag
 
 	uint16								rca;					/* card RCA */
 	uint32								block_len;			/* block length */
-} sdio_pal_hd_t, *sdio_pal_hd_ptr;
+} sdio_pal_t, *sdio_pal_ptr;
+
+typedef enum 
+{
+	SDIO_DMA_IN = 1,
+	SDIO_DMA_OUT,
+	SDIO_DMA_BIDIRECTIONAL
+} sdio_dma_dir_e;
+
+typedef struct sdio_data_param_t_tag
+{
+	uint8*								data_buf;
+	uint32								blk_len;
+	uint32								blk_num;
+	sdio_dma_dir_e						direction;
+} sdio_data_param_t;
 
 typedef enum sdio_pal_err_e_tag
 {
-	PAL_ERR_NONE						= 0,
-	PAL_ERR_RSP							= BIT_0,
-	PAL_ERR_CMD12						= BIT_1,
-	PAL_ERR_CUR_LIMIT					= BIT_2,
-	PAL_ERR_DATA_END					= BIT_3,
-	PAL_ERR_DATA_CRC					= BIT_4,
-	PAL_ERR_DATA_TIMEOUT				= BIT_5,
-	PAL_ERR_CMD_INDEX					= BIT_6,
-	PAL_ERR_CMD_END					= BIT_7,
-	PAL_ERR_CMD_CRC					= BIT_8,
-	PAL_ERR_CMD_TIMEOUT				= BIT_9
+	ERR_NONE							= 0,
+	ERR_CMD_TIMEOUT					= BIT_0,
+	ERR_CMD_CRC						= BIT_1,
+	ERR_CMD_END_BIT					= BIT_2,
+	ERR_CMD_INDEX						= BIT_3,
+	ERR_DATA_TIMEOUT					= BIT_4,
+	ERR_DATA_CRC						= BIT_5,
+	ERR_DATA_END_BIT					= BIT_6,
+	ERR_CUR_LIMIT						= BIT_7,
+	ERR_AUTO_CMD12						= BIT_8,
+	ERR_TRGT_RSP						= BIT_9,
+	ERR_BAD_PARAM						= BIT_10				/* software error */
 } sdio_pal_err_e;
 
-#endif /* __SDIO_PAL_H_ */
+#endif /* __SDIO_CORE_H_ */

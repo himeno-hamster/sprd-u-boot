@@ -29,6 +29,15 @@
 #define SLOT10_BASE_ADDR				(CTL_BASE_SDIO2 + 0x0100)
 #define SLOT11_BASE_ADDR				0					/* not support */
 
+/* sdio controller version information */
+#define SDIO_20							20
+#define SDIO_30							30
+
+#define SDIO0_VER						SDIO_30
+#define SDIO1_VER						SDIO_20
+#define SDIO2_VER						SDIO_20
+#define SDIO3_VER						SDIO_30
+
 /* sdio slot register */
 #define AHB_SDIO_CTRL					(SPRD_AHB_PHYS + 0x0018)
 

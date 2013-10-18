@@ -145,6 +145,7 @@ typedef struct sdhost_cap_v30_t_tag
 #define INT_TRGT_RESP					BIT_28
 #define INT_VNDR_ERR_ST					(BIT_29 | BIT_30 | BIT_31)
 
+#define INT_ALL							(BIT_15 | BIT_8 | 0xFF)
 
 typedef struct sdio_reg_v20_t_tag
 {
