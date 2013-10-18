@@ -1,6 +1,6 @@
 #include <asm/arch/sprd_reg.h>
 #include <asm/arch/sci_types.h>
-
+#include <asm/arch/adi_hal_internal.h>
 /*
 	REG_AON_APB_BOND_OPT0  ==> romcode set
 	REG_AON_APB_BOND_OPT1  ==> set it later
@@ -86,6 +86,46 @@ static void bb_ldo_auto_en()
 	*((volatile unsigned int *)(REG_AON_APB_RES_REG0)) |= 1<<9;
 } 
 
+void pbint_7s_rst_cfg(uint32 en_rst, uint32 sw_rst)
+{
+	uint16 reg_data = ANA_REG_GET(ANA_REG_GLB_POR_7S_CTRL);
+
+	if (!en_rst)
+	{
+		reg_data |=  BIT_PBINT_7S_RST_DISABLE;
+	}
+	else
+	{
+		reg_data &= ~BIT_PBINT_7S_RST_DISABLE;
+		if (sw_rst)
+		{
+			reg_data |=  BIT_PBINT_7S_RST_MODE_RTCSET;
+			reg_data &= ~BIT_PBINT_7S_RST_MODE_RTCCLR;
+			ANA_REG_SET(ANA_REG_GLB_POR_7S_CTRL, reg_data);
+
+			do {
+				reg_data = ANA_REG_GET(ANA_REG_GLB_POR_7S_CTRL);
+			}while(!(reg_data&BIT_PBINT_7S_RST_MODE_RTCSTS));
+
+			reg_data &= ~BIT_PBINT_7S_RST_MODE_RTCSET;
+		}
+		else
+		{
+			reg_data &= ~BIT_PBINT_7S_RST_MODE_RTCSET;
+			reg_data |=  BIT_PBINT_7S_RST_MODE_RTCCLR;
+			ANA_REG_SET(ANA_REG_GLB_POR_7S_CTRL, reg_data);
+
+			do {
+				reg_data = ANA_REG_GET(ANA_REG_GLB_POR_7S_CTRL);
+			}while(reg_data&BIT_PBINT_7S_RST_MODE_RTCSTS);
+			reg_data &= ~BIT_PBINT_7S_RST_MODE_RTCCLR;
+		}
+	}
+
+	ANA_REG_SET(ANA_REG_GLB_POR_7S_CTRL, reg_data);
+	//printf("ANA_REG_GLB_POR_7S_CTRL:%04X\r\n", ANA_REG_GET(ANA_REG_GLB_POR_7S_CTRL));
+}
+
 void misc_init()
 {
 	ap_slp_cp_dbg_cfg();
@@ -95,5 +135,6 @@ void misc_init()
 	ap_close_wifipll_en();
 	bb_bg_auto_en();
 	bb_ldo_auto_en();
+	pbint_7s_rst_cfg(1, 0);
 }
 
