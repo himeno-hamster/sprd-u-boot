@@ -1270,6 +1270,10 @@ sp6821a_config	: unconfig
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 	@$(MKCONFIG) $@ arm armv7 sp8810 spreadtrum sc8810
 
+sp6821a-openphone_config : unconfig
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@$(MKCONFIG) $@ arm armv7 sp6821a-openphone spreadtrum sc8810
+
 sp8810g-brcm_config	: unconfig
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 	@$(MKCONFIG) $@ arm armv7 sp8810g-brcm spreadtrum sc8810
