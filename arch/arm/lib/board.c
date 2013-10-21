@@ -672,6 +672,21 @@ void board_init_r (gd_t *id, ulong dest_addr)
 #ifdef SPRD_EVM_TAG_ON
 		SPRD_EVM_TAG(11);
 #endif
+
+    extern uint32_t CHG_GetAdcCalType(void);
+    extern void CHG_Init (void);
+    CHG_Init();
+
+#ifdef CONFIG_SC8830
+        if (CHG_GetAdcCalType() != 0)
+        {
+            DCDC_Cal_ArmCore();
+        }
+        //DCDC_Cal_All(0);
+#endif
+
+    board_keypad_init();
+
     extern int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[]);
     boot_pwr_check();
 

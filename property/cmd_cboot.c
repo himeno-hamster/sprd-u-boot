@@ -2,15 +2,15 @@
 #include <common.h>
 #include <command.h>
 #include <linux/types.h>
-#include <android_bootimg.h>
 #include <linux/keypad.h>
 #include <linux/key_code.h>
 #include <boot_mode.h>
+#include <android_bootimg.h>
 #include <asm/arch/gpio.h>
 
 #define COMMAND_MAX 128
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define DBG(fmt...) printf(fmt)
 #else
@@ -20,10 +20,6 @@
 extern int power_button_pressed(void);
 extern int charger_connected(void);
 extern int alarm_triggered(void);
-extern void CHG_TurnOn (void);
-extern void CHG_ShutDown (void);
-extern uint32_t CHG_GetAdcCalType(void);
-extern void CHG_Init (void);
 extern int cali_file_check(void);
 unsigned check_reboot_mode(void);
 
@@ -42,233 +38,143 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     uint32_t key_mode = 0;
     uint32_t key_code = 0;
     volatile int i;
-    unsigned rst_mode= check_reboot_mode();
+    unsigned rst_mode = check_reboot_mode();
 
     if(argc > 2)
-      goto usage;
-
-	CHG_Init();
-
-#ifdef CONFIG_SC8830
-        if(cali_file_check() && !boot_pwr_check()&&
-           (!rst_mode || (rst_mode == CALIBRATION_MODE))&&
-           (!alarm_triggered()))
-                calibration_detect(2);
-#endif
-#ifdef CONFIG_SC7710G2
-    {
-	extern void set_cp_emc_pad(void);
-	set_cp_emc_pad();
-    }
-#endif
-
-#ifdef CONFIG_SC8830
-	if (CHG_GetAdcCalType() != 0)
-	{
-		DCDC_Cal_ArmCore();
-	}
-	//DCDC_Cal_All(0);
-#endif
-
+        goto usage;
+    
 #ifdef CONFIG_AUTOBOOT
-	normal_mode();
+        normal_mode();
 #endif
 
-    boot_pwr_check();
-	
-#ifdef CONFIG_SC8800G
-    CHG_ShutDown();
-    if(charger_connected()){
-        mdelay(10);
-        CHG_TurnOn();
-    }else{
-        if(is_bat_low()){
-            printf("shut down again for low battery\n");
-            power_down_devices();
-            while(1)
-              ;
-        }
+// 0 get mode from calibration detect
+    if(cali_file_check() && !boot_pwr_check()&&
+    (!rst_mode || (rst_mode == CALIBRATION_MODE))&&
+    (!alarm_triggered())){
+        calibration_detect(2);
     }
-#else
-
 #ifndef CONFIG_MACH_CORI
-	if(is_bat_low()){
-				printf("shut down again for low battery\n");
-				mdelay(10000);
-				power_down_devices();
-				while(1)
-				  ;
-	}
+    if(is_bat_low()){
+        DBG("cboot:low battery and shutdown\n");
+        mdelay(10000);
+        power_down_devices();
+        while(1);
+    }
 #endif    
-#endif	
-
-    boot_pwr_check();
-    board_keypad_init();
-    boot_pwr_check();
-
 #ifdef CONFIG_SPRD_SYSDUMP
     write_sysdump_before_boot(rst_mode);
 #endif
 
-    int recovery_init(void);
-    int ret =0;
-    ret = recovery_init();
-    if(ret == 1){
-        DBG("func: %s line: %d\n", __func__, __LINE__);
-        recovery_mode_without_update();
-    }else if(ret == 2){
-#ifndef CONFIG_SC8830
-	    try_update_modem(); //update img from mmc
-#endif
-	    normal_mode();
+// 1 get mode from file
+    boot_pwr_check();
+    switch(get_mode_from_file()){
+        case RECOVERY_MODE:
+            DBG("cboot:get mode from file:recovery\n");
+            recovery_mode();
+        break;
+        default: // unknown mode
+        break;
     }
-    if(rst_mode == RECOVERY_MODE){
-        DBG("func: %s line: %d\n", __func__, __LINE__);
-        recovery_mode();
+
+// 2 get mode from watch dog
+    boot_pwr_check();
+    DBG("cboot:get mode from watchdog 0x%x\n",rst_mode);
+    switch(rst_mode){
+        case RECOVERY_MODE:
+            recovery_mode();
+        break;
+        case FASTBOOT_MODE:
+            fastboot_mode();
+        break;
+        case NORMAL_MODE:
+            normal_mode();
+        break;
+        case WATCHDOG_REBOOT:
+            watchdog_mode();
+        break;
+        case UNKNOW_REBOOT_MODE:
+            unknow_reboot_mode();
+        break;
+        case PANIC_REBOOT:
+            panic_reboot_mode();
+        break;
+        case AUTODLOADER_REBOOT:
+            autodloader_mode();
+        break;
+        case SPECIAL_MODE:
+            special_mode();
+        break;
+        case ALARM_MODE:
+        default:
+        break;
     }
-    else if(rst_mode == FASTBOOT_MODE){
-        DBG("func: %s line: %d\n", __func__, __LINE__);
-        fastboot_mode();
-    }else if(rst_mode == NORMAL_MODE){
-        normal_mode();
-    }else if(rst_mode == WATCHDOG_REBOOT){
-        watchdog_mode();
-    }else if(rst_mode == UNKNOW_REBOOT_MODE){
-        unknow_reboot_mode();
-    }else if(rst_mode == PANIC_REBOOT){
-        panic_reboot_mode();
-    }else if(rst_mode == ALARM_MODE){
-              int flag =alarm_flag_check();
-              if(flag == 1)
-			alarm_mode();
-              else if(flag == 2)
-			normal_mode();
-    }else if(rst_mode == SLEEP_MODE){
-		sleep_mode();
-    }else if(rst_mode == SPECIAL_MODE){
-		special_mode();
-    }else if(rst_mode == CALIBRATION_MODE){
-		calibration_detect(0);
-	}else if(rst_mode == AUTODLOADER_REBOOT) {
-		autodloader_mode();
-	}
-
-#ifdef CONFIG_SC8810
-//    normal_mode();
-#endif
-    DBG("func: %s line: %d\n", __func__, __LINE__);
-
-   if(charger_connected()){
-        DBG("%s: charger connected\n", __FUNCTION__);
-#if defined (CONFIG_SP8810W) 
-        	calibration_detect(1);
-#endif
+    // 3 get mode from alarm register
+    boot_pwr_check();
+    if(alarm_triggered() && alarm_flag_check()){
+        int flag =alarm_flag_check();
+        if(flag == 1){
+            DBG("cboot:get mode from alarm:alarm_mode\n");
+            alarm_mode();
+        }
+        else if(flag == 2){
+            DBG("cboot:get mode from alarm:normal_mode\n");
+            normal_mode();
+        }
+    }
+    // 4 get mode from charger
+    else if(charger_connected()){
+        DBG("cboot:get mode from charger\n");
         charge_mode();
     }
-    //find the power up trigger
+    // 5 get mode from keypad
     else if(boot_pwr_check() >= get_pwr_key_cnt()){
-        DBG("%s: power button press\n", __FUNCTION__);
-	DBG("boot_pwr_check=%d,get_pwr_key_cnt=%d\n",boot_pwr_check(),get_pwr_key_cnt());
-        //go on to check other keys
         mdelay(50);
         for(i=0; i<10;i++){
             key_code = board_key_scan();
             if(key_code != KEY_RESERVED)
-              break;
+                break;
         }
-		DBG("key_code %d\n", key_code);
         key_mode = check_key_boot(key_code);
-
+        DBG("cboot:get mode from keypad:0x%x\n",key_code);
         switch(key_mode){
             case BOOT_FASTBOOT:
                 fastboot_mode();
-                break;
+            break;
             case BOOT_RECOVERY:
                 recovery_mode();
-                break;
+            break;
             case BOOT_CALIBRATE:
                 engtest_mode();
-                return 0; //back to normal boot
-                break;
-           // case BOOT_DLOADER:
-           //     dloader_mode();
-           //     break;
+                return 0;
+            break;
             default:
-                break;
+            break;
         }
     }
-    else if(alarm_triggered() && alarm_flag_check()){
-        DBG("%s: alarm triggered\n", __FUNCTION__);
-        int flag =alarm_flag_check();
-
-        if(flag == 1){
-			alarm_mode();
-        }
-        else if(flag == 2){
-			normal_mode();
-        }
-		
-    }else{
-#if BOOT_NATIVE_LINUX_MODEM
-        *(volatile u32*)CALIBRATION_FLAG = 0xca;
-#endif
-#ifndef CONFIG_SC8830
-        calibration_detect(0);
-#endif
-        //if calibrate success, it will here
-        DBG("%s: power done again\n", __FUNCTION__);
-        power_down_devices();
-        while(1)
-          ;
-    }
-
-    if(argc == 1){
-	DBG("func: %s line: %d\n", __func__, __LINE__);
-        normal_mode();
-        return 1;
-    }
-
-    if(argc == 2){
-        DBG("func: %s line: %d\n", __func__, __LINE__);
-
-        if(strcmp(argv[1],"normal") == 0){
+// 6 get mode from argument
+    else if(2 == argc){
+        DBG("cboot:get mode from argument:%s\n",argv[1]);
+        if(!strcmp(argv[1],"normal")){
             normal_mode();
-            return 1;
         }
-        DBG("func: %s line: %d\n", __func__, __LINE__);
-
-        if(strcmp(argv[1],"recovery") == 0){
+        if(!strcmp(argv[1],"recovery")){
             recovery_mode();
-            return 1;
         }
-        DBG("func: %s line: %d\n", __func__, __LINE__);
-
-        if(strcmp(argv[1],"fastboot") == 0){
+        if(!strcmp(argv[1],"fastboot")){
             fastboot_mode();
-            return 1;
         }
-        DBG("func: %s line: %d\n", __func__, __LINE__);
-
-        if(strcmp(argv[1],"dloader") == 0){
-            dloader_mode();
-            return 1;
-        }
-        DBG("func: %s line: %d\n", __func__, __LINE__);
-
-        if(strcmp(argv[1],"charge") == 0){
+        if(!strcmp(argv[1],"charge")){
             charge_mode();
-            return 1;
         }
-        DBG("func: %s line: %d\n", __func__, __LINE__);
-
-        if(strcmp(argv[1],"caliberation") == 0){
-            calibration_detect(1);
-            return 1;
-        }
-        DBG("func: %s line: %d\n", __func__, __LINE__);
     }
-    DBG("func: %s line: %d\n", __func__, __LINE__);
-
+    else{
+        DBG("cboot:get mode fail , and shutdown device\n");
+        power_down_devices();
+        while(1);
+    }
+    // 7 unrecognize mode , system enter normal start
+    DBG("cboot:get mode fail, and start with normal mode\n");
+    normal_mode();
 usage:
     cmd_usage(cmdtp);
     return 1;

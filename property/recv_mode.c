@@ -75,7 +75,7 @@ int update_firmware_image (struct update_header *header, char *name)
  * It is recovery's responsibility to clean up the mess afterwards.
  */
 
-int recovery_init (void)
+int get_mode_from_file(void)
 {
 	struct recovery_message msg;
 	struct update_header header;
@@ -84,23 +84,14 @@ int recovery_init (void)
 
 	// get recovery message
 	if(get_recovery_message(&msg))
-		return -1;
+		return UNKNOW_REBOOT_MODE;
 	if (msg.command[0] != 0 && msg.command[0] != 255) {
 		dprintf("Recovery command: %.*s\n", sizeof(msg.command), msg.command);
 	}
 	msg.command[sizeof(msg.command)-1] = '\0'; //Ensure termination
 
 	if (!strcmp("boot-recovery",msg.command)) {
-		return 1;
-	}
-
-	if (!strcmp("boot-update",msg.command)) {
-		valid_command = 1;
-		strcpy(msg.command, "");	// to safe against multiple reboot into recovery
-		strcpy(msg.status, "OKAY");
-		set_recovery_message(&msg);	// send recovery message
-		// Boot in update mode
-		return 2;
+		return RECOVERY_MODE;
 	}
 
 	if (!strcmp("update-radio",msg.command)) {
@@ -130,15 +121,12 @@ SEND_RECOVERY_MSG:
 	strcpy(msg.command, "boot-recovery");
 	set_recovery_message(&msg);	// send recovery message
 	reboot_devices(0);
-	return 0;
+	return UNKNOW_REBOOT_MODE;
 }
 
 void recovery_mode(void)
 {
     printf("%s\n", __func__);
-#ifndef CONFIG_SC8830
-    try_update_modem(); //update img from mmc
-#endif
 #if BOOT_NATIVE_LINUX
     vlx_nand_boot(RECOVERY_PART, CONFIG_BOOTARGS, BACKLIGHT_ON);
 #else
@@ -146,12 +134,3 @@ void recovery_mode(void)
 #endif
 }
 
-void recovery_mode_without_update(void)
-{
-    printf("%s\n", __func__);
-#if BOOT_NATIVE_LINUX
-    vlx_nand_boot(RECOVERY_PART, CONFIG_BOOTARGS, BACKLIGHT_ON);
-#else
-    vlx_nand_boot(RECOVERY_PART, NULL, BACKLIGHT_ON);
-#endif
-}

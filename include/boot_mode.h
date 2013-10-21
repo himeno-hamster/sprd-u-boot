@@ -1,15 +1,14 @@
 #ifndef _BOOT_MODE_H_
 #define _BOOT_MODE_H_
 
+int get_mode_from_file(void);
 void normal_mode(void);
 void recovery_mode(void);
 void charge_mode(void);
-void dloader_mode(void);
 void fastboot_mode(void);
 void alarm_mode(void);
 void calibration_detect(int key);
 void engtest_mode(void);
-void sleep_mode(void);
 void watchdog_mode(void);
 void unknow_reboot_mode(void);
 void special_mode(void);

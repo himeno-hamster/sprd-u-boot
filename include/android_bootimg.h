@@ -76,28 +76,5 @@ struct boot_img_hdr
 **    else: jump to kernel_addr
 */
 
-#if 0
-typedef struct ptentry ptentry;
-
-struct ptentry {
-    char name[16];      /* asciiz partition name    */
-    unsigned start;     /* starting block number    */
-    unsigned length;    /* length in blocks         */
-    unsigned flags;     /* set to zero              */
-};
-
-/* MSM Partition Table ATAG
-**
-** length: 2 + 7 * n
-** atag:   0x4d534d70
-**         <ptentry> x n
-*/
-#endif
-void normal_mode(void);
-void recovery_mode(void);
-void fastboot_mode(void);
-void dloader_mode(void);
-void charge_mode(void);
-void vlx_mode(void);
 
 #endif
