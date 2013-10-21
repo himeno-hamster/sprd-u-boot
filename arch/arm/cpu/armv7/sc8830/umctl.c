@@ -15,6 +15,8 @@
 #include "asm/arch/dram_phy.h"
 #include "asm/arch/umctl2_reg.h"
 #include "asm/arch/sprd_reg_base.h"
+
+#if defined(CONFIG_SPX15)
 #include "asm/arch/sprd_reg.h"
 
 #if defined(CONFIG_SPX15)
@@ -1194,7 +1196,7 @@ void umctl2_poweron_init(DRAM_INFO* dram,CLK_TYPE_E umctl2_clk) {
 
 
 
-void sdram_clk_set(uint32 clock) 
+void sdram_clk_set(CLK_TYPE_E clock) 
 {
 
     uint32 reg_val = 0;
@@ -1807,9 +1809,9 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 	sdram_vddmem_set(VDDMEM_1V20);
 #endif
     
-    #if defined(CONFIG_SPX15)
-    REG32(0x402b0128) = 1;
-    #endif
+    //#if defined(CONFIG_SPX15)
+    //REG32(0x402b0128) = 1;
+    //#endif
     sdram_clk_set(dmc_clk);
 
     //enable umctl,publ,phy
@@ -1849,10 +1851,10 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
     umctl2_wait_status(OPERATION_MODE_NORMAL); 
 
     //enable AP port
-    //umctl2_port_en(UMCTL2_PORT_AP,TRUE);
-    #if defined(CONFIG_SPX15)
-    umctl2_allport_en();
-    #endif
+    umctl2_port_en(UMCTL2_PORT_AP,TRUE);
+    //#if defined(CONFIG_SPX15)
+    //umctl2_allport_en();
+    //#endif
     
     //do training
     if(!publ_do_training())
@@ -1862,7 +1864,7 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
     }    
     
     //enable all port
-    
+    umctl2_allport_en();
 
 #if 0
 	umctl2_low_power_open();
@@ -1896,14 +1898,12 @@ CLK_TYPE_E DDR_DFS_POINT[] =
 	CLK_533MHZ,
 };
 #endif
-
 #define NS2CLK_T(x_ns,clk) ((clk*x_ns)/1000 + 1)
 
 void  __cal_actiming(lpddr2_timing_t *cal_timing,void *native_timing,CLK_TYPE_E clk)
 {
     lpddr2_timing_t* lpddr2_timing = (lpddr2_timing_t*)(native_timing);
     ddr3_timing_t*   ddr3_timing   = (ddr3_timing_t*)(native_timing);
-
 	#ifdef DDR_LPDDR2	
 	cal_timing->tREFI 	= NS2CLK_T(lpddr2_timing->tREFI,clk);
 	cal_timing->tRAS  	= NS2CLK_T(lpddr2_timing->tRAS,clk);
@@ -2203,10 +2203,19 @@ void sdram_init()
 	uint32 ddr_clk = DDR_CLK ;
 	#endif
 #endif
-#ifdef DDR_DFS_SUPPORT
+
+	#ifdef DDR_DFS_SUPPORT
 	uint32 i = 0;
 	DRAM_INFO * dram_info = NULL;
 	void *ddr_timing_native = NULL;
+
+	#ifdef DDR_LPDDR2
+		ddr_timing_native = &LPDDR2_ACTIMING_NATIVE;
+	#else
+		ddr_timing_native = &DDR3_ACTIMING_NATIVE;
+	#endif
+
+
 
 	#ifdef DDR_LPDDR2
 		ddr_timing_native = &LPDDR2_ACTIMING_NATIVE;
@@ -2247,11 +2256,12 @@ void sdram_init()
 			DDR_DFS_POINT[i] = ddr_clk;
 		}
 		#else
-		if(DDR_DFS_POINT[i] >= DDR_CLK)		
-		{
-			DDR_DFS_POINT[i] = ddr_clk;
-		}
+			if(DDR_DFS_POINT[i] >= DDR_CLK)		
+			{
+				DDR_DFS_POINT[i] = DDR_CLK;
+			}
 		#endif		
+		
 		__cal_actiming(dram_info->ac_timing,ddr_timing_native,DDR_DFS_POINT[i]);
 
 		#ifdef DDR_AUTO_DETECT		
@@ -2284,7 +2294,6 @@ void sdram_init()
 		#endif
 		
 		record_dfs_val(DDR_DFS_POINT[i], DDR_DFS_VAL_BASE+sizeof(ddr_dfs_val_t)*i);
-		
 		#if defined(CONFIG_SPX15)
 		if(DDR_DFS_POINT[i] >= ddr_clk)
 		{
@@ -2302,7 +2311,8 @@ void sdram_init()
 	
 	REG32(DDR_DFS_VAL_BASE+sizeof(ddr_dfs_val_t)*ARRAY_SIZE(DDR_DFS_POINT)) = 0x12345678;
 	
-#else
+
+	#else
 		#if defined(CONFIG_SPX15)
 			#if defined(CONFIG_CLK_PARA)
 			DRAM_INFO * dram_info = NULL;
