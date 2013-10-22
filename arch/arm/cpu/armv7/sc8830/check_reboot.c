@@ -81,7 +81,7 @@ unsigned check_reboot_mode(void)
 		else
 			return 0;
 	}
-#endif
+
 }
 
 void reboot_devices(unsigned reboot_mode)
@@ -98,10 +98,8 @@ void reboot_devices(unsigned reboot_mode)
 		rst_mode = 0;
 	}
 
-	#if defined (CONFIG_SPX15)
-	#else
 	ANA_REG_SET(ANA_REG_GLB_POR_RST_MONITOR, rst_mode);
-	#endif
+
 	reset_cpu(0);
 }
 void power_down_devices(unsigned pd_cmd)
@@ -112,12 +110,14 @@ void power_down_devices(unsigned pd_cmd)
 int power_button_pressed(void)
 {
 	#if defined (CONFIG_SPX15)
-	return 0;
+	sci_glb_set(REG_AON_APB_APB_EB0,BIT_AON_GPIO_EB | BIT_EIC_EB);
+	sci_glb_set(REG_AON_APB_APB_RTC_EB,BIT_EIC_RTC_EB);
+	sci_adi_set(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_EIC_EN);
 	#else
 	sci_glb_set(REG_AON_APB_APB_EB0,BIT_GPIO_EB | BIT_EIC_EB);
 	sci_glb_set(REG_AON_APB_APB_RTC_EB,BIT_EIC_RTC_EB);
-	sci_adi_set(ANA_REG_GLB_ARM_MODULE_EN,
-		    BIT_ANA_EIC_EN | BIT_ANA_GPIO_EN);
+	sci_adi_set(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_EIC_EN | BIT_ANA_GPIO_EN);
+	#endif
 	sci_adi_set(ANA_REG_GLB_RTC_CLK_EN,BIT_RTC_EIC_EN);
 
 	ANA_REG_SET(ADI_EIC_MASK, 0xff);
@@ -130,7 +130,7 @@ int power_button_pressed(void)
 	debugf("power_button_pressed eica status 0x%x\n", status );
 	
 	return !status;//low level if pb hold
-	#endif
+
 }
 
 int charger_connected(void)
