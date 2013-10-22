@@ -29,19 +29,11 @@ const MCU_CLK_PARA_T mcu_clk_para=
 };
 #endif
 
-#ifdef CONFIG_SPX15
 static void delay()
 {
     volatile uint32 i;
-    for (i=0; i<0x2000; i++);
+    for (i=0; i<0x100; i++);
 }
-#else
-static void delay()
-{
-    uint32 i;
-    for (i=0; i<0x20; i++);
-}
-#endif
 
 static uint32 SetMPllClk (uint32 clk)
 {
