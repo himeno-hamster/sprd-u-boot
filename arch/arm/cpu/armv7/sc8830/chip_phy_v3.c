@@ -86,11 +86,8 @@ void CHIP_ResetMCU (void)  //reset interrupt disable??
 /*****************************************************************************/
 LOCAL uint32 CHIP_PHY_GetHwRstAddr (void)
 {
-	#if defined(CONFIG_SPX15)
-	#else
     // Returns a DWORD of IRAM shared with DCAM
     return ANA_REG_GLB_WDG_RST_MONITOR;
-	#endif
 }
 
 /*****************************************************************************/
@@ -100,10 +97,7 @@ LOCAL uint32 CHIP_PHY_GetHwRstAddr (void)
 /*****************************************************************************/
 LOCAL uint32 CHIP_PHY_GetRstModeAddr (void)
 {
-	#if defined(CONFIG_SPX15)
-	#else
     return ANA_REG_GLB_POR_RST_MONITOR;
-	#endif
 }
 
 /*****************************************************************************/
@@ -117,10 +111,7 @@ LOCAL uint32 CHIP_PHY_GetRstModeAddr (void)
 /*****************************************************************************/
 LOCAL uint32 CHIP_PHY_GetANAReg (void)
 {
-	#if defined(CONFIG_SPX15)
-	#else
     return ANA_REG_GET(ANA_REG_GLB_POR_RST_MONITOR);
-	#endif
 }
 
 /*****************************************************************************/
@@ -167,8 +158,6 @@ PUBLIC uint32 CHIP_PHY_GetRstMode (void)
 /*****************************************************************************/
 PUBLIC void CHIP_PHY_ResetHWFlag (uint32 val)
 {
-#if defined(CONFIG_SPX15)
-#else
     // Reset the analog die register
     ANA_REG_AND(ANA_REG_GLB_POR_RST_MONITOR, ~0xFFF);
     ANA_REG_OR (ANA_REG_GLB_POR_RST_MONITOR, (val&0xFFF));
@@ -176,7 +165,6 @@ PUBLIC void CHIP_PHY_ResetHWFlag (uint32 val)
     // Reset the HW_RST
     ANA_REG_AND(CHIP_PHY_GetHwRstAddr (), ~0xFFFF);
     ANA_REG_OR (CHIP_PHY_GetHwRstAddr (), (val&0xFFFF));
-#endif
 }
 
 /*****************************************************************************/
@@ -278,8 +266,6 @@ PUBLIC BOOLEAN CHIP_PHY_IsResetByWatchDog()
 PUBLIC uint32 TDPllRefConfig(TDPLL_REF_T rf_id)
 {
     uint32 pll_reg;
-#if defined(CONFIG_SPX15)
-#else
 /* before switch reference crystal, it must be sure that no module is using TDPLL */
     pll_reg = readl(REG_AP_CLK_AP_AHB_CFG);
     pll_reg &= ~AP_AHB_CLK_SEL_MASK;
@@ -356,7 +342,6 @@ PUBLIC uint32 TDPllRefConfig(TDPLL_REF_T rf_id)
     pll_reg = readl(REG_AON_CLK_AON_APB_CFG);
     pll_reg |= 0x3;
     writel(pll_reg, REG_AON_CLK_AON_APB_CFG);
-#endif
     return 0;
 }
 /**---------------------------------------------------------------------------*

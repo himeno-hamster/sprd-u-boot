@@ -14,7 +14,11 @@
 #include <asm/arch/clk_para_config.h>
 const MCU_CLK_PARA_T mcu_clk_para=
 {
-    MAGIC_CLK,
+    MAGIC_HEADER,
+    CONFIG_PARA_VERSION,
+    0,
+    0,
+    0,
     CLK_CA7_CORE,
     DDR_FREQ,
     CLK_CA7_AXI,
@@ -23,9 +27,9 @@ const MCU_CLK_PARA_T mcu_clk_para=
     CLK_CA7_APB,
     CLK_PUB_AHB,
     CLK_AON_APB,
-    MAGIC_VOLTAGE,
     DCDC_ARM,
-    DCDC_CORE
+    DCDC_CORE,
+    MAGIC_END
 };
 #endif
 
