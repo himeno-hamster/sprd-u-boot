@@ -200,7 +200,7 @@ typedef struct dcdc_cali_tag
 } dcdc_cali_t;
 
 #define CALI_VOL_ADDR						0x1F00
-#define CALI_VOL_ADDR_NUM					4
+#define CALI_VOL_ADDR_NUM					8
 
 static dcdc_cali_t* get_cali_addr()
 {
@@ -452,6 +452,11 @@ int DCDC_Cal_ArmCore(void)
 	regVal |= BIT(11) | BIT(10) | BIT(9);
 	ANA_REG_SET(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR, regVal);
 
+	/* enable sim0, sim2. */
+	regVal = ANA_REG_GET(ANA_REG_GLB_LDO_PD_CTRL);
+	regVal &= ~(BIT(2) | BIT(4));
+	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, regVal);
+
 	/* FIXME: Update CHGMNG_AdcvalueToVoltage table before setup vbat ratio. */
 	/*ADC_CHANNEL_VBAT is 5*/
 	res = (u32) sci_adc_ratio(5, 0);
@@ -470,7 +475,9 @@ int DCDC_Cal_ArmCore(void)
 	while (desc < (struct regulator_desc *)&__init_end) {
 		if ((0 == strcmp("vddmem", desc->name))
 			|| (0 == strcmp("vddarm", desc->name))
-			|| (0 == strcmp("vddcore", desc->name))) {
+			|| (0 == strcmp("vddcore", desc->name))
+			|| (0 == strcmp("vddsim0", desc->name))
+			|| (0 == strcmp("vddsim2", desc->name))) {
 
 			printf("\nCalibrate %s ...\n", desc->name);
 			DCDC_Cal_One(desc, 1);
@@ -487,13 +494,19 @@ int DCDC_Cal_ArmCore(void)
 	while (desc < (struct regulator_desc *)&__init_end) {
 		if ((0 == strcmp("vddmem", desc->name))
 			|| (0 == strcmp("vddarm", desc->name))
-			|| (0 == strcmp("vddcore", desc->name))) {
+			|| (0 == strcmp("vddcore", desc->name))
+			|| (0 == strcmp("vddsim0", desc->name))
+			|| (0 == strcmp("vddsim2", desc->name))) {
 
 			printf("\nVerify %s ...\n", desc->name);
 			DCDC_Cal_One(desc, 0);
 		}
 		desc++;
 	}
+
+	/* disable sim0, sim2. */
+	regVal |= (BIT(2) | BIT(4));
+	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, regVal);
 
 	return 0;
 }
