@@ -1178,8 +1178,11 @@ void sdram_clk_set(CLK_TYPE_E clock)
     //set divide
     reg_val = UMCTL2_REG_GET(SHARK_DDR_CTL_CLK_DIV_ADDR);
     reg_val &=~0x7ff;
-    reg_val |= (clock>>2);
+	reg_val &=~(0x3<<24);
+    reg_val |= (clock>>1);
     UMCTL2_REG_SET(SHARK_DDR_CTL_CLK_DIV_ADDR,reg_val);
+
+	wait_pclk(20000);//wait dpll stable
     
     //select DPLL 533MHZ source clock
     reg_val = UMCTL2_REG_GET(SHARK_DDR_CTL_CLK_SEL_ADDR);
