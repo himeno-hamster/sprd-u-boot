@@ -2099,6 +2099,33 @@ BOOLEAN __ddr_info_detect(DRAM_TYPE_E* ddr_type)
 	}
 }
 #endif
+
+#ifdef DDR_SCAN_SUPPORT
+void ddr_scan_store(uint32 ddr_clk)
+{
+	uint32 arry_size = sizeof(ddr_dfs_val_t);
+	uint32 i = 0;
+	ddr_dfs_val_t * dfs_val_ptr = NULL;
+	
+	for(i = 0; i < ARRAY_SIZE(DDR_DFS_POINT);i++)
+	{
+		dfs_val_ptr = (ddr_dfs_val_t *)(DDR_DFS_VAL_BASE+sizeof(ddr_dfs_val_t)*i);
+		
+		if(dfs_val_ptr->ddr_clk == ddr_clk)
+		{
+			dfs_val_ptr->publ_dx0dqstr = REG32(PUBL_DX0DQSTR);
+			dfs_val_ptr->publ_dx1dqstr = REG32(PUBL_DX1DQSTR);
+			dfs_val_ptr->publ_dx2dqstr = REG32(PUBL_DX2DQSTR);
+			dfs_val_ptr->publ_dx3dqstr = REG32(PUBL_DX3DQSTR);
+
+			return;
+		}
+	}
+	
+}
+#endif
+
+
 void sdram_init()
 {
 #ifdef DDR_DFS_SUPPORT
@@ -2191,6 +2218,7 @@ void sdram_init()
 
 	#ifdef DDR_SCAN_SUPPORT
 		ddr_scan(dram_info);
+		ddr_scan_store(DDR_CLK);
 	#endif
 	
 	umctl2_low_power_open();
