@@ -12,7 +12,7 @@
 #define SP09_SPPH_MAGIC             (0X53503039)    // "SP09"
 static char     	product_SN[20+1];
 static int		product_SN_flag = 0;
-
+static wchar_t *factory_partition = L"prodnv";
 
 static boot_image_required_t const s_boot_image_table[]={
 #ifdef CONFIG_SC8830
@@ -20,7 +20,6 @@ static boot_image_required_t const s_boot_image_table[]={
 #if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
 	{L"tdfixnv1",L"tdfixnv2",FIXNV_SIZE,TDFIXNV_ADR},
 	{L"tdruntimenv1",L"tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR},
-	/*{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},*/
 	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
 	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR}, 
 #ifdef CONFIG_SP8830WCN
@@ -31,7 +30,6 @@ static boot_image_required_t const s_boot_image_table[]={
 #elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735)
 	{L"wfixnv1",L"wfixnv2",FIXNV_SIZE,WFIXNV_ADR},
 	{L"wruntimenv1",L"wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR},
-	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,WPRODINFO_ADR},
 	{L"wmodem",NULL,MODEM_SIZE,WMODEM_ADR},
 	{L"wdsp",NULL,DSP_SIZE,WDSP_ADR},
 #ifdef CONFIG_SP8830WCN
@@ -44,8 +42,6 @@ static boot_image_required_t const s_boot_image_table[]={
 	{L"tdruntimenv1",L"tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR},
 	{L"wfixnv1",L"wfixnv2",FIXNV_SIZE,WFIXNV_ADR},
 	{L"wruntimenv1",L"wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR},
-	/*{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},*/
-	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,WPRODINFO_ADR},
 	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
 	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR},		
 	{L"wmodem",NULL,MODEM_SIZE,WMODEM_ADR},
@@ -55,7 +51,6 @@ static boot_image_required_t const s_boot_image_table[]={
 #else
 	{L"fixnv1",L"fixnv2",FIXNV_SIZE,FIXNV_ADR},
 	{L"runtimenv1",L"runtimenv2",RUNTIMENV_SIZE,RUNTIMENV_ADR},
-	{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,PRODUCTINFO_ADR},
 	{L"modem",NULL,MODEM_SIZE,MODEM_ADR},
 	{L"dsp",NULL,DSP_SIZE,DSP_ADR},
 #endif
@@ -287,7 +282,23 @@ int read_logoimg(char *bmp_img,size_t size)
 	}
 	return 0;
 }
+#ifdef CONFIG_FS_EXT4
+int is_factorymode()
+{
+  char factorymode_falg[8]={0};
+  int ret = 0;
 
+	if ( ext4_read_content(1,factory_partition,"/factorymode.file",factorymode_falg,0,8))
+		return 0;
+	printf("Checking factorymode :  factorymode_falg = %s \n", factorymode_falg);
+	if(!strcmp(factorymode_falg, "1"))
+		ret = 1;
+	else
+		ret = 0;
+	printf("Checking factorymode :  ret = %d \n", ret);
+	return ret;
+}
+#else
 int is_factorymode()
 {
 	int ret = 0;
@@ -331,6 +342,7 @@ int is_factorymode()
 		printf("0\n");
 	return ret;
 }
+#endif
 void addbuf(char *buf)
 {
 }

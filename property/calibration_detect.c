@@ -15,7 +15,6 @@
 
 static unsigned int nv_buffer[256]={0};
 static int s_is_calibration_mode = 0;
-static wchar_t *calibration_detect_partition = L"prodinfo4";
 /* calibration support uart only */
 #ifdef CONFIG_MODEM_CALI_UART
 
@@ -487,17 +486,8 @@ int cali_file_check(void)
 	p_block_dev = get_dev("mmc", 1);
 	if(NULL == p_block_dev)
 		return 0;
-#ifdef CONFIG_FS_EXT4
 	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
-	{
-#endif
-		if(-1 == Calibration_read_partition(p_block_dev, calibration_detect_partition, (char *)nv_buffer,sizeof(nv_buffer))){
-			printf("%s: read PARTITION_PROD_INFO4 error\n", __func__);
-			return 0;
-		}
-#ifdef CONFIG_FS_EXT4
-	}
-#endif
+		return 1;
 	if((nv_buffer[0] != CALI_MAGIC)||(nv_buffer[1]!=CALI_COMP))
 		return 1;
 	else 
@@ -554,15 +544,9 @@ int read_adc_calibration_data(char *buffer,int size)
 	p_block_dev = get_dev("mmc", 1);
 	if(NULL == p_block_dev)
 		return 0;
-#ifdef CONFIG_FS_EXT4
 	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
-	{
-#endif
-		if(-1 == Calibration_read_partition(p_block_dev, calibration_detect_partition, (char *)nv_buffer,sizeof(nv_buffer)))
-			return 0;
-#ifdef CONFIG_FS_EXT4
-	}
-#endif
+	    	return 0;
+
 	if(size>48)
 		size=48;
 	memcpy(buffer,&nv_buffer[2],size);

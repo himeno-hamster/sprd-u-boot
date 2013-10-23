@@ -21,8 +21,6 @@ static unsigned int nv_buffer[256]={0};
 static nv_read_flag = 0;
 #endif
 
-static wchar_t *ap_calibration_partition = L"prodinfo4";
-
 extern int nand_part_write(char *partname,char *buffer, int size);
 extern int nand_part_read(char *partname,char *buffer, int size);
 #ifdef CONFIG_AP_ADC_CALIBRATION
@@ -61,15 +59,8 @@ static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
 	return 0;
     }
     if(nv_read_flag == 0){
-#ifdef CONFIG_FS_EXT4
 	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
-	{
-#endif
-		if(-1 == Calibration_read_partition(p_block_dev, ap_calibration_partition, (char *)nv_buffer,sizeof(nv_buffer)))
-			return 0;
-#ifdef CONFIG_FS_EXT4
-	}
-#endif
+		return 0;
 	nv_read_flag = 1;
     }
     printf("EMC_Read:nv_buffer[255]=0x%x \n",nv_buffer[255]);
@@ -81,15 +72,8 @@ static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
         } else {
             nv_buffer[255] = 0x5a5a5a5a;
 	    memcpy(&nv_buffer[0],lpBuff,size);
-#ifdef CONFIG_FS_EXT4
 	    if(ext4_write_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
-	     {
-#endif
-		    if(-1 == Calibration_write_partition(p_block_dev, ap_calibration_partition, (char *)nv_buffer,sizeof(nv_buffer)))
-			return 0;
-#ifdef CONFIG_FS_EXT4
-	     }
-#endif
+		    return 0;
         }
     }
     return size;
