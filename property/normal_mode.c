@@ -654,7 +654,7 @@ static int start_linux()
 	while(1);
 	return 0;
 }
-void lcd_display_logo(int backlight_set,ulong bmp_img,size_t size)
+int lcd_display_logo(int backlight_set,ulong bmp_img,size_t size)
 {
 #ifdef CONFIG_SPLASH_SCREEN
 	extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
@@ -662,13 +662,16 @@ void lcd_display_logo(int backlight_set,ulong bmp_img,size_t size)
 	extern void *lcd_base;
 	extern void Dcache_CleanRegion(unsigned int addr, unsigned int length);
 	extern void set_backlight(uint32_t value);
+        int ret_i = 0;
 	if(backlight_set == BACKLIGHT_ON){
-		lcd_display_bitmap((ulong)bmp_img, 0, 0);
+		ret_i = lcd_display_bitmap((ulong)bmp_img, 0, 0);
 #if defined(CONFIG_SC8810) || defined(CONFIG_SC8825) || defined(CONFIG_SC8830)
 		Dcache_CleanRegion((unsigned int)(lcd_base), size);//Size is to large.
 #endif
+            if(0 == ret_i){
 		lcd_display();
 		set_backlight(255);
+            }
 	}else{
 		memset((unsigned int)lcd_base, 0, size);
 #if defined(CONFIG_SC8810) || defined(CONFIG_SC8825) || defined(CONFIG_SC8830)
@@ -676,6 +679,7 @@ void lcd_display_logo(int backlight_set,ulong bmp_img,size_t size)
 #endif
 		lcd_display();
 	}
+        return ret_i;
 #endif
 }
 

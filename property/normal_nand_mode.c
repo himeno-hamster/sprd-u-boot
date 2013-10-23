@@ -10,6 +10,8 @@ extern int cmd_yaffs_ls_chk(const char *dirfilename);
 extern void cmd_yaffs_mread_file(char *fn, unsigned char *addr);
 extern void cmd_yaffs_mread_fileex(char *fn, unsigned char *addr, int size);
 static int flash_page_size = 0;
+static int backlight_on = 0;
+
 void nand_block_info(struct mtd_info *nand, int *good, int *bad)
 {
     loff_t off;
@@ -328,6 +330,45 @@ static int load_kernel_and_layout(struct mtd_info *nand,
     return ret;
 }
 
+//show logo image for charging when phone is off.
+int show_image_from_partion(const char *part,int backlight_set){
+    struct mtd_device *dev;
+    struct part_info *part_info;
+    u8 pnum;
+    int ret;
+    size_t size = 1<<19;
+    loff_t off = 0;
+    char * bmp_img = malloc(size);
+    struct mtd_info *nand;
+
+    ret = find_dev_and_part(part, &dev, &pnum, &part_info);
+    if(ret){
+        printf("No partition named %s\n", part);
+        return;
+    }else if(dev->id->type != MTD_DEV_TYPE_NAND){
+        printf("Partition %s not a NAND device\n", part);
+        return;
+    }
+
+    off=part_info->offset;
+    nand = &nand_info[dev->id->num];
+    if(!bmp_img){
+        printf("not enough memory for splash image\n");
+        return;
+    }
+    ret = nand_read_offset_ret(nand, off, &size, (void *)bmp_img, &off);
+    if(ret != 0){
+        printf("function: %s nand read error %d\n", __FUNCTION__, ret);
+        return;
+    }
+
+    ret=lcd_display_logo(backlight_set,(ulong)bmp_img,size);
+    if(ret==0)
+        backlight_on = backlight_set;
+
+    return ret;
+}
+
 void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 {
     boot_img_hdr *hdr = (void *)raw_header;
@@ -381,19 +422,22 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
     off=part->offset;
     nand = &nand_info[dev->id->num];
-    //read boot image header
-    size = 1<<19;//where the size come from????
-    char * bmp_img = malloc(size);
-    if(!bmp_img){
-        printf("not enough memory for splash image\n");
-        return;
+    //if the image has been loaded for charging,ignore it.
+    if(backlight_on == 0){
+        //read boot image header
+        size = 1<<19;//where the size come from????
+        char * bmp_img = malloc(size);
+        if(!bmp_img){
+            printf("not enough memory for splash image\n");
+            return;
+        }
+        ret = nand_read_offset_ret(nand, off, &size, (void *)bmp_img, &off);
+        if(ret != 0){
+            printf("function: %s nand read error %d\n", __FUNCTION__, ret);
+            return;
+        }
+        lcd_display_logo(backlight_set,(ulong)bmp_img,size);
     }
-    ret = nand_read_offset_ret(nand, off, &size, (void *)bmp_img, &off);
-    if(ret != 0){
-        printf("function: %s nand read error %d\n", __FUNCTION__, ret);
-        return;
-    }
-    lcd_display_logo(backlight_set,(ulong)bmp_img,size);
 #endif
     set_vibrator(0);
     {

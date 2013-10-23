@@ -268,7 +268,7 @@ unsigned long get_productinfo_index(unsigned char *array);
 
 int nv_is_correct(unsigned char *array, unsigned long size);
 int nv_is_correct_endflag(unsigned char *array, unsigned long size);
-void lcd_display_logo(int backlight_set,ulong bmp_image,size_t size);
+int lcd_display_logo(int backlight_set,ulong bmp_image,size_t size);
 char *creat_cmdline(char * cmdline,boot_img_hdr *hdr);
 void vlx_entry();
 

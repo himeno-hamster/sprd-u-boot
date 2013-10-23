@@ -27,6 +27,9 @@ extern void CHG_Init (void);
 extern int cali_file_check(void);
 extern unsigned check_reboot_mode();
 
+//show logo image for charging when phone is off.
+extern int show_image_from_partion(const char *part,int backlight_set);
+
 int boot_pwr_check(void)
 {
     static int total_cnt = 0;
@@ -169,7 +172,11 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
    if(charger_connected()){
         DBG("%s: charger connected\n", __FUNCTION__);
 #if defined (CONFIG_SP8810W) || defined(CONFIG_SC7710G2)
-        	calibration_detect(1);
+        //show logo image for charging when phone is off.
+        if(show_image_from_partion("fastboot_logo",1)!=0)
+            show_image_from_partion("boot_logo",1);
+        DBG("calibration_detect ...\n");
+        calibration_detect(1);
 #endif
         charge_mode();
     }
