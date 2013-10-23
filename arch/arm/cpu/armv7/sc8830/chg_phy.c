@@ -136,6 +136,9 @@ int sprd_charger_is_adapter(void)
 unsigned int fgu_vol, fgu_cur;
 void fgu_init(void)
 {
+	sci_adi_set(ANA_REG_GLB_MP_MISC_CTRL, (BIT(1)));
+	sci_adi_write(ANA_REG_GLB_DCDC_CTRL2, (4 << 8), (7 << 8));
+
 	sci_adi_set(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_FGU_EN);
 	sci_adi_set(ANA_REG_GLB_RTC_CLK_EN, BIT_RTC_FGU_EN | BIT_RTC_FGUA_EN);
 	//sci_adi_clr(REG_FGU_CONFIG, BIT_VOLT_H_VALID);
