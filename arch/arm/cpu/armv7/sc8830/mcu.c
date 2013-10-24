@@ -69,12 +69,12 @@ static uint32 AhbClkConfig()
     uint32 ahb_cfg;
     ahb_cfg  = REG32(REG_AP_CLK_AP_AHB_CFG);
     ahb_cfg &=~3;
-    ahb_cfg |= mcu_clk_para.clk_ca7_ahb;  //ahb select 192M           0:26M 1:76M 2:128M 3:192M
+    ahb_cfg |= mcu_clk_para.ahb_freq;  //ahb select 192M           0:26M 1:76M 2:128M 3:192M
     REG32(REG_AP_CLK_AP_AHB_CFG) = ahb_cfg;
 
     ahb_cfg  = REG32(REG_AON_CLK_PUB_AHB_CFG);
     ahb_cfg &=~3;
-    ahb_cfg |= mcu_clk_para.clk_pub_ahb;  //pub ahb select 153M      0:26M 1:76M 2:128M 3:153M
+    ahb_cfg |= mcu_clk_para.pub_ahb_freq;  //pub ahb select 153M      0:26M 1:76M 2:128M 3:153M
     REG32(REG_AON_CLK_PUB_AHB_CFG) = ahb_cfg;
 #else
     uint32 ahb_cfg;
@@ -98,12 +98,12 @@ static uint32 ApbClkConfig()
     uint32 apb_cfg;
     apb_cfg  = REG32(REG_AP_CLK_AP_APB_CFG);
     apb_cfg &=~3;
-    apb_cfg |= mcu_clk_para.clk_ca7_apb;  //apb select 64M            0:26M 1:64M 2:96M 3:128M
+    apb_cfg |= mcu_clk_para.apb_freq;  //apb select 64M            0:26M 1:64M 2:96M 3:128M
     REG32(REG_AP_CLK_AP_APB_CFG) = apb_cfg;
 
     apb_cfg = REG32(REG_AON_CLK_AON_APB_CFG);
     apb_cfg &=~3;
-    apb_cfg |= mcu_clk_para.clk_aon_apb;  //aon apb select 128M        0:26M 1:76M 2:96M 3:128M
+    apb_cfg |= mcu_clk_para.aon_apb_freq;  //aon apb select 128M        0:26M 1:76M 2:96M 3:128M
     REG32(REG_AON_CLK_AON_APB_CFG) = apb_cfg;
 #else
     uint32 apb_cfg;
@@ -127,7 +127,7 @@ static uint32 AxiClkConfig(uint32 arm_clk)
     uint32 ca7_ckg_cfg;
     ca7_ckg_cfg  = REG32(REG_AP_AHB_CA7_CKG_CFG);
     ca7_ckg_cfg &= ~(7<<8);
-    ca7_ckg_cfg |= ((arm_clk/(mcu_clk_para.clk_ca7_axi+1))&0x7)<<8;
+    ca7_ckg_cfg |= ((arm_clk/(mcu_clk_para.axi_freq+1))&0x7)<<8;
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
 #else
     uint32 ca7_ckg_cfg;
@@ -146,7 +146,7 @@ static uint32 DbgClkConfig(uint32 arm_clk)
     uint32 ca7_ckg_cfg;
     ca7_ckg_cfg  =  REG32(REG_AP_AHB_CA7_CKG_CFG);
     ca7_ckg_cfg &= ~(7<<16);
-    ca7_ckg_cfg |=  ((arm_clk/(mcu_clk_para.clk_ca7_dgb+1))&0x7)<<16;
+    ca7_ckg_cfg |=  ((arm_clk/(mcu_clk_para.dgb_freq+1))&0x7)<<16;
     REG32(REG_AP_AHB_CA7_CKG_CFG) = ca7_ckg_cfg;
 #else
     uint32 ca7_ckg_cfg;
@@ -180,87 +180,48 @@ static uint32 McuClkConfig(uint32 arm_clk)
     return 0;
 }
 
+
+#if defined(CONFIG_VOL_PARA)
+static const int dcdc_ctl_vol[][2] = {
+	{5,650},{1,700},{2,800},{3,900},{4,1000},{0,1100},{6,1200},{7,1300}
+};
+
+void dcdc_calibrate(int chan, int to_vol)
+{
+	int i;
+	uint32 cal_vol, ctl_vol = to_vol;
+
+	uint32 length=ARRAY_SIZE(dcdc_ctl_vol)/ARRAY_SIZE(dcdc_ctl_vol[0]);
+	for (i = 0; i < length - 1; i++) {
+		if (ctl_vol < dcdc_ctl_vol[i + 1][2])
+			break;
+	}
+	if (i >= length - 1)
+		goto exit;
+
+	cal_vol = ((ctl_vol - dcdc_ctl_vol[i][2]) * 32 / 100) % 32;
+	if (chan == 10) { // dcdc arm
+		ANA_REG_SET(ANA_REG_GLB_DCDC_ARM_ADI, cal_vol |((dcdc_ctl_vol[i][1]&0x7)<<5));
+	}
+	else if (chan == 11) {//dcdc core
+		ANA_REG_SET(ANA_REG_GLB_DCDC_CORE_ADI, cal_vol |((dcdc_ctl_vol[i][1]&0x7)<<5));
+	}
+	for(i = 0; i < 0x1000; ++i){};
+exit:
+	return ;
+}
+#endif
+
 static uint32 ArmCoreConfig(uint32 arm_clk)
 {
     uint32 dcdc_arm;
 
-#if  defined(CONFIG_VOL_PARA)
-    dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_ARM_ADI);
-    dcdc_arm &= ~0xFF;
+#if defined(CONFIG_VOL_PARA)
+    dcdc_calibrate(10,mcu_clk_para.dcdc_arm);	//dcdc arm
+    dcdc_calibrate(11,mcu_clk_para.dcdc_core);	//dcdc core
 
-    if(mcu_clk_para.dcdc_arm < 700)
-    {
-	dcdc_arm |= (5<<5);
-    }
-    else if(mcu_clk_para.dcdc_arm < 800)
-    {
-	dcdc_arm |= (1<<5);
-    }
-    else if(mcu_clk_para.dcdc_arm < 900)
-    {
-	dcdc_arm |= (2<<5);
-    }
-    else if(mcu_clk_para.dcdc_arm < 1000)
-    {
-	dcdc_arm |= (3<<5);
-    }
-    else if(mcu_clk_para.dcdc_arm < 1100)
-    {
-	dcdc_arm |= (4<<5);
-    }
-    else if(mcu_clk_para.dcdc_arm < 1200)
-    {
-	dcdc_arm |= (0<<5);
-    }
-    else if(mcu_clk_para.dcdc_arm < 1300)
-    {
-	dcdc_arm |= (6<<5);
-    }
-    else
-    {
-	dcdc_arm |= (7<<5);
-    }
-    ANA_REG_SET(ANA_REG_GLB_DCDC_ARM_ADI, dcdc_arm);
-
-    dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_CORE_ADI);
-    dcdc_arm &= ~0xFF;
-
-    if(mcu_clk_para.dcdc_core < 700)
-    {
-	dcdc_arm |= (5<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 800)
-    {
-	dcdc_arm |= (1<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 900)
-    {
-	dcdc_arm |= (2<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 1000)
-    {
-	dcdc_arm |= (3<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 1100)
-    {
-	dcdc_arm |= (4<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 1200)
-    {
-	dcdc_arm |= (0<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 1300)
-    {
-	dcdc_arm |= (6<<5);
-    }
-    else
-    {
-	dcdc_arm |= (7<<5);
-    }
-    ANA_REG_SET(ANA_REG_GLB_DCDC_CORE_ADI, dcdc_arm);
     REG32(REG_AP_APB_APB_EB) |= BIT_AP_CKG_EB;
 #else
-
     dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_ARM_ADI);
     dcdc_arm &= ~0xFF;
     //1.0V  800M
