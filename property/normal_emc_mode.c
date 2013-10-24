@@ -282,7 +282,7 @@ int read_logoimg(char *bmp_img,size_t size)
 	}
 	return 0;
 }
-#ifdef CONFIG_FS_EXT4
+
 int is_factorymode()
 {
   char factorymode_falg[8]={0};
@@ -298,51 +298,7 @@ int is_factorymode()
 	printf("Checking factorymode :  ret = %d \n", ret);
 	return ret;
 }
-#else
-int is_factorymode()
-{
-	int ret = 0;
-	block_dev_desc_t *p_block_dev = NULL;
 
-	printf("Checking factorymode : ");
-	p_block_dev = get_dev("mmc", 1);
-	if(NULL == p_block_dev)
-	{
-		printf("\nCan't get mmc device,get_dev return error!\n");
-		return ret;
-	}
-
-	int factoryalarmret1, factoryalarmret2;
-	unsigned long factoryalarmcnt1, factoryalarmcnt2;
-	unsigned char factoryalarmarray1[PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE];
-	unsigned char factoryalarmarray2[PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE];
-
-	memset((unsigned char *)factoryalarmarray1, 0xff, PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE);
-	factoryalarmret1 = prodinfo_read_partition(p_block_dev, L"prodinfo1", 4 * 1024, (char *)factoryalarmarray1, PRODUCTINFO_SIZE + 8);
-	memset((unsigned char *)factoryalarmarray2, 0xff, PRODUCTINFO_SIZE +  EMMC_SECTOR_SIZE);
-	factoryalarmret2 = prodinfo_read_partition(p_block_dev, L"prodinfo2", 4 * 1024, (char *)factoryalarmarray2, PRODUCTINFO_SIZE + 8);
-
-	if ((factoryalarmret1 == 0) && (factoryalarmret2 == 0)) {
-		factoryalarmcnt1 = char2u32(factoryalarmarray1, 3 * 1024 + 4);
-		factoryalarmcnt2 = char2u32(factoryalarmarray2, 3 * 1024 + 4);
-		if (factoryalarmcnt2 >= factoryalarmcnt1) {
-			if (factoryalarmarray2[0] == 0x31)
-				ret = 1;
-		} else {
-			if (factoryalarmarray1[0] == 0x31)
-				ret = 1;
-		}
-	} else if ((factoryalarmret1 == 0) && (factoryalarmret2 == 1)) {
-		if (factoryalarmarray1[0] == 0x31)
-			ret = 1;
-	} else if ((factoryalarmret1 == 1) && (factoryalarmret2 == 0)) {
-		if (factoryalarmarray2[0] == 0x31)
-			ret = 1;
-	} else if ((factoryalarmret1 == 1) && (factoryalarmret2 == 1))
-		printf("0\n");
-	return ret;
-}
-#endif
 void addbuf(char *buf)
 {
 }
