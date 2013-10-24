@@ -191,20 +191,20 @@ void dcdc_calibrate(int chan, int to_vol)
 	int i;
 	uint32 cal_vol, ctl_vol = to_vol;
 
-	uint32 length=ARRAY_SIZE(dcdc_ctl_vol)/ARRAY_SIZE(dcdc_ctl_vol[0]);
+	uint32 length=ARRAY_SIZE(dcdc_ctl_vol);
 	for (i = 0; i < length - 1; i++) {
-		if (ctl_vol < dcdc_ctl_vol[i + 1][2])
+		if (ctl_vol < dcdc_ctl_vol[i + 1][1])
 			break;
 	}
 	if (i >= length - 1)
 		goto exit;
 
-	cal_vol = ((ctl_vol - dcdc_ctl_vol[i][2]) * 32 / 100) % 32;
+	cal_vol = ((ctl_vol - dcdc_ctl_vol[i][1]) * 32 / 100) % 32;
 	if (chan == 10) { // dcdc arm
-		ANA_REG_SET(ANA_REG_GLB_DCDC_ARM_ADI, cal_vol |((dcdc_ctl_vol[i][1]&0x7)<<5));
+		ANA_REG_SET(ANA_REG_GLB_DCDC_ARM_ADI, cal_vol |((dcdc_ctl_vol[i][0]&0x7)<<5));
 	}
 	else if (chan == 11) {//dcdc core
-		ANA_REG_SET(ANA_REG_GLB_DCDC_CORE_ADI, cal_vol |((dcdc_ctl_vol[i][1]&0x7)<<5));
+		ANA_REG_SET(ANA_REG_GLB_DCDC_CORE_ADI, cal_vol |((dcdc_ctl_vol[i][0]&0x7)<<5));
 	}
 	for(i = 0; i < 0x1000; ++i){};
 exit:
