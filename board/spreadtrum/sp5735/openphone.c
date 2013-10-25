@@ -22,30 +22,14 @@ extern int sound_init(void);
 
 #ifdef CONFIG_GENERIC_MMC
 int mv_sdh_init(u32 regbase, u32 max_clk, u32 min_clk, u32 quirks);
+int mmc_sdcard_init();
+
 int board_mmc_init(bd_t *bd)
 {
-	ulong mmc_base_address[CONFIG_SYS_MMC_NUM] = CONFIG_SYS_MMC_BASE;
-	u8 i, data;
-#ifdef CONFIG_SC8830
-	REG32(AHB_CTL0)     |= BIT_11;
-	REG32(AHB_SOFT_RST) |= BIT_14;
-	for (i=0; i<0x10; i++){}
-	REG32(AHB_SOFT_RST) &= ~BIT_14;
-#else
-	REG32(AHB_CTL0)     |= BIT_4;
-	REG32(AHB_SOFT_RST) |= BIT_12;
-	REG32(AHB_SOFT_RST) &= ~BIT_12;
-#endif
+	mmc_sdcard_init();
 
-#ifndef CONFIG_SC8830
-	LDO_SetVoltLevel(LDO_LDO_SDIO1, LDO_VOLT_LEVEL1);
-	LDO_TurnOnLDO(LDO_LDO_SDIO1);
-#endif
-	for (i = 0; i < CONFIG_SYS_MMC_NUM; i++) {
-		if (mv_sdh_init(mmc_base_address[i], SDIO_BASE_CLK_96M, 
-			SDIO_CLK_250K, 0))
-			return 1;
-	}
+	mv_sdh_init(CONFIG_SYS_SD_BASE, SDIO_BASE_CLK_192M,
+			SDIO_CLK_250K, 0);
 
 	return 0;
 }
@@ -66,7 +50,6 @@ int board_init()
 	sprd_gpio_init();
 	sound_init();
 
-	init_ldo_sleep_gr();
 	TDPllRefConfig(1);
 
 	return 0;

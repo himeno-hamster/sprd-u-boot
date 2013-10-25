@@ -87,6 +87,7 @@
 #define CONFIG_MMC			1
 #define CONFIG_GENERIC_MMC		1
 #define CONFIG_SDHCI			1
+#define CONFIG_SDHCI_CTRL_NO_HISPD     1 /* disable high speed control */
 #define CONFIG_SYS_MMC_MAX_BLK_COUNT	0x1000
 #define CONFIG_MMC_SDMA			1
 #define CONFIG_MV_SDHCI			1
@@ -94,6 +95,7 @@
 #define CONFIG_EFI_PARTITION		1
 #define CONFIG_SYS_MMC_NUM		1
 #define CONFIG_SYS_MMC_BASE		{0x20600000}
+#define CONFIG_SYS_SD_BASE		0x20300000
 #endif
 
 #define BB_DRAM_TYPE_256MB_32BIT
@@ -108,9 +110,9 @@
 #endif
 
 #define FIXNV_SIZE		(2*128 * 1024)
-#define PRODUCTINFO_SIZE	(16 * 1024)
-#define MODEM_SIZE		(0x800000)
-#define DSP_SIZE		(0x2E0000)
+#define PRODUCTINFO_SIZE	(3 * 1024)
+#define MODEM_SIZE		(0xA00000)
+#define DSP_SIZE		(0x3E0400) /* 3968K */
 #define VMJALUNA_SIZE		(0x64000) /* 400K */
 #define RUNTIMENV_SIZE		(3*128 * 1024)
 #define CONFIG_SPL_LOAD_LEN	(0x6000)
@@ -226,7 +228,7 @@
 #define DDR3_DLL_ON TRUE
 //#define DLL_BYPASS
 #define DDR_APB_CLK 128
-#define DDR_DFS_SUPPORT
+//#define DDR_DFS_SUPPORT
 #define DDR_DFS_VAL_BASE 0X1c00
 
 //#define DDR_SCAN_SUPPORT
@@ -235,7 +237,6 @@
 #define PUBL_LPDDR1_DS PUBL_LPDDR1_DS_48OHM
 #define PUBL_LPDDR2_DS PUBL_LPDDR2_DS_40OHM
 #define PUBL_DDR3_DS   PUBL_DDR3_DS_34OHM
-
 
 
 /* NAND */
@@ -274,6 +275,7 @@
 #undef CONFIG_BOOTM_RTEMS
 
 /* U-Boot commands */
+
 #include <config_cmd_default.h>
 #define CONFIG_CMD_NAND
 #undef CONFIG_CMD_FPGA
@@ -299,7 +301,7 @@
 
 #define MTDIDS_DEFAULT "nand0=sprd-nand"
 #define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),250m(system),180m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),3840k(productinfo),512k(kpanic)"
-#define CONFIG_BOOTARGS "mem=512M loglevel=1 console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
+#define CONFIG_BOOTARGS "mem=512M console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
 
 #define COPY_LINUX_KERNEL_SIZE	(0x600000)
 #define LINUX_INITRD_NAME	"modem"
@@ -330,7 +332,7 @@
 //#define CONFIG_USB_ETHER
 #define CONFIG_CMD_FASTBOOT
 #define SCRATCH_ADDR    (CONFIG_SYS_SDRAM_BASE + 0x100000)
-#define FB_DOWNLOAD_BUF_SIZE (280*1024*1024)
+#define FB_DOWNLOAD_BUF_SIZE (250*1024*1024)
 
 #define CONFIG_MODEM_CALIBERATE
 
@@ -364,8 +366,9 @@
 #define SPRD_SYSDUMP_MAGIC      ((PHYS_OFFSET_ADDR & (~(SZ_512M - 1))) + SZ_512M - SZ_1M)
 
 
-#define CALIBRATE_ENUM_MS 3000
-#define CALIBRATE_IO_MS 2000
+
+#define CALIBRATE_ENUM_MS 15000
+#define CALIBRATE_IO_MS 10000
 
 //#define LOW_BAT_ADC_LEVEL 782 /*phone battery adc value low than this value will not boot up*/
 #define LOW_BAT_VOL            3500 /*phone battery voltage low than this value will not boot up*/
@@ -376,7 +379,7 @@
 
 #define PHYS_OFFSET_ADDR			0x80000000
 #define TD_CP_OFFSET_ADDR			0x8000000	/*128*/
-#define TD_CP_SDRAM_SIZE			0x1200000	/*18M*/
+#define TD_CP_SDRAM_SIZE			0x1800000	/*24M*/
 #define WCDMA_CP_OFFSET_ADDR		0x10000000	/*256M*/
 #define WCDMA_CP_SDRAM_SIZE		0x4000000	/*64M*/
 
@@ -385,12 +388,6 @@
 #define SIPC_TD_APCP_START_ADDR		(PHYS_OFFSET_ADDR + TD_CP_OFFSET_ADDR + TD_CP_SDRAM_SIZE - SIPC_APCP_RESET_SIZE)	/*0x897FF000*/
 #define SIPC_WCDMA_APCP_START_ADDR	(PHYS_OFFSET_ADDR + WCDMA_CP_OFFSET_ADDR + WCDMA_CP_SDRAM_SIZE - SIPC_APCP_RESET_SIZE) /*0x93FFF000*/
 
-#define CONFIG_RAM_CONSOLE
-
-#ifdef CONFIG_RAM_CONSOLE
-#define CONFIG_RAM_CONSOLE_SIZE        0x80000
-#define CONFIG_RAM_CONSOLE_START    (CONFIG_SYS_NAND_U_BOOT_START + 0x600000)
-#endif
 
 //#define CALIBRATION_FLAG           0x89700000
 
@@ -399,5 +396,7 @@
 #define CONFIG_SOUND_CODEC_SPRD_V3 1
 #define CONFIG_SOUND_DAI_VBC_R2P0 1
 /* #define CONFIG_SPRD_AUDIO_DEBUG */
+
+#define CONFIG_RAMDUMP_NO_SPLIT 1 /* Don't split sysdump file */
 
 #endif /* __CONFIG_H */

@@ -684,7 +684,7 @@ LOCAL __inline void _boot_display_logo(block_dev_desc_t *dev, int backlight_set)
 {
 	size_t size;
 
-#ifdef CONFIG_LCD_720P
+#if defined(CONFIG_LCD_720P) || defined(CONFIG_LCD_HD) //LiWei add CONFIG_LCD_HD
 	size = 1<<20;
 #else
 	size = 1<<19;
