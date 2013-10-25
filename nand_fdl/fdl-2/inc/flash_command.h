@@ -57,4 +57,5 @@ int FDL2_EraseFlash (PACKET_T *packet, void *arg);
 int FDL2_FormatFlash (PACKET_T *pakcet, void *arg);
 unsigned long FDL2_GetRecvDataSize (void);
 
+int FDL_ResetSpl(PACKET_T *pakcet, void *arg); //reset to normal
 #endif /* FLASH_COMMAND_H */

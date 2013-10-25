@@ -174,7 +174,8 @@ int main(void)
 	   		FDL_DlReg(BSL_ERASE_FLASH,        FDL2_EraseFlash,        0);
 			FDL_DlReg(BSL_REPARTITION,    	   FDL2_FormatFlash,       0);
 #endif
-   		FDL_DlReg(BSL_CMD_NORMAL_RESET,   FDL_McuResetNormal/*mcu_reset_boot*/,   0);
+    FDL_DlReg(BSL_CMD_NORMAL_RESET,   FDL_ResetSpl, 0);
+    //FDL_DlReg(BSL_CMD_NORMAL_RESET,   FDL_McuResetNormal,   0);
 	    	FDL_DlReg(BSL_CMD_READ_CHIP_TYPE, FDL_McuReadChipType, 0);  
 #ifdef CONFIG_EMMC_BOOT
 		FDL_SendAckPacket (EMMC_SUCCESS == err ? BSL_REP_ACK :

@@ -20,6 +20,8 @@
 #ifdef CONFIG_SC7710G2
 #include "special_downloading.h"
 #endif
+#include <asm/arch/analog_reg_v3.h>
+#include <asm/arch/adi_hal_internal.h>
 
 extern void cmd_yaffs_mount(char *mp);
 extern void cmd_yaffs_umount(char *mp);
@@ -2430,4 +2432,11 @@ int FDL2_FormatFlash (PACKET_T *pakcet, void *arg)
     int ret = nand_format();
     FDL2_SendRep (ret);
     return (NAND_SUCCESS == ret);
+}
+
+int FDL_ResetSpl(PACKET_T *pakcet, void *arg)
+{
+    ANA_REG_SET(ANA_HWRST_STATUS, 0x40);
+    CHIP_ResetMCU();
+    while(1);
 }
