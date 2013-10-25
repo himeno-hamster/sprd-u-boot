@@ -754,3 +754,47 @@ int update_fixnv_by_id_flush(unsigned char*addr){
     clean_up_runtimenv();
     return 1;
 }
+
+int erase_mtd_partition(const char *partname){
+    loff_t offset = 0;
+    unsigned pagesize;
+    size_t size;
+
+    struct mtd_info *nand;
+    struct mtd_device *dev;
+    struct part_info *part;
+    u8 pnum;
+    int ret;
+
+    ret = mtdparts_init();
+    if(ret != 0){
+        printf("mtdparts init error %d\n", ret);
+        return -1;
+    }
+
+    ret = find_dev_and_part(partname, &dev, &pnum, &part);
+    if(ret){
+        printf("No partiton named %s found\n", partname);
+        return -1;
+    }else if(dev->id->type != MTD_DEV_TYPE_NAND){
+        printf("Partition %s not a NAND device\n", partname);
+        return -1;
+    }
+
+    nand = &nand_info[dev->id->num];
+    pagesize = nand->writesize;
+
+    nand_erase_options_t opts;
+    memset(&opts, 0, sizeof(opts));
+    opts.offset = part->offset;
+    opts.length = part->size;
+    opts.jffs2 = 0;
+    opts.scrub = 0;
+    opts.quiet = 1;
+    ret = nand_erase_opts(nand, &opts);
+    if(ret != 0){
+        printf("%s, nand erase error %d\n", __FUNCTION__, ret);
+        return -1;
+    }
+    return ret;
+}
