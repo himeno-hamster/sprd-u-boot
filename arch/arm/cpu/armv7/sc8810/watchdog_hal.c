@@ -126,7 +126,10 @@ PUBLIC void WDG_ResetMCU (void)
 {
     WDG_CONFIG_T config;
     int32        ret;
-
+#if defined(CONFIG_SC7710G2)
+    ANA_REG_OR(ANA_APB_CLK_EN, WDG_EB);
+    ANA_REG_OR(ANA_RTC_CLK_EN, RTC_ARCH_EB | RTC_WDG_EB);
+#endif
     WDG_TRACE ("Watch Dog Trace: WDG_ResetMCU");
     config.state    = WDG_TIMER_STATE_START ;
     config.mode     = WDG_TIMEOUT_MODE_RESET;
