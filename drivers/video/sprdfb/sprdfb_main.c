@@ -122,6 +122,15 @@ void set_backlight(uint32_t value)
 		ANA_REG_SET(0x40038894,(ANA_REG_GET(0x40038894)|(0x3 << 7)));
 	}
 #endif
+#elif defined(CONFIG_SP8830SSW)
+	printf("set_backlight\n");
+	/* GPIO214 */
+	/* Enable GPIO in APB global register */
+        __raw_bits_or((1<<3), 0x402E0000);
+	/* Set GPIO high  */
+        __raw_bits_or((1<<6), 0x40280684);
+        __raw_bits_or((1<<6), 0x40280688);
+        __raw_bits_or((1<<6), 0x40280680);
 #endif
 #if defined (CONFIG_SP8825) || defined (CONFIG_SP8825EA) || defined (CONFIG_SP8825EB) ||defined(CONFIG_GARDA)
 	__raw_writel(0x101, 0x4C000138);
