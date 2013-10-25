@@ -328,7 +328,23 @@ static uint8 is_adc_calibration(char *dest, int destSize, char *src,int srcSize)
                 //read mode
                 printf("Entry read mode ...\n");
             }
-        }
+        }else if( 0x68 == lpHeader->type){
+            //now only deal with AT+SPDIAG="AT+ETSRESET"
+            unsigned char *at_cmd[36];
+            printf("got a at cmd:\n");
+            memcpy(at_cmd, (unsigned char *)src+sizeof(MSG_HEAD_T)+1, lpHeader->len-sizeof(MSG_HEAD_T));
+
+            if ( 0==strncmp(at_cmd,"AT+SPDIAG=\"AT+ETSRESET\"\r\n", 24) ) {
+                printf("factory default!\n");
+                #define AP_AT_OK 0xD0
+                #define AP_AT_ERROR 0xD1
+                if ( -1 == erase_mtd_partition("userdata") )
+                    return AP_AT_ERROR;
+                if ( -1 == erase_mtd_partition("cache") )
+                    return AP_AT_ERROR;
+                return AP_AT_OK;
+            }
+       }
     }
 
     return 0;
@@ -521,6 +537,30 @@ uint32 ap_calibration_proc(uint8 *data,uint32 count,uint8 *out_msg)
                 nv_access_resp.resp = 2;//CRC_ERR:1 CMD_ERR:2 SAVE_ERR:3 READ_ERR:4
             }
             index = translate_packet(out_msg, &nv_access_resp, nv_access_resp.msg_head.len);
+            count = 0;
+            return index;
+        }else if ( adcFlag == AP_AT_OK ) {
+            MSG_HEAD_T* lpHeader = (MSG_HEAD_T *)g_usb_buf_dest;
+            MSG_HEAD_T msg1 = {0};
+            struct {
+                MSG_HEAD_T msg_head;
+                unsigned char at_resp[6];
+            }__attribute__((packed)) msg_resp = {{0},{0}};
+            printf("at cmd return adcFlag = %d\n", adcFlag);
+
+            msg1.seq_num = lpHeader->seq_num;
+            msg1.len = sizeof(MSG_HEAD_T);
+            msg1.type = 0xD5;
+            msg1.subtype = 0x00;
+            index = translate_packet(out_msg, &msg1, msg1.len);
+
+            msg_resp.msg_head.seq_num = lpHeader->seq_num;
+            msg_resp.msg_head.len = sizeof(msg_resp);
+            msg_resp.msg_head.type = 0x9C;
+            msg_resp.msg_head.subtype = 0x00;
+            memcpy(msg_resp.at_resp, "\x0D\x0A\x4F\x4B\x0D\x0A", 6);
+            index += translate_packet(out_msg+index, &msg_resp, msg_resp.msg_head.len);
+
             count = 0;
             return index;
         }else if (adcFlag != 0){
