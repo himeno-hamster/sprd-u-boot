@@ -52,22 +52,22 @@ enum clk_aon_apb_sel
     AON_APB_CLK_128M
 };
 typedef struct{
-    uint32 magic_header;
-    uint8  version;
-    uint8  reserved0;
-    uint8  reserved1;
-    uint8  reserved2;
-    uint32 core_freq;
-    uint32 ddr_freq;
-    uint32 axi_freq;
-    uint32 dgb_freq;
-    uint32 ahb_freq;
-    uint32 apb_freq;
-    uint32 pub_ahb_freq;
-    uint32 aon_apb_freq;
-    uint32 dcdc_arm;
-    uint32 dcdc_core;
-    uint32 magic_end;
+    volatile uint32 magic_header;
+    volatile uint8  version;
+    volatile uint8  reserved0;
+    volatile uint8  reserved1;
+    volatile uint8  reserved2;
+    volatile uint32 core_freq;
+    volatile uint32 ddr_freq;
+    volatile uint32 axi_freq;
+    volatile uint32 dgb_freq;
+    volatile uint32 ahb_freq;
+    volatile uint32 apb_freq;
+    volatile uint32 pub_ahb_freq;
+    volatile uint32 aon_apb_freq;
+    volatile uint32 dcdc_arm;
+    volatile uint32 dcdc_core;
+    volatile uint32 magic_end;
 }MCU_CLK_PARA_T;
 
 extern const MCU_CLK_PARA_T mcu_clk_para;
