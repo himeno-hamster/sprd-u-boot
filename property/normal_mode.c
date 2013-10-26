@@ -650,6 +650,7 @@ static int start_linux()
 }
 void lcd_display_logo(int backlight_set,ulong bmp_img,size_t size)
 {
+#define mdelay(t)     ({unsigned long msec=(t); while (msec--) { udelay(1000);}})//LiWei add
 #ifdef CONFIG_SPLASH_SCREEN
 	extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
 	extern void lcd_display(void);
@@ -662,6 +663,9 @@ void lcd_display_logo(int backlight_set,ulong bmp_img,size_t size)
 		Dcache_CleanRegion((unsigned int)(lcd_base), size<<1);//Size is to large.
 #endif
 		lcd_display();
+#ifdef CONFIG_SC8830_LVDS
+	    mdelay(100);//LiWei add
+#endif
 		set_backlight(255);
 	}else{
 		memset((unsigned int)lcd_base, 0, size);

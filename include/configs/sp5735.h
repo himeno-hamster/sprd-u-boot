@@ -51,6 +51,7 @@
 #define CONFIG_SP8830
 #define CONFIG_SC8830
 #define CONFIG_SP5735
+#define CONFIG_SC8830_LVDS //LiWei
 
 #define CHIP_ENDIAN_LITTLE
 #define _LITTLE_ENDIAN 1
@@ -228,7 +229,7 @@
 #define DDR3_DLL_ON TRUE
 //#define DLL_BYPASS
 #define DDR_APB_CLK 128
-//#define DDR_DFS_SUPPORT
+#define DDR_DFS_SUPPORT
 #define DDR_DFS_VAL_BASE 0X1c00
 
 //#define DDR_SCAN_SUPPORT
@@ -342,14 +343,16 @@
 #define LCD_BPP LCD_COLOR16
 //#define CONFIG_LCD_HVGA   1
 //#define CONFIG_LCD_QVGA   1
-#define CONFIG_LCD_QHD 1
+//#define CONFIG_LCD_QHD 1//LiWei delete
 //#define CONFIG_LCD_720P 1
+#define CONFIG_LCD_HD 1 //LiWei add
 //#define CONFIG_LCD_INFO
 //#define LCD_TEST_PATTERN
 //#define CONFIG_LCD_LOGO
 //#define CONFIG_FB_LCD_S6D0139
 #define CONFIG_FB_LCD_SSD2075_MIPI
 #define CONFIG_FB_LCD_NT35516_MIPI
+#define CONFIG_FB_LCD_NT51017_LVDS //LiWei add
 #define CONFIG_SYS_WHITE_ON_BLACK
 #ifdef  LCD_TEST_PATTERN
 #define CONSOLE_COLOR_RED 0xf800 

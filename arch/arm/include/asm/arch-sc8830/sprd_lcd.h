@@ -115,6 +115,8 @@ typedef uint32_t (*read_data_t)(void);
 
 typedef int32_t (*mipi_set_cmd_mode_t)(void);
 typedef int32_t (*mipi_set_video_mode_t)(void);
+typedef int32_t (*mipi_set_lp_mode_t)(void);//LiWei
+typedef int32_t (*mipi_set_hs_mode_t)(void);//LiWei
 typedef int32_t (*mipi_gen_write_t)(uint8_t *param, uint16_t param_length);
 typedef int32_t (*mipi_gen_read_t)(uint8_t *param, uint16_t param_length, uint8_t bytes_to_read, uint8_t *read_buffer);
 typedef int32_t (*mipi_dcs_write_t)(uint8_t *param, uint16_t param_length);

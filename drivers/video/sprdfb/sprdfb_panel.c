@@ -74,6 +74,15 @@ static struct panel_cfg lcd_panel[] = {
 };
 #endif
 
+#elif defined CONFIG_SC8830_LVDS //LiWei
+extern struct panel_spec lcd_nt51017_mipi_lvds_spec;
+static struct panel_cfg lcd_panel[] = {
+	[0] = {
+	      .lcd_id = 0xC749,
+	      .panel = &lcd_nt51017_mipi_lvds_spec,
+	      },
+};
+
 #elif defined CONFIG_SC8830
 extern struct panel_spec lcd_nt35516_mipi_spec;
 extern struct panel_spec lcd_ssd2075_mipi_spec;//thomaszhang@20130412
@@ -238,6 +247,15 @@ vidinfo_t panel_info = {
 	.vl_col = 720,
 	.vl_bpix = 4,
 	.vl_row = 1280,
+	.cmap = colormap,
+};
+#endif
+
+#ifdef CONFIG_LCD_HD  //LiWei
+vidinfo_t panel_info = {
+	.vl_col = 768,
+	.vl_bpix = 4,
+	.vl_row = 1024,
 	.cmap = colormap,
 };
 #endif
