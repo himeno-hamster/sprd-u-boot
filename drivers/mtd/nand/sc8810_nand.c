@@ -212,7 +212,7 @@ static struct sc8810_nand_page_oob nand_config_table[] =
 	{0xec, 0xb3, 0x01, 0x66, 0x5a, 4096, 128, 512, 4},
     	{0xec, 0xbc, 0x00, 0x6a, 0x56, 4096, 256, 512, 8},
 	{0x98, 0xbc, 0x90, 0x66, 0x76, 4096, 224, 512, 8},
-        //{0x98, 0xba, 0x90, 0x55, 0x76, 2048, 128, 512, 4},
+        {0x98, 0xba, 0x90, 0x55, 0x76, 2048, 128, 512, 8},
     	{0x2c, 0xbc, 0x90, 0x55, 0x56, 2048, 64,  512, 4},
         {0x2c, 0xb3, 0xd1, 0x55, 0x56, 2048, 64,  512, 4},
 	{0xc8, 0xbc, 0x90, 0x55, 0x54, 2048, 64,  512, 4}
@@ -1005,7 +1005,9 @@ void nand_spl_hardware_config(struct nand_chip *this, u8 id[5])
 			        case 8:
 				    /* 8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 13 bytes */
 				    this->ecc.bytes = 14;
-				    if (nand_config_table[index].oobsize == 224)
+				    if(nand_config_table[index].oobsize == 128)
+                                        this->ecc.layout = &_nand_oob_128;
+				    else if (nand_config_table[index].oobsize == 224)
 					this->ecc.layout = &_nand_oob_224;
 				else
 					this->ecc.layout = &_nand_oob_256;
@@ -1071,7 +1073,11 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, unsigned
 			case 8:
 				/* 8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 13 bytes */
 				this->ecc.bytes = 14;
-				if (nand_config_table[index].oobsize == 224)
+				if(nand_config_table[index].oobsize == 128){
+				   this->ecc.layout = &_nand_oob_128;
+                                   //printf("[yuelin] ecc set 8 bit\n");
+                                }
+				else if (nand_config_table[index].oobsize == 224)
 					this->ecc.layout = &_nand_oob_224;
 				else
 					this->ecc.layout = &_nand_oob_256;
