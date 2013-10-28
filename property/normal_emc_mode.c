@@ -14,6 +14,15 @@ static char     	product_SN[20+1];
 static int		product_SN_flag = 0;
 static wchar_t *factory_partition = L"prodnv";
 
+typedef struct  _NV_HEADER {
+     uint32 magic;
+     uint32 len;
+     uint32 checksum;
+     char *   version;
+}nv_header_t;
+#define NV_HEAD_MAGIC   0x00004e56
+#define NV_VERSION      101
+
 static boot_image_required_t const s_boot_image_table[]={
 #ifdef CONFIG_SC8830
 
@@ -705,45 +714,79 @@ end:
 	return;
 }
 
+LOCAL BOOLEAN _chkNVEcc(uint8* buf, uint32 size,uint32 checksum)
+{
+	uint16 crc;
+
+	crc = calc_checksum(buf,size);
+	printf("_chkNVEcc crc 0x%x\n",crc);
+	return (crc == (uint16)checksum);
+}
+
 /**
 	we assume partition with backup must check ecc.
 */
 LOCAL __inline int _boot_read_partition_with_backup(block_dev_desc_t *dev, boot_image_required_t info)
 {
 	uint8 *bakbuf = NULL;
+	uint8 *oribuf = NULL;
 	u8 status=0;
+	uint8 header[EMMC_SECTOR_SIZE];
+	uint32 checksum = 0;//,magic = 0;
+	nv_header_t * header_p = NULL;
 
-	if(_boot_partition_read(dev, info.partition, 0, info.size, (u8*)info.mem_addr))
-		if(chkEcc((u8*)info.mem_addr, info.size))
-			status += 1;
-
+	header_p = header;
 	bakbuf = malloc(info.size+EMMC_SECTOR_SIZE);
 	if(NULL != bakbuf)
 		memset(bakbuf, 0xff, info.size+EMMC_SECTOR_SIZE);
-	if(_boot_partition_read(dev, info.bak_partition, 0, info.size, bakbuf))
-		if(chkEcc(bakbuf, info.size))
+	oribuf = malloc(info.size+EMMC_SECTOR_SIZE);
+	if(NULL != oribuf)
+		memset(oribuf,0xff,info.size+EMMC_SECTOR_SIZE);
+
+	if(_boot_partition_read(dev, info.partition, 0, info.size+EMMC_SECTOR_SIZE, oribuf)){
+		memset(header,0,EMMC_SECTOR_SIZE);
+		memcpy(header,oribuf,EMMC_SECTOR_SIZE);
+		checksum = header_p->checksum;
+		printf("_boot_read_partition_with_backup origin checksum 0x%x\n",checksum);
+		if(_chkNVEcc(oribuf+EMMC_SECTOR_SIZE,info.size,checksum)){
+			memcpy(info.mem_addr,oribuf+EMMC_SECTOR_SIZE,info.size);
+			status += 1;
+		}
+	}
+	if(_boot_partition_read(dev, info.bak_partition, 0, info.size+EMMC_SECTOR_SIZE, bakbuf)){
+		memset(header,0,EMMC_SECTOR_SIZE);
+		memcpy(header,bakbuf,EMMC_SECTOR_SIZE);
+		checksum = header_p->checksum;
+		printf("_boot_read_partition_with_backup backup checksum 0x%x\n",checksum);
+		if(_chkNVEcc(bakbuf+EMMC_SECTOR_SIZE, info.size,checksum))
 			status += 1<<1;
+	}
 
 	switch(status){
 		case 0:
 			printf("%s:(%s)both org and bak partition are damaged!\n",__FUNCTION__,w2c(info.partition));
+			free(bakbuf);
+			free(oribuf);
 			return 0;
 		case 1:
 			printf("%s:(%s)bak partition is damaged!\n",__FUNCTION__,w2c(info.bak_partition));
-			_boot_partition_write(dev, info.bak_partition, info.size, (u8*)info.mem_addr);
+			_boot_partition_write(dev, info.bak_partition, info.size+EMMC_SECTOR_SIZE,oribuf);
 			break;
 		case 2:
 			printf("%s:(%s)org partition is damaged!\n!",__FUNCTION__,w2c(info.partition));
-			_boot_partition_write(dev, info.partition, info.size, bakbuf);
+			_boot_partition_write(dev, info.partition, info.size+EMMC_SECTOR_SIZE, bakbuf);
 			break;
 		case 3:
 			printf("%s:(%s)both org and bak partition are ok!\n",__FUNCTION__,w2c(info.partition));
 			break;
 		default:
 			printf("%s: status error!\n",__FUNCTION__);
+			free(bakbuf);
+			free(oribuf);
 			return 0;
 	}
-
+	free(bakbuf);
+	free(oribuf);
 	return 1;
 }
 

@@ -79,6 +79,14 @@ typedef struct{
 }EMMC_BootHeader;
 #endif
 
+typedef struct  _NV_HEADER {
+     uint32 magic;
+     uint32 len;
+     uint32 checksum;
+     uint32   version;
+}nv_header_t;
+#define NV_HEAD_MAGIC   0x00004e56
+#define NV_VERSION      101
 
 typedef enum
 {
@@ -614,7 +622,20 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 				{
 					if(FB_PARTITION_PURPOSE_NV == partition_purpose)
 					{
-						_makEcc((uint8*)data, FIXNV_SIZE);
+						nv_header_t *header_p = NULL;
+						uint8  header_buf[EMMC_SECTOR_SIZE];
+
+						memset(header_buf,0x00,EMMC_SECTOR_SIZE);
+						header_p = header_buf;
+						header_p->magic = NV_HEAD_MAGIC;
+						header_p->len = FIXNV_SIZE;
+						header_p->checksum =(uint32)calc_checksum((unsigned char *) data,FIXNV_SIZE);
+						header_p->version = NV_VERSION;
+						if(!Emmc_Write(partition_type, startblock, 1,header_buf)){
+							fastboot_fail("eMMC WRITE_NVHEADER_ERROR!");
+							return;
+						}
+						startblock++;
 						count = ((FIXNV_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1)))/EMMC_SECTOR_SIZE;
 					}
 					goto emmc_write;
