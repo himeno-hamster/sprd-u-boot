@@ -877,6 +877,8 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	boot_img_hdr *hdr = (void *)raw_header;
 	block_dev_desc_t *dev = NULL;
 	char * buf = NULL;
+	char * mode_ptr = NULL;
+	uint32 modem_up = 1;
 	int i;
 
 #if (defined CONFIG_SC8810) || (defined CONFIG_SC8825) || (defined CONFIG_SC8830)
@@ -915,8 +917,19 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #if BOOT_NATIVE_LINUX_MODEM
 	//sipc addr clear
 	sipc_addr_reset();
+#ifdef CONFIG_SC8830
+	mode_ptr = strstr(cmdline, "androidboot.mode=");
+	if (mode_ptr) {
+		if (0 == strncmp(mode_ptr+17, "charger", 7)) {
+			printf("Boot mode is charger , don,t start modem!!!\n");
+			modem_up = 0;
+		}
+	}
+#endif
 	// start modem CP
-	modem_entry();
+	if (modem_up) {
+		modem_entry();
+	}
 #endif
 #ifdef CONFIG_SC8830
 	Emmc_DisSdClk();
