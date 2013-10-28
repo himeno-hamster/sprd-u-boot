@@ -59,7 +59,7 @@ static LCM_Init_Code init_data[] = {
 {LCM_SEND(10), {8, 0, 0xF3,0x02,0x03,0x07,0x45,0x88,0xD1,0x0D}},
 // Manufacture Command Set for Page 0
 {LCM_SEND(8), {6, 0, 0xF0,0x55,0xAA,0x52,0x08,0x00}},
-#if defined(CONFIG_SP8830EC)||defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735)
+#if defined(CONFIG_SP8830EC)||defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM)
 {LCM_SEND(6), {4, 0, 0xB1,0x7C,0x06,0x00}}, // command/video mode,rotate 180
 #else
 {LCM_SEND(6), {4, 0, 0xB1,0x7C,0x00,0x00}}, // command/video mode
