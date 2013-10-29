@@ -229,39 +229,6 @@ static uint32 ArmCoreConfig(uint32 arm_clk)
     dcdc_calibrate(10,mcu_clk_para.dcdc_arm);	//dcdc arm
     dcdc_calibrate(11,mcu_clk_para.dcdc_core);	//dcdc core
 
-    if(mcu_clk_para.dcdc_core < 700)
-    {
-	dcdc_arm |= (5<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 800)
-    {
-	dcdc_arm |= (1<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 900)
-    {
-	dcdc_arm |= (2<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 1000)
-    {
-	dcdc_arm |= (3<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 1100)
-    {
-	dcdc_arm |= (4<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 1200)
-    {
-	dcdc_arm |= (0<<5);
-    }
-    else if(mcu_clk_para.dcdc_core < 1300)
-    {
-	dcdc_arm |= (6<<5);
-    }
-    else
-    {
-	dcdc_arm |= (7<<5);
-    }
-    ANA_REG_SET(ANA_REG_GLB_DCDC_CORE_ADI, dcdc_arm);
     REG32(REG_AP_APB_APB_EB) |= BIT_AP_CKG_EB;
 #else
     dcdc_arm  = ANA_REG_GET(ANA_REG_GLB_DCDC_ARM_ADI);
