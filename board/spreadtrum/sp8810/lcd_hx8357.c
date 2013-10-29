@@ -34,12 +34,12 @@ static int32_t hx8357_init(struct lcd_spec *self)
 	self->ops->lcd_reset(self);
 
 	send_cmd(0x11);				// SLPOUT 
-	LCD_DelayMS(30);   
+	LCD_DelayMS(120);
 	send_cmd(0xB9);
 	send_data(0xFF);
 	send_data(0x83);
 	send_data(0x57);
-	LCD_DelayMS(5);
+	LCD_DelayMS(1);
 
 	send_cmd(0xB1);	  //SETPower 
 	send_data(0x00);	 //STB 
@@ -62,7 +62,7 @@ static int32_t hx8357_init(struct lcd_spec *self)
 	LCD_DelayMS(1); 
 
 	send_cmd(0xB6);	//VCOMDC 
-	send_data(0x5C);	  
+	send_data(0x22);
 	LCD_DelayMS(1);
 
 	send_cmd(0xC0);   //SETSTBA 
@@ -129,7 +129,8 @@ static int32_t hx8357_init(struct lcd_spec *self)
 
 
 	send_cmd(0x36);
-	send_data(0x48);	  
+	//send_data(0x48);
+	send_data(0x40);
 	//send_data(0x08);  
 
 	send_cmd(0x35);	// TE on
