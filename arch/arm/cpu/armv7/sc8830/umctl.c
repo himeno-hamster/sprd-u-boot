@@ -16,8 +16,6 @@
 #include "asm/arch/umctl2_reg.h"
 #include "asm/arch/sprd_reg_base.h"
 
-#if defined(CONFIG_SPX15)
-#include "asm/arch/sprd_reg.h"
 
 #if defined(CONFIG_SPX15)
 #include "asm/arch/sprd_reg.h"

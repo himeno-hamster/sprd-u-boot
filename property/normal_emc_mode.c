@@ -972,4 +972,3 @@ static void product_SN_get(void)
 		product_SN_flag =0;
 	}
 }
-#endif
