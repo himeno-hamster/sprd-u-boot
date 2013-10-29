@@ -211,6 +211,8 @@ extern void usb_in_cal(int flag);
 extern void CHG_TurnOn (void);
 extern void CHG_ShutDown (void);
 
+extern int charger_connected(void);
+
 #define mdelay(_ms) udelay(_ms*1000)
 
 //#define DEBUG
@@ -353,6 +355,12 @@ void calibration_detect(int key)
 #endif
     start_time = get_timer_masked();
     while(!usb_is_configured()){
+        /*down the device if charger disconnect during calibration detect.*/
+        if(!charger_connected()){
+            power_down_devices();
+            while(1);
+        }
+
         ret = is_timeout(key);
         if(ret == 0)
           continue;
@@ -368,6 +376,12 @@ void calibration_detect(int key)
     start_time = get_timer_masked();
     count_ms = get_cal_io_ms();
     while(!usb_is_port_open()){
+        /*down the device if charger disconnect during calibration detect.*/
+        if(!charger_connected()){
+            power_down_devices();
+            while(1);
+        }
+
         ret = is_timeout(key);
         if(ret == 0)
           continue;
