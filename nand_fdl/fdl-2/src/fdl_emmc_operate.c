@@ -14,6 +14,7 @@
 #include "fdl_emmc_operate.h"
 
 #define EFI_SECTOR_SIZE 		(512)
+#define EMMC_MAX_MUTIL_WRITE  (0x8000)
 #define ERASE_SECTOR_SIZE		((64 * 1024) / EFI_SECTOR_SIZE)
 #define EMMC_BUF_SIZE			(((216 * 1024 * 1024) / EFI_SECTOR_SIZE) * EFI_SECTOR_SIZE)
 
@@ -65,7 +66,7 @@ static SPECIAL_PARTITION_CFG const s_special_partition_cfg[]={
 	{{L"wruntimenv1"},{L"wruntimenv2"},IMG_RAW,PARTITION_PURPOSE_NV},
 	{{L"wcnfixnv1"},{L"wcnfixnv2"},IMG_RAW,PARTITION_PURPOSE_NV},
 	{{L"wcnruntimenv1"},{L"wcnruntimenv2"},IMG_RAW,PARTITION_PURPOSE_NV},
-	{{L"system"},NULL,IMG_WITH_SPARSE,PARTITION_PURPOSE_NORMAL},
+	{{L"system"},NULL,IMG_RAW,PARTITION_PURPOSE_NORMAL},
 	{{L"userdata"},NULL,IMG_WITH_SPARSE,PARTITION_PURPOSE_NORMAL},
 	{{L"cache"},NULL,IMG_WITH_SPARSE,PARTITION_PURPOSE_NORMAL},
 	{{L"prodnv"},NULL,IMG_RAW,PARTITION_PURPOSE_NORMAL},
@@ -625,11 +626,23 @@ LOCAL int _emmc_download_image(unsigned long nSectorCount, unsigned long each_wr
 			SEND_ERROR_RSP (BSL_WRITE_ERROR);
 			return 0;
 		}
-	} else if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, g_dl_eMMCStatus.base_sector,
-			nSectorCount, (unsigned char *) g_eMMCBuf)) {
-			g_status.unsave_recv_size = 0;
-			SEND_ERROR_RSP (BSL_WRITE_ERROR);
-			return 0;
+	} else{
+		unsigned long count = nSectorCount;
+		unsigned int saved = 0;
+		unsigned int each;
+		unsigned int base_sector = g_dl_eMMCStatus.base_sector;
+		while(count){
+			each = MIN(count,each_write_block);
+			if (!Emmc_Write(g_dl_eMMCStatus.curEMMCArea, base_sector,
+					each, (unsigned char *) (g_eMMCBuf+(saved*EFI_SECTOR_SIZE)))) {
+				g_status.unsave_recv_size = 0;
+				SEND_ERROR_RSP (BSL_WRITE_ERROR);
+				return 0;
+			}
+			base_sector += each;
+			saved += each;
+			count -= each;
+		}
 	}
 
 	if (IMG_WITH_SPARSE == g_dl_eMMCStatus.curImgType){
@@ -927,7 +940,7 @@ PUBLIC int fdl2_emmc_download_start(wchar_t* partition_name, unsigned long size,
 PUBLIC int fdl2_emmc_download(unsigned short size, char *buf)
 {
 	unsigned long lastSize, nSectorCount;
-	unsigned long each_write_block = 10000;
+	unsigned long each_write_block = EMMC_MAX_MUTIL_WRITE;
 
 	if ((g_status.total_recv_size + size) > g_status.total_size) {
 		printf("%s,size+recvd>total_size!\n", __FUNCTION__);
