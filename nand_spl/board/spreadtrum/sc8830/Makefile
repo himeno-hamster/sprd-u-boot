@@ -43,6 +43,7 @@ endif
 ifdef CONFIG_FPGA
 SPL_COBJS       += mcu.o dram_cfg_fpga.o umctl_fpga.o adi.o chip_cfg.o div0.o string.o lowlevel_init.o
 else
+
 SPL_COBJS	+= mcu.o dram_cfg.o umctl.o ddr_scan.o adi.o chip_cfg.o div0.o string.o lowlevel_init.o
 
 
