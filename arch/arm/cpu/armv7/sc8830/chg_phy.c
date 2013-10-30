@@ -125,7 +125,6 @@ int sprd_charger_is_adapter(void)
 	return ret;
 }
 
-#ifndef CONFIG_SPX15
 #define REGS_FGU_BASE SPRD_ANA_FPU_PHYS
 #define REG_FGU_START                   SCI_ADDR(REGS_FGU_BASE, 0x0000)
 #define REG_FGU_CONFIG                  SCI_ADDR(REGS_FGU_BASE, 0x0004)
@@ -155,7 +154,6 @@ void fgu_init(void)
 	fgu_cur = 0; //sci_adi_read(REG_FGU_CURT_VAL);
 	debugf("fgu_init fgu_vol 0x%x fgu_cur 0x%x \n", fgu_vol, fgu_cur);
 }
-#endif
 
 void CHG_Init(void)
 {
@@ -179,8 +177,6 @@ void CHG_Init(void)
 	ANA_REG_OR(ANA_APB_CHGR_CTL2, CHGR_CC_EN_BIT);
 
 	get_adc_cali_data();
-#ifndef CONFIG_SPX15
 	fgu_init();
-#endif
 }
 #endif

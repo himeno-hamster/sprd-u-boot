@@ -808,7 +808,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 
 		free(adc_data);
 	}
-#ifndef CONFIG_SPX15
+
 #if defined(CONFIG_SC8830)
 	{
 		extern unsigned int fgu_cur;
@@ -817,7 +817,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 		sprintf(&buf[str_len], " fgu_init=%d,%d",fgu_vol,fgu_cur);
 	}
 #endif
-#endif
+
 }
 #endif
     debugf("cmdline_len = %d \n pass cmdline: %s \n",strlen(buf), buf);
