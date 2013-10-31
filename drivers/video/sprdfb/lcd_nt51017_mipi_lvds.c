@@ -34,6 +34,10 @@
 #define SN65DSI83
 //#define CHIPONE
 
+/* MUST define ONLY ONE */
+//#define LINES_ALL_RIGHT
+#define LINES_ONLY_CLK_RIGHT
+//#define LINES_ALL_WRONG // this macro defined only for chipone
 
 
 #define ARRAY_SIZE(array) ( sizeof(array) / sizeof(array[0]))
@@ -85,9 +89,9 @@ const static I2C_Init_Code lvds_init_data[] = {
 		{0x11, 0x00},
 		{0x12, 0x31},
 		{0x13, 0x00},
-#if 0
+#ifdef LINES_ALL_RIGHT
 		{0x18, 0x18},/* all the line is right */
-#else
+#elif defined LINES_ONLY_CLK_RIGHT
         {0x18, 0xF8},/* only clock line is right */
 #endif
 		{0x19, 0x0C},/* 0x00 */
@@ -146,7 +150,13 @@ const static I2C_Init_Code lvds_init_data[] = {
 		{0x69, 0x1C},/*0x1F*/
 		{0x6B, 0x22},
 		{0x5C, 0xFF},
+#ifdef LINES_ALL_RIGHT
+        {0x13, 0x10},
+#elif defined LINES_ONLY_CLK_RIGHT
+        {0x13, 0x1F},
+#elif defined LINES_ALL_WRONG
 		{0x13, 0x5F},
+#endif
 		/*{0x10, 0x47},add*/
 		/*{0x2A, 0x31},modify*/
 		/*{0x2E, 0x40},add*/
