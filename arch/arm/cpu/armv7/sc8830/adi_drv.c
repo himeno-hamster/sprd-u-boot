@@ -20,13 +20,23 @@
 /**---------------------------------------------------------------------------*
  **                         Dependencies                                      *
  **---------------------------------------------------------------------------*/
+
 #include <common.h>
 #include <asm/io.h>
-#include <asm/arch/sci_types.h>
-#include <asm/arch/adi_reg_v3.h>
-#include <asm/arch/chip_drv_common_io.h>
+#include <asm/errno.h>
+#include <asm/arch/ldo.h>
+#include <ubi_uboot.h>
+#include <asm/sizes.h>
+#include <asm/arch/sprd_reg.h>
 
-#define TIMEOUT_ADI	(300)
+#include <asm/arch/chip_drv_common_io.h>
+#include <asm/arch/adi_reg_v3.h>
+
+#ifndef	__ADI_DEBUG__
+#define	__ADI_DEBUG__
+#endif
+
+#define TIMEOUT_ADI	(200000)
 
 /*****************************************************************************
  *  Description:    this function performs read operation to the analog die reg .   *
@@ -50,7 +60,12 @@ unsigned short ADI_Analogdie_reg_read (unsigned int addr)
 	do {
 		adi_rd_data = CHIP_REG_GET (ADI_RD_DATA);		
 		if (!timeout--)
+		{
+#if !(defined(CONFIG_NAND_SPL) || defined(CONFIG_FDL1))
+			printf("[0x%s]: reg = 0x%x, value = 0x%x\n", __func__, addr, adi_rd_data);
+#endif
 			break;
+		}
 	} while (adi_rd_data & BIT_31);
 	
     return ( (unsigned short) (adi_rd_data & 0x0000FFFF));
@@ -75,7 +90,12 @@ void ADI_Analogdie_reg_write (unsigned int addr, unsigned short data)
 			break;
 		}
 		if (!timeout--)
-			return;//NEED TO return ERROR.
+		{
+#if !(defined(CONFIG_NAND_SPL) || defined(CONFIG_FDL1))
+			printf("[0x%s]: reg = 0x%x, value = 0x%x\n", __func__, addr, data);
+#endif
+			return;
+		}
 	} while (1);/*lint !e506*/
 
 	CHIP_REG_SET (addr, data);
