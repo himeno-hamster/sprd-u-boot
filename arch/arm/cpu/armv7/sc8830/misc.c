@@ -130,11 +130,15 @@ void misc_init()
 {
 	ap_slp_cp_dbg_cfg();
 	ap_cpll_rel_cfg();
+#ifndef  CONFIG_SPX15
 	ap_close_wpll_en();
 	ap_close_cpll_en();
 	ap_close_wifipll_en();
+#endif
 	bb_bg_auto_en();
 	bb_ldo_auto_en();
+#ifndef CONFIG_SPX15
 	pbint_7s_rst_cfg(1, 0);
+#endif
 }
 
