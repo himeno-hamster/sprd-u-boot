@@ -215,7 +215,8 @@
 //#define DDR_DDR3
 
 //#define DDR_AUTO_DETECT
-#define DDR_TYPE DRAM_LPDDR2_1CS_4G_X32
+#define DDR_TYPE DRAM_LPDDR2_2CS_6G_X32
+//#define DDR_TYPE DRAM_LPDDR2_1CS_4G_X32
 //#define DDR_TYPE DRAM_LPDDR2_1CS_8G_X32
 //#define DDR_TYPE DRAM_LPDDR2_2CS_8G_X32
 //#define DDR_TYPE DRAM_LPDDR2_2CS_16G_X32
@@ -228,7 +229,6 @@
 #define DDR_DFS_SUPPORT
 #define DDR_DFS_VAL_BASE 0X1c00
 
-#define DDR_SCAN_SUPPORT
 #define MEM_IO_DS LPDDR2_DS_40R
 
 #define PUBL_LPDDR1_DS PUBL_LPDDR1_DS_48OHM
@@ -298,9 +298,9 @@
 
 #define MTDIDS_DEFAULT "nand0=sprd-nand"
 #define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),250m(system),180m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),3840k(productinfo),512k(kpanic)"
-#define CONFIG_BOOTARGS "mem=512M loglevel=1 console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
+//#define CONFIG_BOOTARGS "mem=512M loglevel=1 console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
 // FANGHUACHECK
-//#define CONFIG_BOOTARGS "mem=1024M loglevel=1 console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
+#define CONFIG_BOOTARGS "mem=768M loglevel=1 console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
 
 #define COPY_LINUX_KERNEL_SIZE	(0x600000)
 #define LINUX_INITRD_NAME	"modem"
@@ -334,6 +334,7 @@
 #define FB_DOWNLOAD_BUF_SIZE (350*1024*1024)
 
 #define CONFIG_MODEM_CALIBERATE
+#define CONFIG_MODEM_CALI_UART
 
 #define CONFIG_LCD
 #ifdef  CONFIG_LCD

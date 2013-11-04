@@ -12,9 +12,6 @@ static unsigned char board_key_map[]={
     0x00, KEY_BACK,//DOWN
     0x01, KEY_HOME,//CAM
     0x10, KEY_MENU,//UP
-//   0x10, KEY_VOLUMEUP,//DOWN
-//   0x01, KEY_HOME,//CAM
-//   0x00, KEY_VOLUMEDOWN,//UP
 #endif
 };
 
