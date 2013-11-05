@@ -104,6 +104,7 @@ static struct panel_cfg lcd_panel[] = {
         .panel = &lcd_nt35516_rgb_spi_spec,
         },
 };
+
 #elif defined CONFIG_STAR2
 extern struct panel_spec lcd_panel_ili9486;
 static struct panel_cfg lcd_panel[] = {
@@ -113,6 +114,7 @@ static struct panel_cfg lcd_panel[] = {
 		},
 };
 #else
+
 
 
 
@@ -128,6 +130,7 @@ static struct panel_cfg lcd_panel[] = {
 
 
 #endif
+
 
 
 
