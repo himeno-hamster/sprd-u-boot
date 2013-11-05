@@ -470,8 +470,8 @@ static struct nand_spec_str *get_nand_spec(u8 *nand_id)
     return (struct nand_spec_str *)0;
 }
 
-#define DELAY_NFC_TO_PAD 9
-#define DELAY_PAD_TO_NFC 6
+#define DELAY_NFC_TO_PAD 10
+#define DELAY_PAD_TO_NFC 8
 #define DELAY_RWL (DELAY_NFC_TO_PAD + DELAY_PAD_TO_NFC)
 
 static void set_nfc_timing(struct sc8810_nand_timing_param *nand_timing, u32 nfc_clk_MHz)
@@ -484,7 +484,7 @@ static void set_nfc_timing(struct sc8810_nand_timing_param *nand_timing, u32 nfc
 	cycles = nand_timing->rwh_time * nfc_clk_MHz / 1000 + 2;
 	value |= ((cycles & 0x1F) << NFC_RWH_OFFSET);
 
-	cycles = (nand_timing->rwl_time+DELAY_RWL) * nfc_clk_MHz / 1000 + 1;
+	cycles = (nand_timing->rwl_time+DELAY_RWL) * nfc_clk_MHz / 1000 + 2;
 	value |= ((cycles & 0x3F) << NFC_RWL_OFFSET);
 
 	cycles = nand_timing->acr_time * nfc_clk_MHz / 1000 + 1;
