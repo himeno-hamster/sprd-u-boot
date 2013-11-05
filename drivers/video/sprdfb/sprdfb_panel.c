@@ -21,7 +21,6 @@
 
 static ushort colormap[256];
 
-
 #ifdef CONFIG_SC8810_OPENPHONE
 
 extern struct panel_spec lcd_panel_hx8357;
