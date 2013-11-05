@@ -82,19 +82,13 @@ int main(void)
 
 	do {
 #ifdef CONFIG_EMMC_BOOT
-			/* Initialize eMMC. */
-			extern int mmc_legacy_init(int dev);
-			mmc_legacy_init(1);
-			err = EMMC_SUCCESS;
+		/* Initialize eMMC. */
+		extern int mmc_legacy_init(int dev);
+		mmc_legacy_init(1);
+		err = EMMC_SUCCESS;
 #else
-			err = nand_init();
-			if ((NAND_SUCCESS != err) && (NAND_INCOMPATIBLE_PART != err)) {
-				FDL_SendAckPacket (convert_err (err));
-				break;
-			}
-			if(!fdl_ubi_dev_init()){
-				err = NAND_SYSTEM_ERROR;
-			}
+		nand_init();
+		fdl_ubi_dev_init();
 #endif
 		MMU_Init(0);
 

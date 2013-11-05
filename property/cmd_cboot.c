@@ -67,6 +67,7 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
     write_sysdump_before_boot(rst_mode);
 #endif
 
+
 // 1 get mode from file
     boot_pwr_check();
     switch(get_mode_from_file()){
@@ -76,6 +77,7 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
         break;
         default: // unknown mode
         break;
+
     }
 
 // 2 get mode from watch dog
