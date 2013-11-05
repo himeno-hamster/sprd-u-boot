@@ -23,5 +23,10 @@
 void engtest_mode(void)
 {
     printf("%s\n", __func__);
-    vlx_nand_boot(BOOT_PART, "engtest_mode", BACKLIGHT_ON);
+#if BOOT_NATIVE_LINUX
+    vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=engtest", BACKLIGHT_ON);
+#else
+    vlx_nand_boot(BOOT_PART, "androidboot.mode=engtest", BACKLIGHT_ON);
+#endif
+
 }
