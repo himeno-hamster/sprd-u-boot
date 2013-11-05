@@ -1,3 +1,4 @@
+
 /* drivers/video/sc8825/lcd_nt35516_spi.c
  *
  * Support for nt35516 spi LCD device
