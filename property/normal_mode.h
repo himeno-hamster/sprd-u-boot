@@ -8,6 +8,7 @@
 #include <linux/string.h>
 #include <android_bootimg.h>
 #include <linux/mtd/mtd.h>
+#include <linux/mtd/ubi.h>
 #include <linux/crc32b.h>
 #include <linux/mtd/nand.h>
 #include <nand.h>
@@ -17,6 +18,10 @@
 #include <boot_mode.h>
 #include <malloc.h>
 #include <asm/arch/secure_boot.h>
+#include <ubi_uboot.h>
+#ifdef CONFIG_MTD_PARTITIONS
+#include <linux/mtd/partitions.h>
+#endif
 
 extern unsigned spl_data_buf[0x1000] __attribute__((align(4)));
 extern unsigned harsh_data_buf[8]__attribute__((align(4)));
@@ -41,6 +46,7 @@ extern unsigned char raw_header[8192];
 #define SPL_PART "spl"
 #define FIRMWARE_PART "firmware"
 #define SIMLOCK_PART "simlock"
+#define LOGO_PART "logo"
 #define SIMLOCK_SIZE	1024
 
 #if defined(CONFIG_SC8830)
@@ -269,6 +275,22 @@ typedef struct _tagSP09_PHASE_CHECK
 	unsigned short  iItem;    // part1: Bit0~ Bit_14 indicate test Station,1 : Pass,
 
 }SP09_PHASE_CHECK_T, *LPSP09_PHASE_CHECK_T;
+
+typedef enum{
+	IMG_RAW,
+	IMG_UBIFS,
+	IMG_YAFFS,
+	IMG_MAX
+}img_fs_type;
+
+typedef struct vol_image_required
+{
+	char* vol;  //volume name
+	char* bak_vol;  //if no backup vol, set NULL
+	unsigned long size;  //partition size to be read
+	unsigned long mem_addr;  //target memory addr
+	img_fs_type fs_type;
+}vol_image_required_t;
 
 typedef struct boot_image_required
 {

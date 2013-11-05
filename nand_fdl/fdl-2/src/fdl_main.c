@@ -9,12 +9,8 @@
 #include <asm/arch/dma_drv_fdl.h>
 #include <asm/arch/sc_reg.h>
 
-#ifdef CONFIG_EMMC_BOOT
-#include "fdl_emmc.h"
-#else
-#include "fdl_nand.h"
-#include "flash_command.h"
-#endif
+#include "fdl_cmd_proc.h"
+
 
 extern  const unsigned char FDL2_signature[][24];
 extern int sprd_clean_rtc(void);
@@ -42,48 +38,6 @@ char mempool[1024*1024] = {0};
 extern void get_adc_cali_data (void);
 extern uint32_t CHG_GetAdcCalType(void);
 extern int DCDC_Cal_ArmCore(void);
-#endif
-#ifdef FPGA_TRACE_DOWNLOAD
-#define BIN_TABLE_ADDR	0x80a00000
-typedef struct {
-	unsigned int base_addr;//logic id
-	unsigned int bin_addr; //bin address in dram
-	unsigned int bin_size; //bin size(bytes)
-	unsigned int var;
-}bin_table_t;
-#define WRITE_MAX_SIZE	(1024*8)
-static void write_bin2flash()
-{
-	bin_table_t *pbin_table;
-	int buf_size;
-	int write_size;
-	unsigned char *pbuf;
-	uint32 begin_time,end_time;
-	for(pbin_table = (bin_table_t *)BIN_TABLE_ADDR; pbin_table->base_addr; pbin_table += 1) {
-		printf("write_bin2flash, base_addr=0x%x, bin_addr=0x%x,bin_size=%x\r\n",pbin_table->base_addr, pbin_table->bin_addr,pbin_table->bin_size);
-		begin_time = SCI_GetTickCount();
-#ifdef CONFIG_EMMC_BOOT
-		FDL2_eMMC_DRAM_Download(pbin_table->base_addr, pbin_table->bin_addr, pbin_table->bin_size);
-#else
-		FDL2_DramStart(pbin_table->base_addr, pbin_table->bin_size);
-		pbuf = (unsigned char *)pbin_table->bin_addr;
-		buf_size = pbin_table->bin_size;
-		while(buf_size > 0) {
-			write_size = (buf_size > WRITE_MAX_SIZE) ? WRITE_MAX_SIZE : buf_size;
-			printf("write_bin2flash writesize = 0x%x, pbuf = 0x%x\r\n",write_size, pbuf);
-			if(FDL2_DramMidst(pbuf, write_size) == 0){
-				printf("write_bin2flash, 0x%x, write_size =0x%x\r\n",pbin_table->bin_addr, write_size);
-				while(1); //fail
-			}
-			pbuf += write_size;
-			buf_size  -= write_size;
-		}
-		FDL2_DramEnd();
-#endif
-		end_time = SCI_GetTickCount();
-		printf("write_bin2flash, 0x%x, sucessfully, cost time %d s !\r\n",pbin_table->bin_addr, (end_time-begin_time)/1000);
-	}
-}
 #endif
 int main(void)
 {
@@ -125,29 +79,21 @@ int main(void)
 #else
 	sprd_clean_rtc();
 #endif
-//        FDL_SendAckPacket (BSL_REP_ACK);
+
 	do {
-#ifdef CONFIG_EMMC_BOOT		
-		if(FDL_BootIsEMMC()) {
-			/* Initialize NAND flash. */
+#ifdef CONFIG_EMMC_BOOT
+			/* Initialize eMMC. */
 			extern int mmc_legacy_init(int dev);
 			mmc_legacy_init(1);
-		#ifdef CONFIG_EBR_PARTITION
-			#if defined (CONFIG_SC8825) || defined(CONFIG_SC7710G2) || defined(CONFIG_SC8830)
-				write_mbr_partition_table();
-			#else
-				FDL_SendAckPacket (convert_err (EMMC_INCOMPATIBLE_PART));
-			#endif
-		#else
-			//do nothing
-		#endif
 			err = EMMC_SUCCESS;
-		}
 #else
-			err = nand_flash_init();
+			err = nand_init();
 			if ((NAND_SUCCESS != err) && (NAND_INCOMPATIBLE_PART != err)) {
 				FDL_SendAckPacket (convert_err (err));
 				break;
+			}
+			if(!fdl_ubi_dev_init()){
+				err = NAND_SYSTEM_ERROR;
 			}
 #endif
 		MMU_Init(0);
@@ -155,48 +101,33 @@ int main(void)
 #ifdef FPGA_TRACE_DOWNLOAD
 		if(!err)
 		{
-			write_bin2flash();
+			fdl_ram2flash_dl();
 		}
 		while(1);
 #else
 		/* Register command handler */
 		FDL_DlInit();
-#ifdef CONFIG_EMMC_BOOT	
-		if(FDL_BootIsEMMC()){
-	  		FDL_DlReg(BSL_CMD_START_DATA,     FDL2_eMMC_DataStart,         0);
-	   		FDL_DlReg(BSL_CMD_MIDST_DATA,     FDL2_eMMC_DataMidst,         0);
-	   		FDL_DlReg(BSL_CMD_END_DATA,       FDL2_eMMC_DataEnd,           0);
-			FDL_DlReg(BSL_CMD_READ_FLASH_START,     FDL2_eMMC_ReadStart,         0);
-			FDL_DlReg(BSL_CMD_READ_FLASH_MIDST,     FDL2_eMMC_ReadMidst,         0);
-			FDL_DlReg(BSL_CMD_READ_FLASH_END,     FDL2_eMMC_ReadEnd,         0);
-	   		FDL_DlReg(BSL_ERASE_FLASH,        FDL2_eMMC_Erase,        0);
-		    	FDL_DlReg(BSL_REPARTITION,    	   FDL2_eMMC_Repartition,       0);	
-		}
-#else
-	  		FDL_DlReg(BSL_CMD_START_DATA,     FDL2_DataStart,         0);
-	   		FDL_DlReg(BSL_CMD_MIDST_DATA,     FDL2_DataMidst,         0);
-	   		FDL_DlReg(BSL_CMD_END_DATA,       FDL2_DataEnd,           0);
-	   		FDL_DlReg(BSL_CMD_READ_FLASH,     FDL2_ReadFlash,         0);
-	   		FDL_DlReg(BSL_ERASE_FLASH,        FDL2_EraseFlash,        0);
-			FDL_DlReg(BSL_REPARTITION,    	   FDL2_FormatFlash,       0);
-#endif
-   		FDL_DlReg(BSL_CMD_NORMAL_RESET,   FDL_McuResetNormal/*mcu_reset_boot*/,   0);
-	    	FDL_DlReg(BSL_CMD_READ_CHIP_TYPE, FDL_McuReadChipType, 0);  
-#ifdef CONFIG_EMMC_BOOT
+		FDL_DlReg(BSL_CMD_START_DATA,     FDL2_Download_Start,         0);
+		FDL_DlReg(BSL_CMD_MIDST_DATA,     FDL2_Download_Midst,         0);
+		FDL_DlReg(BSL_CMD_END_DATA,       FDL2_Download_End,           0);
+		FDL_DlReg(BSL_CMD_READ_FLASH_START,     FDL2_Read_Start,         0);
+		FDL_DlReg(BSL_CMD_READ_FLASH_MIDST,     FDL2_Read_Midst,         0);
+		FDL_DlReg(BSL_CMD_READ_FLASH_END,     FDL2_Read_End,         0);
+		FDL_DlReg(BSL_ERASE_FLASH,        FDL2_Erase,        0);
+		FDL_DlReg(BSL_REPARTITION,    	   FDL2_Repartition,       0);
+		FDL_DlReg(BSL_CMD_NORMAL_RESET,   FDL_McuResetNormal/*mcu_reset_boot*/,   0);
+		FDL_DlReg(BSL_CMD_READ_CHIP_TYPE, FDL_McuReadChipType, 0);  
+
 		//Send BSL_INCOMPATIBLE_PARTITION because of FDL2 will know nothing about new partition
 		FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
-#else
-		/* Reply the EXEC cmd received in the 1st FDL. */
-		FDL_SendAckPacket (NAND_SUCCESS == err ? BSL_REP_ACK :
-					BSL_INCOMPATIBLE_PARTITION);
-#endif
-        /* Start the download process. */
-        FDL_DlEntry (DL_STAGE_CONNECTED);
-#endif
-    } while (0);
 
-    /* If we get here, there must be something wrong. */
-   	fdl_error();
-   	return 0;
+		/* Start the download process. */
+		FDL_DlEntry (DL_STAGE_CONNECTED);
+#endif
+	} while (0);
+
+	/* If we get here, there must be something wrong. */
+	fdl_error();
+	return 0;
 }
 

@@ -47,11 +47,15 @@ FDL2_SOBJS_LIST = init.o
 COM_COBJS	= dl_engine.o fdl_crc.o packet.o fdl_channel.o fdl_stdio.o mcu_command.o usb_boot.o drv_usb.o virtual_com.o
 COM_OBJS = $(addprefix $(obj),$(COM_COBJS))
 
-FDL2_COBJS_LIST = migrate.o fdl2_signature.o fdl_main.o fdl_ldo.o
+FDL2_COBJS_LIST = migrate.o fdl2_signature.o fdl_main.o fdl_cmd_proc.o fdl_ldo.o
 ifdef CONFIG_EMMC_BOOT
-FDL2_COBJS_LIST += newfs_msdos.o fdl_emmc_operate.o fdl_emmc_command.o phasecheck.o
+FDL2_COBJS_LIST += newfs_msdos.o fdl_emmc_operate.o phasecheck.o
 else
-FDL2_COBJS_LIST += fdl_nand.o flash_command.o parsemtdparts.o fdl_yaffs2.o
+FDL2_COBJS_LIST += fdl_fill_spl.o fdl_nand_operate.o parsemtdparts.o fdl_mtdparts.o fdl_ubi.o
+endif
+
+ifdef FPGA_TRACE_DOWNLOAD
+FDL2_COBJS_LIST += fdl_ram_dl.o
 endif
 
 FDL2_COBJS = $(addprefix $(obj),$(FDL2_COBJS_LIST))
@@ -60,7 +64,6 @@ FDL2_OBJS = $(FDL2_COBJS) $(FDL2_SOBJS)
 
 MTD_LIB = $(OBJTREE)/drivers/mtd/libmtd.o 
 NAND_LIB = $(OBJTREE)/drivers/mtd/nand/libnand.o
-YAFFS2_LIB = $(OBJTREE)/fs/yaffs2/libyaffs2.o
 COMMON_OBJ = dlmalloc.o idh_layout.o dload_op.o
 COMMON_LIB = $(addprefix $(OBJTREE)/common/,$(COMMON_OBJ))
 DRIVERS_LIB = $(OBJTREE)/drivers/serial/serial_sc8800x.o
@@ -80,7 +83,11 @@ GENERIC_LIB = $(OBJTREE)/lib/libgeneric.o
 ifdef CONFIG_EMMC_BOOT
 UBOOT_LIBS = $(MTD_LIB) $(ARM_LIB) $(NAND_LIB) $(YAFFS2_LIB) $(COMMON_LIB) $(CPU_LIB) $(GENERIC_LIB) $(DRIVERS_LIB) $(ARCH_LIB) $(EMMC_LIB) $(UEFI_LIB) $(EXT4_LIB)
 else
-UBOOT_LIBS = $(MTD_LIB) $(ARM_LIB) $(NAND_LIB) $(YAFFS2_LIB) $(COMMON_LIB) $(CPU_LIB) $(GENERIC_LIB) $(DRIVERS_LIB) $(ARCH_LIB)
+UBOOT_LIBS = $(MTD_LIB) $(ARM_LIB) $(NAND_LIB) $(COMMON_LIB) $(CPU_LIB) $(GENERIC_LIB) $(DRIVERS_LIB) $(ARCH_LIB)
+endif
+
+ifdef CONFIG_CMD_UBI
+UBOOT_LIBS += $(OBJTREE)/drivers/mtd/ubi/libubi.o
 endif
 
 ifdef CONFIG_FS_EXT4

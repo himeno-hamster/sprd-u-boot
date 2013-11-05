@@ -27,7 +27,7 @@ struct cmdline_mtd_partition {
 	struct mtd_partition *parts;
 };
 
-static struct real_mtd_partition realpart[MTDPARTITION_MAX];
+static struct mtd_partition realpart[MTDPARTITION_MAX];
 static int real_current_part = MTDPARTITION_MAX;
 
 /* the command line passed to mtdpart_setupd() */
@@ -36,6 +36,8 @@ static int cmdline_parsed = 0;
 
 
 #define TOLOWER(x) ((x) | 0x20)
+
+extern char * get_mtdparts(void);
 
 static unsigned int simple_guess_base(const char *cp)
 {
@@ -216,29 +218,25 @@ static struct mtd_partition * newpart(char *s,
 	extra_mem += name_len + 1;
 
 	/*printf("partition %02d: name <%14s>, offset %08x, size %08x, mask flags %08x\n",
-	     this_part,
-	     parts[this_part].name,
-	     parts[this_part].offset,
-	     parts[this_part].size,
-	     parts[this_part].mask_flags);*/
+	this_part,
+	parts[this_part].name,
+	parts[this_part].offset,
+	parts[this_part].size,
+	parts[this_part].mask_flags);*/
 	
-	     if (real_current_part >= 0) {
+	if (real_current_part > 0) {
 		real_current_part --;
-		memset(realpart[real_current_part].name, 0, PARTITION_NAME_LEN);
-		strcpy(realpart[real_current_part].name, parts[this_part].name);
+		realpart[real_current_part].name = parts[this_part].name;
 		realpart[real_current_part].offset = parts[this_part].offset;
 		realpart[real_current_part].size = parts[this_part].size;
-		if ((strcmp(realpart[real_current_part].name, "system") == 0) || ((strcmp(realpart[real_current_part].name, "userdata") == 0)))
-			realpart[real_current_part].yaffs = 1;
-		else
-			realpart[real_current_part].yaffs = 0;
-	    } else
+		realpart[real_current_part].mask_flags = parts[this_part].mask_flags;
+	} else
 		printf("mtdparts partition is too much\n");
 
 
 	/* return (updated) pointer to extra_mem memory */
-	if (extra_mem_ptr)
-	  *extra_mem_ptr = extra_mem;
+	if(extra_mem_ptr)
+		*extra_mem_ptr = extra_mem;
 
 	/* return (updated) pointer command line string */
 	*retptr = s;
@@ -312,13 +310,10 @@ static int mtdpart_setup_real(char *s)
 	return 1;
 }
 
-char * get_mtdparts(void);
-int real_parse_cmdline_partitions(struct real_mtd_partition *current, unsigned long long mastersize)
+int parse_cmdline_partitions(unsigned long long mastersize)
 {
+	int i;
 	unsigned long offset;
-	int i, j;
-	unsigned long index;
-	struct cmdline_mtd_partition *part;
 
 	cmdline = get_mtdparts();
 
@@ -342,38 +337,39 @@ int real_parse_cmdline_partitions(struct real_mtd_partition *current, unsigned l
 				offset += realpart[i].size;
 
 
-				printf("id : %02d, name : %20s, offset : 0x%08x, size : 0x%08x, yaffs : %d\n",
+				printf("id : %02d, name : %20s, offset : 0x%08x, size : 0x%08x\n",
 	     			(i - real_current_part),
 				realpart[i].name,
 	     			realpart[i].offset,
-	     			realpart[i].size, realpart[i].yaffs);
+	     			realpart[i].size);
 		}
 	}
 
-	//printf("current->offset = 0x%08x,  real_current_part = %d\n", current->offset, real_current_part);
-	if ((strcmp(current->name, "fixnv") == 0) || ((strcmp(current->name, "backupfixnv") == 0))) {
-		for (j = real_current_part; j < MTDPARTITION_MAX; j ++)
-			if (strcmp(realpart[j].name, current->name) == 0) {
-				current->offset = realpart[j].offset;
-				current->size = realpart[j].size;
-				current->yaffs = realpart[j].yaffs;
-				return 0;
-			}
-		/* not find fixnv or backupfixnv */
-		current->offset = 0xffffffff;
+	return 0;
+}
+
+int parse_mtd_part_info(char *name,struct mtd_partition *part)
+{
+	int i;
+
+	if (!cmdline_parsed){
+		printf("get_mtd_part_info: partition not parsed!\n");
 		return 0;
 	}
-	
-	index = (current->offset & 0x0000FFFF)/2 + real_current_part;
-	if ((index >= real_current_part) && (index < MTDPARTITION_MAX)) {
-		current->offset = realpart[index].offset;
-		strcpy(current->name, realpart[index].name);
-		current->size = realpart[index].size;
-		current->yaffs = realpart[index].yaffs;
-	} else {
-		current->offset = 0xffffffff;
+
+	for(i=MTDPARTITION_MAX;i>0;i--){
+		if(0==strcmp(name, realpart[i].name)){
+			part->offset = realpart[i].offset;
+			part->size = realpart[i].size;
+			part->name = realpart[i].name;
+			part->mask_flags = realpart[i].mask_flags;
+			//debug print,del later
+			printf("get mtd part info:debug i=%d\n",i);
+			return 1;
+		}
 	}
 
-	return 0;
+	printf("get_mtd_part_info: \"%s\" is not a mtd partition.\n",name);
+	return -1;
 }
 

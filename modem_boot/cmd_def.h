@@ -25,6 +25,9 @@ typedef enum _CMD_TYPE
     BSL_ERASE_FLASH,                            /* 0xA */
     BSL_REPARTITION,                            /* 0xB */
     BSL_CMD_SWITCH_MODE = 0x0D,
+    BSL_CMD_READ_FLASH_START =0x10,/*0x10*/
+    BSL_CMD_READ_FLASH_MIDST,		/*0x11*/
+    BSL_CMD_READ_FLASH_END,		/*0x12*/
     BSL_CMD_TYPE_MAX,
 
     /* Start of the Command can be transmited by phone*/

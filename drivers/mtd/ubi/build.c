@@ -700,6 +700,19 @@ static int autoresize(struct ubi_device *ubi, int vol_id)
 }
 
 /**
+ * ubi_autoresize - re-size the volume which has the "auto-resize" flag set.
+ * @ubi: UBI device description object
+ * @vol_id: ID of the volume to re-size
+ *
+ * Returns zero in case of success and a
+ * negative error code in case of failure.
+ */
+int ubi_autoresize(struct ubi_device *ubi, int vol_id)
+{
+	return autoresize(ubi, vol_id);
+}
+
+/**
  * ubi_attach_mtd_dev - attach an MTD device.
  * @mtd_dev: MTD device description object
  * @ubi_num: number to assign to the new UBI device

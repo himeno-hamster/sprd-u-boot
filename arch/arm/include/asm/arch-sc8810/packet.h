@@ -19,7 +19,11 @@ struct PACKET_BODY_tag
 {
     unsigned short  type;
     unsigned short  size;
+#ifndef FPGA_TRACE_DOWNLOAD
     unsigned char   content[ MAX_PKT_SIZE ];
+#else
+    char*              content;
+#endif
 };
 
 typedef struct PACKET_tag
