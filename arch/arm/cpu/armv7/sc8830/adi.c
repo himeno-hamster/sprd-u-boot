@@ -25,10 +25,16 @@
 #include <asm/sizes.h>
 #include <asm/arch/sprd_reg.h>
 
+#include <asm/arch/chip_drv_common_io.h>
+
 #ifdef SPRD_MISC_BASE
 #undef SPRD_MISC_BASE
 #endif
 #define SPRD_MISC_BASE SPRD_MISC_PHYS
+
+#ifndef	__ADI_DEBUG__
+#define __ADI_DEBUG__
+#endif
 
 /* registers definitions for controller CTL_ADI */
 #define REG_ADI_CTRL0					(SPRD_MISC_BASE + 0x04)
@@ -130,7 +136,7 @@ static inline u32 __adi_translate_addr(u32 regvddr)
 static inline int __adi_read(u32 regPddr)
 {
 	unsigned long val;
-	int cnt = 2000;
+	int cnt = 200000;
 
 	/*
 	 * We don't wait write fifo empty in here,
@@ -148,7 +154,12 @@ static inline int __adi_read(u32 regPddr)
 		val = __raw_readl(REG_ADI_RD_DATA);
 	} while ((val & BIT_RD_CMD_BUSY) && cnt--);
 
-	WARN(cnt == 0, "ADI READ timeout!!!");
+#ifdef __ADI_DEBUG__
+	if (cnt + 1 <= 0)
+		printf("[0x%s]: reg = 0x%x, value = 0x%x\n", __func__, regPddr, val);
+#else
+	WARN((cnt + 1) == 0, "ADI READ timeout!!!");
+#endif
 	/* val high part should be the address of the last read operation */
 	BUG_ON(TO_ADDR(val) != (regPddr & readback_addr_mak));
 
