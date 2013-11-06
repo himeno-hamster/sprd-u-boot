@@ -121,6 +121,11 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
             normal_mode();
         }
     }
+#ifdef CONFIG_SP8830SSW
+   else if (1) {
+		;
+   }
+#endif
     // 4 get mode from charger
     else if(charger_connected()){
         DBG("cboot:get mode from charger\n");
