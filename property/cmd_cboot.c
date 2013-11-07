@@ -56,9 +56,11 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 #ifndef CONFIG_MACH_CORI
     if(is_bat_low()){
         DBG("cboot:low battery and shutdown\n");
-        mdelay(10000);
-        power_down_devices();
+#ifndef CONFIG_SP8830SSW
+     	mdelay(10000);
+	power_down_devices();
         while(1);
+#endif
     }
 #endif    
 #ifdef CONFIG_SPRD_SYSDUMP
