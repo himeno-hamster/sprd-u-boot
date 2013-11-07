@@ -54,7 +54,7 @@ bool lcd_resume = true;
 #ifdef MCP_F2R1
 #define MODEM_SIZE		(3500 * 1024)  	/* 3.5MB */
 #else
-#define MODEM_SIZE		(8 * 1024 * 1024)
+#define MODEM_SIZE		(6 * 1024 * 1024)
 #endif
 
 #define DSP_ADR			0x00020000
