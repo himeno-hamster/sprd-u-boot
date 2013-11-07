@@ -753,11 +753,11 @@ static u32 sprd_dolphin_get_decode_sts(u32 index)
 	err >>= shift;
 	if((err & ECC_ALL_FF))
 	{
-		err = 0;
+		err &= ERR_ERR_NUM0_MASK;
 	}
 	else
 	{
-		err &= ERR_ERR_NUM0_MASK;
+		err = 0;
 	}
 	return err;
 }

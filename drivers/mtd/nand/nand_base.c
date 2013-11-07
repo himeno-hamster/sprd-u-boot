@@ -2953,6 +2953,7 @@ int nand_scan_tail(struct mtd_info *mtd)
 	 * Allow subpage writes up to ecc.steps. Not possible for MLC
 	 * FLASH.
 	 */
+	chip->options |= NAND_NO_SUBPAGE_WRITE;
 	if (!(chip->options & NAND_NO_SUBPAGE_WRITE) &&
 	    !(chip->cellinfo & NAND_CI_CELLTYPE_MSK)) {
 		switch(chip->ecc.steps) {

@@ -1,5 +1,4 @@
 #include "normal_mode.h"
-
 extern void cmd_yaffs_mount(char *mp);
 extern void cmd_yaffs_umount(char *mp);
 extern int cmd_yaffs_ls_chk(const char *dirfilename);
@@ -73,6 +72,7 @@ int read_spldata()
 	struct mtd_info *nand;
 	int size = CONFIG_SPL_LOAD_LEN;
 
+
 	int ret = find_dev_and_part(SPL_PART, &dev, &pnum, &part);
 	if (ret) {
 		debugf("No partition named %s\n", SPL_PART);
@@ -84,6 +84,7 @@ int read_spldata()
 	off = part->offset;
 	nand = &nand_info[dev->id->num];
 	flash_page_size = nand->writesize;
+
 
 	ret = nand_read_offset_ret(nand, off, &size, (void*)spl_data, &off);
 	if(ret != 0) {
@@ -795,6 +796,12 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	secure_check(VMJALUNA_ADR, 0, VMJALUNA_ADR + VMJALUNA_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
 #endif
 	creat_cmdline(cmdline,hdr);
+#if BOOT_NATIVE_LINUX_MODEM
+	//sipc addr clear
+	sipc_addr_reset();
+	// start modem CP
+	modem_entry();
+#endif
 	vlx_entry();
 }
 
