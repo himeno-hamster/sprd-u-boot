@@ -8,6 +8,8 @@ void *spl_data = spl_data_buf;
 void *harsh_data = harsh_data_buf;
 unsigned char raw_header[8192];
 const int SP09_MAX_PHASE_BUFF_SIZE = sizeof(SP09_PHASE_CHECK_T);
+unsigned int g_charger_mode = 0;
+extern int charger_connected(void);
 
 int eng_getphasecheck(SP09_PHASE_CHECK_T* phase_check)
 {
@@ -787,6 +789,12 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 }
 void vlx_entry()
 {
+        /*down the device if charger disconnect during calibration detect.*/
+        if ( g_charger_mode && !charger_connected() ){
+            g_charger_mode = 0;
+            power_down_devices();
+            while(1);
+        }
 #if !(defined CONFIG_SC8810 || defined CONFIG_TIGER || defined CONFIG_SC8830)
 	MMU_InvalideICACHEALL();
 #endif

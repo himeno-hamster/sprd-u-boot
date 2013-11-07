@@ -15,11 +15,13 @@
 #if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W)
 extern 	void modem_poweroff(void);
 #endif
+extern unsigned int g_charger_mode;
 
 void charge_mode(void)
 {
     printf("%s\n", __func__);
 
+    g_charger_mode = 1;
 #if defined(CONFIG_SP7702) || defined(CONFIG_SP8810W)
 	modem_poweroff();
 #endif
