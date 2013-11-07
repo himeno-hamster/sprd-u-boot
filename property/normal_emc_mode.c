@@ -18,7 +18,7 @@ typedef struct  _NV_HEADER {
      uint32 magic;
      uint32 len;
      uint32 checksum;
-     char *   version;
+     uint32   version;
 }nv_header_t;
 #define NV_HEAD_MAGIC   0x00004e56
 #define NV_VERSION      101
