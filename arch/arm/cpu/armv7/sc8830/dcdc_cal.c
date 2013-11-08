@@ -486,7 +486,7 @@ int DCDC_Cal_ArmCore(void)
 	}
 
 	/* wait a moment for LDOs ready */
-	udelay(1000 * 1000);
+	udelay(200 * 1000);
 
 	/* TODO: verify all DCDCs */
 	desc = (struct regulator_desc *)(&__init_begin + 1);
