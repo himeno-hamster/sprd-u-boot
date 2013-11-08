@@ -1811,7 +1811,9 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
     //REG32(0x402b0128) = 1;
     //#endif
     sdram_clk_set(dmc_clk);
-
+    #if defined(CONFIG_SPX15)
+    REG32(0x402b00f0) |= (1<<31);
+    #endif
     //enable umctl,publ,phy
     umctl2_ctl_en(TRUE);
     
@@ -1881,11 +1883,17 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 #ifdef DDR_LPDDR2
 CLK_TYPE_E DDR_DFS_POINT[] = 
 {
-	CLK_100MHZ,
+#if defined(CONFIG_SPX15)
+        CLK_192MHZ,
+        CLK_332MHZ
+#else
+
+        CLK_100MHZ,
 	CLK_200MHZ,
 	CLK_333MHZ,
 	CLK_400MHZ, 
 	CLK_533MHZ,
+#endif
 };
 #else
 CLK_TYPE_E DDR_DFS_POINT[] = 
