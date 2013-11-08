@@ -238,12 +238,15 @@ int dcdc_set_voltage(struct regulator_desc *desc, int ctl_vol, int to_vol)
 	if (i < 0)
 		return -1;
 
-	printf("dcdc (%s) %d = %d %+dmv\n", desc->name, 
+	printf("dcdc (%s) %d = %d +%d mv\n", desc->name, 
 		mv, regs->vol_sel[i], mv - regs->vol_sel[i]);
 	{
 		/* dcdc calibration control bits (default 00000),
 		* small adjust voltage: 100/32mv ~= 3.125mv */
-		int j = DIV_ROUND((mv - regs->vol_sel[i]) * 32, 100) % 32;
+		int j = DIV_ROUND((mv - regs->vol_sel[i]) * 32, 100) ;
+		if (j >= 32) {
+			j = 31;
+		}
 		sci_adi_write(regs->vol_trm,
 			(BITS_DCDC_CAL(j) | (BITS_DCDC_CAL_RST(BITS_DCDC_CAL(-1) - j))), -1);
 	}
@@ -296,8 +299,7 @@ int sci_ldo_calibrate(struct regulator_desc *desc, int adc_chan, int def_vol, in
 		cal_vol = abs(adc_vol - to_vol);
 		if (cal_vol > to_vol / 10)	/* adjust limit 10% */
 			goto exit;
-		else if (!is_cal && (cal_vol < to_vol / 100 || 
-							(adc_vol > to_vol && cal_vol < to_vol * 15 / 1000))) {
+		else if (cal_vol < to_vol / 100 || (adc_vol > to_vol && cal_vol < to_vol * 15 / 1000)) {
 			/* margin 1% ~ 1.5% */
 			printf("%s %s is ok\n\n", __FUNCTION__, desc->name);
 			return 0;
@@ -321,20 +323,46 @@ exit:
 	return -1;
 }
 /*******************      Calibration      ************************************/
+int dcdc_set_def_volt(struct regulator_desc *desc, int def_vol)
+{
+	const struct regulator_regs *regs = desc->regs;
+	u32 mv;
+	int i, shft = __ffs(regs->vol_ctl_bits);
+	int max = regs->vol_ctl_bits >> shft;
+
+	if (!regs->vol_ctl || !regs->vol_trm)
+		return -1;
+
+	mv = (def_vol / 100) * 100;
+	/* found the closely vol ctrl bits */
+	i = __match_dcdc_vol(regs, mv);
+	if (i < 0)
+		return -1;
+
+	/* clear trm register value */
+	sci_adi_write(regs->vol_trm,
+			(BITS_DCDC_CAL(0) | (BITS_DCDC_CAL_RST(BITS_DCDC_CAL(-1)))), -1);
+
+	/* set ctl value */
+	sci_adi_write(regs->vol_ctl, i | (max - i) << 4, -1);
+	return 0;
+}
+
 struct ldo_map {
 	const char *name;	/* a-die DCDC or LDO name */
 	int def_on;		/* 1: default ON, 0: default OFF */
 	u32 def_vol;		/* default voltage (mV), could not read from a-die */
+	u32 to_vol;		/* want to set voltage write in this */
 	u32 cal_sel;		/* only one ldo cal can be enable at the same time */
 	int adc_chan;		/* multiplexed adc-channel id for LDOs */
 };
 #define BITS_LDO_VSIM_CAL_EN(_x_)				( (_x_) & (BIT(3)|BIT(5)) )
 struct ldo_map ldo_map[] = {
-	{"vddcore", 1, 1100, 0, ADC_CHANNEL_DCDCCORE},
-	{"vddarm", 1, 1200, 0, ADC_CHANNEL_DCDCARM},
-	{"vddmem", 1, 1200, 0, ADC_CHANNEL_DCDCMEM},	/*DDR2 */
+	{"vddcore", 1, 1100, 1100, 0, ADC_CHANNEL_DCDCCORE},
+	{"vddarm", 1, 1200, 1200, 0, ADC_CHANNEL_DCDCARM},
+	{"vddmem", 1, 1200, 1200, 0, ADC_CHANNEL_DCDCMEM},	/*DDR2 */
 //      {"vddmem1", 0, 1800, 0, ADC_CHANNEL_DCDCMEM},       /*DDR1 */
-	{"vddsim0", 0, 1800, BITS_LDO_VSIM_CAL_EN(-1), ADC_CHANNEL_LDO1},
+	{"vddsim0", 0, 1800, 1800, BITS_LDO_VSIM_CAL_EN(-1), ADC_CHANNEL_LDO1},
 };
 
 int DCDC_Cal_ArmCore(void)
@@ -351,11 +379,15 @@ int DCDC_Cal_ArmCore(void)
 	for (i = 0; i < (sizeof(ldo_map) / sizeof(ldo_map[0])); i++) {
 		int adc_chan = ldo_map[i].adc_chan;
 		int def_vol = ldo_map[i].def_vol;
+		int to_vol = ldo_map[i].to_vol;
 		const char *name = ldo_map[i].name;
 		struct regulator_desc *desc = sci_ldo_request(name);
 
 		/* turn on ldo at first */
 		if (ldo_map[i].def_on) {
+			if (2 /*DCDC*/ == desc->regs->typ) {
+				dcdc_set_def_volt(desc, ldo_map[i].def_vol);
+			}
 			printf("regu (%s) default on\n", name);
 		} else {
 			ret = sci_ldo_turn_on(desc);
@@ -369,7 +401,7 @@ int DCDC_Cal_ArmCore(void)
 		}
 
 		/* calibrate ldo throught adc channel feedback */
-		ret = sci_ldo_calibrate(desc, adc_chan, def_vol, def_vol, 1);
+		ret = sci_ldo_calibrate(desc, adc_chan, def_vol, to_vol, 1);
 
 		/* close ldo cal */
 		if (0 != ldo_map[i].cal_sel) {

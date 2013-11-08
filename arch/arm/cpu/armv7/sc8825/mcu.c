@@ -348,6 +348,7 @@ static uint32 ClkConfig()
     uint16 reg_data;
 
     if (sci_efuse_overclocking_get()) {
+        /* if used dcdc calibration in uboot, dcdc_arm,dcdc_core set in dcdc_cal.c */
         //DCDC ARM 1.3V
         reg_data = ADI_Analogdie_reg_read(0x420006AC);
         reg_data &=  ~(0xff);
