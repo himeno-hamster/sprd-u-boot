@@ -137,6 +137,7 @@ void set_backlight(uint32_t value)
 #if defined (CONFIG_STAR2)
 	FB_PRINT("sprdfb: [%s] turn on the backlight\n", __FUNCTION__);
 
+
 	sprd_gpio_request(NULL, 190);
 	sprd_gpio_direction_output(NULL, 190, 1);
     sprd_gpio_set(NULL, 190, 1);
