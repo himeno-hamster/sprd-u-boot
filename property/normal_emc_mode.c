@@ -81,19 +81,19 @@ int Calibration_read_partition(block_dev_desc_t *p_block_dev, wchar_t* partition
 	char * buffer =NULL;
 
 	if ( 0 != get_partition_info_by_name(p_block_dev, partition_name, &info)) {
-		printf("## %s partition not found ##\n", partition_name);
+		debugf("## %s partition not found ##\n", partition_name);
 		return -1;
 	}
-	printf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
+	debugf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
 
 	if(len == 0){
-		printf("The size for reading error \n");
+		debugf("The size for reading error \n");
 		return -1;
 	}
 
 	if(size == 0){
 		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-			printf("emmc image0 read error \n");
+			debugf("emmc image0 read error \n");
 			return -1;
 		}
 		return ret;
@@ -101,7 +101,7 @@ int Calibration_read_partition(block_dev_desc_t *p_block_dev, wchar_t* partition
 
 	if(numb >0){
 		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-			printf("emmc image1 read error \n");
+			debugf("emmc image1 read error \n");
 			return -1;
 		}
 		info.start = info.start + numb * EMMC_SECTOR_SIZE;
@@ -109,12 +109,12 @@ int Calibration_read_partition(block_dev_desc_t *p_block_dev, wchar_t* partition
 
 	buffer = malloc(EMMC_SECTOR_SIZE);
 	if(buffer == NULL){
-		printf("malloc memory  error \n");
+		debugf("malloc memory  error \n");
 		return -1;
 	}
 	memset(buffer, 0xff, EMMC_SECTOR_SIZE);
 	if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
-		printf("emmc image2 read error \n");
+		debugf("emmc image2 read error \n");
 		free(buffer);
 		return -1;
 	}
@@ -132,19 +132,19 @@ int Calibration_write_partition(block_dev_desc_t *p_block_dev, wchar_t* partitio
 	char * buffer =NULL;
 
 	if ( 0 != get_partition_info_by_name(p_block_dev, partition_name, &info)) {
-		printf("## %s partition not found ##\n", partition_name);
+		debugf("## %s partition not found ##\n", partition_name);
 		return -1;
 	}
-	printf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
+	debugf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
 
 	if(len == 0){
-		printf("The size for writing error \n");
+		debugf("The size for writing error \n");
 		return -1;
 	}
 
 	if(size == 0){
 		if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-			printf("emmc image0 write error \n");
+			debugf("emmc image0 write error \n");
 			return -1;
 		}
 		return ret;
@@ -152,7 +152,7 @@ int Calibration_write_partition(block_dev_desc_t *p_block_dev, wchar_t* partitio
 
 	if(numb >0){
 		if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-			printf("emmc image1 write error \n");
+			debugf("emmc image1 write error \n");
 			return -1;
 		}
 		info.start = info.start + numb * EMMC_SECTOR_SIZE;
@@ -160,13 +160,13 @@ int Calibration_write_partition(block_dev_desc_t *p_block_dev, wchar_t* partitio
 
 	buffer = malloc(EMMC_SECTOR_SIZE);
 	if(buffer == NULL){
-		printf("malloc memory  error \n");
+		debugf("malloc memory  error \n");
 		return -1;
 	}
 	memset(buffer, 0xff, EMMC_SECTOR_SIZE);
 	memcpy(buffer,(buf+numb*EMMC_SECTOR_SIZE),size);
 	if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
-		printf("emmc image2 write error \n");
+		debugf("emmc image2 write error \n");
 		free(buffer);
 		return -1;
 	}
@@ -197,19 +197,19 @@ int prodinfo_read_partition(block_dev_desc_t *p_block_dev, wchar_t *partition, i
 	char * buffer =NULL;
 
 	if ( 0 != get_partition_info_by_name(p_block_dev, partition, &info)) {
-		printf("## %s partition not found ##\n", partition);
+		debugf("## %s partition not found ##\n", partition);
 		return 1;
 	}
-	printf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
+	debugf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
 	if(len == 0){
-		printf("The size for reading error \n");
+		debugf("The size for reading error \n");
 		return 1;
 	}
 	info.start = info.start + offset_block;
 	if(size != 0){
 		if(numb >0){
 			if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-				printf("emmc image1 read error \n");
+				debugf("emmc image1 read error \n");
 				return 1;
 			}
 			info.start = info.start + numb * EMMC_SECTOR_SIZE;
@@ -217,12 +217,12 @@ int prodinfo_read_partition(block_dev_desc_t *p_block_dev, wchar_t *partition, i
 
 		buffer = malloc(EMMC_SECTOR_SIZE);
 		if(buffer == NULL){
-			printf("malloc memory  error \n");
+			debugf("malloc memory  error \n");
 			return 1;
 		}
 		memset(buffer, 0xff, EMMC_SECTOR_SIZE);
 		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
-			printf("emmc image2 read error \n");
+			debugf("emmc image2 read error \n");
 			free(buffer);
 			return 1;
 		}
@@ -231,7 +231,7 @@ int prodinfo_read_partition(block_dev_desc_t *p_block_dev, wchar_t *partition, i
 	}
 	else{
 		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-			printf("emmc image3 read error \n");
+			debugf("emmc image3 read error \n");
 			return 1;
 		}
 	}
@@ -285,7 +285,7 @@ int read_logoimg(char *bmp_img,size_t size)
 	}
 	if (!get_partition_info_by_name(p_block_dev, L"logo", &info)) {
 		if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, size/EMMC_SECTOR_SIZE, bmp_img)){
-			printf("function: %s nand read error\n", __FUNCTION__);
+			debugf("function: %s nand read error\n", __FUNCTION__);
 			return -1;
 		}
 	}
@@ -299,12 +299,12 @@ int is_factorymode()
 
 	if ( ext4_read_content(1,factory_partition,"/factorymode.file",factorymode_falg,0,8))
 		return 0;
-	printf("Checking factorymode :  factorymode_falg = %s \n", factorymode_falg);
+	debugf("Checking factorymode :  factorymode_falg = %s \n", factorymode_falg);
 	if(!strcmp(factorymode_falg, "1"))
 		ret = 1;
 	else
 		ret = 0;
-	printf("Checking factorymode :  ret = %d \n", ret);
+	debugf("Checking factorymode :  ret = %d \n", ret);
 	return ret;
 }
 
@@ -432,12 +432,12 @@ void addcmdline(char *buf)
 	char* nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG));
 	sprintf(nv_infor, buf);
 	nv_infor[str_len] = '\0';
-	printf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
+	debugf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
 #if defined (CONFIG_SC8830)
 	nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG_WCDMA));
 	sprintf(nv_infor, buf);
 	nv_infor[str_len] = '\0';
-	printf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
+	debugf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
 #endif
 #endif
 }
@@ -446,7 +446,7 @@ int read_spldata()
 {
 	int size = CONFIG_SPL_LOAD_LEN;
 	if(TRUE !=  Emmc_Read(PARTITION_BOOT1, 0, size/EMMC_SECTOR_SIZE, (uint8*)spl_data)){
-		printf("vmjaluna nand read error \n");
+		debugf("vmjaluna nand read error \n");
 		return -1;
 	}
 	return 0;
@@ -634,7 +634,7 @@ PUBLIC int _boot_partition_read(block_dev_desc_t *dev, wchar_t* partition_name, 
 	disk_partition_t info;
 
 	if(NULL == buf){
-		printf("%s:buf is NULL!\n", __FUNCTION__);
+		debugf("%s:buf is NULL!\n", __FUNCTION__);
 		return 0;
 	}
 	size = (size +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
@@ -643,16 +643,16 @@ PUBLIC int _boot_partition_read(block_dev_desc_t *dev, wchar_t* partition_name, 
 	{
 		if(TRUE != Emmc_Read(PARTITION_USER, info.start+offsetsector, size, buf))
 		{
-			printf("%s: partition:%s read error!\n", __FUNCTION__,w2c(partition_name));
+			debugf("%s: partition:%s read error!\n", __FUNCTION__,w2c(partition_name));
 			return 0;
 		}
 	}
 	else
 	{
-		printf("%s: partition:%s >>>get partition info failed!\n", __FUNCTION__,w2c(partition_name));
+		debugf("%s: partition:%s >>>get partition info failed!\n", __FUNCTION__,w2c(partition_name));
 		return 0;
 	}
-	printf("%s: partition:%s read success!\n", __FUNCTION__,w2c(partition_name));
+	debugf("%s: partition:%s read success!\n", __FUNCTION__,w2c(partition_name));
 	return 1;
 }
 
@@ -664,7 +664,7 @@ PUBLIC int _boot_partition_write(block_dev_desc_t *dev, wchar_t* partition_name,
 	disk_partition_t info;
 
 	if(NULL == buf){
-		printf("%s:buf is NULL!\n", __FUNCTION__);
+		debugf("%s:buf is NULL!\n", __FUNCTION__);
 		return 0;
 	}
 	size = (size +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
@@ -673,16 +673,16 @@ PUBLIC int _boot_partition_write(block_dev_desc_t *dev, wchar_t* partition_name,
 	{
 		if(TRUE != Emmc_Write(PARTITION_USER, info.start, size, buf))
 		{
-			printf("%s: partition:%s read error!\n", __FUNCTION__,w2c(partition_name));
+			debugf("%s: partition:%s read error!\n", __FUNCTION__,w2c(partition_name));
 			return 0;
 		}
 	}
 	else
 	{
-		printf("%s: partition:%s >>>get partition info failed!\n", __FUNCTION__,w2c(partition_name));
+		debugf("%s: partition:%s >>>get partition info failed!\n", __FUNCTION__,w2c(partition_name));
 		return 0;
 	}
-	printf("%s: partition:%s write success!\n", __FUNCTION__,w2c(partition_name));
+	debugf("%s: partition:%s write success!\n", __FUNCTION__,w2c(partition_name));
 	return 1;
 }
 
@@ -700,12 +700,12 @@ LOCAL __inline void _boot_display_logo(block_dev_desc_t *dev, int backlight_set)
 #endif
 	uint8 * bmp_img = malloc(size);
 	if(!bmp_img){
-	    printf("%s: malloc for splash image failed!\n",__FUNCTION__);
+	    debugf("%s: malloc for splash image failed!\n",__FUNCTION__);
 	    return;
 	}
 	if(!_boot_partition_read(dev, L"logo", 0, size, bmp_img)) 
 	{
-		printf("%s: read logo partition failed!\n",__FUNCTION__);
+		debugf("%s: read logo partition failed!\n",__FUNCTION__);
 		goto end;
 	}
 	lcd_display_logo(backlight_set,(ulong)bmp_img,size);
@@ -719,7 +719,7 @@ LOCAL BOOLEAN _chkNVEcc(uint8* buf, uint32 size,uint32 checksum)
 	uint16 crc;
 
 	crc = calc_checksum(buf,size);
-	printf("_chkNVEcc crc 0x%x\n",crc);
+	debugf("_chkNVEcc crc 0x%x\n",crc);
 	return (crc == (uint16)checksum);
 }
 
@@ -747,7 +747,7 @@ LOCAL __inline int _boot_read_partition_with_backup(block_dev_desc_t *dev, boot_
 		memset(header,0,EMMC_SECTOR_SIZE);
 		memcpy(header,oribuf,EMMC_SECTOR_SIZE);
 		checksum = header_p->checksum;
-		printf("_boot_read_partition_with_backup origin checksum 0x%x\n",checksum);
+		debugf("_boot_read_partition_with_backup origin checksum 0x%x\n",checksum);
 		if(_chkNVEcc(oribuf+EMMC_SECTOR_SIZE,info.size,checksum)){
 			memcpy(info.mem_addr,oribuf+EMMC_SECTOR_SIZE,info.size);
 			status += 1;
@@ -757,30 +757,30 @@ LOCAL __inline int _boot_read_partition_with_backup(block_dev_desc_t *dev, boot_
 		memset(header,0,EMMC_SECTOR_SIZE);
 		memcpy(header,bakbuf,EMMC_SECTOR_SIZE);
 		checksum = header_p->checksum;
-		printf("_boot_read_partition_with_backup backup checksum 0x%x\n",checksum);
+		debugf("_boot_read_partition_with_backup backup checksum 0x%x\n",checksum);
 		if(_chkNVEcc(bakbuf+EMMC_SECTOR_SIZE, info.size,checksum))
 			status += 1<<1;
 	}
 
 	switch(status){
 		case 0:
-			printf("%s:(%s)both org and bak partition are damaged!\n",__FUNCTION__,w2c(info.partition));
+			debugf("%s:(%s)both org and bak partition are damaged!\n",__FUNCTION__,w2c(info.partition));
 			free(bakbuf);
 			free(oribuf);
 			return 0;
 		case 1:
-			printf("%s:(%s)bak partition is damaged!\n",__FUNCTION__,w2c(info.bak_partition));
+			debugf("%s:(%s)bak partition is damaged!\n",__FUNCTION__,w2c(info.bak_partition));
 			_boot_partition_write(dev, info.bak_partition, info.size+EMMC_SECTOR_SIZE,oribuf);
 			break;
 		case 2:
-			printf("%s:(%s)org partition is damaged!\n!",__FUNCTION__,w2c(info.partition));
+			debugf("%s:(%s)org partition is damaged!\n!",__FUNCTION__,w2c(info.partition));
 			_boot_partition_write(dev, info.partition, info.size+EMMC_SECTOR_SIZE, bakbuf);
 			break;
 		case 3:
-			printf("%s:(%s)both org and bak partition are ok!\n",__FUNCTION__,w2c(info.partition));
+			debugf("%s:(%s)both org and bak partition are ok!\n",__FUNCTION__,w2c(info.partition));
 			break;
 		default:
-			printf("%s: status error!\n",__FUNCTION__);
+			debugf("%s: status error!\n",__FUNCTION__);
 			free(bakbuf);
 			free(oribuf);
 			return 0;
@@ -795,7 +795,7 @@ LOCAL __inline int _boot_read_partition_with_backup(block_dev_desc_t *dev, boot_
 */
 LOCAL __inline int _boot_load_required_image(block_dev_desc_t *dev, boot_image_required_t img_info)
 {
-	printf("%s: load %s to addr 0x%08x\n",__FUNCTION__,w2c(img_info.partition),img_info.mem_addr);
+	debugf("%s: load %s to addr 0x%08x\n",__FUNCTION__,w2c(img_info.partition),img_info.mem_addr);
 
 	if(NULL != img_info.bak_partition)
 	{
@@ -819,19 +819,19 @@ LOCAL int _boot_load_kernel_ramdisk_image(block_dev_desc_t *dev, char* bootmode,
 	
 	if(0 == memcmp(bootmode, RECOVERY_PART, strlen(RECOVERY_PART))){
 		partition = L"recovery";
-		printf("enter recovery mode!\n");
+		debugf("enter recovery mode!\n");
 	}else{
 		partition = L"boot";
-		printf("enter boot mode!\n");
+		debugf("enter boot mode!\n");
 	}
 
 	if(!_boot_partition_read(dev, partition, 0, 4*EMMC_SECTOR_SIZE, (u8*) hdr)){
-		printf("%s:%s read error!\n",__FUNCTION__,w2c(partition));
+		debugf("%s:%s read error!\n",__FUNCTION__,w2c(partition));
 		return 0;
 	}
 	//image header check
 	if(0 != memcmp(hdr->magic, BOOT_MAGIC, BOOT_MAGIC_SIZE)){
-		printf("bad boot image header, give up boot!!!!\n");
+		debugf("bad boot image header, give up boot!!!!\n");
 		return 0;
 	}
 
@@ -839,11 +839,11 @@ LOCAL int _boot_load_kernel_ramdisk_image(block_dev_desc_t *dev, char* bootmode,
 	offset = 4;
 	size = (hdr->kernel_size+(KERNL_PAGE_SIZE - 1)) & (~(KERNL_PAGE_SIZE - 1));
 	if(size <=0){
-		printf("kernel image should not be zero!\n");
+		debugf("kernel image should not be zero!\n");
 		return 0;
 	}
 	if(!_boot_partition_read(dev, partition, offset, size, (u8*) KERNEL_ADR)){
-		printf("%s:%s kernel read error!\n",__FUNCTION__,w2c(partition));
+		debugf("%s:%s kernel read error!\n",__FUNCTION__,w2c(partition));
 		return 0;
 	}
 
@@ -852,11 +852,11 @@ LOCAL int _boot_load_kernel_ramdisk_image(block_dev_desc_t *dev, char* bootmode,
 	offset = ((offset+3)/4)*4;
 	size = (hdr->ramdisk_size+(KERNL_PAGE_SIZE - 1)) & (~(KERNL_PAGE_SIZE - 1));
 	if(size<0){
-		printf("ramdisk size error\n");
+		debugf("ramdisk size error\n");
 		return 0;
 	}
 	if(!_boot_partition_read(dev, partition, offset, size, (u8*) RAMDISK_ADR)){
-		printf("%s:ramdisk read error!\n",__FUNCTION__);
+		debugf("%s:ramdisk read error!\n",__FUNCTION__);
 		return 0;
 	}
 #ifdef CONFIG_SDRAMDISK
@@ -886,7 +886,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 	dev = get_dev("mmc", 1);
 	if(NULL == dev){
-		printf("Fatal Error,get_dev mmc failed!\n");
+		debugf("Fatal Error,get_dev mmc failed!\n");
 		return;
 	}
 
@@ -932,17 +932,17 @@ static void product_SN_get(void)
 
 	p_block_dev = get_dev("mmc", 1);
 	if(NULL == p_block_dev){
-		printf("%s:  get_dev() error\n", __FUNCTION__);
+		debugf("%s:  get_dev() error\n", __FUNCTION__);
 		product_SN_flag =0;
 		return;
 	}
 
 	if(-1 == Calibration_read_partition(p_block_dev, PRODUCTINFO_FILE_PATITION, (char *)&phase_check,sizeof(phase_check))){
-		printf("%s:  read miscdata error\n", __FUNCTION__);
+		debugf("%s:  read miscdata error\n", __FUNCTION__);
 		product_SN_flag =0;
 		return ;
 	}
-	printf("%s: phase_check.Magic = %d \n", __FUNCTION__, phase_check.Magic);
+	debugf("%s: phase_check.Magic = %d \n", __FUNCTION__, phase_check.Magic);
 	if(phase_check.Magic == SP09_SPPH_MAGIC){
 		product_SN_flag =1;
 		memcpy(product_SN, phase_check.SN1, 21);

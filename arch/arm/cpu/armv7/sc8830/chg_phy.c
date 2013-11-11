@@ -5,6 +5,11 @@
 #include <asm/arch/adi_hal_internal.h>
 #include <asm/arch/analog_reg_v3.h>
 
+#ifdef DEBUG
+#define debugf(fmt, args...) do { printf("%s(): ", __func__); printf(fmt, ##args); } while (0)
+#else
+#define debugf(fmt, args...)
+#endif
 #define ADC_CAL_TYPE_NO			0
 #define ADC_CAL_TYPE_NV			1
 #define ADC_CAL_TYPE_EFUSE		2
@@ -25,7 +30,7 @@ uint16_t CHGMNG_AdcvalueToVoltage(uint16_t adcvalue)
 	temp = temp * (adcvalue - adc_voltage_table[0][0]);
 	temp = temp / (adc_voltage_table[0][0] - adc_voltage_table[1][0]);
 
-	printf("uboot battery voltage:%d,adc4200:%d,adc3600:%d\n",
+	debugf("uboot battery voltage:%d,adc4200:%d,adc3600:%d\n",
 	       temp + adc_voltage_table[0][1], adc_voltage_table[0][0],
 	       adc_voltage_table[1][0]);
 
@@ -67,7 +72,7 @@ void get_adc_cali_data(void)
 	if((ret > 0) &&
 			((adc_data[2] & 0xFFFF) < 4500 ) && ((adc_data[2] & 0xFFFF) > 3000) &&
 			((adc_data[3] & 0xFFFF) < 4500 ) && ((adc_data[3] & 0xFFFF) > 3000)){
-		printf("adc_para from nv is 0x%x 0x%x \n",adc_data[2],adc_data[3]);
+		debugf("adc_para from nv is 0x%x 0x%x \n",adc_data[2],adc_data[3]);
 		adc_voltage_table[0][1]=adc_data[2] & 0xFFFF;
 		adc_voltage_table[0][0]=(adc_data[2] >> 16) & 0xFFFF;
 		adc_voltage_table[1][1]=adc_data[3] & 0xFFFF;
@@ -79,7 +84,7 @@ void get_adc_cali_data(void)
 	if (adc_cal_flag == ADC_CAL_TYPE_NO){
 		ret = sci_efuse_calibration_get(adc_data);
 		if (ret > 0) {
-			printf("adc_para from efuse is 0x%x 0x%x \n",adc_data[0],adc_data[1]);
+			debugf("adc_para from efuse is 0x%x 0x%x \n",adc_data[0],adc_data[1]);
 			adc_voltage_table[0][1]=adc_data[0] & 0xFFFF;
 			adc_voltage_table[0][0]=(adc_data[0]>>16) & 0xFFFF;
 			adc_voltage_table[1][1]=adc_data[1] & 0xFFFF;
@@ -149,7 +154,7 @@ void fgu_init(void)
 	fgu_vol = sci_adi_read(REG_FGU_VOLT_VAL);
 
 	fgu_cur = sci_adi_read(REG_FGU_CURT_VAL);
-	printf("fgu_init fgu_vol 0x%x fgu_cur 0x%x \n", fgu_vol, fgu_cur);
+	debugf("fgu_init fgu_vol 0x%x fgu_cur 0x%x \n", fgu_vol, fgu_cur);
 }
 
 void CHG_Init(void)
@@ -158,12 +163,12 @@ void CHG_Init(void)
 	if (charger_connected()) {
 		enum sprd_adapter_type adp_type = sprd_charger_is_adapter();
 		if (adp_type == ADP_TYPE_CDP || adp_type == ADP_TYPE_DCP) {
-			printf("uboot adp AC\n");
+			debugf("uboot adp AC\n");
 			ANA_REG_MSK_OR(ANA_APB_CHGR_CTL1,
 				       (6 << CHGR_CHG_CUR_SHIFT) &
 				       CHGR_CHG_CUR_MSK, CHGR_CHG_CUR_MSK);
 		} else {
-			printf("uboot adp USB\n");
+			debugf("uboot adp USB\n");
 			ANA_REG_MSK_OR(ANA_APB_CHGR_CTL1,
 				       (4 << CHGR_CHG_CUR_SHIFT) &
 				       CHGR_CHG_CUR_MSK, CHGR_CHG_CUR_MSK);

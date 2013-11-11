@@ -56,7 +56,7 @@ int FDL2_eMMC_DataStart (PACKET_T *packet, void *arg)
 	wchar_t partition_name[MAX_UTF_PARTITION_NAME_LEN]={0};
 	unsigned long size,nv_checksum;
 
-	printf("Enter %s \n", __FUNCTION__);
+	debugf("Enter %s \n", __FUNCTION__);
 
 	_decode_packet_data(packet, partition_name, &size, &nv_checksum);
 
@@ -79,7 +79,7 @@ int FDL2_eMMC_DataEnd (TRACE_PACKET_T *packet, void *arg)
 int FDL2_eMMC_DataEnd (PACKET_T *packet, void *arg)
 #endif
 {
-	printf("Enter %s \n", __FUNCTION__);
+	debugf("Enter %s \n", __FUNCTION__);
 	return fdl2_emmc_download_end();
 }
 
@@ -88,7 +88,7 @@ int FDL2_eMMC_ReadStart(PACKET_T *packet, void *arg)
 	wchar_t partition_name[MAX_UTF_PARTITION_NAME_LEN]={0};
 	unsigned long size;
 
-	printf("Enter %s \n", __FUNCTION__);
+	debugf("Enter %s \n", __FUNCTION__);
 
 	_decode_packet_data(packet, partition_name, &size, NULL);
 
@@ -103,7 +103,7 @@ int FDL2_eMMC_ReadMidst(PACKET_T *packet, void *arg)
 	int           ret;
 
 	if (size > MAX_PKT_SIZE) {
-		printf("%s:Size:0x%x beyond MAX_PKT_SIZE(0x%x)\n", __FUNCTION__,size,MAX_PKT_SIZE);
+		debugf("%s:Size:0x%x beyond MAX_PKT_SIZE(0x%x)\n", __FUNCTION__,size,MAX_PKT_SIZE);
 		FDL_SendAckPacket (BSL_REP_DOWN_SIZE_ERROR);
 		return FALSE;
 	}
@@ -125,7 +125,7 @@ int FDL2_eMMC_ReadMidst(PACKET_T *packet, void *arg)
 
 int FDL2_eMMC_ReadEnd(PACKET_T *packet, void *arg)
 {
-	printf("Enter %s \n", __FUNCTION__);
+	debugf("Enter %s \n", __FUNCTION__);
 	return fdl2_emmc_read_end();
 }
 
@@ -134,7 +134,7 @@ int FDL2_eMMC_Erase(PACKET_T *packet, void *arg)
 	wchar_t partition_name[MAX_UTF_PARTITION_NAME_LEN]={0};
 	unsigned long size;
 
-	printf("Enter %s \n", __FUNCTION__);
+	debugf("Enter %s \n", __FUNCTION__);
 
 	_decode_packet_data(packet, partition_name, &size, NULL);
 
@@ -153,12 +153,12 @@ int FDL2_eMMC_Repartition (PACKET_T *pakcet, void *arg)
 
 	if(0 != (size%(MAX_PARTITION_NAME_SIZE + PARTITION_SIZE_LENGTH)))
 	{
-		printf("%s:recvd packet size(%d) is error \n", __FUNCTION__,size);
+		debugf("%s:recvd packet size(%d) is error \n", __FUNCTION__,size);
 		FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
 		return 0;
 	}
 	total_partition_num = size/(MAX_PARTITION_NAME_SIZE + PARTITION_SIZE_LENGTH);
-	printf("Enter %s,Partition total num:%d \n", __FUNCTION__,total_partition_num);
+	debugf("Enter %s,Partition total num:%d \n", __FUNCTION__,total_partition_num);
 	return fdl2_emmc_repartition(data, total_partition_num);
 }
 
@@ -170,7 +170,7 @@ uint32 FDL2_eMMC_DRAM_Download(uint32 start_addr, char* mem_addr, uint32 size)
 	TRACE_PACKET_T packet;
 	packet.next=NULL;
 	memset(&packet, 0, sizeof(packet));
-	printf("start_addr:%08x, mem_addr:%08x, size:%08x\r\n", start_addr, mem_addr, size);
+	debugf("start_addr:%08x, mem_addr:%08x, size:%08x\r\n", start_addr, mem_addr, size);
 	packet.ack_flag=0;
 	packet.pkt_state=3;
 	packet.data_size=0xe;
@@ -185,7 +185,7 @@ uint32 FDL2_eMMC_DRAM_Download(uint32 start_addr, char* mem_addr, uint32 size)
 	(packet.packet_body.content)[5]=(size>>16) & 0xff;
 	(packet.packet_body.content)[6]=(size>>8) & 0xff;
 	(packet.packet_body.content)[7]=(size>>0) & 0xff;
-	printf("packet addr :%08x\r\n", &packet);
+	debugf("packet addr :%08x\r\n", &packet);
 	FDL2_eMMC_DataStart(&packet, NULL);
 	packet.packet_body.type    = 0x200;
 	for (wr_size=0; wr_size<size; )

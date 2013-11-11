@@ -4,8 +4,13 @@
 #include <asm/arch/adi_hal_internal.h>
 #include <asm/arch/sprd_reg.h>
 
+#ifdef DEBUG
 #define debug(format, arg...) printf("\t" format, ## arg)
 #define debug2(format, arg...) printf("\t\t" format, ## arg)
+#else
+#define debug(format, arg...)
+#define debug2(format, arg...)
+#endif
 
 /* abs() handles unsigned and signed longs, ints, shorts and chars.  For all input types abs()
  * returns a signed long.
@@ -74,9 +79,9 @@ int sci_adc_request(int channel)
 
 	/* dump results */
 	for (i = 0; i < MEASURE_TIMES; i++) {
-		printf("%d ", results[i]);
+		debug("%d ", results[i]);
 	}
-	printf("\n");
+	debug("\n");
 
 	return results[MEASURE_TIMES / 2];
 }
@@ -444,8 +449,8 @@ int DCDC_Cal_ArmCore(void)
 	u32 res;
 	struct regulator_desc *desc = NULL;
 
-	printf("%s\n", __FUNCTION__);
-	printf("Enable dcdc_arm, dcdc_core, dcdc_mem\n\r");
+	debug("%s\n", __FUNCTION__);
+	debug("Enable dcdc_arm, dcdc_core, dcdc_mem\n\r");
 
 	/* mem arm core bits are [11:9]*/
 	regVal = ANA_REG_GET(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR);
@@ -469,7 +474,7 @@ int DCDC_Cal_ArmCore(void)
 	/* TODO: calibrate all DCDCs */
 	desc = (struct regulator_desc *)(&__init_begin + 1);
 
-	printf("%p (%x) -- %p -- %p (%x)\n", &__init_begin, __init_begin,
+	debug("%p (%x) -- %p -- %p (%x)\n", &__init_begin, __init_begin,
 		desc, &__init_end, __init_end);
 
 	while (desc < (struct regulator_desc *)&__init_end) {
@@ -479,7 +484,7 @@ int DCDC_Cal_ArmCore(void)
 			|| (0 == strcmp("vddsim0", desc->name))
 			|| (0 == strcmp("vddsim2", desc->name))) {
 
-			printf("\nCalibrate %s ...\n", desc->name);
+			debug("\nCalibrate %s ...\n", desc->name);
 			DCDC_Cal_One(desc, 1);
 		}		
 		desc++;
@@ -498,7 +503,7 @@ int DCDC_Cal_ArmCore(void)
 			|| (0 == strcmp("vddsim0", desc->name))
 			|| (0 == strcmp("vddsim2", desc->name))) {
 
-			printf("\nVerify %s ...\n", desc->name);
+			debug("\nVerify %s ...\n", desc->name);
 			DCDC_Cal_One(desc, 0);
 		}
 		desc++;

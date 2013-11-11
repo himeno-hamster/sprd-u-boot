@@ -18,7 +18,7 @@ extern int usb_fastboot_initialize(void);
 
 void fastboot_mode(void)
 {
-	printf("%s\n", __FUNCTION__);
+	debugf("%s\n", __FUNCTION__);
 #ifdef CONFIG_SPLASH_SCREEN
 
 	vibrator_hw_init();
@@ -27,7 +27,7 @@ void fastboot_mode(void)
 	size_t size = 1<<19;
 	char * bmp_img = malloc(size);
 	if(!bmp_img){
-		printf("not enough memory for splash image\n");
+		debugf("not enough memory for splash image\n");
 		return;
 	}
 	int ret = read_logoimg(bmp_img,size);

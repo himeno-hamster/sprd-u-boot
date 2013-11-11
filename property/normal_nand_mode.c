@@ -27,17 +27,17 @@ int read_logoimg(char *bmp_img,size_t size)
 
 	ret = mtdparts_init();
 	if (ret != 0){
-		printf("mtdparts init error %d\n", ret);
+		debugf("mtdparts init error %d\n", ret);
 		return -1;
 	}
 #define SPLASH_PART "fastboot_logo"
 
 	ret = find_dev_and_part(SPLASH_PART, &dev, &pnum, &part);
 	if(ret){
-		printf("No partition named %s\n", SPLASH_PART);
+		debugf("No partition named %s\n", SPLASH_PART);
 		return -1;
 	}else if(dev->id->type != MTD_DEV_TYPE_NAND){
-		printf("Partition %s not a NAND device\n", SPLASH_PART);
+		debugf("Partition %s not a NAND device\n", SPLASH_PART);
 		return -1;
 	}
 
@@ -46,7 +46,7 @@ int read_logoimg(char *bmp_img,size_t size)
 
 	ret = nand_read_offset_ret(nand, off, &size, (void *)bmp_img, &off);
 	if(ret != 0){
-		printf("function: %s nand read error %d\n", __FUNCTION__, ret);
+		debugf("function: %s nand read error %d\n", __FUNCTION__, ret);
 		return -1;
 	}
 	return 0;
@@ -75,10 +75,10 @@ int read_spldata()
 
 	int ret = find_dev_and_part(SPL_PART, &dev, &pnum, &part);
 	if (ret) {
-		printf("No partition named %s\n", SPL_PART);
+		debugf("No partition named %s\n", SPL_PART);
 		return -1;
 	} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
-		printf("Partition %s not a NAND device\n", SPL_PART);
+		debugf("Partition %s not a NAND device\n", SPL_PART);
 		return -1;
 	}
 	off = part->offset;
@@ -87,7 +87,7 @@ int read_spldata()
 
 	ret = nand_read_offset_ret(nand, off, &size, (void*)spl_data, &off);
 	if(ret != 0) {
-		printf("spl nand read error %d\n", ret);
+		debugf("spl nand read error %d\n", ret);
 		return -1;
 	}
 	return 0;
@@ -127,11 +127,11 @@ static int check_fixnv_struct(unsigned int addr,unsigned int size) {
 
 	flash_ptr = (volatile unsigned int *)(addr+size-8);
 	keep_length = *flash_ptr;
-	printf("keep_length=%d  line=%d\r\n",keep_length ,__LINE__);
+	debugf("keep_length=%d  line=%d\r\n",keep_length ,__LINE__);
 	if(keep_length != 0xffffffff){
 		length = Vlx_CalcFixnvLen(addr, addr+size);
 		if(keep_length != length){
-			printf("keep_length=%d  length=%d line=%d\r\n",keep_length ,length,__LINE__);
+			debugf("keep_length=%d  length=%d line=%d\r\n",keep_length ,length,__LINE__);
 			return -1;
 		}
 	}
@@ -195,27 +195,27 @@ TRY_BACKUP_FILE:
 		}
 
 		if(ptr == -1) {
-			printf("[load_sector_to_memory]backup_sector is error need recovery it......\n");
+			debugf("[load_sector_to_memory]backup_sector is error need recovery it......\n");
 			cmd_yaffs_mwrite_file(backup_sector_name, mem_addr, size);
 		} else {
 			master = (unsigned short *)(bck_addr + size - 8);
 			slave  = (unsigned short *)(mem_addr + size - 8);
 			if(*master != *slave){
-				printf("[load_sector_to_memory]slave file is error recovery it......\n");
+				debugf("[load_sector_to_memory]slave file is error recovery it......\n");
 				cmd_yaffs_mwrite_file(sector_name, bck_addr, size);
 				cmd_yaffs_mread_file(backup_sector_name, mem_addr);
 			} else {
-				printf("[load_sector_to_memory]both master and slave  is ok don't sysc......\n");
+				debugf("[load_sector_to_memory]both master and slave  is ok don't sysc......\n");
 			}
 		}
 	}
 
 	if(try_backup_file&&ret==1){
 		//recovery_sector(sector_path,sector_name,mem_addr,size);
-		printf("[load_sector_to_memory]recovery the latest file......\n");
+		debugf("[load_sector_to_memory]recovery the latest file......\n");
 		cmd_yaffs_mwrite_file(sector_name, mem_addr, size);
 	}else if(try_backup_file&&ret==-1){
-		printf("[load_sector_to_memory] don't care this log ........\n");
+		debugf("[load_sector_to_memory] don't care this log ........\n");
 	}
 
 	//unmout yaffs
@@ -236,16 +236,16 @@ static int load_kernel_and_layout(struct mtd_info *nand,
 	unsigned int off = phystart;
 	int size = real_page_size;
 
-	printf("virtual_page_size : %x\n",virtual_page_size);
-	printf("real_page_size : %x\n",real_page_size);
+	debugf("virtual_page_size : %x\n",virtual_page_size);
+	debugf("real_page_size : %x\n",real_page_size);
 	//read boot image header
 	ret = nand_read_offset_ret(nand, off, &size, (void *)hdr, &off);
 	if(ret != 0){
-		printf("function: %s nand read error %d\n", __FUNCTION__, ret);
+		debugf("function: %s nand read error %d\n", __FUNCTION__, ret);
         return -1;
 	}
 	if(memcmp(hdr->magic, BOOT_MAGIC, BOOT_MAGIC_SIZE)){
-		printf("bad boot image header, give up read!!!!\n");
+		debugf("bad boot image header, give up read!!!!\n");
         return -1;
 	}
 	else
@@ -264,9 +264,9 @@ static int load_kernel_and_layout(struct mtd_info *nand,
 			spare_size = 0;
 		}
 		//read kernel image
-		printf("file size: %x\n",hdr->kernel_size);
-		printf("use size: %x\n",used_size);
-		printf("spare size: %x\n",spare_size);
+		debugf("file size: %x\n",hdr->kernel_size);
+		debugf("use size: %x\n",used_size);
+		debugf("spare size: %x\n",spare_size);
 
 		if(spare_size) {
 			memcpy(kernel,&prev_page_addr[used_size],spare_size);
@@ -275,8 +275,8 @@ static int load_kernel_and_layout(struct mtd_info *nand,
 		size = (next_file_size+(real_page_size - 1)) & (~(real_page_size - 1));
 		ret = nand_read_offset_ret(nand, off, &size, (void *)(kernel+spare_size), &off);
 		if(ret != 0){
-			printf("reading kernel error!\n");
-			printf("try reading to %x\n",kernel+spare_size);
+			debugf("reading kernel error!\n");
+			debugf("try reading to %x\n",kernel+spare_size);
 		}
 		//read ramdisk image prepare
 		prev_page_addr =  (char*)(kernel+spare_size+size-real_page_size);
@@ -287,9 +287,9 @@ static int load_kernel_and_layout(struct mtd_info *nand,
 			spare_size = 0;
 		}
 		next_file_size = hdr->ramdisk_size;
-		printf("file size: %x\n",hdr->ramdisk_size);
-		printf("use size: %x\n",used_size);
-		printf("spare size: %x\n",spare_size);
+		debugf("file size: %x\n",hdr->ramdisk_size);
+		debugf("use size: %x\n",used_size);
+		debugf("spare size: %x\n",spare_size);
 		//read ramdisk image
 		if(spare_size){
 			memcpy(ramdisk,&prev_page_addr[used_size],spare_size);
@@ -298,8 +298,8 @@ static int load_kernel_and_layout(struct mtd_info *nand,
 		size = (next_file_size+(real_page_size - 1)) & (~(real_page_size - 1));
 		ret = nand_read_offset_ret(nand, off, &size, (void *)(ramdisk+spare_size), &off);
 		if(ret != 0){
-			printf("reading ramdisk error!\n");
-			printf("try reading to %x\n",ramdisk+spare_size);
+			debugf("reading ramdisk error!\n");
+			debugf("try reading to %x\n",ramdisk+spare_size);
 		}
 	}
 
@@ -341,7 +341,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	#endif
 	ret = mtdparts_init();
 	if (ret != 0){
-		printf("mtdparts init error %d\n", ret);
+		debugf("mtdparts init error %d\n", ret);
 		return;
 	}
 
@@ -349,10 +349,10 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #define SPLASH_PART "boot_logo"
 	ret = find_dev_and_part(SPLASH_PART, &dev, &pnum, &part);
 	if(ret){
-		printf("No partition named %s\n", SPLASH_PART);
+		debugf("No partition named %s\n", SPLASH_PART);
 		return;
 	}else if(dev->id->type != MTD_DEV_TYPE_NAND){
-		printf("Partition %s not a NAND device\n", SPLASH_PART);
+		debugf("Partition %s not a NAND device\n", SPLASH_PART);
 		return;
 	}
 
@@ -362,12 +362,12 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	size = 1<<19;//where the size come from????
 	char * bmp_img = malloc(size);
 	if(!bmp_img){
-	    printf("not enough memory for splash image\n");
+	    debugf("not enough memory for splash image\n");
 	    return;
 	}
 	ret = nand_read_offset_ret(nand, off, &size, (void *)bmp_img, &off);
 	if(ret != 0){
-		printf("function: %s nand read error %d\n", __FUNCTION__, ret);
+		debugf("function: %s nand read error %d\n", __FUNCTION__, ret);
 		return;
 	}
    lcd_display_logo(backlight_set,(ulong)bmp_img,size);
@@ -381,7 +381,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	///////////////////////////////////////////////////////////////////////
 	/* recovery damaged fixnv or backupfixnv */
 	/* FIXNV_PART */
-	printf("Reading fixnv to 0x%08x\n", FIXNV_ADR);
+	debugf("Reading fixnv to 0x%08x\n", FIXNV_ADR);
 	//try "/fixnv/fixnvchange.bin" first,if fail,
 	//try /fixnv/fixnv.bin instead
 	ret = load_sector_to_memory(fixnvpoint,
@@ -411,7 +411,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 			//backupfixnvpoint's files are still uncorrect.
 			//then we can do nothing to get it right!!!!
 			//there is an fatal error has occured.
-			printf("\n\nfixnv and backupfixnv are all wrong!\n\n");
+			debugf("\n\nfixnv and backupfixnv are all wrong!\n\n");
 			return -1;
 			//clear memory
 			//memset(FIXNV_ADR, 0xff,FIXNV_SIZE + 4);
@@ -436,7 +436,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 	//finally we check the fixnv structure,if fail,then u-boot will hung up!!!
 	if(check_fixnv_struct(FIXNV_ADR,FIXNV_SIZE) == -1){
-		printf("check fixnv structer error ............\r\n");
+		debugf("check fixnv structer error ............\r\n");
 		return -1;
 	}
 
@@ -449,7 +449,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 							(unsigned char *)MODEM_ADR,//we just test if it's correct.
 							PRODUCTINFO_SIZE + 4);
 	if(ret == -1){
-		printf("don't need read productinfo  to 0x%08x!\n", PRODUCTINFO_ADR);
+		debugf("don't need read productinfo  to 0x%08x!\n", PRODUCTINFO_ADR);
 	}
 	eng_phasechecktest((unsigned char *)PRODUCTINFO_ADR, SP09_MAX_PHASE_BUFF_SIZE);
 	///////////////////////////////////////////////////////////////////////
@@ -470,13 +470,13 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 	////////////////////////////////////////////////////////////////
 	/* DSP_PART */
-	printf("Reading dsp to 0x%08x\n", DSP_ADR);
+	debugf("Reading dsp to 0x%08x\n", DSP_ADR);
 	ret = find_dev_and_part(DSP_PART, &dev, &pnum, &part);
 	if (ret) {
-		printf("No partition named %s\n", DSP_PART);
+		debugf("No partition named %s\n", DSP_PART);
 		return;
 	} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
-		printf("Partition %s not a NAND device\n", DSP_PART);
+		debugf("Partition %s not a NAND device\n", DSP_PART);
 		return;
 	}
 
@@ -485,12 +485,12 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	flash_page_size = nand->writesize;
 	size = (DSP_SIZE + (flash_page_size - 1)) & (~(flash_page_size - 1));
 	if(size <= 0) {
-		printf("dsp image should not be zero\n");
+		debugf("dsp image should not be zero\n");
 		return;
 	}
 	ret = nand_read_offset_ret(nand, off, &size, (void*)DSP_ADR, &off);
 	if(ret != 0) {
-		printf("dsp nand read error %d\n", ret);
+		debugf("dsp nand read error %d\n", ret);
 		return;
 	}
 	secure_check(DSP_ADR, 0, DSP_ADR + DSP_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
@@ -501,7 +501,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		*/ 
 		extern void DSP_ForceSleep(void);
 		DSP_ForceSleep();
-		printf("dsp nand read ok1 %d\n", ret);
+		debugf("dsp nand read ok1 %d\n", ret);
 #endif	
 
 	if(poweron_by_calibration())
@@ -515,21 +515,21 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		cmd_yaffs_umount(fixnvpoint);
 		if(!chkEcc(FIXNV_ADR, FIXNV_SIZE)){
 			// 2 read backup fixNv
-			printf("Read origin fixnv fail\n");
+			debugf("Read origin fixnv fail\n");
 			memset((unsigned char *)FIXNV_ADR, 0xff, FIXNV_SIZE);
 			cmd_yaffs_mount(backupfixnvpoint);
 			cmd_yaffs_ls_chk(backupfixnvfilename);
 			cmd_yaffs_mread_fileex(backupfixnvfilename, (unsigned char *)FIXNV_ADR, FIXNV_SIZE);
 			cmd_yaffs_umount(backupfixnvpoint);
 			if(!chkEcc(FIXNV_ADR, FIXNV_SIZE)){
-				printf("Read backup fixnv fail\n");
+				debugf("Read backup fixnv fail\n");
 			}
 			else{
-				printf("Read backup fixnv pass\n");
+				debugf("Read backup fixnv pass\n");
 			}
 		}
 		else{
-			printf("Read origin fixnv pass\n");
+			debugf("Read origin fixnv pass\n");
 		}
 		// ---------------------runtime nv----------------------------
 		// 2 read orighin runtime nv
@@ -540,21 +540,21 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		cmd_yaffs_umount(runtimenvpoint);
 		if(!chkEcc(RUNTIMENV_ADR, RUNTIMENV_SIZE)){
 			// 2 read backup runtime nv
-			printf("Read origin  runtime nv fail\n");
+			debugf("Read origin  runtime nv fail\n");
 			memset((unsigned char *)RUNTIMENV_ADR, 0xff, RUNTIMENV_SIZE);
 			cmd_yaffs_mount(runtimenvpoint2);
 			cmd_yaffs_ls_chk(runtimenvfilename2);
 			cmd_yaffs_mread_fileex(runtimenvfilename2, (unsigned char *)RUNTIMENV_ADR, RUNTIMENV_SIZE);
 			cmd_yaffs_umount(runtimenvpoint2);
 			if(!chkEcc(RUNTIMENV_ADR, RUNTIMENV_SIZE)){
-				printf("Read backup  runtime nv fail\n");
+				debugf("Read backup  runtime nv fail\n");
 			}
 			else{
-				printf("Read backup  runtime nv pass\n");
+				debugf("Read backup  runtime nv pass\n");
 			}
 		}
 		else{
-			printf("Read origin  runtime nv pass\n");
+			debugf("Read origin  runtime nv pass\n");
 		}
 
 		// 3 read orighin product information
@@ -565,33 +565,33 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		cmd_yaffs_umount(productinfopoint);
 		if(!chkEcc((PRODUCTINFO_ADR), PRODUCTINFO_SIZE)){
 			// 3 read backup productinfo
-			printf("Read origin productinfo fail\n");
+			debugf("Read origin productinfo fail\n");
 			memset((unsigned char *)(PRODUCTINFO_ADR), 0xff, PRODUCTINFO_SIZE);
 			cmd_yaffs_mount(productinfopoint);
 			cmd_yaffs_ls_chk(productinfofilename2);
 			cmd_yaffs_mread_file(productinfofilename2, (unsigned char *)(PRODUCTINFO_ADR));
 			cmd_yaffs_umount(productinfopoint);
 			if(!chkEcc((PRODUCTINFO_ADR), PRODUCTINFO_SIZE)){
-				printf("Read backup productinfo fail\n");
+				debugf("Read backup productinfo fail\n");
 			}
 			else{
-				printf("Read backup productinfo pass\n");
+				debugf("Read backup productinfo pass\n");
 			}
 		}
 		else{
 			char *product_data = (char *)PRODUCTINFO_ADR;
-			printf("productinfo: %c %c %c %c\n",product_data[0],product_data[1],product_data[2],product_data[3]);
-			printf("Read origin productinfo pass\n");
+			debugf("productinfo: %c %c %c %c\n",product_data[0],product_data[1],product_data[2],product_data[3]);
+			debugf("Read origin productinfo pass\n");
 		}
 
 		// ---------------------DSP ----------------------------
-		printf("Reading dsp to 0x%08x\n", DSP_ADR);
+		debugf("Reading dsp to 0x%08x\n", DSP_ADR);
 		ret = find_dev_and_part(DSP_PART, &dev, &pnum, &part);
 		if (ret) {
-		        printf("No partition named %s\n", DSP_PART);
+		        debugf("No partition named %s\n", DSP_PART);
 		        return;
 		} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
-		        printf("Partition %s not a NAND device\n", DSP_PART);
+		        debugf("Partition %s not a NAND device\n", DSP_PART);
 		        return;
 		}
 		off = part->offset;
@@ -599,59 +599,59 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		flash_page_size = nand->writesize;
 		size = (DSP_SIZE + (flash_page_size - 1)) & (~(flash_page_size - 1));
 		if(size <= 0) {
-		        printf("dsp image should not be zero\n");
+		        debugf("dsp image should not be zero\n");
 		        return;
 		}
 		ret = nand_read_offset_ret(nand, off, &size, (void*)DSP_ADR, &off);
 		if(ret != 0) {
-		        printf("dsp nand read error %d\n", ret);
+		        debugf("dsp nand read error %d\n", ret);
 		        return;
 		}
 
-		printf("Reading firmware to 0x%08x\n", FIRMWARE_ADR);
+		debugf("Reading firmware to 0x%08x\n", FIRMWARE_ADR);
 		ret = find_dev_and_part(FIRMWARE_PART, &dev, &pnum, &part);
 		if (ret) {
-		        printf("No partition named %s\n", FIRMWARE_PART);
+		        debugf("No partition named %s\n", FIRMWARE_PART);
 		        return;
 		} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
-		        printf("Partition %s not a NAND device\n", FIRMWARE_PART);
+		        debugf("Partition %s not a NAND device\n", FIRMWARE_PART);
 		        return;
 		}
 		off = part->offset;
 		nand = &nand_info[dev->id->num];
 		size = (FIRMWARE_SIZE +(flash_page_size - 1)) & (~(flash_page_size - 1));
 		if(size <= 0) {
-		        printf("firmware image should not be zero\n");
+		        debugf("firmware image should not be zero\n");
 		        return;
 		}
 		ret = nand_read_offset_ret(nand, off, &size, (void*)FIRMWARE_ADR, &off);
 		if(ret != 0) {
-		        printf("firmware nand read error %d\n", ret);
+		        debugf("firmware nand read error %d\n", ret);
 		        return;
 		}
 
-		printf("Reading vmjaluna to 0x%08x\n", VMJALUNA_ADR);
+		debugf("Reading vmjaluna to 0x%08x\n", VMJALUNA_ADR);
 		ret = find_dev_and_part(VMJALUNA_PART, &dev, &pnum, &part);
 		if (ret) {
-		        printf("No partition named %s\n", VMJALUNA_PART);
+		        debugf("No partition named %s\n", VMJALUNA_PART);
 		        return;
 		} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
-		        printf("Partition %s not a NAND device\n", VMJALUNA_PART);
+		        debugf("Partition %s not a NAND device\n", VMJALUNA_PART);
 		        return;
 		}
 		off = part->offset;
 		nand = &nand_info[dev->id->num];
 		size = (VMJALUNA_SIZE +(flash_page_size - 1)) & (~(flash_page_size - 1));
 		if(size <= 0) {
-		        printf("modem image should not be zero\n");
+		        debugf("modem image should not be zero\n");
 		        return;
 		}
 		ret = nand_read_offset_ret(nand, off, &size, (void*)VMJALUNA_ADR, &off);
 		if(ret != 0) {
-		        printf("modem nand read error %d\n", ret);
+		        debugf("modem nand read error %d\n", ret);
 		        return;
 		}
-		printf("call bootup modem in vlx_nand_boot,0x%x 0x%x\n",FIXNV_ADR, FIXNV_SIZE);
+		debugf("call bootup modem in vlx_nand_boot,0x%x 0x%x\n",FIXNV_ADR, FIXNV_SIZE);
 		{
 			char * cmd_line_ptr;
 			cmd_line_ptr = creat_cmdline(NULL,NULL);
@@ -670,14 +670,14 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #endif
 	////////////////////////////////////////////////////////////////
 	/* KERNEL_PART */
-	printf("Reading kernel to 0x%08x\n", KERNEL_ADR);
+	debugf("Reading kernel to 0x%08x\n", KERNEL_ADR);
 
 	ret = find_dev_and_part(kernel_pname, &dev, &pnum, &part);
 	if(ret){
-		printf("No partition named %s\n", kernel_pname);
+		debugf("No partition named %s\n", kernel_pname);
         return;
 	}else if(dev->id->type != MTD_DEV_TYPE_NAND){
-		printf("Partition %s not a NAND device\n", kernel_pname);
+		debugf("Partition %s not a NAND device\n", kernel_pname);
         return;
 	}
 
@@ -732,7 +732,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 							nand->writesize);
 
 	if (ret != 0) {
-		printf("ramdisk nand read error %d\n", ret);
+		debugf("ramdisk nand read error %d\n", ret);
 		return;
 	}
 
@@ -741,13 +741,13 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 #if !(BOOT_NATIVE_LINUX)
 	////////////////////////////////////////////////////////////////
 	/* MODEM_PART */
-	printf("Reading modem to 0x%08x\n", MODEM_ADR);
+	debugf("Reading modem to 0x%08x\n", MODEM_ADR);
 	ret = find_dev_and_part(MODEM_PART, &dev, &pnum, &part);
 	if (ret) {
-		printf("No partition named %s\n", MODEM_PART);
+		debugf("No partition named %s\n", MODEM_PART);
 		return;
 	} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
-		printf("Partition %s not a NAND device\n", MODEM_PART);
+		debugf("Partition %s not a NAND device\n", MODEM_PART);
 		return;
 	}
 
@@ -756,12 +756,12 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	flash_page_size = nand->writesize;
 	size = (MODEM_SIZE +(flash_page_size - 1)) & (~(flash_page_size - 1));
 	if(size <= 0) {
-		printf("modem image should not be zero\n");
+		debugf("modem image should not be zero\n");
 		return;
 	}
 	ret = nand_read_offset_ret(nand, off, &size, (void*)MODEM_ADR, &off);
 	if(ret != 0) {
-		printf("modem nand read error %d\n", ret);
+		debugf("modem nand read error %d\n", ret);
 		return;
 	}
 
@@ -770,13 +770,13 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 	////////////////////////////////////////////////////////////////
 	/* VMJALUNA_PART */
-	printf("Reading vmjaluna to 0x%08x\n", VMJALUNA_ADR);
+	debugf("Reading vmjaluna to 0x%08x\n", VMJALUNA_ADR);
 	ret = find_dev_and_part(VMJALUNA_PART, &dev, &pnum, &part);
 	if (ret) {
-		printf("No partition named %s\n", VMJALUNA_PART);
+		debugf("No partition named %s\n", VMJALUNA_PART);
 		return;
 	} else if (dev->id->type != MTD_DEV_TYPE_NAND) {
-		printf("Partition %s not a NAND device\n", VMJALUNA_PART);
+		debugf("Partition %s not a NAND device\n", VMJALUNA_PART);
 		return;
 	}
 
@@ -784,12 +784,12 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	nand = &nand_info[dev->id->num];
 	size = (VMJALUNA_SIZE +(flash_page_size - 1)) & (~(flash_page_size - 1));
 	if(size <= 0) {
-		printf("VMJALUNA image should not be zero\n");
+		debugf("VMJALUNA image should not be zero\n");
 		return;
 	}
 	ret = nand_read_offset_ret(nand, off, &size, (void*)VMJALUNA_ADR, &off);
 	if(ret != 0) {
-		printf("VMJALUNA nand read error %d\n", ret);
+		debugf("VMJALUNA nand read error %d\n", ret);
 		return;
 	}
 	secure_check(VMJALUNA_ADR, 0, VMJALUNA_ADR + VMJALUNA_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
@@ -809,16 +809,16 @@ int nand_part_read(char *partname,char *buffer, int size)
 	
 	ret = mtdparts_init();
 	if(ret != 0){
-		printf("No nand device ... %d\n",ret);
+		debugf("No nand device ... %d\n",ret);
 		return -1;
 	}
 
 	ret = find_dev_and_part(partname,&dev,&pnum,&part);
         if(ret){
-		printf("No partition named %s\n",partname);
+		debugf("No partition named %s\n",partname);
 		return -1;
 	} else if(dev->id->type != MTD_DEV_TYPE_NAND){
-		printf("No partition  %s is not NAND device\n",partname);
+		debugf("No partition  %s is not NAND device\n",partname);
 		return -1;
 	}
 	nand = &nand_info[dev->id->num];
@@ -839,16 +839,16 @@ int nand_part_write(char *partname,char *buffer, int size)
 
         ret = mtdparts_init();
         if(ret != 0){
-                printf("No nand device ... %d\n",ret);
+                debugf("No nand device ... %d\n",ret);
                 return -1;
         }
 
         ret = find_dev_and_part(partname,&dev,&pnum,&part);
         if(ret){
-                printf("No partition named %s\n",partname);
+                debugf("No partition named %s\n",partname);
                 return -1;
         } else if(dev->id->type != MTD_DEV_TYPE_NAND){
-                printf("No partition  %s is not NAND device\n",partname);
+                debugf("No partition  %s is not NAND device\n",partname);
                 return -1;
         }
         nand = &nand_info[dev->id->num];
@@ -859,7 +859,7 @@ int nand_part_write(char *partname,char *buffer, int size)
         opts.quiet  = 1;
         ret = nand_erase_opts(nand, &opts);
         if(ret){
-               printf("nand erase bad %d\n", ret);
+               debugf("nand erase bad %d\n", ret);
                return -1;
         }
 

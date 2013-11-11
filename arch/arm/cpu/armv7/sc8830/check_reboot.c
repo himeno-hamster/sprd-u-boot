@@ -23,20 +23,27 @@
 #define   HW_7SRST_STATUS			(0x80)
 #define   SW_7SRST_STATUS			(0x1000)
 
+#ifdef DEBUG
+#define debugf(fmt, args...) do { printf("%s(): ", __func__); printf(fmt, ##args); } while (0)
+#else
+#define debugf(fmt, args...)
+#endif
+
+
 extern int hw_watchdog_rst_pending(void);
 unsigned check_reboot_mode(void)
 {
 	unsigned val, rst_mode= 0;
 	unsigned hw_rst_mode = ANA_REG_GET(ANA_REG_GLB_POR_SRC_FLAG);
-	printf("hw_rst_mode==%x\n", hw_rst_mode);
+	debugf("hw_rst_mode==%x\n", hw_rst_mode);
 
 	rst_mode = ANA_REG_GET(ANA_REG_GLB_POR_RST_MONITOR);
 	rst_mode &= 0x7FFF;
 	ANA_REG_SET(ANA_REG_GLB_POR_RST_MONITOR, 0); //clear flag
 
-	printf("rst_mode==%x\n",rst_mode);
+	debugf("rst_mode==%x\n",rst_mode);
 	if(hw_watchdog_rst_pending()){
-		printf("hw watchdog rst int pending\n");
+		debugf("hw watchdog rst int pending\n");
 		if(rst_mode == HWRST_STATUS_RECOVERY)
 			return RECOVERY_MODE;
 		else if(rst_mode == HWRST_STATUS_FASTBOOT)
@@ -58,11 +65,11 @@ unsigned check_reboot_mode(void)
 		else if(rst_mode == HWRST_STATUS_AUTODLOADER)
 			return AUTODLOADER_REBOOT;
 		else{
-			printf(" a boot mode not supported\n");
+			debugf(" a boot mode not supported\n");
 			return 0;
 		}
 	}else{
-		printf("no hw watchdog rst int pending\n");
+		debugf("no hw watchdog rst int pending\n");
 		if(rst_mode == HWRST_STATUS_NORMAL2)
 			return UNKNOW_REBOOT_MODE;
 		else if(hw_rst_mode & HW_7SRST_STATUS)
@@ -111,7 +118,7 @@ int power_button_pressed(void)
 	int status = ANA_REG_GET(ADI_EIC_DATA);
 	status = status & (1 << 2);
 
-	printf("power_button_pressed eica status 0x%x\n", status );
+	debugf("power_button_pressed eica status 0x%x\n", status );
 	
 	return !status;//low level if pb hold
 }
@@ -120,14 +127,14 @@ int charger_connected(void)
 {
 	sprd_eic_request(EIC_CHG_INT);
 	udelay(3000);
-	printf("eica status %x\n", sprd_eic_get(EIC_CHG_INT));
+	debugf("eica status %x\n", sprd_eic_get(EIC_CHG_INT));
 	return !!sprd_eic_get(EIC_CHG_INT);
 }
 
 int alarm_triggered(void)
 {
 	//printf("ANA_RTC_INT_RSTS is 0x%x\n", ANA_RTC_INT_RSTS);
-	printf("value of it 0x%x\n", ANA_REG_GET(ANA_RTC_INT_RSTS));
+	debugf("value of it 0x%x\n", ANA_REG_GET(ANA_RTC_INT_RSTS));
 	return ANA_REG_GET(ANA_RTC_INT_RSTS) & BIT_4;
 }
 

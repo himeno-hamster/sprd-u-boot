@@ -24,11 +24,6 @@
 
 #define msleep(a) udelay(a * 1000)
 
-
-#ifdef dprintf
-#undef dprintf
-#endif
-#define dprintf(fmt, args...) printf(fmt, ##args)
 #define MAGIC_DATA_SAVE_OFFSET	(0x20/4)
 #define CHECKSUM_SAVE_OFFSET	(0x24/4)
 #define CHECKSUM_START_OFFSET	0x28
@@ -47,7 +42,7 @@ int get_recovery_message(struct recovery_message *out)
 	}
 	if (!get_partition_info_by_name(p_block_dev, L"misc", &info)) {
 		if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, size/EMMC_SECTOR_SIZE, (void *)buf)){
-			printf("function: %s emcc read error\n", __FUNCTION__);
+			debugf("function: %s emcc read error\n", __FUNCTION__);
 			return -1;
 		}
 	}
@@ -68,12 +63,12 @@ int set_recovery_message(const struct recovery_message *in)
 	if (!get_partition_info_by_name(p_block_dev, L"misc", &info)) {
 		memset(buf, 0, sizeof(buf));
 		if(TRUE !=  Emmc_Read(PARTITION_USER, info.start, size/EMMC_SECTOR_SIZE, (void *)buf)){
-			printf("function: %s emcc read error\n", __FUNCTION__);
+			debugf("function: %s emcc read error\n", __FUNCTION__);
 			return -1;
 		}
 		memcpy((void *)buf, in, sizeof(*in));
 		if(TRUE !=  Emmc_Write(PARTITION_USER, info.start, size/EMMC_SECTOR_SIZE, (void *)buf)){
-			printf("function: %s emcc write error\n", __FUNCTION__);
+			debugf("function: %s emcc write error\n", __FUNCTION__);
 			return -1;
 		}
 	}
@@ -229,9 +224,9 @@ void update_fixnv(unsigned char *old_addr,unsigned char*new_addr){
 		}
 		old_item_len =*(unsigned short*)(old_item_base-2);
 		new_item_len =*(unsigned short*)(new_item_base-2);
-		printf("item_id = 0x%x,old_item_len = %d,new_item_len = %d\n",item_id,new_item_len,old_item_len);
+		debugf("item_id = 0x%x,old_item_len = %d,new_item_len = %d\n",item_id,new_item_len,old_item_len);
 		if(old_item_len == new_item_len&&old_item_len != 0xffffffff){
-			printf("copy from 0x%x to 0x%x and size = %d\n",old_item_base,new_item_base,old_item_len);
+			debugf("copy from 0x%x to 0x%x and size = %d\n",old_item_base,new_item_base,old_item_len);
 			memcpy(new_item_base,old_item_base,old_item_len);
 		}
 	}
@@ -264,35 +259,35 @@ void try_update_modem(void)
 	if(mmc){
 		ret = mmc_init(mmc);
 		if(ret < 0){
-			printf("mmc init failed %d\n", ret);
+			debugf("mmc init failed %d\n", ret);
 			return;
 		}
 	}else{
-		printf("no mmc card found\n");
+		debugf("no mmc card found\n");
 		return;
 	}
 
 	dev_desc = &mmc->block_dev;
 	if(dev_desc==NULL){
-		printf("no mmc block device found\n");
+		debugf("no mmc block device found\n");
 		return;
 	}
 	ret = fat_register_device(dev_desc, 1);
 	if(ret < 0){
-		printf("fat regist fail %d\n", ret);
+		debugf("fat regist fail %d\n", ret);
 		return;
 	}
 	ret = file_fat_detectfs();
 	if(ret){
-		printf("detect fs failed\n");
+		debugf("detect fs failed\n");
 		return;
 	}
 	do{
-		printf("reading %s\n", SD_NV_NAME);
+		debugf("reading %s\n", SD_NV_NAME);
 
 		ret = do_fat_read(SD_NV_NAME, BUF_ADDR, 0, LS_NO);
 		if(ret <= 0){
-			printf("sd file read error %d\n", ret);
+			debugf("sd file read error %d\n", ret);
 			break;
 		}
 		size = FIXNV_SIZE + 4;
@@ -322,11 +317,11 @@ NEXT:
 			if (1 == fixnv_is_correct_endflag((unsigned char *)FIXNV_ADR, FIXNV_SIZE)){
 				update_fixnv(FIXNV_ADR,BUF_ADDR);	
 			}else{
-				printf("both of the fixnv files are not correct,skip parameter backup process!\n");
+				debugf("both of the fixnv files are not correct,skip parameter backup process!\n");
 				break;
 			}
 		}else{
-			printf("both of the fixnv files are not correct,skip parameter backup process!\n");
+			debugf("both of the fixnv files are not correct,skip parameter backup process!\n");
 			break;
 		}
 #endif
@@ -342,27 +337,27 @@ SKIP:
 	}while(0);
 #ifndef CONFIG_SC8830
 	do{
-		printf("reading %s\n", SD_SPL_NAME);
+		debugf("reading %s\n", SD_SPL_NAME);
 		ret = do_fat_read(SD_SPL_NAME, spl_eMMCBuf, 0, LS_NO);
 		if(ret <= 0){
-			printf("sd file read error %d\n", ret);
+			debugf("sd file read error %d\n", ret);
 			break;
 		}
 		size = ret;
 		splFillCheckData((unsigned int *) spl_eMMCBuf, (int)size);
 		if (TRUE !=  Emmc_Write(PARTITION_BOOT1, 0, CONFIG_SPL_LOAD_LEN / EMMC_SECTOR_SIZE, (uint8*)spl_eMMCBuf)) {
-			printf("emmc image read error \n");
+			debugf("emmc image read error \n");
 			ret = 1; /* fail */
 		}
-		printf("spl update done\n");
+		debugf("spl update done\n");
 		file_fat_rm(SD_SPL_NAME);
 	}while(0);
 #endif
 	do{
-		printf("reading %s\n", SD_MODEM_NAME);
+		debugf("reading %s\n", SD_MODEM_NAME);
 		ret = do_fat_read(SD_MODEM_NAME, BUF_ADDR, 0, LS_NO);
 		if(ret <= 0){
-			printf("sd file read error %d\n", ret);
+			debugf("sd file read error %d\n", ret);
 			break;
 		}
 		size = ret;
@@ -375,10 +370,10 @@ SKIP:
 	}while(0);
 
 	do{
-		printf("reading %s\n", SD_DSP_NAME);
+		debugf("reading %s\n", SD_DSP_NAME);
 		ret = do_fat_read(SD_DSP_NAME, BUF_ADDR, 0, LS_NO);
 		if(ret <= 0){
-			printf("sd file read error %d\n", ret);
+			debugf("sd file read error %d\n", ret);
 			break;
 		}
 		size = ret;
@@ -391,10 +386,10 @@ SKIP:
 	}while(0);
 
 	do{
-		printf("reading %s\n", SD_VM_NAME);
+		debugf("reading %s\n", SD_VM_NAME);
 		ret = do_fat_read(SD_VM_NAME, BUF_ADDR, 0, LS_NO);
 		if(ret <= 0){
-			printf("sd file read error %d\n", ret);
+			debugf("sd file read error %d\n", ret);
 			break;
 		}
 		size = ret;
@@ -404,7 +399,7 @@ SKIP:
 		file_fat_rm(SD_VM_NAME);
 	}while(0);
 
-	printf("update done\n");
+	debugf("update done\n");
 	return;
 }
 #else

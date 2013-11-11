@@ -295,7 +295,7 @@ static int usb_read(void *_buf, unsigned len)
 	if (fastboot_state == STATE_ERROR)
 		goto oops;
 
-	printf("usb_read(address = 0x%x,len=0x%x)\n",_buf,len);
+	fb_printf("usb_read(address = 0x%x,len=0x%x)\n",_buf,len);
 	while (len > 0) {
 		xfer = (len > 4096) ? 4096 : len;
 		req->buf = buf;
@@ -304,7 +304,7 @@ static int usb_read(void *_buf, unsigned len)
 		//r = udc_request_queue(out, req);
 		r = usb_ep_queue(out, req, GFP_ATOMIC);
 		if (r < 0) {
-			printf("usb_read() queue failed\n");
+			fb_printf("usb_read() queue failed\n");
 			goto oops;
 		}
 		//event_wait(&txn_done);
@@ -313,11 +313,11 @@ static int usb_read(void *_buf, unsigned len)
 			usb_gadget_handle_interrupts();
 
 		if (txn_status < 0) {
-			printf("usb_read() transaction failed\n");
+			fb_printf("usb_read() transaction failed\n");
 			goto oops;
 		}
 		if((count % 0x100000) == 0)
-		printf("remained size = 0x%x\n",len);
+		fb_printf("remained size = 0x%x\n",len);
 
 		count += req->actual;
 		buf += req->actual;
@@ -349,14 +349,14 @@ static int usb_write(void *buf, unsigned len)
 	//r = udc_request_queue(in, req);
 	r = usb_ep_queue(in, req, GFP_ATOMIC);
 	if (r < 0) {
-		printf("usb_write() queue failed\n");
+		fb_printf("usb_write() queue failed\n");
 		goto oops;
 	}
 	//event_wait(&txn_done);
 	while(!txn_done)
 		usb_gadget_handle_interrupts();
 	if (txn_status < 0) {
-		printf("usb_write() transaction failed\n");
+		fb_printf("usb_write() transaction failed\n");
 		goto oops;
 	}
 	return req->actual;
@@ -378,7 +378,7 @@ void fastboot_ack(const char *code, const char *reason)
 
 	//snprintf(response, 64, "%s%s", code, reason);
 	if(strlen(code) + strlen(reason) >= 64) {
-		printf("%s too long string\r\n", __func__);
+		fb_printf("%s too long string\r\n", __func__);
 	}
 	sprintf(response, "%s%s", code, reason);
 	fastboot_state = STATE_COMPLETE;
@@ -584,13 +584,13 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 
 	fb_printf("%s\n", __func__);
 	dev = get_dev("mmc", 1);
-	printf("cmd_flash:data = 0x%x,ImageInfo[0].base_address = 0x%x,ImageInfo[1].base_address = 0x%x\n",data,ImageInfo[0].base_address,ImageInfo[1].base_address);
+	fb_printf("cmd_flash:data = 0x%x,ImageInfo[0].base_address = 0x%x,ImageInfo[1].base_address = 0x%x\n",data,ImageInfo[0].base_address,ImageInfo[1].base_address);
 	if(NULL == dev){
 		fastboot_fail("Block device not supported!");
 		return;
 	}
 
-	printf("Cmd Flash partition:%s \n", arg);
+	fb_printf("Cmd Flash partition:%s \n", arg);
 	for(i=0;i<MAX_UTF_PARTITION_NAME_LEN;i++)
 	{
 		partition_name[i] = arg[i];
@@ -649,29 +649,29 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 					//2 block[1] is big enough
 					while (write_size > 0)
 					{
-						printf("cmd_flash: write_size %d\n",write_size);
+						fb_printf("cmd_flash: write_size %d\n",write_size);
 						retval = write_simg2emmc("mmc", 1, partition_name, write_addr, write_size);
 
 						if(-1 == retval){
-							printf("cmd_flash : retval =%d,idx = %d\n",retval,idx);
+							fb_printf("cmd_flash : retval =%d,idx = %d\n",retval,idx);
 							fastboot_fail("eMMC WRITE_ERROR!");
 							return;
 						}
 						if(0 == retval){
-							printf("cmd_flash : write end!\n");
+							fb_printf("cmd_flash : write end!\n");
 							goto end;
 						}
 
 						size_left = write_size - retval;
 
-						printf("cmd flash:size = %d, retval = %d,size left %d\n", write_size, retval,size_left);
+						fb_printf("cmd flash:size = %d, retval = %d,size left %d\n", write_size, retval,size_left);
 
 						write_in += retval;
 
 						if (write_addr == ImageInfo[0].base_address)	{
 							//move once
 							move_size = size_left;
-							printf("flash second times size_left = %d!\n",size_left);
+							fb_printf("flash second times size_left = %d!\n",size_left);
 
 							if(move_size + ImageInfo[1].data_size > ImageInfo[1].max_size){
 								//error tips
@@ -690,7 +690,7 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 							write_size = move_size + ImageInfo[1].data_size;
 						}
 						else{
-							printf("flash third times size_left = %d!\n",size_left);
+							fb_printf("flash third times size_left = %d!\n",size_left);
 							write_addr = ImageInfo[1].base_address + write_in - (ImageInfo[0].data_size - move_size);
 							write_size = size_left;
 						}
@@ -700,16 +700,16 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 				else if(FB_IMG_RAW == img_format){
 					uint32  data_left = 0;
 
-					printf("cmd_flash: raw data\n");
+					fb_printf("cmd_flash: raw data\n");
 					//first part
 					data_left = ImageInfo[0].data_size%EMMC_SECTOR_SIZE;
 					count = ImageInfo[0].data_size/EMMC_SECTOR_SIZE;
 					if(!Emmc_Write(partition_type, startblock,count,(uint8*)ImageInfo[0].base_address)){
-						printf("cmd_flash: raw data write frist part error!\n");
+						fb_printf("cmd_flash: raw data write frist part error!\n");
 						fastboot_fail("write frist part error!");
 						return;
 					}
-					printf("cmd_flash:raw data write first part success\n");
+					fb_printf("cmd_flash:raw data write first part success\n");
 					startblock += count;
 
 					if(0 == ImageInfo[1].data_size){
@@ -720,7 +720,7 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 						}
 						else{
 							if(!Emmc_Write(partition_type, startblock,1,ImageInfo[0].base_address+count*EMMC_SECTOR_SIZE)){
-								printf("cmd_flash: raw data write tail part error!\n");
+								fb_printf("cmd_flash: raw data write tail part error!\n");
 								fastboot_fail("write tail part error!");
 								return;
 							}
@@ -741,11 +741,11 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 
 						count = ((ImageInfo[1].data_size +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1)))/EMMC_SECTOR_SIZE;
 						if(!Emmc_Write(partition_type, startblock,count,(uint8*)ImageInfo[1].base_address)){
-							printf("cmd_flash: raw data write second part error!\n");
+							fb_printf("cmd_flash: raw data write second part error!\n");
 							fastboot_fail("write second part error!");
 							return;
 						}
-						printf("cmd_flash:raw data write second part success\n");
+						fb_printf("cmd_flash:raw data write second part success\n");
 					}
 					goto end;
 				}
@@ -801,7 +801,7 @@ void cmd_erase(const char *arg, void *data, unsigned sz)
 		return;
 	}
 
-	printf("Cmd Erase partition:%s \n", arg);
+	fb_printf("Cmd Erase partition:%s \n", arg);
 
 	if (strcmp("params", arg) == 0){
 		if(secureboot_enabled()){
@@ -839,7 +839,7 @@ void cmd_erase(const char *arg, void *data, unsigned sz)
 		fastboot_fail("eMMC Erase Partition ERROR!");
 		return;
 	}
-	printf("Cmd Erase OK\n");
+	fb_printf("Cmd Erase OK\n");
 	fastboot_okay("");
 	return;
 }
@@ -1161,7 +1161,7 @@ U_BOOT_CMD(
 
 int fastboot_init(void *base, unsigned size, struct usb_ep * ep_in, struct usb_ep *ep_out)
 {
-	printf("fastboot_init()\n");
+	fb_printf("fastboot_init()\n");
 
 	ImageInfo[0].base_address = base;
 	ImageInfo[0].max_size = size;
@@ -1173,13 +1173,13 @@ int fastboot_init(void *base, unsigned size, struct usb_ep * ep_in, struct usb_e
 	ImageInfo[1].max_size = FB_DOWNLOAD_BUF_EXT1_SIZE;
 #endif
 	if(!ep_in) {
-		printf("ep in is not alloc\r\n");
+		fb_printf("ep in is not alloc\r\n");
 		return -1;
 	}
 	in = ep_in;
 	
 	if(!ep_out) {
-		printf("ep out is not alloc\r\n");
+		fb_printf("ep out is not alloc\r\n");
 		return -1;
 	}
 	out = ep_out;
@@ -1187,13 +1187,13 @@ int fastboot_init(void *base, unsigned size, struct usb_ep * ep_in, struct usb_e
 	tx_req = usb_ep_alloc_request(in, 0);
 	if(!tx_req)
 	{
-	      printf("ep tx request is not alloc\r\n");
+	      fb_printf("ep tx request is not alloc\r\n");
 	      return -1;
 	}
 	rx_req =  usb_ep_alloc_request(out, 0);
 	if(!rx_req)
 	{
-	      printf("ep rx request is not alloc\r\n");
+	      fb_printf("ep rx request is not alloc\r\n");
 	      usb_ep_free_request(in,tx_req);
 	      return -1;
 	}

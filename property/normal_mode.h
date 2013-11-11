@@ -24,6 +24,13 @@ extern void *spl_data;
 extern void *harsh_data;
 extern unsigned char raw_header[8192];
 
+#ifdef DEBUG
+#define debugf(fmt, args...) do { printf("%s(): ", __func__); printf(fmt, ##args); } while (0)
+#else
+#define debugf(fmt, args...)
+#endif
+
+
 #define VMJALUNA_PART "vmjaluna"
 #define MODEM_PART "modem"
 #define KERNEL_PART "kernel"

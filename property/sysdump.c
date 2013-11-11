@@ -31,7 +31,7 @@ extern void set_backlight(uint32_t value);
 
 void display_writing_sysdump(void)
 {
-	printf("%s\n", __FUNCTION__);
+	debugf("%s\n", __FUNCTION__);
 #ifdef CONFIG_SPLASH_SCREEN
 
 	vibrator_hw_init();
@@ -40,7 +40,7 @@ void display_writing_sysdump(void)
 	size_t size = 1<<19;
 	char * bmp_img = malloc(size);
 	if(!bmp_img){
-		printf("not enough memory for splash image\n");
+		debugf("not enough memory for splash image\n");
 		return;
 	}
 	int ret = read_logoimg(bmp_img,size);
@@ -71,7 +71,7 @@ static void wait_for_keypress()
 		if (key_code == KEY_VOLUMEDOWN || key_code == KEY_VOLUMEUP || key_code == KEY_HOME)
 			break;
 	} while (1);
-	printf("Pressed key: %d\n", key_code);
+	debugf("Pressed key: %d\n", key_code);
 	lcd_printf("Pressed key: %d\n", key_code);
 	lcd_display();
 }
@@ -87,29 +87,29 @@ int init_mmc_fat(void)
 	if(mmc) {
 		ret = mmc_init(mmc);
 		if(ret < 0){
-			printf("mmc init failed %d\n", ret);
+			debugf("mmc init failed %d\n", ret);
 			return -1;
 		}
 	} else {
-		printf("no mmc card found\n");
+		debugf("no mmc card found\n");
 		return -1;
 	}
 
 	dev_desc = &mmc->block_dev;
 	if(dev_desc==NULL){
-		printf("no mmc block device found\n");
+		debugf("no mmc block device found\n");
 		return -1;
 	}
 
 	ret = fat_register_device(dev_desc, 1);
 	if(ret < 0) {
-		printf("fat regist fail %d\n", ret);
+		debugf("fat regist fail %d\n", ret);
 		return -1;
 	}
 
 	ret = file_fat_detectfs();
 	if(ret) {
-		printf("detect fs failed\n");
+		debugf("detect fs failed\n");
 		return -1;
 	}
 
@@ -125,13 +125,13 @@ void write_mem_to_mmc(char *path, char *filename,
 		do {} while (0); /* TODO: jianjun.he */
 	}
 
-	printf("writing 0x%lx bytes to sd file %s\n",
+	debugf("writing 0x%lx bytes to sd file %s\n",
 		memsize, filename);
 	lcd_printf("writing 0x%lx bytes to sd file %s\n", memsize, filename);
 	lcd_display();
 	ret = file_fat_write(filename, memaddr, memsize);
 	if (ret <= 0) {
-		printf("sd file write error %d\n", ret);
+		debugf("sd file write error %d\n", ret);
 	}
 
 	return;
@@ -335,19 +335,19 @@ void write_sysdump_before_boot(int rst_mode)
 
 	int sprd_dump_mem_num = 1;
 
-	printf("rst_mode:0x%x, Check if need to write sysdump info of 0x%08lx to file...\t", rst_mode,
+	debugf("rst_mode:0x%x, Check if need to write sysdump info of 0x%08lx to file...\t", rst_mode,
 		SPRD_SYSDUMP_MAGIC);
 
 	if ((rst_mode == WATCHDOG_REBOOT) || (rst_mode == UNKNOW_REBOOT_MODE) || \
 		((rst_mode == PANIC_REBOOT) && !memcmp(infop->magic, SYSDUMP_MAGIC, sizeof(infop->magic)))) {
-		printf("\n");
+		debugf("\n");
 
 		memset(infop->magic, 0, sizeof(infop->magic));
 
 #ifdef SYSDUMP_BYPASS
 		//printf("infop->crash_key: %d\n", infop->crash_key);
 		if ((rst_mode != PANIC_REBOOT)) {
-			printf("skip sysdump for user build\n");
+			debugf("skip sysdump for user build\n");
 			goto FINISH;
 		}
 #endif
@@ -422,12 +422,12 @@ void write_sysdump_before_boot(int rst_mode)
 		}
 #endif
 
-		printf("\nwriting done.\nPress any key to continue...");
+		debugf("\nwriting done.\nPress any key to continue...");
 		lcd_printf("\nWriting done.\nPress any key (Exp power key) to continue...");
 		lcd_display();
 		wait_for_keypress();
 	} else
-		printf("no need.\n");
+		debugf("no need.\n");
 
 FINISH:
 	return;

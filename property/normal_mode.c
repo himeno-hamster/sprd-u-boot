@@ -18,7 +18,7 @@ int eng_getphasecheck(SP09_PHASE_CHECK_T* phase_check)
 
 	if (phase_check->Magic == SP09_SPPH_MAGIC_NUMBER) {
 		//printf("Magic = 0x%08x\n",phase_check->Magic);
-		printf("SN1 = %s   SN2 = %s\n",phase_check->SN1, phase_check->SN2);
+		debugf("SN1 = %s   SN2 = %s\n",phase_check->SN1, phase_check->SN2);
 		/*printf("StationNum = %d\n",phase_check->StationNum);
 		printf("Reserved = %s\n",phase_check->Reserved);
 		printf("SignFlag = 0x%02x\n",phase_check->SignFlag);
@@ -26,24 +26,24 @@ int eng_getphasecheck(SP09_PHASE_CHECK_T* phase_check)
 		printf("iItem = 0x%04x\n",phase_check->iItem);*/
 		if (phase_check->SignFlag == 1) {
 			for (aaa = 0; aaa < phase_check->StationNum/*SP09_MAX_STATION_NUM*/; aaa ++) {
-				printf("%s : ", phase_check->StationName[aaa]);
+				debugf("%s : ", phase_check->StationName[aaa]);
 				tested = 1 << aaa;
 				if ((tested & phase_check->iTestSign) == 0) {
 					if ((tested & phase_check->iItem) == 0)
-						printf("Pass; ");
+						debugf("Pass; ");
 					else
-						printf("Fail; ");
+						debugf("Fail; ");
 				} else
-					printf("UnTested; ");
+					debugf("UnTested; ");
 			}
 		} else {
-			printf("station status are all invalid!\n");
+			debugf("station status are all invalid!\n");
 			for (aaa = 0; aaa < phase_check->StationNum/*SP09_MAX_STATION_NUM*/; aaa ++)
-				printf("%s  ", phase_check->StationName[aaa]);
+				debugf("%s  ", phase_check->StationName[aaa]);
 		}
-		printf("\nLast error: %s\n",phase_check->szLastFailDescription);
+		debugf("\nLast error: %s\n",phase_check->szLastFailDescription);
 	} else
-		printf("no production information / phase check!\n");
+		debugf("no production information / phase check!\n");
 
 	return 0;
 }
@@ -219,12 +219,12 @@ unsigned long LogSwitch_Function(unsigned char *lpPhoBuf, unsigned long dwPhoSiz
 		pTemp += 2;
 
 		if (wCurID == 1) {
-			printf("pTemp = 0x%08x  dwLength = %d\n", pTemp, dwLength);
+			debugf("pTemp = 0x%08x  dwLength = %d\n", pTemp, dwLength);
 			GSM_Download_Param = (struct GSM_Download_Param_Tag *)pTemp;
-			printf("flag = %d sizeof = 0x%08x\n", GSM_Download_Param->log_switch_struct.DSP_log_switch.DSP_log_switch_value, sizeof(struct GSM_Download_Param_Tag));
+			debugf("flag = %d sizeof = 0x%08x\n", GSM_Download_Param->log_switch_struct.DSP_log_switch.DSP_log_switch_value, sizeof(struct GSM_Download_Param_Tag));
 
 			GSM_Download_Param->log_switch_struct.DSP_log_switch.DSP_log_switch_value = 0;
-			printf("flag = %d\n", GSM_Download_Param->log_switch_struct.DSP_log_switch);
+			debugf("flag = %d\n", GSM_Download_Param->log_switch_struct.DSP_log_switch);
 			break;
 		}
 		dwOffset += 4;
@@ -260,10 +260,10 @@ int fixnv_is_correct(unsigned char *array, unsigned long size)
 			&& (array[size + 3] == 0x5a)) {
 			/* check nv right or wrong */
 			if (XCheckNVStruct(array, size) == 0) {
-				printf("NV data is crashed!!!.\n");
+				debugf("NV data is crashed!!!.\n");
 				return -1;
 			} else {
-				printf("NV data is right!!!.\n");
+				debugf("NV data is right!!!.\n");
 				array[size] = 0xff; array[size + 1] = 0xff;
 				array[size + 2] = 0xff; array[size + 3] = 0xff;
 				return 1;
@@ -278,10 +278,10 @@ int fixnv_is_correct(unsigned char *array, unsigned long size)
 		if (*dataaddr == sum) {
 			/* check nv right or wrong */
 			if (XCheckNVStruct(array, size) == 0) {
-				printf("NV data is crashed!!!.\n");
+				debugf("NV data is crashed!!!.\n");
 				return -1;
 			} else {
-				printf("NV data is right!!!.\n");
+				debugf("NV data is right!!!.\n");
 				array[size] = 0xff; array[size + 1] = 0xff;
 				array[size + 2] = 0xff; array[size + 3] = 0xff;
 				array[size - 4] = 0xff; array[size - 3] = 0xff;
@@ -289,7 +289,7 @@ int fixnv_is_correct(unsigned char *array, unsigned long size)
 				return 1;
 			}
 		} else {
-			printf("NV data crc error\n");
+			debugf("NV data crc error\n");
 			return -1;
 		}
 	}
@@ -306,10 +306,10 @@ int fixnv_is_correct_endflag(unsigned char *array, unsigned long size)
 			&& (array[size + 3] == 0x5a)) {
 			/* check nv right or wrong */
 			if (XCheckNVStruct(array, size) == 0) {
-				printf("NV data is crashed!!!.\n");
+				debugf("NV data is crashed!!!.\n");
 				return -1;
 			} else {
-				printf("NV data is right!!!.\n");
+				debugf("NV data is right!!!.\n");
 				return 1;
 			}
 		} else
@@ -322,14 +322,14 @@ int fixnv_is_correct_endflag(unsigned char *array, unsigned long size)
 		if (*dataaddr == sum) {
 			/* check nv right or wrong */
 			if (XCheckNVStruct(array, size) == 0) {
-				printf("NV data is crashed!!!.\n");
+				debugf("NV data is crashed!!!.\n");
 				return -1;
 			} else {
-				printf("NV data is right!!!.\n");
+				debugf("NV data is right!!!.\n");
 				return 1;
 			}
 		} else {
-			printf("NV data crc error\n");
+			debugf("NV data crc error\n");
 			return -1;
 		}
 	}
@@ -410,7 +410,7 @@ unsigned long check_dir_table(struct nv_dev *dev)
 		backup_dir = dev->runtime + backup_sct * dev->npb->sct_size;
 		ret = memcmp(dir, backup_dir, dev->npb->sct_size);
 		if (ret != 0) {
-			printf("sct = %d  backupsct = %d is diffrent\n", sct, backup_sct);
+			debugf("sct = %d  backupsct = %d is diffrent\n", sct, backup_sct);
 			return 0;
 		}
 	}
@@ -492,18 +492,18 @@ unsigned long check_items(struct nv_dev *dev)
 
 		read_itemhdr(dev, dir.offset, &header);
 		if ((dir.size != header.size) || (header.id != id)) {
-			printf("item header is corrupted id = %d headerid = %d direntry.size = %d header.size = %d\n", id, header.id, dir.size, header.size);
+			debugf("item header is corrupted id = %d headerid = %d direntry.size = %d header.size = %d\n", id, header.id, dir.size, header.size);
 		}
 
 		if (dir.size > bufsize) {
-			printf("item size is too large : %d\n", dir.size);
+			debugf("item size is too large : %d\n", dir.size);
 			continue;
 		}
 
 		read_itemdata(dev, dir.offset, dir.size, buf);
 		checksum = calc_checksum(buf, dir.size);
 		if (checksum != dir.checksum) {
-			printf("item data is corrupted id = %d orgsum = 0x%04x checksum = 0x%04x\n", id, dir.checksum, checksum);
+			debugf("item data is corrupted id = %d orgsum = 0x%04x checksum = 0x%04x\n", id, dir.checksum, checksum);
 			return 0;
 		}
 	}
@@ -523,7 +523,7 @@ unsigned long XCheckRunningNVStruct(unsigned char *lpPhoBuf, unsigned long dwPho
 	dev.npb = npb;
 	ret = check_npb(dev, 512);
 	if (ret == 0) {
-		printf("runtimenv is wrong\n");
+		debugf("runtimenv is wrong\n");
 		return 0;
 	}
 
@@ -547,21 +547,21 @@ void dump_all_buffer(unsigned char *buf, unsigned long len)
 	remain_col = len - total_row * 16;
     offset = 0;
 	for (row = 0; row < total_row; row ++) {
-		printf("%08xh: ", offset );
+		debugf("%08xh: ", offset );
 		for (col = 0; col < 16; col ++)
-			printf("%02x ", buf[offset + col]);
-		printf("\n");
+			debugf("%02x ", buf[offset + col]);
+		debugf("\n");
         offset += 16;
 	}
 
 	if (remain_col > 0) {
-		printf("%08xh: ", offset);
+		debugf("%08xh: ", offset);
 		for (col = 0; col < remain_col; col ++)
-			printf("%02x ", buf[offset + col]);
-		printf("\n");
+			debugf("%02x ", buf[offset + col]);
+		debugf("\n");
 	}
 
-	printf("\n");
+	debugf("\n");
 }
 
 
@@ -574,7 +574,7 @@ int runtimenv_is_correct(unsigned char *array, unsigned long size)
 
 	ret = XCheckRunningNVStruct(array, size);
 	if (ret == 1) {
-		printf("runtimenv is right\n");
+		debugf("runtimenv is right\n");
 		return 1;
 	} else
 		return -1;
@@ -599,7 +599,7 @@ int sn_is_correct(unsigned char *array, unsigned long size)
 		}
 	}
 
-	printf("phasecheck crc error\n");
+	debugf("phasecheck crc error\n");
 	return -1;
 }
 
@@ -625,7 +625,7 @@ int sn_is_correct_endflag(unsigned char *array, unsigned long size)
 			return 1;
 	}
 
-	printf("phasecheck crc error\n");
+	debugf("phasecheck crc error\n");
 	return -1;
 }
 
@@ -733,7 +733,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 	int ret=is_factorymode();
 
 	if (ret == 1) {
-		printf("1\n");
+		debugf("1\n");
 		str_len = strlen(buf);
 		sprintf(&buf[str_len], " factory=1");
 	}
@@ -766,11 +766,11 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 		return NULL;
 	}
 	if(harsh_data == NULL){
-		printf("harsh_data malloc failed\n");
+		debugf("harsh_data malloc failed\n");
 		free(buf);
 		return NULL;
 	}
-	printf("spl_data adr 0x%x harsh_data adr 0x%x\n", spl_data, harsh_data);
+	debugf("spl_data adr 0x%x harsh_data adr 0x%x\n", spl_data, harsh_data);
 	ret = cal_md5(spl_data, CONFIG_SPL_LOAD_LEN, harsh_data);
 	if(ret){
 		str_len = strlen(buf);
@@ -816,7 +816,7 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 #endif
 }
 #endif
-    printf("cmdline_len = %d \n pass cmdline: %s \n",strlen(buf), buf);
+    debugf("cmdline_len = %d \n pass cmdline: %s \n",strlen(buf), buf);
     //lcd_printf(" pass cmdline : %s\n",buf);
     //lcd_display();
     creat_atags(VLX_TAG_ADDR, buf, NULL, 0);
@@ -867,7 +867,7 @@ void normal_mode(void)
 }
 void special_mode(void)
 {
-    printf("special_mode\n");
+    debugf("special_mode\n");
 #if BOOT_NATIVE_LINUX
     vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=special", BACKLIGHT_OFF);
 #else
@@ -889,46 +889,46 @@ void write_modem_memory()
 	block_dev_desc_t *dev_desc=NULL;
 	int ret;
 	char bufread[50];
-	printf("go to dump memory\n");
+	debugf("go to dump memory\n");
 	mmc = find_mmc_device(0);
 	if(mmc){
 		ret = mmc_init(mmc);
 		if(ret < 0){
-			printf("mmc init failed %d\n", ret);
+			debugf("mmc init failed %d\n", ret);
 			return;
 		}
 	}else{
-		printf("no mmc card found\n");
+		debugf("no mmc card found\n");
 		return;
 	}
 
 	dev_desc = &mmc->block_dev;
 	if(dev_desc==NULL){
-		printf("no mmc block device found\n");
+		debugf("no mmc block device found\n");
 		return;
 	}
 	ret = fat_register_device(dev_desc, 1);
 	if(ret < 0){
-		printf("fat regist fail %d\n", ret);
+		debugf("fat regist fail %d\n", ret);
 		return;
 	}
 	ret = file_fat_detectfs();
 	if(ret){
-		printf("detect fs failed\n");
+		debugf("detect fs failed\n");
 		return;
 	}
 
-	printf("writing %s\n",  MODEM_MEMORY_NAME);
+	debugf("writing %s\n",  MODEM_MEMORY_NAME);
 	ret = file_fat_write(MODEM_MEMORY_NAME, MODEM_MEMORY_ADDR, MODEM_MEMORY_SIZE);
 	if(ret <= 0){
-		printf("sd file write error %d\n", ret);
+		debugf("sd file write error %d\n", ret);
 	}
 }
 #endif
 extern int fatal_dump_enabled(void);
 void watchdog_mode(void)
 {
-	printf("watchdog_mode\n");
+	debugf("watchdog_mode\n");
 #ifdef CONFIG_GENERIC_MMC
 #ifndef CONFIG_SC8830
 	if(fatal_dump_enabled())
@@ -944,7 +944,7 @@ void watchdog_mode(void)
 
 void unknow_reboot_mode(void)
 {
-	printf("unknow_reboot_mode\n");
+	debugf("unknow_reboot_mode\n");
 #ifdef CONFIG_GENERIC_MMC
 #ifndef CONFIG_SC8830
 	if(fatal_dump_enabled())
@@ -959,7 +959,7 @@ void unknow_reboot_mode(void)
 }
 void panic_reboot_mode(void)
 {
-	printf("%s\n", __func__);
+	debugf("%s\n", __func__);
 #ifdef CONFIG_GENERIC_MMC
 #ifndef CONFIG_SC8830
 	if(fatal_dump_enabled())
