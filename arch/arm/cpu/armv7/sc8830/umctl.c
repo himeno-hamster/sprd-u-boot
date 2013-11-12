@@ -1885,7 +1885,8 @@ CLK_TYPE_E DDR_DFS_POINT[] =
 {
 #if defined(CONFIG_SPX15)
         CLK_192MHZ,
-        CLK_332MHZ
+        CLK_332MHZ,
+        CLK_400MHZ
 #else
 
         CLK_100MHZ,
