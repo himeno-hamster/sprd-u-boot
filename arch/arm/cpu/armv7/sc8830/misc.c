@@ -1,3 +1,4 @@
+#include <common.h>
 #include <asm/arch/sprd_reg.h>
 #include <asm/arch/sci_types.h>
 #include <asm/arch/adi_hal_internal.h>
@@ -86,6 +87,69 @@ static void bb_ldo_auto_en()
 	*((volatile unsigned int *)(REG_AON_APB_RES_REG0)) |= 1<<9;
 } 
 
+#ifdef CONFIG_PBINT_7S_RESET
+static inline int pbint_7s_rst_disable(uint32 disable)
+{
+	if (disable) {
+		sci_adi_set(ANA_REG_GLB_POR_7S_CTRL, BIT_PBINT_7S_RST_DISABLE);
+	} else {
+		sci_adi_clr(ANA_REG_GLB_POR_7S_CTRL, BIT_PBINT_7S_RST_DISABLE);
+	}
+	return 0;
+}
+
+#define PBINT_7S_RST_HW_MODE 1
+#define PBINT_7S_RST_SW_MODE 0
+static inline int pbint_7s_rst_set_sw(uint32 mode)
+{
+	if (mode) {
+		sci_adi_set(ANA_REG_GLB_POR_7S_CTRL, BIT_PBINT_7S_RST_MODE);
+	} else {
+		sci_adi_clr(ANA_REG_GLB_POR_7S_CTRL, BIT_PBINT_7S_RST_MODE);
+	}
+	return 0;
+}
+
+#define PBINT_7S_RST_SW_LONG_MODE 0
+#define PBINT_7S_RST_SW_SHORT_MODE 1
+static inline int pbint_7s_rst_set_swmode(uint32 mode)
+{
+	if (mode) {
+		sci_adi_set(ANA_REG_GLB_POR_7S_CTRL, BIT_PBINT_7S_RST_SWMODE);
+	} else {
+		sci_adi_clr(ANA_REG_GLB_POR_7S_CTRL, BIT_PBINT_7S_RST_SWMODE);
+	}
+	return 0;
+}
+
+static inline int pbint_7s_rst_set_threshold(uint32 th)
+{
+	int mask = BITS_PBINT_7S_RST_THRESHOLD(-1);
+	int shift = ffs(mask) - 1;
+	sci_adi_write(ANA_REG_GLB_POR_7S_CTRL, (th << shift) & mask, mask);
+	return 0;
+}
+
+int pbint_7s_rst_cfg(uint32 en, uint32 sw_rst)
+{
+	/* ignore sw_rst, please refer to config.h */
+	if (en) {
+#if defined CONFIG_PBINT_7S_RST_THRESHOLD
+		pbint_7s_rst_set_threshold(CONFIG_PBINT_7S_RST_THRESHOLD);
+#endif
+#if defined CONFIG_PBINT_7S_RST_SW_SHORT
+		pbint_7s_rst_set_sw(PBINT_7S_RST_SW_MODE);
+		pbint_7s_rst_set_swmode(PBINT_7S_RST_SW_SHORT_MODE);
+#elif defined CONFIG_PBINT_7S_RST_SW_LONG
+		pbint_7s_rst_set_sw(PBINT_7S_RST_SW_MODE);
+		pbint_7s_rst_set_swmode(PBINT_7S_RST_SW_LONG_MODE);
+#else
+		pbint_7s_rst_set_sw(PBINT_7S_RST_HW_MODE);
+#endif
+	}
+	return pbint_7s_rst_disable(!en);
+}
+#else
 void pbint_7s_rst_cfg(uint32 en_rst, uint32 sw_rst)
 {
 	uint16 reg_data = ANA_REG_GET(ANA_REG_GLB_POR_7S_CTRL);
@@ -125,6 +189,7 @@ void pbint_7s_rst_cfg(uint32 en_rst, uint32 sw_rst)
 	ANA_REG_SET(ANA_REG_GLB_POR_7S_CTRL, reg_data);
 	//printf("ANA_REG_GLB_POR_7S_CTRL:%04X\r\n", ANA_REG_GET(ANA_REG_GLB_POR_7S_CTRL));
 }
+#endif
 
 void misc_init()
 {
@@ -137,8 +202,6 @@ void misc_init()
 #endif
 	bb_bg_auto_en();
 	bb_ldo_auto_en();
-#ifndef CONFIG_SPX15
 	pbint_7s_rst_cfg(1, 0);
-#endif
 }
 

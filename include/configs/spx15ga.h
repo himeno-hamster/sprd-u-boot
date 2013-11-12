@@ -423,4 +423,12 @@
 
 #define CONFIG_RAMDUMP_NO_SPLIT 1 /* Don't split sysdump file */
 
+#define CONFIG_PBINT_7S_RESET
+/* short reset when power key reset trigged */
+#define CONFIG_PBINT_7S_RST_SW_SHORT 1
+/* reset then release the power key when reset trigged */
+/* #define CONFIG_PBINT_7S_RST_SW_LONG 1 */
+/* rang:2-16 unit: s */
+/* #define CONFIG_PBINT_7S_RST_THRESHOLD 7 */
+
 #endif /* __CONFIG_H */
