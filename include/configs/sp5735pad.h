@@ -53,6 +53,8 @@
 #define CONFIG_SP8830
 #define CONFIG_SC8830
 
+#define CONFIG_AUTODLOADER
+
 #define CHIP_ENDIAN_LITTLE
 #define _LITTLE_ENDIAN 1
 
