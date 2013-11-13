@@ -7,6 +7,7 @@
 #include <asm/arch/regs_adi.h>
 #include <asm/arch/adi_hal_internal.h>
 #include <asm/arch/sprd_reg_aon_apb.h>
+#include <asm/arch/chip_drv_config.h>
 
 #define   HWRST_STATUS_POWERON_MASK 		(0xf0)
 #define   HWRST_STATUS_RECOVERY 		(0x20)
@@ -126,6 +127,12 @@ int power_button_pressed(void)
 int charger_connected(void)
 {
 	sprd_eic_request(EIC_CHG_INT);
+	if((ANA_REG_GET(ANA_APB_CHGR_CTL2) & (1 << 8)) == 0){
+		debugf("---err---ANA_APB_CHGR_CTL2 0x%x-------\n", ANA_REG_GET(ANA_APB_CHGR_CTL2));
+		while(1);
+		ANA_REG_OR(ANA_APB_CHGR_CTL2, 1<<8);
+		debugf("---set bit8---ANA_APB_CHGR_CTL2 0x%x-------\n", ANA_REG_GET(ANA_APB_CHGR_CTL2));
+	}
 	udelay(3000);
 	debugf("eica status %x\n", sprd_eic_get(EIC_CHG_INT));
 	return !!sprd_eic_get(EIC_CHG_INT);

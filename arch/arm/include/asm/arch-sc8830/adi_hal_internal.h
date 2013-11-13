@@ -21,46 +21,33 @@
 #define  _ADI_HAL_INTERNAL_H_
 
 #include "sci_types.h"
-
+#include <asm/arch/adi.h>
     
-unsigned short ADI_Analogdie_reg_read (unsigned int addr);
 
-void ADI_Analogdie_reg_write (unsigned int addr, unsigned short data);
-
-
-void ADI_init (void);
+#define		ADI_init	sci_adi_init
 
 ///for analog die register operation
 #define ANA_REG_OR(reg_addr, value)     \
     do{\
-        unsigned short adi_tmp_val = ADI_Analogdie_reg_read(reg_addr); \
-        adi_tmp_val |= (uint16)(value); \
-        ADI_Analogdie_reg_write(reg_addr, adi_tmp_val); \
+        sci_adi_write(reg_addr, (unsigned short)(value), 0); \
     }while(0)
 #define ANA_REG_MSK_OR(reg_addr, value, msk)        \
     do{\
-        unsigned short adi_tmp_val = ADI_Analogdie_reg_read(reg_addr); \
-        adi_tmp_val &= (unsigned short)(~(msk)); \
-        adi_tmp_val |= (unsigned short)((value)&(msk)); \
-        ADI_Analogdie_reg_write(reg_addr, adi_tmp_val); \
+        sci_adi_write(reg_addr, (unsigned short)((value)&(msk)), msk); \
     }while(0)
 #define ANA_REG_AND(reg_addr, value)    \
     do{\
-        unsigned short adi_tmp_val = ADI_Analogdie_reg_read(reg_addr); \
-        adi_tmp_val &= (unsigned short)(value); \
-        ADI_Analogdie_reg_write(reg_addr, adi_tmp_val); \
+        sci_adi_write(reg_addr, 0, (unsigned short)(~(value))); \
     }while(0)
 #define ANA_REG_BIC(reg_addr, value)    \
     do{\
-        unsigned short adi_tmp_val = ADI_Analogdie_reg_read(reg_addr); \
-        adi_tmp_val &= (unsigned short)(~value); \
-        ADI_Analogdie_reg_write(reg_addr, adi_tmp_val); \
+        sci_adi_write(reg_addr, 0, (unsigned short)(value)); \
     }while(0)
 
 
-#define ANA_REG_SET(reg_addr, value)    ADI_Analogdie_reg_write(reg_addr, (unsigned short)(value))
+#define ANA_REG_SET(reg_addr, value)    sci_adi_raw_write(reg_addr, (unsigned short)(value))
 
-#define ANA_REG_GET(reg_addr)           ADI_Analogdie_reg_read(reg_addr)
+#define ANA_REG_GET(reg_addr)           sci_adi_read(reg_addr)
 
 
 #endif  //_ADI_HAL_INTERNAL_H_

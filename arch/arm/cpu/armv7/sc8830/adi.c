@@ -32,10 +32,6 @@
 #endif
 #define SPRD_MISC_BASE SPRD_MISC_PHYS
 
-#ifndef	__ADI_DEBUG__
-#define __ADI_DEBUG__
-#endif
-
 /* registers definitions for controller CTL_ADI */
 #define REG_ADI_CTRL0					(SPRD_MISC_BASE + 0x04)
 #define REG_ADI_CHNL_PRI				(SPRD_MISC_PHYS + 0x08)
@@ -86,6 +82,17 @@
 
 static u32 readback_addr_mak = 0;
 
+#if defined(CONFIG_NAND_SPL) || defined(CONFIG_FDL1)
+#define panic(x...) do{}while(0)
+#define printf(x...) do{}while(0)
+#define udelay(x)	\
+	do { \
+		volatile int i; \
+		int cnt = 1000 * x; \
+		for (i=0; i<cnt; i++);\
+	} while(0);
+#endif
+
 /*FIXME: Now define adi IP version, sc8825 is zero, sc8830 is one,
 * Adi need init early that than read soc id, now using this ARCH dependency.
 */
@@ -117,7 +124,12 @@ static inline int __adi_fifo_drain(void)
 	while (!(__raw_readl(REG_ADI_FIFO_STS) & BIT_FIFO_EMPTY) && cnt--) {
 		udelay(1);
 	}
-	WARN(cnt == 0, "ADI WAIT timeout!!!");
+	if(cnt < 0) {
+		while(1) {
+			printf("[0x%s]: ADI READ timeout!!! \n", __func__);
+			udelay(1000000);
+		}
+	}
 	return 0;
 }
 
@@ -154,12 +166,12 @@ static inline int __adi_read(u32 regPddr)
 		val = __raw_readl(REG_ADI_RD_DATA);
 	} while ((val & BIT_RD_CMD_BUSY) && cnt--);
 
-#ifdef __ADI_DEBUG__
-	if (cnt + 1 <= 0)
-		printf("[0x%s]: reg = 0x%x, value = 0x%x\n", __func__, regPddr, val);
-#else
-	WARN((cnt + 1) == 0, "ADI READ timeout!!!");
-#endif
+	if (cnt + 1 <= 0){
+		while(1){
+			printf("[0x%s]: ADI READ timeout!!! reg = 0x%x, value = 0x%x\n", __func__, regPddr, val);
+			udelay(1000000);
+		}
+	}
 	/* val high part should be the address of the last read operation */
 	BUG_ON(TO_ADDR(val) != (regPddr & readback_addr_mak));
 
@@ -177,8 +189,6 @@ int sci_adi_read(u32 reg)
 	__adi_unlock(&flags, NULL);
 	return val;
 }
-
-EXPORT_SYMBOL(sci_adi_read);
 
 /*This value have a bit of depending on  real hardware fifo size*/
 #define CACHE_SIZE	(16)
@@ -241,8 +251,6 @@ int sci_adi_write_fast(u32 reg, u16 val, u32 sync)
 	return 0;
 }
 
-EXPORT_SYMBOL(sci_adi_write_fast);
-
 int sci_adi_write(u32 reg, u16 or_val, u16 clear_msk)
 {
 	unsigned long flags;
@@ -254,23 +262,6 @@ int sci_adi_write(u32 reg, u16 or_val, u16 clear_msk)
 		     ~clear_msk) | or_val, 1);
 	__adi_unlock(&flags, NULL);
 	return 0;
-}
-
-EXPORT_SYMBOL(sci_adi_write);
-
-inline int sci_adi_raw_write(u32 reg, u16 val)
-{
-		return sci_adi_write_fast(reg, val, 1);
-}
-
-inline int sci_adi_set(u32 reg, u16 bits)
-{
-		return sci_adi_write(reg, bits, 0);
-}
-
-inline int sci_adi_clr(u32 reg, u16 bits)
-{
-		return sci_adi_write(reg, 0, bits);
 }
 
 static void __adi_init(void)
@@ -303,17 +294,13 @@ static void __adi_init(void)
 	}
 }
 
-int sci_adi_init(void)
+void sci_adi_init(void)
 {
 	/* enable adi in global regs */
-	//sci_glb_set(GR_GEN0, GEN0_ADI_EN);
-
+	CHIP_REG_OR(REG_AON_APB_APB_EB0, BIT_ADI_EB);
 	/* reset adi */
-	//sci_glb_set(GR_SOFT_RST, ADI_SOFT_RST);
-	//udelay(2);
-	//sci_glb_clr(GR_SOFT_RST, ADI_SOFT_RST);
-
+	CHIP_REG_OR(REG_AON_APB_APB_RST0, BIT_ADI_SOFT_RST);
+	udelay(2);
+	CHIP_REG_AND(REG_AON_APB_APB_RST0, (~BIT_ADI_SOFT_RST));
 	__adi_init();
-
-	return 0;
 }

@@ -48,6 +48,7 @@ SECTIONS
 		dram_cfg.o      (.bss)
 		drv_usb.o 	(.bss)
 		virtual_com.o 	(.bss)
+		adi.o	(.bss)
 	}
 	__bss0_end = .;
 

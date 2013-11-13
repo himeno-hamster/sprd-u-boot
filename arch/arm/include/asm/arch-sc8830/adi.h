@@ -14,7 +14,7 @@
 #ifndef __ADI_H__
 #define __ADI_H__
 
-int sci_adi_init(void);
+void sci_adi_init(void);
 
 int sci_adi_read(u32 reg);
 

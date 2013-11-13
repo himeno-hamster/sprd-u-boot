@@ -40,7 +40,7 @@ else
 SPL_COBJS	= sprd_tiger_nand_boot.o nand_ecc.o sc8830_nand.o
 endif
 
-SPL_COBJS	+= mcu.o dram_cfg.o umctl.o ddr_scan.o adi_drv.o chip_cfg.o div0.o string.o lowlevel_init.o
+SPL_COBJS	+= mcu.o dram_cfg.o umctl.o ddr_scan.o adi.o chip_cfg.o div0.o string.o lowlevel_init.o
 SEC_COBJS	+= sec_mcu.o sec_boot.o
 
 SEC_OBJS	:= $(addprefix $(obj),$(SEC_SOBJS) $(SEC_COBJS))
