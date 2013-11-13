@@ -47,14 +47,18 @@ static boot_image_required_t const s_boot_image_table[]={
 	{L"wcnmodem",NULL,MODEM_SIZE,WCNMODEM_ADR},
 #endif	
 #else
+#ifndef CONFIG_NOT_BOOT_TD_MODEM
 	{L"tdfixnv1",L"tdfixnv2",FIXNV_SIZE,TDFIXNV_ADR},
 	{L"tdruntimenv1",L"tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR},
-	{L"wfixnv1",L"wfixnv2",FIXNV_SIZE,WFIXNV_ADR},
-	{L"wruntimenv1",L"wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR},
 	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
 	{L"tddsp",NULL,DSP_SIZE,TDDSP_ADR},		
+#endif
+#ifndef CONFIG_NOT_BOOT_W_MODEM
+	{L"wfixnv1",L"wfixnv2",FIXNV_SIZE,WFIXNV_ADR},
+	{L"wruntimenv1",L"wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR},
 	{L"wmodem",NULL,MODEM_SIZE,WMODEM_ADR},
 	{L"wdsp",NULL,DSP_SIZE,WDSP_ADR},
+#endif
 #endif	
 
 #else
@@ -527,9 +531,9 @@ void modem_entry()
 #endif
 
 #else
-	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
+#ifndef CONFIG_NOT_BOOT_W_MODEM
+{
 	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
-	
 	memcpy(0x50000000, cp0data, sizeof(cp0data));      /* copy cp0 source code */
 	*((volatile u32*)0x402B00A8) |=  0x00000001;       /* reset cp0 */
 	*((volatile u32*)0x402B003C) &= ~0x02000000;       /* clear cp0 force shutdown */
@@ -540,7 +544,12 @@ void modem_entry()
 			break;
 	}
 	*((volatile u32*)0x402B003C) &= ~0x10000000;       /* clear cp0 force deep sleep */
+}
+#endif
 
+#ifndef CONFIG_NOT_BOOT_TD_MODEM
+{
+	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
 	memcpy(0x50001800, cp1data, sizeof(cp1data));      /* copy cp1 source code */
 	*((volatile u32*)0x402B00A8) |=  0x00000002;       /* reset cp1 */
 	*((volatile u32*)0x402B0050) &= ~0x02000000;       /* clear cp1 force shutdown */
@@ -551,6 +560,9 @@ void modem_entry()
 			break;
 	}
 	*((volatile u32*)0x402B0050) &= ~0x10000000;       /* clear cp1 force deep sleep */
+}
+#endif
+
 #ifdef CONFIG_SP8830WCN
 	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
 	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
@@ -581,8 +593,12 @@ void sipc_addr_reset()
 #elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SP5735)
 	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 #else
+#ifndef CONFIG_NOT_BOOT_TD_MODEM
 	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+#endif
+#ifndef CONFIG_NOT_BOOT_W_MODEM
 	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+#endif
 #endif
 #ifdef CONFIG_SP8830WCN
 	memset((void *)SIPC_WCN_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
