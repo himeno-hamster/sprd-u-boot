@@ -50,6 +50,8 @@ int board_init()
 	sound_init();
 	init_ldo_sleep_gr();
 	TDPllRefConfig(1);
+	ANA_REG_SET(ANA_LDO_PD_CTL0,(ANA_REG_GET(ANA_LDO_PD_CTL0) | (0x1 << 15)));
+	ANA_REG_SET(ANA_LDO_PD_CTL1,(ANA_REG_GET(ANA_LDO_PD_CTL1) & ~(0x1 << 15)));
 
 	return 0;
 }
