@@ -28,8 +28,11 @@ LIB	:= $(obj)libsprdfb.o
 
 #ifdef CONFIG_LCD
 COBJS-$(CONFIG_TIGER) += sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_mipi.o sprdfb_i2c.o sprdfb_spi.o sprdfb_dsi.o mipi_dsih_api.o mipi_dsih_dphy.o mipi_dsih_hal.o sprdfb_chip_common.o sprdfb_chip_8825.o
+ifndef CONFIG_SPX15
 COBJS-$(CONFIG_SC8830)+= sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_mipi.o sprdfb_i2c.o sprdfb_spi.o sprdfb_dsi.o mipi_dsih_api.o mipi_dsih_dphy.o mipi_dsih_hal.o sprdfb_chip_common.o sprdfb_chip_8830.o
+endif
 COBJS-$(CONFIG_SC7710G2) += sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_i2c.o sprdfb_spi.o sprdfb_chip_common.o sprdfb_chip_7710.o
+COBJS-$(CONFIG_SPX15) += sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_i2c.o sprdfb_spi.o sprdfb_chip_common.o sprdfb_chip_7715.o
 
 COBJS-$(CONFIG_FB_LCD_HX8363_RGB_SPI) += lcd_hx8363_rgb_spi.o
 COBJS-$(CONFIG_FB_LCD_HX8363_MCU) += lcd_hx8363_mcu.o
@@ -42,6 +45,7 @@ COBJS-$(CONFIG_FB_LCD_NT35510_MIPI) += lcd_nt35510_mipi.o
 COBJS-$(CONFIG_FB_LCD_NT35512_MIPI) += lcd_nt35512_mipi.o
 COBJS-$(CONFIG_FB_LCD_OTM8018B_MIPI) += lcd_otm_8018b_mipi.o
 COBJS-$(CONFIG_FB_LCD_SSD2075_MIPI) += lcd_ssd2075_mipi.o
+COBJS-$(CONFIG_FB_LCD_ILI9486)  += lcd_ili9486.o
 COBJS-$(CONFIG_FB_LCD_NT51017_LVDS) += lcd_nt51017_mipi_lvds.o
 COBJS-$(CONFIG_FB_LCD_HX8369B_MIPI) += lcd_hx8369b_mipi.o
 #endif

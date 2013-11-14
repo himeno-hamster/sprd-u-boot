@@ -35,14 +35,14 @@ void dispc_pll_clk_set(unsigned int clk_src, unsigned int clk_div)
 
 void dispc_dbi_clk_set(unsigned int clk_src, unsigned int clk_div)
 {
-        __raw_bits_set_value(DISPC_DBI_SEL_CFG, clk_src, BITS_DISPC_DBI_SEL_CFG, BIT_DISPC_DBI_SEL_MSK);
-        __raw_bits_set_value(DISPC_DBI_DIV_CFG, clk_div, BITS_DISPC_DBI_DIV_CFG, BIT_DISPC_DBI_DIV_MSK);
+	__raw_bits_set_value(DISPC_DBI_SEL_CFG, clk_src, BITS_DISPC_DBI_SEL_CFG, BIT_DISPC_DBI_SEL_MSK);
+	__raw_bits_set_value(DISPC_DBI_DIV_CFG, clk_div, BITS_DISPC_DBI_DIV_CFG, BIT_DISPC_DBI_DIV_MSK);
 }
 
 void dispc_dpi_clk_set(unsigned int clk_src, unsigned int clk_div)
 {
-        __raw_bits_set_value(DISPC_DPI_SEL_CFG, clk_src, BITS_DISPC_DPI_SEL_CFG, BIT_DISPC_DPI_SEL_MSK);
-        __raw_bits_set_value(DISPC_DPI_DIV_CFG, clk_div, BITS_DISPC_DPI_DIV_CFG, BIT_DISPC_DPI_DIV_MSK);
+	__raw_bits_set_value(DISPC_DPI_SEL_CFG, clk_src, BITS_DISPC_DPI_SEL_CFG, BIT_DISPC_DPI_SEL_MSK);
+	__raw_bits_set_value(DISPC_DPI_DIV_CFG, clk_div, BITS_DISPC_DPI_DIV_CFG, BIT_DISPC_DPI_DIV_MSK);
 }
 
 

@@ -102,7 +102,7 @@ void LCD_SetBackLightBrightness( unsigned long  value)
 
 void set_backlight(uint32_t value)
 {
-#ifdef CONFIG_SP8830
+#ifdef CONFIG_SP8830 || defined (CONFIG_SPX15)
 #if 0
 	/*backlight is driven by PWMD */
 #define DEFAULT_BRIGHTNESS (0xff >> 2)
@@ -131,6 +131,14 @@ void set_backlight(uint32_t value)
         __raw_bits_or((1<<6), 0x40280684);
         __raw_bits_or((1<<6), 0x40280688);
         __raw_bits_or((1<<6), 0x40280680);
+#endif
+
+#if defined (CONFIG_STAR2)
+	FB_PRINT("sprdfb: [%s] turn on the backlight\n", __FUNCTION__);
+
+	sprd_gpio_request(NULL, 190);
+	sprd_gpio_direction_output(NULL, 190, 1);
+    sprd_gpio_set(NULL, 190, 1);
 #endif
 #if defined (CONFIG_SP8825) || defined (CONFIG_SP8825EA) || defined (CONFIG_SP8825EB) ||defined(CONFIG_GARDA)
 	__raw_writel(0x101, 0x4C000138);
@@ -228,6 +236,10 @@ static int sprdfb_probe(void * lcdbase)
 	__raw_writel((__raw_readl(0x20900200) | 0xFFFFFFFF), 0x20900200);
 	__raw_writel((__raw_readl(0x20900220) | 0x00500000), 0x20900220);
 */
+#ifdef CONFIG_SPX15
+	sprd_gpio_request(NULL, 190);
+	sprd_gpio_direction_output(NULL, 190, 1);
+#endif
 
 	dev->ctrl = &sprdfb_dispc_ctrl;
 	dev->ctrl->early_init(dev);

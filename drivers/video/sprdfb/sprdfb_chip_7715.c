@@ -1,5 +1,5 @@
 /******************************************************************************
- ** File Name:    sprdfb_chip_common.h                                     *
+ ** File Name:    sprdfb_chip_7715.c                                     *
  ** Author:       congfu.zhao                                           *
  ** DATE:         30/04/2013                                        *
  ** Copyright:    2013 Spreatrum, Incoporated. All Rights Reserved. *
@@ -11,46 +11,22 @@
  ** DATE          NAME            DESCRIPTION                       *
 
  ******************************************************************************/
-#ifndef __DISPC_CHIP_COM_H_
-#define __DISPC_CHIP_COM_H_
 
-#include <common.h>
-#include <asm/arch/dispc_reg.h>
-#include <asm/arch/sprd_lcd.h>
-
-
-#ifdef CONFIG_SPX15
 
 #include "sprdfb_chip_7715.h"
+#include "sprdfb_chip_common.h"
 
-#elif defined(CONFIG_SC8830)
 
-#include "sprdfb_chip_8830.h"
-
-#endif
-
-#ifdef CONFIG_SC8825
-
-#include "sprdfb_chip_8825.h"
-
-#endif
-
-#ifdef CONFIG_SC7710G2
-
-#include "sprdfb_chip_7710.h"
-
-#endif
-
-void __raw_bits_or(unsigned int v, unsigned int a);
-
-void __raw_bits_set_value(unsigned int reg, unsigned int value, unsigned int bit, unsigned int mask);
-
-void dispc_pll_clk_set(unsigned int clk_src, unsigned int clk_div);
-
-void dispc_dbi_clk_set(unsigned int clk_src, unsigned int clk_div);
-
-void dispc_dpi_clk_set(unsigned int clk_src, unsigned int clk_div);
+void dispc_print_clk(void)
+{
+	printf("0x7120002c = 0x%x\n", __raw_readl(0x7120002c));
+	printf("0x71200030 = 0x%x\n", __raw_readl(0x71200030));
+	printf("0x71200034 = 0x%x\n", __raw_readl(0x71200034));
+	printf("0x20d00000 = 0x%x\n", __raw_readl(0x20d00000));
+	printf("0x71300000 = 0x%x\n", __raw_readl(0x71300000));
+	printf("0x402e0004 = 0x%x\n", __raw_readl(0x402e0004));
+}
 
 
 
-#endif
+
