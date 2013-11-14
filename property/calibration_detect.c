@@ -476,7 +476,6 @@ int poweron_by_calibration(void)
 
 int cali_file_check(void)
 {
-#if defined(CONFIG_EMMC_BOOT) && defined (CONFIG_SC8830)
 
 #define CALI_MAGIC      (0x49424143) //CALI
 #define CALI_COMP       (0x504D4F43) //COMP
@@ -493,8 +492,6 @@ int cali_file_check(void)
 		return 1;
 	else 
 		return 0;		
-#endif
-	return 0;	
 }
 
 #ifndef CONFIG_AP_ADC_CALIBRATION
@@ -547,7 +544,6 @@ int read_adc_calibration_data(char *buffer,int size)
 		return 0;
 	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
 	    	return 0;
-
 
 	if(size>48)
 		size=48;
