@@ -318,6 +318,9 @@ extern   "C"
 #define NANDC_BASE           CTL_BASE_NFC
 #define DISPC_CTL_BEGIN         CTL_BASE_DISP0
 
+#define ANA_LDO_PD_CTL0      (ANA_REG_BASE + 0x10)
+#define ANA_LDO_PD_CTL1      (ANA_REG_BASE + 0x14)
+
 #ifdef   __cplusplus
 }
 #endif
