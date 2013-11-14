@@ -29,12 +29,15 @@
 #define CONFIG_SYS_NAND_ECCSIZE	512
 
 struct sc8810_nand_timing_param {
-	u8 acs_time;
-	u8 rwh_time;
-	u8 rwl_time;
-	u8 acr_time;
-	u8 rr_time;
-	u8 ceh_time;
+    //u8 ancs_time;
+    u8 rwh_time;
+    u8 rwl_time;
+    u8 acr_time;
+    u8 rr_time;
+    u8 ceh_time;
+    u8 als_time;
+    u8 cls_time;
+    u8 rea_time;
 };
 struct sc8810_nand_info {
 	struct clk	*clk;
@@ -193,25 +196,29 @@ static unsigned char nand_id_replace_table[][10] =
 
 #if !defined(CONFIG_NAND_SPL)
 static const struct nand_spec_str nand_spec_table[] = {
-    {0x2c, 0xb3, 0xd1, 0x55, 0x5a, {10, 10, 12, 10, 20, 50}},// MT29C8G96MAAFBACKD-5, MT29C4G96MAAHBACKD-5
-    {0x2c, 0xb3, 0x90, 0x66, 0x64, {10, 10, 15, 10, 20, 50}},//MT29F8G16ABBCA
-    {0x2c, 0xba, 0x80, 0x55, 0x50, {10, 10, 12, 10, 20, 50}},// MT29C2G48MAKLCJA-5 IT
-    {0x2c, 0xbc, 0x90, 0x55, 0x56, {10, 10, 12, 10, 20, 50}},// KTR0405AS-HHg1, KTR0403AS-HHg1, MT29C4G96MAZAPDJA-5 IT
+        {0x2c, 0xb3, 0xd1, 0x55, 0x5a, {10, 12, 10, 20, 50, 10, 10, 25}},// MT29C8G96MAAFBACKD-5, MT29C4G96MAAHBACKD-5
+        {0x2c, 0xb3, 0x90, 0x66, 0x64, {10, 15, 10, 20, 50, 10, 10, 25}},
+        {0x2c, 0xba, 0x80, 0x55, 0x50, {10, 12, 10, 20, 50, 10, 10, 25}},// MT29C2G48MAKLCJA-5 IT
+        {0x2c, 0xbc, 0x90, 0x55, 0x56, {15, 20, 10, 20, 50, 10, 10, 25}},// KTR0405AS-HHg1, KTR0403AS-HHg1, MT29C4G96MAZAPDJA-5 IT
+        {0x2c, 0xbc, 0x90, 0x66, 0x54, {15, 20, 10, 20, 50, 10, 10, 25}}, //MT29F4G16ABBEA
 
-    {0x98, 0xac, 0x90, 0x15, 0x76, {12, 10, 12, 10, 20, 50}},// TYBC0A111392KC
-    {0x98, 0xbc, 0x90, 0x55, 0x76, {12, 15, 15, 10, 20, 50}},// TYBC0A111430KC, KSLCBBL1FB4G3A, KSLCBBL1FB2G3A
-    {0x98, 0xbc, 0x90, 0x66, 0x76, {12, 15, 15, 10, 20, 50}},// KSLCCBL1FB2G3A_mvr400
+        {0x98, 0xac, 0x90, 0x15, 0x76, {10, 12, 10, 20, 50, 12, 12, 25}},// TYBC0A111392KC
+        {0x98, 0xbc, 0x90, 0x55, 0x76, {15, 15, 10, 20, 50, 12, 12, 25}},// TYBC0A111430KC, KSLCBBL1FB4G3A, KSLCBBL1FB2G3A
+        {0x98, 0xbc, 0x90, 0x66, 0x76, {15, 15, 10, 20, 50, 12, 12, 25}},// KSLCCBL1FB2G3A
 
-    {0xad, 0xbc, 0x90, 0x11, 0x00, {25, 15, 25, 10, 20, 50}},// H9DA4VH4JJMMCR-4EMi, H9DA4VH2GJMMCR-4EM
-    {0xad, 0xbc, 0x90, 0x55, 0x54, {25, 15, 25, 10, 20, 50}},// H9DA4GH2GJAMCR-4EM
-    {0xad, 0xbc, 0x90, 0x55, 0x56, {25, 20, 30, 10, 20, 50}},// H9DA4GH2GJBMCR
+        {0xad, 0xbc, 0x90, 0x11, 0x00, {15, 25, 10, 20, 50, 25, 25, 30}},// H9DA4VH4JJMMCR-4EMi, H9DA4VH2GJMMCR-4EM
+        {0xad, 0xbc, 0x90, 0x55, 0x54, {15, 25, 10, 20, 50, 25, 25, 30}},//
+        {0xad, 0xbc, 0x90, 0x55, 0x56, {20, 30, 10, 20, 30, 25, 25, 30}},//H9DA4GH2GJBMCR
 
-    {0xec, 0xb3, 0x01, 0x66, 0x5a, {21, 10, 21, 10, 20, 50}},// KBY00U00VA-B450
-    {0xec, 0xbc, 0x00, 0x55, 0x54, {21, 10, 21, 10, 20, 50}},// KA100O015M-AJTT
-    {0xec, 0xbc, 0x00, 0x6a, 0x56, {21, 10, 21, 10, 20, 50}},// K524G2GACH-B050
-    {0xec, 0xbc, 0x01, 0x55, 0x48, {21, 15, 21, 10, 20, 50}},// KBY00N00HM-A448
+        {0xec, 0xb3, 0x01, 0x66, 0x5a, {10, 21, 10, 20, 50, 21, 21, 30}},// KBY00U00VA-B450
+        {0xec, 0xbc, 0x00, 0x55, 0x54, {10, 21, 10, 20, 50, 21, 21, 30}},// KA100O015M-AJTT
+        {0xec, 0xbc, 0x00, 0x6a, 0x56, {10, 21, 10, 20, 50, 21, 21, 30}},// K524G2GACH-B050
+        {0xec, 0xbc, 0x01, 0x55, 0x48, {15, 30, 10, 20, 30, 21, 21, 30}},// KBY00N00HM-A448
 
-    {0, 0, 0, 0, 0, {0, 0, 0, 0, 0, 0}}
+        {0, 0, 0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0}}
+
+
+
 };
 #endif
 
@@ -469,36 +476,44 @@ static struct nand_spec_str *get_nand_spec(u8 *nand_id)
     }
     return (struct nand_spec_str *)0;
 }
-
+#define TIMEING_DIVIDER  1000
 #define DELAY_NFC_TO_PAD 10
 #define DELAY_PAD_TO_NFC 8
-#define DELAY_RWL (DELAY_NFC_TO_PAD + DELAY_PAD_TO_NFC)
+#define DELAY_RWL        (DELAY_NFC_TO_PAD + DELAY_PAD_TO_NFC)
+#define DELAY_RWH        7
 
 static void set_nfc_timing(struct sc8810_nand_timing_param *nand_timing, u32 nfc_clk_MHz)
 {
-	u32 value = 0;
-	u32 cycles;
-	cycles = nand_timing->acs_time * nfc_clk_MHz / 1000 + 1;
-	value |= ((cycles & 0x1F) << NFC_ACS_OFFSET);
+    u32 value = 0;
+    u32 cycles;
+    u32 delta_als_rwl=0;
+    u32 delta_cls_rwl=0;
 
-	cycles = nand_timing->rwh_time * nfc_clk_MHz / 1000 + 2;
-	value |= ((cycles & 0x1F) << NFC_RWH_OFFSET);
+    delta_als_rwl=(nand_timing->als_time > nand_timing->rwl_time?(nand_timing->als_time-nand_timing->rwl_time):\
+            (nand_timing->rwl_time-nand_timing->als_time));
+    delta_cls_rwl=(nand_timing->cls_time > nand_timing->rwl_time?(nand_timing->cls_time-nand_timing->rwl_time):\
+            (nand_timing->rwl_time-nand_timing->cls_time));
 
-	cycles = (nand_timing->rwl_time+DELAY_RWL) * nfc_clk_MHz / 1000 + 2;
-	value |= ((cycles & 0x3F) << NFC_RWL_OFFSET);
+    cycles = ((max(delta_als_rwl, delta_cls_rwl)\
+                + DELAY_PAD_TO_NFC)* nfc_clk_MHz + TIMEING_DIVIDER-1) / TIMEING_DIVIDER;
+    value |= (min(cycles, 0x1F) << NFC_ACS_OFFSET);
 
-	cycles = nand_timing->acr_time * nfc_clk_MHz / 1000 + 1;
-	value |= ((cycles & 0x1F) << NFC_ACR_OFFSET);
+    cycles = ((nand_timing->rwh_time + DELAY_RWH) * nfc_clk_MHz + TIMEING_DIVIDER-1) / TIMEING_DIVIDER;
+    value |= (min(cycles, 0x1F) << NFC_RWH_OFFSET);
 
-	cycles = nand_timing->rr_time * nfc_clk_MHz / 1000 + 1;
-	value |= ((cycles & 0x1F) << NFC_RR_OFFSET);
+    cycles = ((max(nand_timing->rwl_time, nand_timing->rea_time) + DELAY_RWL) * nfc_clk_MHz + TIMEING_DIVIDER-1) / TIMEING_DIVIDER;
+    value |= (min(cycles,  0x3F) << NFC_RWL_OFFSET);
 
-	cycles = nand_timing->ceh_time * nfc_clk_MHz / 1000 + 1;
-	value |= ((cycles & 0x3F) << NFC_CEH_OFFSET);
+    cycles = (nand_timing->acr_time * nfc_clk_MHz + TIMEING_DIVIDER-1) / TIMEING_DIVIDER;
+    value |= (min(cycles,  0x1F) << NFC_ACR_OFFSET);
 
-        nfc_reg_write(NFC_TIMING, value);
+    cycles = (nand_timing->rr_time * nfc_clk_MHz + TIMEING_DIVIDER-1) / TIMEING_DIVIDER;
+    value |= (min(cycles,  0x1F) << NFC_RR_OFFSET);
 
-    debug("set_nfc_timing NFC_TIMING: %x ", nfc_reg_read(NFC_TIMING));
+    cycles = (nand_timing->ceh_time * nfc_clk_MHz + TIMEING_DIVIDER-1) / TIMEING_DIVIDER;
+    value |= (min(cycles,  0x3F) << NFC_CEH_OFFSET);
+
+    nfc_reg_write(NFC_TIMING, value);
 }
 #endif
 

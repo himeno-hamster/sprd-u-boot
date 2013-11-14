@@ -40,6 +40,10 @@ LOCAL CONST EMC_PARAM_T s_emc_parm[] =
 	//{CHIP_CLK_1000MHZ, EMC_CLK_333MHZ, DDR_DRV_STR_TR_Q,        1,		1,          1,      2,          19, 	{0, 0, 0, 0, 0}},  // openphone
 //	{CHIP_CLK_1000MHZ, EMC_CLK_133MHZ, DDR_DRV_STR_TR_Q,        2,		1,          2,      1,          15,			{0, 0, 0, 0, 0}},  // auto slt soket
 	{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        1,		2,          1,      2,          12,			{0, 0, 0, 0, 0}},  // PCB_V1.1.0
+
+	//{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        1,		2,          1,      2,          12,			{0x2c, 0xbc, 0x90, 0x55, 0x56}},  // MT29C4G96MAZBACKD-5 WT, just example, scan your board then modify para
+	//{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        2,		2,          1,      2,          10,			{0xad, 0xbc, 0x90, 0x55, 0x56}},  // H9DA4GH2GJBMCR, just example, scan your board then modify para
+
   //{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,		1,		2,			1,		2,			12, 		{0x2c, 0xb3, 0x90, 0x66, 0x64}},  // custom para, just example
 
 };
