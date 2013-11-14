@@ -144,7 +144,7 @@ unsigned long Get_CheckSum (const unsigned char *src, int len)
  *
  * Returns the updated CRC value.
  */
-
+#if 0
 uint16 crc16 (uint16 crc, uint8 const *buffer, uint32 len)
 {
     while (len--)
@@ -154,6 +154,7 @@ uint16 crc16 (uint16 crc, uint8 const *buffer, uint32 len)
 
     return crc;
 }
+#endif
 /**---------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }

@@ -278,7 +278,11 @@
 #define CONFIG_MTD_DEVICE
 #define CONFIG_CMD_UBI
 #define CONFIG_RBTREE
-
+#define CONFIG_CMD_UBIFS
+#define CONFIG_LZO
+#ifdef CONFIG_CMD_UBIFS
+#define CONFIG_FS_UBIFS
+#endif
 /* U-Boot general configuration */
 #define CONFIG_SYS_PROMPT	"=> "	/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	1024	/* Console I/O Buffer Size  */

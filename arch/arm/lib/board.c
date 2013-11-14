@@ -688,8 +688,11 @@ void board_init_r (gd_t *id, ulong dest_addr)
     board_keypad_init();
 
     extern int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[]);
+#ifndef CONFIG_EMMC_BOOT
+    extern int nand_ubi_dev_init(void);
+    nand_ubi_dev_init();
+#endif
     boot_pwr_check();
-
     do_cboot(NULL, 0, 1, NULL);
 	/* main_loop() can return to retry autoboot, if so just run it again. */
 	for (;;) {

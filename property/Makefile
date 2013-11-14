@@ -47,6 +47,7 @@ COBJS-y += engtest_mode.o
 COBJS-y += vbat_check.o
 COBJS-y += backupnvitem.o
 COBJS-y += reboot_mode.o
+COBJS-y += fs_common_rw.o
 COBJS-$(CONFIG_SDRAMDISK) += sd_ramdisk.o
 COBJS-$(CONFIG_SP7702) += sprd8810_dsp_sleep.o
 COBJS-$(CONFIG_SP7702) += calibration_mode.o

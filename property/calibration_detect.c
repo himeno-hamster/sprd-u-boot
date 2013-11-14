@@ -488,6 +488,7 @@ int cali_file_check(void)
 		return 0;
 	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
 		return 1;
+
 	if((nv_buffer[0] != CALI_MAGIC)||(nv_buffer[1]!=CALI_COMP))
 		return 1;
 	else 
@@ -546,6 +547,7 @@ int read_adc_calibration_data(char *buffer,int size)
 		return 0;
 	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
 	    	return 0;
+
 
 	if(size>48)
 		size=48;

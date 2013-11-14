@@ -42,7 +42,7 @@ int move2timebuf(unsigned char *src, unsigned char *dst)
 static wchar_t *alarm_partition = L"prodnv";
 int alarm_file_check(char *time_buf)
 {
-	if ( !ext4_read_content(1,alarm_partition,"/alarm_flag",time_buf,0,200))	{
+	if(!do_fs_file_read(PROD_PART, "/alarm_flag", time_buf,200)){
 		return 1;
 	}else{
 		return -1;
@@ -50,7 +50,7 @@ int alarm_file_check(char *time_buf)
 }
 int poweron_file_check(char *time_buf)
 {
-	if ( !ext4_read_content(1,alarm_partition,"/poweron_timeinmillis",time_buf,0,200))	{
+	if(!do_fs_file_read(PROD_PART, "/poweron_timeinmillis", time_buf,200)){
 		return 1;
 	}else{
 		return -1;
