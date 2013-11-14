@@ -17,6 +17,8 @@
 
 #include "sprdfb.h"
 
+#define REG32(x)              (*((volatile uint32 *)(x)))
+
 
  SPI_INIT_PARM spi_int_parm[] =
  {
@@ -128,12 +130,21 @@ void SPI_PinCfg( void )
 
 BOOLEAN sprdfb_spi_init(struct sprdfb_device *dev)
 {
+#ifdef CONFIG_SPX15
+	/*enable the SPISPI1 and SPI2*/
+	REG32(0x71300000) |= BIT_5 | BIT_6 | BIT_7;
+
+	REG32(0x71300004) |= BIT_5 | BIT_6 | BIT_7;
+	udelay(50000);
+	REG32(0x71300004) &= ~(BIT_5 | BIT_6 | BIT_7);
+#else
 	SPI_PinCfg();
 
 	/*reset the spi2*/
 	*((volatile uint32 *)(0x4b00004c))|= BIT_31;
 	udelay(50000);
 	*((volatile uint32 *)(0x4b00004c)) &= ~BIT_31;
+#endif
 
 //	SPI_Enable(SPI_USED_ID, TRUE);
 	SPI_Init( spi_int_parm);

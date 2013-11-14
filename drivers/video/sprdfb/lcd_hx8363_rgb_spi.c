@@ -382,7 +382,11 @@ static int32_t hx8363_read_id(struct panel_spec *self)
 	spi_read(&id);
 	id &= 0xff;
 	LCD_PRINT(" hx8363_read_id u-boot id = %x\n",id);
+#ifndef CONFIG_SPX15
 	return id;
+#else
+	return 0x63;
+#endif
 }
 
 static struct panel_operations lcd_hx8363_rgb_spi_operations = {

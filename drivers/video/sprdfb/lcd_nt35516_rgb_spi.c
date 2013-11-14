@@ -47,6 +47,7 @@ static int32_t nt35516_rgb_spi_init(struct panel_spec *self)
 
 	// NT35516 + AUO 4.29'
 	// VCC=IOVCC=3.3V  RGB_24Bit
+#if 0
 	NT35516_SpiWriteCmd(0xDB00);
 	spi_read(&data);
 
@@ -444,7 +445,7 @@ static int32_t nt35516_rgb_spi_init(struct panel_spec *self)
 	NT35516_SpiWriteCmd(0xEB01); NT35516_SpiWriteData(0xA0);
 	NT35516_SpiWriteCmd(0xEB02); NT35516_SpiWriteData(0x03);
 	NT35516_SpiWriteCmd(0xEB03); NT35516_SpiWriteData(0xF4);
-
+#endif
 	NT35516_SpiWriteCmd(0x3A00); NT35516_SpiWriteData(0x77);
 
 	NT35516_SpiWriteCmd(0x3500); NT35516_SpiWriteData(0x00);
@@ -554,6 +555,7 @@ struct panel_spec lcd_nt35516_rgb_spi_spec = {
 	.height = 960,
 	.type = LCD_MODE_RGB,
 	.direction = LCD_DIRECT_NORMAL,
+	.fps = 56,
 	.info = {
 		.rgb = &lcd_nt35516_rgb_info
 	},

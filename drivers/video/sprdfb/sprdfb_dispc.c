@@ -17,7 +17,11 @@
 #include "sprdfb.h"
 #include "sprdfb_chip_common.h"
 
+#ifdef CONFIG_SPX15
+#define SPRDFB_DPI_CLOCK_SRC (192000000)
+#else
 #define SPRDFB_DPI_CLOCK_SRC (384000000)
+#endif
 
 static uint16_t		is_first_frame = 1;
 
@@ -205,7 +209,11 @@ static void dispc_update_clock(struct sprdfb_device *dev)
 
 		dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC / dividor;
 		dispc_print_clk();
+#ifdef CONFIG_SPX15
+		dispc_dpi_clk_set(DISPC_DPI_SEL_DEFAULT, (dividor-1));
+#else
 		dispc_dpi_clk_set(DISPC_DPI_SEL_384M, (dividor-1));
+#endif
 		dispc_print_clk();
 
 		printf("sprdfb:[%s] need_clock = %d, dividor = %d, dpi_clock = %d\n", __FUNCTION__, need_clock, dividor, dev->dpi_clock);
@@ -219,9 +227,15 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 
         dispc_print_clk();
 
+#ifdef CONFIG_SPX15
+	dispc_pll_clk_set(DISPC_PLL_SEL_DEFAULT, 0);
+	dispc_dbi_clk_set(DISPC_DBI_SEL_DEFAULT, 0);
+	dispc_dpi_clk_set(DISPC_DPI_SEL_DEFAULT, DISPC_DPI_DIV_DEFAULT);
+#else
 	dispc_pll_clk_set(DISPC_PLL_SEL_256M, 0);
 	dispc_dbi_clk_set(DISPC_DBI_SEL_256M, 0);
 	dispc_dpi_clk_set(DISPC_DPI_SEL_384M, DISPC_DPI_DIV_DEFAULT);
+#endif
 	
  	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC /(DISPC_DPI_DIV_DEFAULT + 1);
 
@@ -238,8 +252,7 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	printf("zcf:DISPC_CORE_EN:%x \n",__raw_readl(DISPC_CORE_EN));
 	printf("zcf:DISPC_EMC_EN:%x \n",__raw_readl(DISPC_EMC_EN));
 	printf("zcf:DISPC_AHB_EN:%x \n",__raw_readl(DISPC_AHB_EN));
-
-        dispc_print_clk();
+    dispc_print_clk();
 
 	dispc_reset();
 	dispc_module_enable();

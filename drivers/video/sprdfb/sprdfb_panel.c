@@ -83,6 +83,43 @@ static struct panel_cfg lcd_panel[] = {
 	      },
 };
 
+
+#elif defined CONFIG_SPX15
+/*
+extern struct panel_spec lcd_hx8363_mcu_spec;
+static struct panel_cfg lcd_panel[] = {
+    [0]={
+        .lcd_id = 0x18,
+        .panel = &lcd_hx8363_mcu_spec,
+        },
+};
+*/
+#ifdef CONFIG_SP7715_OPENPHONE
+extern struct panel_spec lcd_nt35516_rgb_spi_spec;
+static struct panel_cfg lcd_panel[] = {
+    [0]={
+        .lcd_id = 0x16,
+        .panel = &lcd_nt35516_rgb_spi_spec,
+        },
+};
+#elif defined CONFIG_STAR2
+extern struct panel_spec lcd_panel_ili9486;
+static struct panel_cfg lcd_panel[] = {
+	[0]={
+		.lcd_id = 0x9486,
+		.panel = &lcd_panel_ili9486,
+		},
+};
+#else
+extern struct panel_spec lcd_panel_hx8363_rgb_spi_spec;
+static struct panel_cfg lcd_panel[] = {
+    [0]={
+        .lcd_id = 0x63,
+        .panel = &lcd_panel_hx8363_rgb_spi_spec,
+        },
+};
+#endif
+
 #elif defined CONFIG_SC8830
 extern struct panel_spec lcd_nt35516_mipi_spec;
 extern struct panel_spec lcd_ssd2075_mipi_spec;//thomaszhang@20130412
@@ -317,12 +354,7 @@ static int panel_mount(struct sprdfb_device *dev, struct panel_spec *panel)
 	case SPRDFB_PANEL_TYPE_RGB:
 		dev->if_ctrl = &sprdfb_rgb_ctrl;
 		break;
-#ifdef CONFIG_SC8825
-	case SPRDFB_PANEL_TYPE_MIPI:
-		dev->if_ctrl = &sprdfb_mipi_ctrl;
-		break;
-#endif
-#ifdef CONFIG_SC8830
+#if ((!defined(CONFIG_SC7710G2)) && (!defined(CONFIG_SPX15)))
 	case SPRDFB_PANEL_TYPE_MIPI:
 		dev->if_ctrl = &sprdfb_mipi_ctrl;
 		break;
