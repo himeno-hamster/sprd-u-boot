@@ -790,6 +790,7 @@ LOCAL __inline int _boot_read_partition_with_backup(block_dev_desc_t *dev, boot_
 			break;
 		case 2:
 			debugf("%s:(%s)org partition is damaged!\n!",__FUNCTION__,w2c(info.partition));
+			memcpy(info.mem_addr,bakbuf+EMMC_SECTOR_SIZE,info.size);
 			_boot_partition_write(dev, info.partition, info.size+EMMC_SECTOR_SIZE, bakbuf);
 			break;
 		case 3:
