@@ -149,11 +149,11 @@ void fgu_init(void)
 	//sci_adi_clr(REG_FGU_CONFIG, BIT_VOLT_H_VALID);
 	//sci_adi_clr(REG_FGU_CONFIG, BIT_AD1_ENABLE);
 	sci_adi_write(REG_FGU_CONFIG, BITS_VOLT_DUTY(3), BITS_VOLT_DUTY(3)|BIT_VOLT_H_VALID);
-	mdelay(1000);
+	//mdelay(1000);
 
-	fgu_vol = sci_adi_read(REG_FGU_VOLT_VAL);
+	fgu_vol = 0; //sci_adi_read(REG_FGU_VOLT_VAL);
 
-	fgu_cur = sci_adi_read(REG_FGU_CURT_VAL);
+	fgu_cur = 0; //sci_adi_read(REG_FGU_CURT_VAL);
 	debugf("fgu_init fgu_vol 0x%x fgu_cur 0x%x \n", fgu_vol, fgu_cur);
 }
 
