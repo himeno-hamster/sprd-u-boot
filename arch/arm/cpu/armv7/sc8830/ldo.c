@@ -756,8 +756,7 @@ static void LDO_TurnOffAllModuleLDO(void)
 
 void LDO_TurnOffAllLDO(void)
 {
-	//LDO_TurnOffAllModuleLDO();
-	//LDO_TurnOffCoreLDO();
-	ANA_REG_OR (ANA_REG_GLB_MP_PWR_CTRL0,  BIT_3);
+	LDO_TurnOffAllModuleLDO();
+	LDO_TurnOffCoreLDO();
 }
 
