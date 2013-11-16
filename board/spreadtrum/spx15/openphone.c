@@ -51,7 +51,7 @@ int board_init()
 	sprd_gpio_init();
 	sound_init();
 	init_ldo_sleep_gr();
-	TDPllRefConfig(1);
+	//TDPllRefConfig(1);
 
 	return 0;
 }
