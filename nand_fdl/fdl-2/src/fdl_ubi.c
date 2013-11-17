@@ -83,7 +83,7 @@ int fdl_ubi_create_vol(struct ubi_device *ubi, char *volume, int *vol_id, long l
 		printf("verify_mkvol_req failed %d\n", err);
 		return err;
 	}
-	printf("Creating %s volume %s of size %d\n",
+	printf("Creating %s volume %s of size 0x%llx\n",
 		dynamic ? "dynamic" : "static", volume, size);
 	/* Call real ubi create volume */
 	err = ubi_create_volume(ubi, &req);
@@ -371,7 +371,7 @@ int fdl_ubi_dev_init(void)
 }
 
 /**
- * autoresize - re-size the volume which has the "auto-resize" flag set.
+ * autoresize - re-size the volume to max.
  * @ubi: UBI device description object
  * @vol_id: ID of the volume to re-size
  *
@@ -380,7 +380,21 @@ int fdl_ubi_dev_init(void)
  */
 int fdl_ubi_volume_autoresize(struct ubi_device *ubi, int vol_id)
 {
-	return ubi_autoresize(ubi, vol_id);
+	struct ubi_volume_desc desc;
+	struct ubi_volume *vol = ubi->volumes[vol_id];
+	int err, old_reserved_pebs = vol->reserved_pebs;
+
+	desc.vol = vol;
+	err = ubi_resize_volume(&desc,
+			old_reserved_pebs + ubi->avail_pebs);
+	if (err){
+		printf("cannot auto-resize volume %d\n", vol_id);
+		return err;
+	}
+
+	printf("volume %d (\"%s\") re-sized from %d to %d LEBs\n", vol_id,
+		vol->name, old_reserved_pebs, vol->reserved_pebs);
+	return 0;
 }
 
 /**

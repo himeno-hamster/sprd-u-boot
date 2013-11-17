@@ -131,7 +131,7 @@ static void _fdl2_parse_volume_cfg(unsigned short* vol_cfg, unsigned short total
 			vtbl[i].name[j] = *(vol_cfg+38*i+j) & 0xFF;
 		}
 
-		printf("volume name:%s,size:0x%x,autoresize flag:%d\n",vtbl[i].name,vtbl[i].size,vtbl[i].autoresize);
+		printf("volume name:%s,size:0x%llx,autoresize flag:%d\n",vtbl[i].name,vtbl[i].size,vtbl[i].autoresize);
 	}
 	return;
 }
@@ -321,7 +321,7 @@ int fdl2_download_start(char* name, unsigned long size, unsigned long nv_checksu
 	switch(dl_stat.part_type){
 		case PART_TYPE_MTD:
 			if(size > dl_stat.mtd.size){
-				printf("%s:dl size %ld > partition size %ld\n",__FUNCTION__,size,dl_stat.mtd.size);
+				printf("%s:dl size 0x%x > partition size 0x%llx\n",__FUNCTION__,size,dl_stat.mtd.size);
 				ret = NAND_INVALID_SIZE;
 				goto err;
 			}
@@ -333,6 +333,11 @@ int fdl2_download_start(char* name, unsigned long size, unsigned long nv_checksu
 			}
 			break;
 		case PART_TYPE_UBI:
+			if(size > dl_stat.ubi.cur_voldesc->vol->used_bytes){
+				printf("dl size > partition size!\n");
+				ret = NAND_INVALID_SIZE;
+				goto err;
+			}
 			ret = fdl_ubi_volume_start_update(dl_stat.ubi.dev, name, size);
 			if(ret){
 				printf("%s: vol %s start update failed!\n",__FUNCTION__,name);
@@ -464,12 +469,17 @@ int fdl2_read_start(char* part, unsigned long size)
 	switch(dl_stat.part_type){
 		case PART_TYPE_MTD:
 			if(size > dl_stat.mtd.size){
-				printf("%s:read size %ld > partition size %ld\n",__FUNCTION__,size,dl_stat.mtd.size);
+				printf("%s:read size 0x%x > partition size 0x%llx\n",__FUNCTION__,size,dl_stat.mtd.size);
 				ret = NAND_INVALID_SIZE;
 				goto err;
 			}
 			break;
 		case PART_TYPE_UBI:
+			if(size > dl_stat.ubi.cur_voldesc->vol->used_bytes){
+				printf("%s:read size 0x%x > partition size 0x%llx\n",__FUNCTION__,size,dl_stat.ubi.cur_voldesc->vol->used_bytes);
+				ret = NAND_INVALID_SIZE;
+				goto err;
+			}
 			break;
 		default:
 			printf("%s:Incompatible part %s!\n",__FUNCTION__,part);
