@@ -85,7 +85,11 @@ int LDO_Init(void)
 
 void LDO_TurnOffAllLDO(void)
 {
-	regulator_disable_all();
+	/*
+	because spx15 in u-boot call this functioncan lead
+	to can not open phone again,so disable this function
+	*/
+	//regulator_disable_all();
 }
 
 LDO_ERR_E LDO_TurnOffLDO(LDO_ID_E ldo_id)
