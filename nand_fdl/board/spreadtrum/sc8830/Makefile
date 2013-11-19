@@ -29,7 +29,7 @@ COM_OBJ_FILE  = dl_engine.o fdl_crc.o packet.o fdl_channel.o fdl_stdio.o usb_boo
 COM_OBJS      = $(addprefix $(obj),$(COM_OBJ_FILE))
 
 CPU_OBJ_FILE  = chip_cfg.o
-CPU_OBJ_FILE += adi_drv.o dram_cfg.o umctl.o mcu.o
+CPU_OBJ_FILE += adi.o dram_cfg.o umctl.o mcu.o
 
 CPU_LIB       = $(addprefix $(obj),$(CPU_OBJ_FILE))
 
