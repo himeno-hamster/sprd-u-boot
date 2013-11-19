@@ -35,7 +35,7 @@ uint8_t mipi_dsih_dphy_calibration(dphy_t * phy)
     for(i =0;i<50;i++ );
 
     rd_data[0] = mipi_dsih_dphy_test_data_out(phy);
-    printf("data[0] = 0x03,rd_data[0] = %x \n",rd_data[0]);
+    MIPI_PRINT("sprdfb: data[0] = 0x03,rd_data[0] = %x \n",rd_data[0]);
 
     for(j=1;j<8;j++){
 
@@ -46,13 +46,13 @@ uint8_t mipi_dsih_dphy_calibration(dphy_t * phy)
         for(i =0;i<50;i++) ;
 
         rd_data[1] = mipi_dsih_dphy_test_data_out(phy);
-        printf("data[%d] = %x,rd_data[1] = %x \n",j,data[0],rd_data[1]);
+        MIPI_PRINT("sprdfb: data[%d] = %x,rd_data[1] = %x \n",j,data[0],rd_data[1]);
         if((rd_data[1]&0x80) != (rd_data[0]&0x80))
         {
             sw_cnt++;
-            printf(" break--data[%d] = %x,rd_data[0] = %x,rd_data[1] = %x \n",j,data[0],rd_data[0],rd_data[1]);
+            MIPI_PRINT("sprdfb: break--data[%d] = %x,rd_data[0] = %x,rd_data[1] = %x \n",j,data[0],rd_data[0],rd_data[1]);
             if(sw_cnt>1){
-                printf("phy calibration error,toggles times more than once \n");
+                printf("sprdfb: phy calibration error,toggles times more than once \n");
                 return 0x0f;
             }
             rd_data[0] = rd_data[1];
@@ -75,10 +75,10 @@ uint8_t mipi_dsih_dphy_calibration(dphy_t * phy)
         for(i =0;i<50;i++ );
 
         rd_data[2] = mipi_dsih_dphy_test_data_out(phy);
-        printf("next-->data[%d] = %x,rd_data[2] = %x \n",j,data[0],rd_data[2]);
+        MIPI_PRINT("sprdfb: next-->data[%d] = %x,rd_data[2] = %x \n",j,data[0],rd_data[2]);
         if((rd_data[2]&0x80) != (rd_data[0]&0x80))
         {
-            printf("break--next-->data[%d] = %x,rd_data[2] = %x,rd_data[0] = %x \n",j,data[0],rd_data[2],rd_data[0]);
+            MIPI_PRINT("sprdfb: break--next-->data[%d] = %x,rd_data[2] = %x,rd_data[0] = %x \n",j,data[0],rd_data[2],rd_data[0]);
             rd_data[0] = rd_data[2];
             sv_data[1] = data[0];
         }
@@ -267,7 +267,7 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
 	if (!flag)
 	{
 		input_divider = step + (loop_divider * phy->reference_freq) / output_freq;
-		printf("D-PHY: Approximated Frequency: %d KHz\n", (loop_divider * (phy->reference_freq / input_divider)));
+		printf("sprdfb: D-PHY: Approximated Frequency: %d KHz\n", (loop_divider * (phy->reference_freq / input_divider)));
 //		phy->log_info("D-PHY: Approximated Frequency: %d KHz", (loop_divider * (phy->reference_freq / input_divider)));
 	}
 
@@ -372,7 +372,7 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
     data[0] = 0x8B;
     mipi_dsih_dphy_write(phy, 0x22, data, 1);
 //    data[1] = mipi_dsih_dphy_test_data_out(phy);
-//    printf("sprdfb:mipi dphy config-->0x22 write:%x,read:%x \n",data[0],data[1]);
+//    MIPI_PRINT("sprdfb:mipi dphy config-->0x22 write:%x,read:%x \n",data[0],data[1]);
 
 #ifdef SOFT_DPHY_CALIBRATION
     data[0] = mipi_dsih_dphy_calibration(phy);
@@ -382,7 +382,7 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
     for(n =0;n<50;n++ );
 
     data[1] = mipi_dsih_dphy_test_data_out(phy);
-    printf("mipi_dsih_dphy_calibration--> data[0]= %x,data[1] = %x \n",data[0],data[1]);
+    MIPI_PRINT("sprdfb: mipi_dsih_dphy_calibration--> data[0]= %x,data[1] = %x \n",data[0],data[1]);
 #endif
 
     no_of_bytes = 2; /* pll loop divider (code 0x18) takes only 2 bytes (10 bits in data) */
@@ -508,7 +508,7 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
     {
         return ERR_DSI_PHY_FREQ_OUT_OF_BOUND;
     }
-    printf("Gen1 D-PHY: Approximated Frequency: %d KHz\n", (loop_divider * (phy->reference_freq / input_divider)));
+    printf("sprdfb: Gen1 D-PHY: Approximated Frequency: %d KHz\n", (loop_divider * (phy->reference_freq / input_divider)));
     /* get the PHY in power down mode (shutdownz=0) and reset it (rstz=0) to
     avoid transient periods in PHY operation during re-configuration procedures. */
     mipi_dsih_dphy_reset(phy, 0);
@@ -593,7 +593,7 @@ dsih_error_t mipi_dsih_dphy_configure(dphy_t * phy, uint8_t no_of_lanes, uint32_
     data[0] = 0x8B;
     mipi_dsih_dphy_write(phy, 0x22, data, 1);
 //    data[1] = mipi_dsih_dphy_test_data_out(phy);
- //   printf("sprdfb:mipi dphy config-->0x22 write:%x,read:%x \n",data[0],data[1]);
+ //   MIPI_PRINT("sprdfb:mipi dphy config-->0x22 write:%x,read:%x \n",data[0],data[1]);
 
 
     no_of_bytes = 2; /* pll loop divider (code 0x18) takes only 2 bytes (10 bits in data) */

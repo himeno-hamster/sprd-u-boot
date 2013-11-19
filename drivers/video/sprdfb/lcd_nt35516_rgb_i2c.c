@@ -451,7 +451,7 @@ static int32_t nt35516_rgb_i2c_init(struct panel_spec *self)
 	i2c_read_16bits_t i2c_read_16bits = self->info.rgb->bus_info.i2c->ops->i2c_read_16bits; 
 	i2c_write_burst_t i2c_write_burst = self->info.rgb->bus_info.i2c->ops->i2c_write_burst; 
 
-	printf("nt35516_rgb_i2c_init\n");
+	LCD_PRINT("nt35516_rgb_i2c_init\n");
 
 
 	//    Set_NT35516_I2C_Read(LCDI2C_ID_ADDR, 2, &data, 2);
@@ -463,23 +463,20 @@ static int32_t nt35516_rgb_i2c_init(struct panel_spec *self)
 		tag = (init->tag >> 24);
 		if (tag & LCM_TAG_SEND) {
 			Set_NT35516_I2C_Send( (init->tag & LCM_TAG_MASK) , init->data);
-			printf("send one i2c data!\n");
 		} else if (tag & LCM_TAG_SLEEP) {
 			udelay((init->tag & LCM_TAG_MASK)*1000);
-			printf("delay!\n");
 		}
 		init++;
 	} 
 	udelay(200);    
 	// while(1)
 	// 	{
-	printf("send disp_on!\n");
 	Set_NT35516_I2C_Send( (disp_on.tag & LCM_TAG_MASK) , disp_on.data);
 	// 	}
 
 	//I2C_ReadCmd(0xDB00,pCmd,NT35516_I2C_ACK);
 	//Set_NT35516_I2C_Read(0xdb00, 2, &data, 2);
-	printf("nt35516_rgb_i2c_init finish\n");
+	LCD_PRINT("nt35516_rgb_i2c_init finish\n");
 
 	return 0;
 }

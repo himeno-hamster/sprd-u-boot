@@ -42,12 +42,12 @@ static void mipi_dispc_init_config(struct panel_spec *panel)
 	FB_PRINT("sprdfb: [%s]\n", __FUNCTION__);
 
 	if(NULL == panel){
-		FB_PRINT("sprdfb: [%s] fail.(Invalid Param)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail.(Invalid Param)\n", __FUNCTION__);
 		return;
 	}
 
 	if(SPRDFB_PANEL_TYPE_MIPI != panel->type){
-		FB_PRINT("sprdfb: [%s] fail.(not  mcu panel)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail.(not  mcu panel)\n", __FUNCTION__);
 		return;
 	}
 
@@ -87,7 +87,7 @@ static void mipi_dispc_init_config(struct panel_spec *panel)
 #endif
 	}else{
 		if(!(panel->cap & PANEL_CAP_NOT_TEAR_SYNC)){
-			FB_PRINT("sprdfb: mipi_dispc_init_config not support TE\n");
+			printf("sprdfb: mipi_dispc_init_config not support TE\n");
 			/*enable te*/
 			reg_val |= (1<<8);
 		}
@@ -129,12 +129,12 @@ static void mipi_dispc_set_timing(struct sprdfb_device *dev)
 static int32_t sprdfb_mipi_panel_check(struct panel_spec *panel)
 {
 	if(NULL == panel){
-		FB_PRINT("sprdfb: [%s] fail. (Invalid param)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail. (Invalid param)\n", __FUNCTION__);
 		return 0;
 	}
 
 	if(SPRDFB_PANEL_TYPE_MIPI != panel->type){
-		FB_PRINT("sprdfb: [%s] fail. (not mipi param)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail. (not mipi param)\n", __FUNCTION__);
 		return 0;
 	}
 
@@ -146,7 +146,7 @@ static int32_t sprdfb_mipi_panel_check(struct panel_spec *panel)
 static void sprdfb_mipi_panel_mount(struct sprdfb_device *dev)
 {
 	if((NULL == dev) || (NULL == dev->panel)){
-		FB_PRINT("sprdfb: [%s]: Invalid Param\n", __FUNCTION__);
+		printf("sprdfb: [%s]: Invalid Param\n", __FUNCTION__);
 		return;
 	}
 

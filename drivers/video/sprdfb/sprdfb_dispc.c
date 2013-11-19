@@ -41,13 +41,9 @@ static void __raw_bits_and(unsigned int v, unsigned int a)
 static void dispc_reset(void)
 {
 	FB_PRINT("sprdfb:[%s]\n",__FUNCTION__);
-	printk("zcf:dispc_reset-DISPC_AHB_SOFT_RST:%x,BIT_DISPC_SOFT_RST:%x \n",DISPC_AHB_SOFT_RST,BIT_DISPC_SOFT_RST);
-	printk("zcf:dispc_reset-DISPC_AHB_SOFT_RST:%x \n",__raw_readl(DISPC_AHB_SOFT_RST));
 	__raw_writel(__raw_readl(DISPC_AHB_SOFT_RST) | (BIT_DISPC_SOFT_RST), DISPC_AHB_SOFT_RST);
-	printk("zcf:dispc_reset-DISPC_AHB_SOFT_RST:%x \n",__raw_readl(DISPC_AHB_SOFT_RST));
 	udelay(10);
 	__raw_writel(__raw_readl(DISPC_AHB_SOFT_RST) & (~(BIT_DISPC_SOFT_RST)), DISPC_AHB_SOFT_RST);
-	printk("zcf:dispc_reset-DISPC_AHB_SOFT_RST:%x \n",__raw_readl(DISPC_AHB_SOFT_RST));
 }
 
 static inline void dispc_set_bg_color(uint32_t bg_color)
@@ -193,7 +189,7 @@ static void dispc_update_clock(struct sprdfb_device *dev)
 			hpixels = panel->width + rgb->timing->hsync + rgb->timing->hbp + rgb->timing->hfp;
 			vlines = panel->height + rgb->timing->vsync + rgb->timing->vbp + rgb->timing->vfp;
 		}else{
-			FB_PRINT("sprdfb:[%s] unexpected panel type!(%d)\n", __FUNCTION__, dev->panel->type);
+			printf("sprdfb:[%s] unexpected panel type!(%d)\n", __FUNCTION__, dev->panel->type);
 			return;
 		}
 
@@ -239,20 +235,16 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 	
  	dev->dpi_clock = SPRDFB_DPI_CLOCK_SRC /(DISPC_DPI_DIV_DEFAULT + 1);
 
-	printf("zcf:DISPC_CORE_EN:%x,BIT_DISPC_CORE_EN:%x \n",DISPC_CORE_EN,BIT_DISPC_CORE_EN);
-	printf("zcf:BIT_DISPC_EMC_EN:%x,DISPC_EMC_EN:%x \n",BIT_DISPC_EMC_EN,DISPC_EMC_EN);
-	printf("zcf:BIT_DISPC_AHB_EN:%x,DISPC_AHB_EN:%x \n",BIT_DISPC_AHB_EN,DISPC_AHB_EN);
-	printf("zcf:DISPC_CORE_EN:%x \n",__raw_readl(DISPC_CORE_EN));
-	printf("zcf:DISPC_EMC_EN:%x \n",__raw_readl(DISPC_EMC_EN));
-	printf("zcf:DISPC_AHB_EN:%x \n",__raw_readl(DISPC_AHB_EN));
 	__raw_bits_or(BIT_DISPC_CORE_EN, DISPC_CORE_EN);  //core_clock_en
 	__raw_bits_or(BIT_DISPC_EMC_EN, DISPC_EMC_EN);  //matrix clock en
 
 	__raw_bits_or(BIT_DISPC_AHB_EN, DISPC_AHB_EN);//enable DISPC clock
-	printf("zcf:DISPC_CORE_EN:%x \n",__raw_readl(DISPC_CORE_EN));
-	printf("zcf:DISPC_EMC_EN:%x \n",__raw_readl(DISPC_EMC_EN));
-	printf("zcf:DISPC_AHB_EN:%x \n",__raw_readl(DISPC_AHB_EN));
-    dispc_print_clk();
+
+	FB_PRINT("sprdfb:DISPC_CORE_EN:%x \n",__raw_readl(DISPC_CORE_EN));
+	FB_PRINT("sprdfb:DISPC_EMC_EN:%x \n",__raw_readl(DISPC_EMC_EN));
+	FB_PRINT("sprdfb:DISPC_AHB_EN:%x \n",__raw_readl(DISPC_AHB_EN));
+
+        dispc_print_clk();
 
 	dispc_reset();
 	dispc_module_enable();
@@ -295,9 +287,9 @@ static int32_t sprdfb_dispc_init(struct sprdfb_device *dev)
 		{/*for debug*/
 			int32_t i;
 			for(i=0x20800000;i<0x208000c0;i+=16){
-				printk("sprdfb: %x: 0x%x, 0x%x, 0x%x, 0x%x\n", i, __raw_readl(i), __raw_readl(i+4), __raw_readl(i+8), __raw_readl(i+12));
+				FB_PRINT("sprdfb: %x: 0x%x, 0x%x, 0x%x, 0x%x\n", i, __raw_readl(i), __raw_readl(i+4), __raw_readl(i+8), __raw_readl(i+12));
 			}
-			printk("**************************************\n");
+			FB_PRINT("**************************************\n");
 		}
 #endif
 	return 0;
@@ -314,8 +306,9 @@ static int32_t sprdfb_dispc_uninit(struct sprdfb_device *dev)
 
 static int32_t sprdfb_dispc_refresh (struct sprdfb_device *dev)
 {
-	FB_PRINT("sprdfb:[%s]\n",__FUNCTION__);
 	uint32_t i;
+
+	printf("sprdfb:[%s]\n",__FUNCTION__);
 
 	if(SPRDFB_PANEL_IF_DPI != dev->panel_if_type){
 		sprdfb_panel_invalidate(dev->panel);
@@ -342,7 +335,7 @@ static int32_t sprdfb_dispc_refresh (struct sprdfb_device *dev)
 				}
 			}
 			if(i >= 1000){
-				FB_PRINT("sprdfb:[%s] wait dispc update  int time out!! (0x%x)\n", __FUNCTION__, dispc_read(DISPC_INT_RAW));
+				printf("sprdfb:[%s] wait dispc update  int time out!! (0x%x)\n", __FUNCTION__, dispc_read(DISPC_INT_RAW));
 			}else{
 				FB_PRINT("sprdfb:[%s] got dispc update int (0x%x)\n", __FUNCTION__, dispc_read(DISPC_INT_RAW));
 			}
@@ -359,7 +352,7 @@ static int32_t sprdfb_dispc_refresh (struct sprdfb_device *dev)
 			}
 		}
 		if(i >= 1000){
-			FB_PRINT("sprdfb:[%s] wait dispc done int time out!! (0x%x)\n", __FUNCTION__, dispc_read(DISPC_INT_RAW));
+			printf("sprdfb:[%s] wait dispc done int time out!! (0x%x)\n", __FUNCTION__, dispc_read(DISPC_INT_RAW));
 		}else{
 			FB_PRINT("sprdfb:[%s] got dispc done int (0x%x)\n", __FUNCTION__, dispc_read(DISPC_INT_RAW));
 		}

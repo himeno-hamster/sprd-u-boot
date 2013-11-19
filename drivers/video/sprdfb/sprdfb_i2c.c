@@ -41,7 +41,7 @@ static int32_t sprdfb_i2c_write_8bits(uint8 addr, uint8_t reg, uint8_t val)
 
 	if (0xFF == reg) {
 		mdelay(val);
-		printk("sprdfb: [%s], sleep %d\n", __FUNCTION__,  val);
+		FB_PRINT("sprdfb: [%s], sleep %d\n", __FUNCTION__,  val);
 		return 0;
 	}
 
@@ -50,7 +50,7 @@ static int32_t sprdfb_i2c_write_8bits(uint8 addr, uint8_t reg, uint8_t val)
 	for (i = 0; i < SPRDFB_I2C_TRY_NUM; i++) {
 		ret = I2C_WriteCmdArr(addr, buf_w, 2, TRUE);
 		if (ret != ERR_I2C_NONE) {
-			printk("sprdfb:[%s] write panel reg fai, ret : %d, I2C w addr: 0x%x, \n",
+			printf("sprdfb:[%s] write panel reg fai, ret : %d, I2C w addr: 0x%x, \n",
 			     __FUNCTION__, ret, addr);
 			ret = -1;
 			msleep(20);
@@ -72,7 +72,7 @@ static int32_t sprdfb_i2c_read_8bits(uint8 addr, uint8_t reg, uint8_t *val)
 	for (i = 0; i < SPRDFB_I2C_TRY_NUM; i++) {
 		ret = I2C_WriteCmd(addr, reg , TRUE);
 		if (ret != ERR_I2C_NONE) {
-			printk("sprdfb:[%s]: read i2c reg fail(1), ret: %d, I2C r addr: 0x%x \n",
+			printf("sprdfb:[%s]: read i2c reg fail(1), ret: %d, I2C r addr: 0x%x \n",
 			     __FUNCTION__, ret, addr);
 			*val = 0xff;
 			ret = -1;
@@ -86,7 +86,7 @@ static int32_t sprdfb_i2c_read_8bits(uint8 addr, uint8_t reg, uint8_t *val)
 	for (i = 0; i < SPRDFB_I2C_TRY_NUM; i++) {
 		ret = I2C_ReadCmd(addr, *val, TRUE);
 		if (ret != ERR_I2C_NONE) {
-			printk("sprdfb:[%s]: read i2c reg fail(2), ret: %d, I2C r addr: 0x%x \n",
+			printf("sprdfb:[%s]: read i2c reg fail(2), ret: %d, I2C r addr: 0x%x \n",
 			     __FUNCTION__, ret, addr);
 			*val = 0xff;
 			ret = -1;
@@ -110,7 +110,7 @@ static int32_t sprdfb_i2c_write_16bits(uint8 addr, uint16_t reg, BOOLEAN reg_is_
 
 	if ((reg_is_8bit && (0xff == reg))||(!reg_is_8bit &&(0xffff == reg))) {
 		mdelay(val);
-		printk("sprdfb: [%s], sleep %d\n", __FUNCTION__,  val);
+		FB_PRINT("sprdfb: [%s], sleep %d\n", __FUNCTION__,  val);
 		return 0;
 	}
 
@@ -131,7 +131,7 @@ static int32_t sprdfb_i2c_write_16bits(uint8 addr, uint16_t reg, BOOLEAN reg_is_
 	for (i = 0; i < SPRDFB_I2C_TRY_NUM; i++) {
 		ret = I2C_WriteCmdArr(addr, cmd, cmd_num, TRUE);
 		if (ret != ERR_I2C_NONE) {
-			printk("srpdfb [%s]: write sensor reg fai, ret : %d, I2C w addr: 0x%x, \n",
+			printf("srpdfb [%s]: write sensor reg fai, ret : %d, I2C w addr: 0x%x, \n",
 				__FUNCTION__, ret, addr);
 			ret = -1;
 			msleep(20);
@@ -170,7 +170,7 @@ static int32_t sprdfb_i2c_read_16bits(uint8 addr, uint16_t reg, BOOLEAN reg_is_8
 	for (i = 0; i < SPRDFB_I2C_TRY_NUM; i++) {
 		ret = I2C_WriteCmdArr(addr, cmd, w_cmd_num, TRUE);
 		if (ret != ERR_I2C_NONE) {
-			printk("srpdfb [%s]: read panel reg fail(1), ret : %d, I2C w addr: 0x%x, \n",
+			printf("srpdfb [%s]: read panel reg fail(1), ret : %d, I2C w addr: 0x%x, \n",
 			     __FUNCTION__,ret, addr);
 			*val = 0xffff;
 			ret = -1;
@@ -186,7 +186,7 @@ static int32_t sprdfb_i2c_read_16bits(uint8 addr, uint16_t reg, BOOLEAN reg_is_8
 	for (i = 0; i < SPRDFB_I2C_TRY_NUM; i++) {
 		ret = I2C_ReadCmdArr(addr, buf_r, r_cmd_num, TRUE);
 		if (ret != ERR_I2C_NONE) {
-			printk("srpdfb [%s]: read panel reg fail(2), ret : %d, I2C w addr: 0x%x, \n",
+			printf("srpdfb [%s]: read panel reg fail(2), ret : %d, I2C w addr: 0x%x, \n",
 			     __FUNCTION__,ret, addr);
 			*val = 0xffff;
 			ret = -1;
@@ -211,7 +211,7 @@ static int32_t sprdfb_i2c_write_burst(uint8 addr, uint8_t* buf, int num)
 	for (i = 0; i < SPRDFB_I2C_TRY_NUM; i++) {
 		ret = I2C_WriteCmdArr(addr, buf, num, TRUE);
 		if (ret != ERR_I2C_NONE) {
-			printk("srpdfb [%s]: write i2c reg fail, ret : %d, I2C w addr: 0x%x, \n",
+			printf("srpdfb [%s]: write i2c reg fail, ret : %d, I2C w addr: 0x%x, \n",
 				__FUNCTION__, ret, addr);
 			ret = -1;
 			msleep(20);

@@ -54,13 +54,10 @@ static void dsi_core_write_function(uint32_t addr, uint32_t offset, uint32_t dat
 
 static void dsi_reset(void)
 {
-	printk("DSI_AHB_SOFT_RST:%x,BIT_DSI_SOFT_RST:%x \n",DSI_AHB_SOFT_RST,BIT_DSI_SOFT_RST);
-	printk("DSI_AHB_SOFT_RST:%x \n",__raw_readl(DSI_AHB_SOFT_RST));
+	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
 	__raw_writel(__raw_readl(DSI_AHB_SOFT_RST) | (BIT_DSI_SOFT_RST), DSI_AHB_SOFT_RST);
-	printk("DSI_AHB_SOFT_RST:%x \n",__raw_readl(DSI_AHB_SOFT_RST));
 	udelay(10);
 	__raw_writel(__raw_readl(DSI_AHB_SOFT_RST) & (~(BIT_DSI_SOFT_RST)),DSI_AHB_SOFT_RST);
-	printk("DSI_AHB_SOFT_RST:%x \n",__raw_readl(DSI_AHB_SOFT_RST));
 }
 
 int32_t dsi_early_int(void)
@@ -95,7 +92,7 @@ static int32_t dsi_edpi_setbuswidth(struct info_mipi * mipi)
 		color_coding = COLOR_CODE_24BIT;
 		break;
 	default:
-		FB_PRINT("sprdfb:[%s] fail, invalid video_bus_width\n", __FUNCTION__);
+		printf("sprdfb:[%s] fail, invalid video_bus_width\n", __FUNCTION__);
 		break;
 	}
 	dsi_core_write_function(DSI_CTL_BEGIN,  R_DSI_HOST_DPI_CFG, (uint32_t)(color_coding<<2));
@@ -131,7 +128,7 @@ static int32_t dsi_dpi_init(struct sprdfb_device *dev)
 		dpi_param.color_coding = COLOR_CODE_24BIT;
 		break;
 	default:
-		FB_PRINT("sprdfb:[%s] fail, invalid video_bus_width\n", __FUNCTION__);
+		printf("sprdfb:[%s] fail, invalid video_bus_width\n", __FUNCTION__);
 		break;
 	}
 
@@ -164,7 +161,7 @@ static int32_t dsi_dpi_init(struct sprdfb_device *dev)
 
 	result = mipi_dsih_dpi_video(&(dsi_ctx.dsi_inst), &dpi_param);
 	if(result != OK){
-		FB_PRINT("sprdfb: [%s] mipi_dsih_dpi_video fail (%d)!\n", __FUNCTION__, result);
+		printf("sprdfb: [%s] mipi_dsih_dpi_video fail (%d)!\n", __FUNCTION__, result);
 		return -1;
 	}
 
@@ -226,13 +223,13 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 	dsi_instance->phy_feq = dev->panel->info.mipi->phy_feq;
 	result = mipi_dsih_open(dsi_instance);
 	if(OK != result){
-		FB_PRINT("sprdfb: [%s]: mipi_dsih_open fail (%d)!\n", __FUNCTION__, result);
+		printf("sprdfb: [%s]: mipi_dsih_open fail (%d)!\n", __FUNCTION__, result);
 		return -1;
 	}
 
 	result = mipi_dsih_dphy_configure(phy,  mipi->lan_number, mipi->phy_feq);
 	if(OK != result){
-		FB_PRINT("sprdfb: [%s]: mipi_dsih_dphy_configure fail (%d)!\n", __FUNCTION__, result);
+		printf("sprdfb: [%s]: mipi_dsih_dphy_configure fail (%d)!\n", __FUNCTION__, result);
 		return -1;
 	}
 
@@ -243,25 +240,25 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 
 	result = mipi_dsih_enable_rx(dsi_instance, 1);
 	if(OK != result){
-		FB_PRINT("sprdfb: [%s]: mipi_dsih_enable_rx fail (%d)!\n", __FUNCTION__, result);
+		printf("sprdfb: [%s]: mipi_dsih_enable_rx fail (%d)!\n", __FUNCTION__, result);
 		return -1;
 	}
 
 	result = mipi_dsih_ecc_rx(dsi_instance, 1);
 	if(OK != result){
-		FB_PRINT("sprdfb: [%s]: mipi_dsih_ecc_rx fail (%d)!\n", __FUNCTION__, result);
+		printf("sprdfb: [%s]: mipi_dsih_ecc_rx fail (%d)!\n", __FUNCTION__, result);
 		return -1;
 	}
 
 	result = mipi_dsih_eotp_rx(dsi_instance, 1);
 	if(OK != result){
-		FB_PRINT("sprdfb: [%s]: mipi_dsih_eotp_rx fail (%d)!\n", __FUNCTION__, result);
+		printf("sprdfb: [%s]: mipi_dsih_eotp_rx fail (%d)!\n", __FUNCTION__, result);
 		return -1;
 	}
 
 	result = mipi_dsih_eotp_tx(dsi_instance, 1);
 	if(OK != result){
-		FB_PRINT("sprdfb: [%s]: mipi_dsih_eotp_tx fail (%d)!\n", __FUNCTION__, result);
+		printf("sprdfb: [%s]: mipi_dsih_eotp_tx fail (%d)!\n", __FUNCTION__, result);
 		return -1;
 	}
 
@@ -277,7 +274,7 @@ int32_t sprdfb_dsi_uninit(struct sprdfb_device *dev)
 	dsih_error_t result;
 	result = mipi_dsih_close(&(dsi_ctx.dsi_inst));
 	if(OK != result){
-		FB_PRINT("sprdfb: [%s]: sprdfb_dsi_uninit fail (%d)!\n", __FUNCTION__, result);
+		printf("sprdfb: [%s]: sprdfb_dsi_uninit fail (%d)!\n", __FUNCTION__, result);
 		return -1;
 	} else {
 		dsi_ctx.is_inited = 0;
@@ -359,7 +356,7 @@ static int32_t sprdfb_dsi_gen_write(uint8_t *param, uint16_t param_length)
 	result = mipi_dsih_gen_wr_cmd(&(dsi_ctx.dsi_inst), 0, param, param_length);
 
 	if(OK != result){
-		FB_PRINT("sprdfb: [%s] error (%d)\n", __FUNCTION__, result);
+		printf("sprdfb: [%s] error (%d)\n", __FUNCTION__, result);
 		return -1;
 	}
 	return 0;
@@ -370,7 +367,7 @@ static int32_t sprdfb_dsi_gen_read(uint8_t *param, uint16_t param_length, uint8_
 	uint16_t result;
 	result = mipi_dsih_gen_rd_cmd(&(dsi_ctx.dsi_inst), 0, param, param_length, bytes_to_read, read_buffer);
 	if(0 == result){
-		FB_PRINT("sprdfb: [%s] error (%d)\n", __FUNCTION__, result);
+		printf("sprdfb: [%s] error (%d)\n", __FUNCTION__, result);
 		return -1;
 	}
 	return 0;
@@ -381,7 +378,7 @@ static int32_t sprdfb_dsi_dcs_write(uint8_t *param, uint16_t param_length)
 	dsih_error_t result;
 	result = mipi_dsih_dcs_wr_cmd(&(dsi_ctx.dsi_inst), 0, param, param_length);
 	if(OK != result){
-		FB_PRINT("sprdfb: [%s] error (%d)\n", __FUNCTION__, result);
+		printf("sprdfb: [%s] error (%d)\n", __FUNCTION__, result);
 		return -1;
 	}
 	return 0;
@@ -392,7 +389,7 @@ static int32_t sprdfb_dsi_dcs_read(uint8_t command, uint8_t bytes_to_read, uint8
 	uint16_t result;
 	result = mipi_dsih_dcs_rd_cmd(&(dsi_ctx.dsi_inst), 0, command, bytes_to_read, read_buffer);
 	if(0 == result){
-		FB_PRINT("sprdfb: [%s] error (%d)\n", __FUNCTION__, result);
+		printf("sprdfb: [%s] error (%d)\n", __FUNCTION__, result);
 		return -1;
 	}
 	return 0;

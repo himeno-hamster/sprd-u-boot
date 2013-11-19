@@ -123,7 +123,7 @@ void set_backlight(uint32_t value)
 	}
 #endif
 #elif defined(CONFIG_SP8830SSW)
-	printf("set_backlight\n");
+	FB_PRINT("set_backlight\n");
 	/* GPIO214 */
 	/* Enable GPIO in APB global register */
         __raw_bits_or((1<<3), 0x402E0000);
@@ -201,13 +201,13 @@ static int real_refresh(struct sprdfb_device *dev)
 	FB_PRINT("sprdfb: [%s]\n", __FUNCTION__);
 
 	if(NULL == dev->panel){
-		FB_PRINT("sprdfb: [%s] fail (no panel!)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail (no panel!)\n", __FUNCTION__);
 		return -1;
 	}
 
 	ret = dev->ctrl->refresh(dev);
 	if (ret) {
-		FB_PRINT("sprdfb: failed to refresh !!!!\n");
+		printf("sprdfb: failed to refresh !!!!\n");
 		return -1;
 	}
 
@@ -217,7 +217,7 @@ static int sprdfb_probe(void * lcdbase)
 {
 	struct sprdfb_device *dev = &s_sprdfb_dev;
 
-	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
+	printf("sprdfb:[%s]\n", __FUNCTION__);
 
 	set_backlight(0);
 
@@ -247,7 +247,7 @@ static int sprdfb_probe(void * lcdbase)
 	if (0 != sprdfb_panel_probe(dev)) {
 		sprdfb_panel_remove(dev);
 		dev->ctrl->uninit(dev);
-		FB_PRINT("sprdfb: failed to probe\n");
+		printf("sprdfb: failed to probe\n");
 		return -EFAULT;
 	}
 
@@ -264,7 +264,7 @@ void lcd_initcolregs(void)
 
 void lcd_disable(void)
 {
-	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
+	printf("sprdfb:[%s]\n", __FUNCTION__);
 	sprdfb_panel_remove(&s_sprdfb_dev);
 	s_sprdfb_dev.ctrl->uninit(&s_sprdfb_dev);
 }
@@ -284,7 +284,7 @@ void lcd_ctrl_init(void *lcdbase)
 
 void lcd_display(void)
 {
-	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
+	printf("sprdfb:[%s]\n", __FUNCTION__);
 	real_refresh(&s_sprdfb_dev);
 }
 

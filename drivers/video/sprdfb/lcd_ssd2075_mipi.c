@@ -134,7 +134,7 @@ static int32_t ssd2075_mipi_init(struct panel_spec *self)
 	mipi_gen_write_t mipi_gen_write = self->info.mipi->ops->mipi_gen_write;
 	mipi_eotp_set_t mipi_eotp_set = self->info.mipi->ops->mipi_eotp_set;
 
-	printk("lcd_ssd2075_init\n");
+	LCD_PRINT("lcd_ssd2075_init\n");
 
 	mipi_set_cmd_mode();
 	mipi_eotp_set(1,0);
@@ -166,7 +166,7 @@ static uint32_t ssd2075_readid(struct panel_spec *self)
 	mipi_force_read_t mipi_force_read = self->info.mipi->ops->mipi_force_read;
 	mipi_eotp_set_t mipi_eotp_set = self->info.mipi->ops->mipi_eotp_set;
 
-	printk("lcd_ssd2075_mipi read id!\n");
+	LCD_PRINT("lcd_ssd2075_mipi read id!\n");
 	mipi_set_cmd_mode();
 	mipi_eotp_set(1,0);
 
@@ -175,11 +175,11 @@ static uint32_t ssd2075_readid(struct panel_spec *self)
 		param[1] = 0x00;
 		mipi_force_write(0x37, param, 2);
 		read_rtn = mipi_force_read(0xA1,10,(uint8_t *)read_data);
-		printk("lcd_ssd2075_mipi read id 0xA1 value is 0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x!\n", read_data[0], read_data[1], \
+		LCD_PRINT("lcd_ssd2075_mipi read id 0xA1 value is 0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x,0x%x!\n", read_data[0], read_data[1], \
 		read_data[2], read_data[3],read_data[4], read_data[5],read_data[6], read_data[7],read_data[8], read_data[9]);
 
 		if((0x20 == read_data[0])&&(0x75 == read_data[1])){
-			printk("lcd_ssd2075_mipi read id success!\n");
+			LCD_PRINT("lcd_ssd2075_mipi read id success!\n");
 			mipi_eotp_set(1,1);
 			return 0x2075;
 		}

@@ -15,11 +15,12 @@
 
 #include "sprdfb_chip_7710.h"
 #include "sprdfb_chip_common.h"
+#include "sprdfb.h"
 
 
 void dispc_print_clk(void)
 {
-	printf("0x2090023c = 0x%x\n", __raw_readl(0x2090023c));
+	FB_PRINT("0x2090023c = 0x%x\n", __raw_readl(0x2090023c));
 }
 
 

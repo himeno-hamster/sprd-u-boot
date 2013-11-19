@@ -167,12 +167,12 @@ void mcu_dispc_init_config(struct panel_spec *panel)
 	FB_PRINT("sprdfb: [%s] for cs1\n", __FUNCTION__);
 
 	if(NULL == panel){
-		FB_PRINT("sprdfb: [%s] fail.(Invalid Param)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail.(Invalid Param)\n", __FUNCTION__);
 		return;
 	}
 
 	if(SPRDFB_PANEL_TYPE_MCU != panel->type){
-		FB_PRINT("sprdfb: [%s] fail.(not  mcu panel)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail.(not  mcu panel)\n", __FUNCTION__);
 		return;
 	}
 
@@ -274,12 +274,12 @@ void mcu_dispc_init_config(struct panel_spec *panel)
 	FB_PRINT("sprdfb: [%s] for cs0\n", __FUNCTION__);
 
 	if(NULL == panel){
-		FB_PRINT("sprdfb: [%s] fail.(Invalid Param)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail.(Invalid Param)\n", __FUNCTION__);
 		return;
 	}
 
 	if(SPRDFB_PANEL_TYPE_MCU != panel->type){
-		FB_PRINT("sprdfb: [%s] fail.(not  mcu panel)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail.(not  mcu panel)\n", __FUNCTION__);
 		return;
 	}
 
@@ -378,12 +378,12 @@ static int32_t sprdfb_mcu_panel_check(struct panel_spec *panel)
 	uint16_t rval = 1;
 
 	if(NULL == panel){
-		FB_PRINT("sprdfb: [%s] fail. (Invalid param)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail. (Invalid param)\n", __FUNCTION__);
 		return 0;
 	}
 
 	if(SPRDFB_PANEL_TYPE_MCU != panel->type){
-		FB_PRINT("sprdfb: [%s] fail. (not mcu param)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail. (not mcu param)\n", __FUNCTION__);
 		return 0;
 	}
 
@@ -435,7 +435,7 @@ static void sprdfb_mcu_panel_mount(struct sprdfb_device *dev)
 	struct timing_mcu* timing = NULL;
 
 	if((NULL == dev) || (NULL == dev->panel)){
-		FB_PRINT("sprdfb: [%s]: Invalid Param\n", __FUNCTION__);
+		printf("sprdfb: [%s]: Invalid Param\n", __FUNCTION__);
 		return;
 	}
 
