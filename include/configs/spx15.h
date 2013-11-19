@@ -319,7 +319,7 @@
 
 #define MTDIDS_DEFAULT "nand0=sprd-nand"
 #define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),2m(2ndbl),256k(tdmodem),256k(tddsp),256k(tdfixnv1),256k(tdruntimenv),256k(wmodem),256k(wdsp),256k(wfixnv1),256k(wruntimenv1),256k(prodinfo1),256k(prodinfo3),1024k(logo),1024k(fastbootlogo),10m(boot),300m(system),150m(cache),10m(recovery),256k(misc),256k(sd),512k(userdata)"
-#define CONFIG_BOOTARGS "mem=512M console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
+#define CONFIG_BOOTARGS "mem=512M loglevel=1 console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
 #define COPY_LINUX_KERNEL_SIZE	(0x600000)
 #define LINUX_INITRD_NAME	"modem"
 
