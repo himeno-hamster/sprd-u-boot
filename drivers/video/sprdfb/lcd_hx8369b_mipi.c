@@ -153,7 +153,7 @@ static uint32_t hx8369b_readid(struct panel_spec *self)
 		LCD_PRINT("lcd_hx8369b_mipi read id 0xdc value is 0x%x!\n",read_data[2]);
 
 		if((0x55 == read_data[0])&&(0xbc == read_data[1])&&(0x90 == read_data[2])){
-				printk("lcd_hx8369b_mipi read id success!\n");
+				LCD_PRINT("lcd_hx8369b_mipi read id success!\n");
 				return 0x8369;
 			}
 	}

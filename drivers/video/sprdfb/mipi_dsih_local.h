@@ -37,6 +37,13 @@
 #include <common.h>
 #include "sprdfb_chip_common.h"
 
+//#define  MIPI_DEBUG
+#ifdef MIPI_DEBUG
+#define MIPI_PRINT printf
+#else
+#define MIPI_PRINT(...)
+#endif
+
 //typedef unsigned char   uint8_t;       
 //typedef unsigned short  uint16_t;      
 //typedef unsigned int    uint32_t; 

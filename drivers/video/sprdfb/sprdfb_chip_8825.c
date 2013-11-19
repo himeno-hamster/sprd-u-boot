@@ -15,6 +15,7 @@
 
 #include "sprdfb_chip_8825.h"
 #include "sprdfb_chip_common.h"
+#include "sprdfb.h"
 
 
 void dsi_enable(void)
@@ -24,9 +25,9 @@ void dsi_enable(void)
 
 void dispc_print_clk(void)
 {
-	printf("0x20900200 = 0x%x\n", __raw_readl(0x20900200));
-	printf("0x20900208 = 0x%x\n", __raw_readl(0x20900208));
-	printf("0x20900220 = 0x%x\n", __raw_readl(0x20900220));
+	FB_PRINT("0x20900200 = 0x%x\n", __raw_readl(0x20900200));
+	FB_PRINT("0x20900208 = 0x%x\n", __raw_readl(0x20900208));
+	FB_PRINT("0x20900220 = 0x%x\n", __raw_readl(0x20900220));
 }
 
 

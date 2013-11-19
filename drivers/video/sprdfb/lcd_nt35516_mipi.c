@@ -233,7 +233,7 @@ static uint32_t nt35516_readid(struct panel_spec *self)
 	mipi_force_read_t mipi_force_read = self->info.mipi->ops->mipi_force_read;
 	mipi_eotp_set_t mipi_eotp_set = self->info.mipi->ops->mipi_eotp_set;
 
-	printk("lcd_nt35516_mipi read id!\n");
+	LCD_PRINT("lcd_nt35516_mipi read id!\n");
 //	return 0x16;	//debug
 //#ifdef CONFIG_SC8830
 //	return 0x16;	//debug
@@ -252,10 +252,10 @@ static uint32_t nt35516_readid(struct panel_spec *self)
 			rd_prepare++;
 		}
 		read_rtn = mipi_force_read(0xc5, 3,(uint8_t *)read_data);
-		printk("lcd_nt35516_mipi read id 0xc5 value is 0x%x, 0x%x, 0x%x!\n", read_data[0], read_data[1], read_data[2]);
+		LCD_PRINT("lcd_nt35516_mipi read id 0xc5 value is 0x%x, 0x%x, 0x%x!\n", read_data[0], read_data[1], read_data[2]);
 
 		if((0x55 == read_data[0])&&(0x16 == read_data[1])){
-			printk("lcd_nt35516_mipi read id success!\n");
+			LCD_PRINT("lcd_nt35516_mipi read id success!\n");
 			mipi_eotp_set(1,1);
 			return 0x16;
 		}

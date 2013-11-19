@@ -49,12 +49,12 @@ static void rgb_dispc_init_config(struct panel_spec *panel)
 	FB_PRINT("sprdfb: [%s]\n", __FUNCTION__);
 
 	if(NULL == panel){
-		FB_PRINT("sprdfb: [%s] fail.(Invalid Param)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail.(Invalid Param)\n", __FUNCTION__);
 		return;
 	}
 
 	if(SPRDFB_PANEL_TYPE_RGB != panel->type){
-		FB_PRINT("sprdfb: [%s] fail.(not  rgb panel)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail.(not  rgb panel)\n", __FUNCTION__);
 		return;
 	}
 
@@ -166,12 +166,12 @@ uint32_t rgb_calc_v_timing(struct timing_rgb *timing)
 static int32_t sprdfb_rgb_panel_check(struct panel_spec *panel)
 {
 	if(NULL == panel){
-		FB_PRINT("sprdfb: [%s] fail. (Invalid param)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail. (Invalid param)\n", __FUNCTION__);
 		return 0;
 	}
 
 	if(SPRDFB_PANEL_TYPE_RGB != panel->type){
-		FB_PRINT("sprdfb: [%s] fail. (not rgb param)\n", __FUNCTION__);
+		printf("sprdfb: [%s] fail. (not rgb param)\n", __FUNCTION__);
 		return 0;
 	}
 
@@ -183,7 +183,7 @@ static int32_t sprdfb_rgb_panel_check(struct panel_spec *panel)
 static void sprdfb_rgb_panel_mount(struct sprdfb_device *dev)
 {
 	if((NULL == dev) || (NULL == dev->panel)){
-		FB_PRINT("sprdfb: [%s]: Invalid Param\n", __FUNCTION__);
+		printf("sprdfb: [%s]: Invalid Param\n", __FUNCTION__);
 		return;
 	}
 
