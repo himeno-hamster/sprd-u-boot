@@ -549,7 +549,7 @@ int nand_read_fdl_yaffs(struct real_mtd_partition *phypart, unsigned int off, un
 	if (strcmp(phypart->name, "fixnv") == 0) {
 		/* for fixnv, read total 64KB */
 		char *fixnvpoint = "/fixnv";
-		char *fixnvfilename = "/fixnv/fixnv.bin";
+		char *fixnvfilename = "/fixnv/fixnvchange.bin";
 		char *backupfixnvpoint = "/backupfixnv";
 		char *backupfixnvfilename = "/backupfixnv/fixnv.bin";
 
