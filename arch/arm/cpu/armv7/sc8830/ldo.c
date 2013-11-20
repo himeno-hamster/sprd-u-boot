@@ -85,11 +85,20 @@ int LDO_Init(void)
 
 void LDO_TurnOffAllLDO(void)
 {
-	/*
-	because spx15 in u-boot call this functioncan lead
-	to can not open phone again,so disable this function
-	*/
-	//regulator_disable_all();
+	unsigned int reg_val;
+
+	ANA_REG_SET(ANA_REG_GLB_PWR_WR_PROT_VALUE,BITS_PWR_WR_PROT_VALUE(0x6e7f));
+	
+	do{
+		reg_val = (ANA_REG_GET(ANA_REG_GLB_PWR_WR_PROT_VALUE) & BIT_PWR_WR_PROT);
+	}while(reg_val == 0);
+
+	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL,0x0FFF);
+	ANA_REG_SET(ANA_REG_GLB_LDO_DCDC_PD,0x7FFF);
+	
+	ANA_REG_SET(ANA_REG_GLB_PWR_WR_PROT_VALUE,BITS_PWR_WR_PROT_VALUE(0x0000));
+	//never return here and wait power down action
+	while(1);
 }
 
 LDO_ERR_E LDO_TurnOffLDO(LDO_ID_E ldo_id)
