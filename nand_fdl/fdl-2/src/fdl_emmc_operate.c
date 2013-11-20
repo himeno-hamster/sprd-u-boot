@@ -743,14 +743,6 @@ LOCAL BOOLEAN _read_nv_with_backup(wchar_t *partition_name, uint8* buf, uint32 s
 			return 0;
 		}
 	}
-
-	//write the backup image to origin image
-	base_sector = efi_GetPartBaseSec(partition_name);
-	if(NV_HEAD_MAGIC == magic){
-		Emmc_Write(PARTITION_USER, base_sector, 1, header_buf);
-		base_sector++;
-	}
-	Emmc_Write(PARTITION_USER, base_sector, (size>>9), (uint8*)buf);
 	return 1;
 }
 
@@ -1135,9 +1127,158 @@ PUBLIC int fdl2_emmc_read_midst(unsigned long size, unsigned long off, unsigned 
 	return TRUE;
 }
 
+LOCAL void _checkNVPartition(void){
+	uint8 *ori_buf;
+	uint8 *backup_buf;
+	wchar_t *backup_partition_name = NULL;
+	uint8  ori_header_buf[EFI_SECTOR_SIZE];
+	uint8  backup_header_buf[EFI_SECTOR_SIZE];
+	u32 base_sector;
+	uint16 checkSum = 0;
+	uint32 len = 0;
+	nv_header_t * header_p = NULL;
+	uint8 status = 0;
+	uint32 size = FIXNV_SIZE;
+
+	printf("check nv partition enter\n");
+	ori_buf = malloc(size+EFI_SECTOR_SIZE);
+	if(!ori_buf){
+		printf("check nv partition malloc oribuf failed\n");
+		return;
+	}
+	printf("check nv partition ori_buf 0x%x\n",ori_buf);
+	backup_buf = malloc(size+EFI_SECTOR_SIZE);
+	if(!backup_buf){
+		printf("check nv partition malloc backup_buf failed\n");
+		free(ori_buf);
+		return;
+	}
+	printf("check nv partition backup_buf 0x%x\n",backup_buf);
+	header_p = ori_header_buf;
+	base_sector = efi_GetPartBaseSec(g_dl_eMMCStatus.curUserPartitionName);
+	//read origin image header
+	memset(ori_header_buf, 0, EFI_SECTOR_SIZE);
+	if(!Emmc_Read(PARTITION_USER, base_sector, 1, ori_header_buf)){
+		printf("_checkNVPartition read origin image header failed\n");
+		free(ori_buf);
+		free(backup_buf);
+		return;
+	}
+	if(NV_HEAD_MAGIC == header_p->magic){
+		base_sector++;
+	}
+	printf("_checkNVPartition origin image magic = 0x%x\n",header_p->magic);
+	//------
+	//read origin image
+	memset(ori_buf, 0xFF, size+EFI_SECTOR_SIZE);
+	if(Emmc_Read(PARTITION_USER, base_sector, ((size+EFI_SECTOR_SIZE-1)&~(EFI_SECTOR_SIZE-1))>>9, (uint8*)ori_buf)){
+		// get length and checksum
+		if(NV_HEAD_MAGIC == header_p->magic){
+			len = header_p->len;
+			checkSum = header_p->checksum;
+		}
+		else{
+			len = size-4;
+			checkSum = (uint16)((((uint16)ori_buf[size-3])<<8) | ((uint16)ori_buf[size-4]));
+		}
+		//check ecc
+		if(_chkNVEcc(ori_buf, len,checkSum)){
+			status |= 1;
+		}
+	}
+
+	//----
+	//get the backup partition name
+	backup_partition_name = _get_backup_partition_name(g_dl_eMMCStatus.curUserPartitionName);
+	if(NULL== backup_partition_name){
+		free(ori_buf);
+		free(backup_buf);
+		return;
+	}
+	base_sector = efi_GetPartBaseSec(backup_partition_name);
+	//read backup header
+	header_p = backup_header_buf;
+	memset(backup_header_buf, 0, EFI_SECTOR_SIZE);
+	if(!Emmc_Read(PARTITION_USER, base_sector, 1, backup_header_buf)){
+		printf("_read_nv_with_backup read backup image header failed\n");
+		free(ori_buf);
+		free(backup_buf);
+		return;
+	}
+	if(NV_HEAD_MAGIC == header_p->magic){
+		base_sector++;
+	}
+	printf("_read_nv_with_backup backup image magic = 0x%x\n",header_p->magic);
+
+	//read bakup image
+	memset(backup_buf, 0xFF, size+EFI_SECTOR_SIZE);
+	if(Emmc_Read(PARTITION_USER, base_sector, ((size+EFI_SECTOR_SIZE-1)&~(EFI_SECTOR_SIZE-1))>>9, (uint8*)backup_buf)){
+		//get length and checksum
+		if(NV_HEAD_MAGIC == header_p->magic){
+			len = header_p->len;
+			checkSum = header_p->checksum;
+		}
+		else{
+			len = size-4;
+			checkSum = (uint16)((((uint16)backup_buf[size-3])<<8) | ((uint16)backup_buf[size-4]));
+		}
+		//check ecc
+		if(_chkNVEcc(backup_buf, len,checkSum)){
+			status |= 2;//four status:00,01,10,11
+		}
+	}
+	switch(status){
+	case 0:
+		printf("%s:both org and bak partition are damaged!\n",__FUNCTION__);
+		break;
+	case 1:
+		printf("%s:bak partition is damaged!\n",__FUNCTION__);
+		base_sector = efi_GetPartBaseSec(backup_partition_name);
+		header_p = ori_header_buf;
+		if(NV_HEAD_MAGIC == header_p->magic){
+			if(Emmc_Write(PARTITION_USER, base_sector, 1, ori_header_buf)){
+				printf("write backup nv header success\n");
+				base_sector++;
+			}
+		}
+		//write one more sector
+		if(Emmc_Write(PARTITION_USER, base_sector, ((size+EFI_SECTOR_SIZE-1)&~(EFI_SECTOR_SIZE-1))>>9, (uint8*)ori_buf)){
+			printf("write backup nv body success\n");
+		}
+		break;
+	case 2:
+		printf("%s:org partition is damaged!\n!",__FUNCTION__);
+		base_sector = efi_GetPartBaseSec(g_dl_eMMCStatus.curUserPartitionName);
+		header_p = backup_header_buf;
+		if(NV_HEAD_MAGIC == header_p->magic){
+			if(Emmc_Write(PARTITION_USER, base_sector, 1, backup_header_buf)){
+				printf("write original partition header success\n");
+				base_sector++;
+			}
+		}
+		if(Emmc_Write(PARTITION_USER, base_sector, ((size+EFI_SECTOR_SIZE-1)&~(EFI_SECTOR_SIZE-1))>>9, (uint8*)backup_buf)){
+			printf("write original partition body success\n");
+		}
+	break;
+	case 3:
+		printf("%s:both org and bak partition are ok!\n",__FUNCTION__);
+		break;
+	default:
+		printf("%s: status error!\n",__FUNCTION__);
+		break;
+	}
+	free(backup_buf);
+	free(ori_buf);
+	return;
+}
+
 PUBLIC int fdl2_emmc_read_end(void)
 {
 	//Just send ack to tool in emmc
+	printf("g_dl_eMMCStatus.partitionpurpose = %d\n",g_dl_eMMCStatus.partitionpurpose);
+	if(PARTITION_PURPOSE_NV == g_dl_eMMCStatus.partitionpurpose){
+		_checkNVPartition();
+	}
 	FDL_SendAckPacket (BSL_REP_ACK);
 	return TRUE;
 }
