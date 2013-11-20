@@ -36,6 +36,9 @@ extern int nv_access_write(unsigned short sub_cmd,unsigned char * buf);
 #define AP_NV_ACCESS_FAIL   0xA1
 #define AP_NV_ACCESS_WRITE_SUCESS 0xA2
 #define AP_NV_ACCESS_READ_SUCESS 0xA3
+#define PRECISION_1MV       (1<<24)
+#define PRECISION_10MV      (0)
+#define MAX_VOLTAGE         (0xFFFFFF)
 typedef struct {
     MSG_HEAD_T msg_head;
     unsigned short resp;
@@ -438,7 +441,15 @@ static uint32 ap_get_voltage(uint32 channel, MSG_AP_ADC_CNF *pMsgADC)
         voltage = CHGMNG_AdcvalueToVoltage(adc_result);
         msg = (MSG_HEAD_T *)pMsgADC;
         para = (msg+1);
-        *para = (voltage/10);
+//        *para = (voltage/10);
+        if (voltage > MAX_VOLTAGE)
+        {
+            *para = (PRECISION_10MV | ((voltage/10) & MAX_VOLTAGE));
+        }
+        else
+        {
+            *para = (PRECISION_1MV | (voltage & MAX_VOLTAGE));
+        }
     }
     else
     {
