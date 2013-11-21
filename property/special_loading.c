@@ -518,7 +518,7 @@ int try_load_fixnv(void){
     length = cmd_yaffs_ls_chk(nvitem_name);
     if(length > 0&&length < FIXNV_SIZE){
         memset((unsigned char*)RUNTIMENV_ADR, 0xff,FIXNV_SIZE + 4);
-        cmd_yaffs_mread_file(nvitem_name, RUNTIMENV_ADR);
+        cmd_yaffs_mread_file(nvitem_name, RUNTIMENV_ADR + 4); //+4 to avoid overlap
         need_update = 1;
         printf("fixnv file needs to be updated......\n");
     }
@@ -581,7 +581,7 @@ int try_load_fixnv(void){
 
     if(need_update){
         printf("update fixnv's items\n");
-        update_fixnv(FIXNV_ADR,RUNTIMENV_ADR);
+        update_fixnv(FIXNV_ADR,RUNTIMENV_ADR + 4); //+4 to avoid overlap
         printf("update fixnv partition");
         recovery_sector(fixnvpoint,
                 fixnvfilename,
