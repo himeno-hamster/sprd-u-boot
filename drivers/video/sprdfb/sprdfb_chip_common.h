@@ -24,7 +24,7 @@
 #include "sprdfb_chip_7715.h"
 
 
-#if defined(CONFIG_SC8830) || defined(CONFIG_SPX15)
+#elif defined(CONFIG_SC8830)
 
 
 #include "sprdfb_chip_8830.h"

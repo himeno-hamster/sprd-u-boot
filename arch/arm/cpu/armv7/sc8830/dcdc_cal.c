@@ -199,7 +199,11 @@ struct regulator_desc {
 	};										\
 
 
-#include "__sc8830_regulator_map.h"
+#if defined CONFIG_SPX15
+#include <asm/arch/chip_x15/__regs_regulator_map.h>
+#else
+#include <asm/arch/chip_x35/sprd_reg_regulator_map.h>
+#endif
 
 typedef struct dcdc_cali_tag
 {

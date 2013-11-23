@@ -6,7 +6,7 @@
 #include <asm/arch/rtc_reg_v3.h>
 #include <asm/arch/regs_adi.h>
 #include <asm/arch/adi_hal_internal.h>
-#include <asm/arch/sprd_reg_aon_apb.h>
+#include <asm/arch/chip_x35/sprd_reg_aon_apb.h>
 #include <asm/arch/chip_drv_config.h>
 
 

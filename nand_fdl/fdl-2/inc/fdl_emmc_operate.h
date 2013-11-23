@@ -16,26 +16,7 @@
 #define EMMC_INVALID_ADDR           5
 #define EMMC_INVALID_SIZE           6
 
-static __inline DLSTATUS convert_err (int err)
-{
-    switch (err)
-    {
-        case EMMC_SUCCESS:
-            return BSL_REP_ACK;
-        case EMMC_INVALID_ADDR:
-            return BSL_REP_DOWN_DEST_ERROR;
-        case EMMC_INVALID_SIZE:
-            return BSL_REP_DOWN_SIZE_ERROR;
-        case EMMC_DEVICE_INIT_ERROR:
-            return BSL_UNKNOWN_DEVICE;
-        case EMMC_INVALID_DEVICE_SIZE:
-            return BSL_INVALID_DEVICE_SIZE;
-        case EMMC_INCOMPATIBLE_PART:
-            return BSL_INCOMPATIBLE_PARTITION;
-        default:
-            return BSL_REP_OPERATION_FAILED;
-    }
-}
+
 
 typedef enum _PARTITION_IMG_TYPE
 {
