@@ -37,6 +37,7 @@
 #include <asm/arch/sci_types.h>
 #include <asm/arch/chip_drv_config_extern.h>
 #include <asm/arch/ldo.h>
+#include <asm/arch/sprd_reg.h>
 /*
  * Reset the cpu by setting up the watchdog timer and let it time out
  */
@@ -46,7 +47,17 @@ void reset_cpu (ulong ignored)
 	while (1) ;
 }
 
+void rtc_clean_all_int(void);
 void power_down_cpu(ulong ignored)
 {
-    LDO_TurnOffAllLDO();
+    //LDO_TurnOffAllLDO();
+	int v = 0;
+	v = ANA_REG_GET(ANA_REG_GLB_POR_SRC_FLAG);
+	printf("power on src = 0x%.8x\n", v);
+	v = 0x1000000;
+	while (v--); // log delay
+
+	rtc_clean_all_int();
+	sci_adi_set(ANA_REG_GLB_MP_PWR_CTRL0,  BIT_PWR_OFF_SEQ_EN); //auto poweroff by chip
+	while(1);
 }

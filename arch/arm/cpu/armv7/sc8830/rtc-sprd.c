@@ -18,6 +18,10 @@
 		while(ANA_REG_GET(ANA_RTC_INT_RSTS) & mask); \
 	}while(0)
 
+void rtc_clean_all_int(void)
+{
+	CLEAR_RTC_INT(RTC_INT_ALL_MSK);
+}
 #define mdelay(_ms) udelay(_ms*1000)
 
 static inline unsigned get_sec(void)

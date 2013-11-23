@@ -98,6 +98,7 @@
 #define ANA_REG_GLB_AFUSE_OUT3          SCI_ADDR(ANA_REGS_GLB_PHYS, 0x0124)
 #define ANA_REG_GLB_ARCH_EN             SCI_ADDR(ANA_REGS_GLB_PHYS, 0x0128)
 #define ANA_REG_GLB_MCU_WR_PROT_VALUE   SCI_ADDR(ANA_REGS_GLB_PHYS, 0x012C)
+#define ANA_REG_GLB_MP_PWR_CTRL0        SCI_ADDR(ANA_REGS_GLB_PHYS, 0x0130)
 #define ANA_REG_GLB_MP_MISC_CTRL    SCI_ADDR(ANA_REGS_GLB_BASE, 0x0148)
 #define ANA_REG_GLB_DCDC_CORE_ADI       SCI_ADDR(ANA_REGS_GLB_PHYS, 0x0160)
 #define ANA_REG_GLB_DCDC_ARM_ADI        SCI_ADDR(ANA_REGS_GLB_PHYS, 0x0164)
@@ -775,6 +776,8 @@
 /* bits definitions for register ANA_REG_GLB_MCU_WR_PROT_VALUE */
 #define BIT_MCU_WR_PROT                 ( BIT(15) )
 #define BITS_MCU_WR_PROT_VALUE(_x_)     ( (_x_) << 0 & (BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4)|BIT(5)|BIT(6)|BIT(7)|BIT(8)|BIT(9)|BIT(10)|BIT(11)|BIT(12)|BIT(13)|BIT(14)) )
+
+#define BIT_PWR_OFF_SEQ_EN             ( BIT(3) )
 
 /* bits definitions for register ANA_REG_GLB_DCDC_CORE_ADI */
 #define BITS_DCDC_CORE_CTL_ADI(_x_)     ( (_x_) << 5 & (BIT(5)|BIT(6)|BIT(7)) )
