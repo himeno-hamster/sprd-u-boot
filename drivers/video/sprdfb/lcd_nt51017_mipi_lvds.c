@@ -263,6 +263,12 @@ static int32_t nt51017_mipi_lvds_init(struct panel_spec *self)
 	sprd_gpio_direction_output(NULL, GPIOID_LCDPWR, 1);
 	mdelay(5);
 
+#ifdef CHIPONE
+	sprd_gpio_request(NULL, GPIOID_ADDR);
+	sprd_gpio_direction_output(NULL, GPIOID_ADDR, 1);//drive ADDR to High
+	mdelay(5);
+#endif
+
     BRIDEG_INIT(self);
 
 	return 0;
