@@ -326,7 +326,13 @@ static uint8 is_adc_calibration(char *dest, int destSize, char *src,int srcSize)
             if(!mode){
                 //write mode
                 printf("Entry write mode ...\n");
-                return (uint8) nv_access_write(lpHeader->subtype&0x7f,(unsigned char *)src+sizeof(MSG_HEAD_T)+1);
+                translated_size = untranslate_packet_header(dest, src, srcSize, srcSize);
+                if (translated_size >= msghead_size )
+                    return (uint8) nv_access_write(lpHeader->subtype&0x7f,(unsigned char *)dest+sizeof(MSG_HEAD_T));
+                else {
+                    printf("untranslate the msg fail\n");
+                    return AP_NV_ACCESS_FAIL;
+                }
             }else{
                 //read mode
                 printf("Entry read mode ...\n");
