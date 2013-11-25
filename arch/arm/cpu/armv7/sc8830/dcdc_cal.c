@@ -55,6 +55,16 @@ static inline int fls(int x)
 
 #define MEASURE_TIMES				(15)
 
+#if defined(CONFIG_SPX15)
+#define ADC_DROP_CNT	( DIV_ROUND(MEASURE_TIMES, 5) )
+static int __average(int a[], int N)
+{
+	int i, sum = 0;
+	for (i = 0; i < N; i++)
+		sum += a[i];
+	return DIV_ROUND(sum, N);
+}
+#endif
 static void bubble_sort(int a[], int N)
 {
 	int i, j, t;
@@ -86,10 +96,42 @@ int sci_adc_request(int channel)
 	}
 	debug("\n");
 
+#if defined(CONFIG_SPX15)
+	return __average(&results[ADC_DROP_CNT], MEASURE_TIMES - ADC_DROP_CNT * 2);
+#else
 	return results[MEASURE_TIMES / 2];
+#endif
 }
 
 #define RATIO(_n_, _d_) (_n_ << 16 | _d_)
+#if defined(CONFIG_SPX15)
+static int sci_adc_ratio(int channel, int mux)
+{
+	switch (channel) {
+	case 0x05:		//vbat
+		return RATIO(7, 29);
+	case 0x0D:		//dcdccore
+	case 0x0E:		//dcdcarm
+		return RATIO(4, 5);
+	case 0x0F:		//dcdcmem
+		return RATIO(3, 5);
+	case 0x10:		//dcdcgen
+		return RATIO(4, 9);
+	case 0x15:		//DCDC Supply LDO
+		return RATIO(1, 2);
+	case 0x13:		//DCDCVBATBK
+	case 0x14:		//DCDCHEADMIC
+	case 0x16:		//VBATD Domain LDO
+	case 0x17:		//VBATA Domain LDO
+	case 0x1E:		//DP from terminal
+	case 0x1F:		//DM from terminal
+		return RATIO(1, 3);
+	default:
+		return RATIO(1, 1);
+	}
+	return RATIO(1, 1);
+}
+#else
 static int sci_adc_ratio(int channel, int mux)
 {
 	switch (channel) {
@@ -118,6 +160,7 @@ static int sci_adc_ratio(int channel, int mux)
 	}
 	return RATIO(1, 1);
 }
+#endif
 
 static u32 bat_numerators, bat_denominators = 0;
 extern uint16_t CHGMNG_AdcvalueToVoltage (uint16_t adcvalue);
@@ -212,8 +255,13 @@ typedef struct dcdc_cali_tag
 } dcdc_cali_t;
 
 #define CALI_VOL_ADDR						0x1F00
+#if defined CONFIG_SPX15
+#define CALI_VOL_ADDR_NUM					4
+#else
 #define CALI_VOL_ADDR_NUM					8
+#endif
 
+#ifndef CONFIG_SPX15
 static dcdc_cali_t* get_cali_addr()
 {
 	dcdc_cali_t *p = (dcdc_cali_t *)CALI_VOL_ADDR;
@@ -230,6 +278,7 @@ static dcdc_cali_t* get_cali_addr()
 	else
 		return p;
 }
+#endif
 
 /* standard dcdc ops*/
 static int __dcdc_is_orig(struct regulator_desc *desc)
@@ -239,14 +288,19 @@ static int __dcdc_is_orig(struct regulator_desc *desc)
 	if (0 == strcmp(desc->name, "vddmem") || 0 == strcmp(desc->name, "vddwrf"))
 		if (ANA_REG_GET(ANA_REG_GLB_CHIP_ID_LOW) & 0xff) /* BA CHIP */
 			return 0;
-	#endif
 	return 1;
+#endif
 }
 
 static int dcdc_get_trimming_step(struct regulator_desc *desc, int to_vol)
 {
 	/* FIXME: vddmem step 200/32mV */
-	if (0 == strcmp(desc->name, "vddmem") || 0 == strcmp(desc->name, "vddwrf")) {
+#if defined(CONFIG_SPX15)
+	if (0 == strcmp(desc->name, "dcdcmem") )
+#else
+	if (0 == strcmp(desc->name, "vddmem") || 0 == strcmp(desc->name, "vddwrf"))
+#endif
+	{
 		return 1000 * 200 / 32;	/*uV */
 	}
 	return 1000 * 100 / 32;	/*uV */
@@ -309,6 +363,7 @@ static int dcdc_set_voltage(struct regulator_desc *desc, int min_mV, int max_mV)
 
 static int dcdc_set_trimming(struct regulator_desc *desc, int def_vol, int to_vol, int adc_vol)
 {
+#ifndef CONFIG_SPX15
 	dcdc_cali_t *p = NULL;
 	int acc_vol = dcdc_get_trimming_step(desc, to_vol) / 1000;
 
@@ -321,9 +376,29 @@ static int dcdc_set_trimming(struct regulator_desc *desc, int def_vol, int to_vo
 		strcpy(p->name, desc->name);
 		p->cali_vol = ctl_vol - to_vol;
 	}
+#else
+	int ctl_vol = (def_vol - (adc_vol - to_vol)) ;
+#endif
 
 	return dcdc_set_voltage(desc, ctl_vol, ctl_vol);
 }
+#if defined(CONFIG_SPX15)
+static int ldo_get_voltage(struct regulator_desc *desc)
+{
+	const struct regulator_regs *regs = desc->regs;
+	u32 vol;
+	if (regs->vol_trm && regs->vol_sel_cnt == 2) {
+		int shft = __ffs(regs->vol_trm_bits);
+		u32 trim =
+		    (ANA_REG_GET(regs->vol_trm) & regs->vol_trm_bits) >> shft;
+		vol = regs->vol_sel[0] * 1000 + trim * regs->vol_sel[1];
+		vol /= 1000;
+		debug0("%s voltage %dmv\n", desc->name, vol);
+		return vol;
+	}
+	return -1;
+}
+#endif
 
 /* ldo trimming step about 0.625%, range 90% ~ 109.375%. that all maps as follow.
 
@@ -365,6 +440,18 @@ static int ldo_set_trimming(struct regulator_desc *desc, int def_vol, int to_vol
 	const struct regulator_regs *regs = desc->regs;
 	int ret = -1;
 
+#if defined(CONFIG_SPX15)
+	if (!regs->vol_ctl && regs->vol_sel_cnt == 2) {
+		int ctl_vol = (def_vol - (adc_vol - to_vol));	//same as dcdc?
+		u32 trim = DIV_ROUND_UP((ctl_vol - regs->vol_sel[0]) * 1000, regs->vol_sel[1]);
+		debug2("regu_ldo %p (%s) %d = %d %+dmv (trim=%d); --- old ctrl=%dmv, \n", regs, desc->name,
+			ctl_vol, regs->vol_sel[0], ctl_vol - regs->vol_sel[0], trim, ldo_get_voltage(desc));
+		ANA_REG_MSK_OR(regs->vol_trm,
+				trim << __ffs(regs->vol_trm_bits),
+				regs->vol_trm_bits);
+		ret = 0;
+	}
+#else
 	if (regs->vol_trm) {
 		/* assert 5 valid trim bits, R = V_IDEAL / V_ADCIN - 1 */
 		u32 trim = DIV_ROUND_UP((to_vol * 100 - adc_vol * 90) * 32, (adc_vol * 20));
@@ -378,6 +465,7 @@ static int ldo_set_trimming(struct regulator_desc *desc, int def_vol, int to_vol
 						regs->vol_trm_bits);
 		ret = 0;
 	}
+#endif
 
 exit:
 	return ret;
@@ -412,13 +500,18 @@ static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 	if (ldo_cal_sel)
 		ANA_REG_OR(regs->cal_ctl, ldo_cal_sel);
 
-	//def_vol = to_vol = desc->regs->vol_def;
-	shft = __ffs(regs->vol_ctl_bits);
-	tmpVal = (ANA_REG_GET(regs->vol_ctl) & regs->vol_ctl_bits) >> shft;
+#if defined(CONFIG_SPX15)
+	def_vol = to_vol = regs->vol_def;
+#else
+	{
+		u16 tmpVal;
+		tmpVal = (ANA_REG_GET(regs->vol_ctl) & regs->vol_ctl_bits) >> __ffs(regs->vol_ctl_bits);
 	if (regs->typ == 2)
 		def_vol = to_vol = (int)regs->vol_sel[tmpVal] + dcdc_get_trimming_vol(desc);
 	else if (regs->typ == 0)
 		def_vol = to_vol = regs->vol_sel[tmpVal];
+	}
+#endif
 
 	adc_vol = sci_adc_vol_request(adc_chan, ldo_cal_sel);
 	if (adc_vol <= 0) {
@@ -427,14 +520,25 @@ static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 	}
 
 	cal_vol = abs(adc_vol - to_vol);
+#if defined(CONFIG_SPX15)
+	debug("%s default %dmv, from %dmv to %dmv, bias %c%d.%03d%%\n",
+	      desc->name, def_vol, adc_vol, to_vol,
+	      (adc_vol > to_vol) ? '+' : '-',
+	      cal_vol * 100 / to_vol, cal_vol * 100 * 1000 / to_vol % 1000);
+#else
 	debug("%s default %dmv, from %dmv to %dmv, bias %c%d.%03d%%\n",
 	      desc->name, def_vol, adc_vol, to_vol,
 	      (adc_vol > to_vol) ? '+' : '-',
 	      cal_vol * 100 / adc_vol, cal_vol * 100 * 1000 / adc_vol % 1000);
+#endif
 
 	if (!def_vol || !to_vol || adc_vol <= 0)
 		goto exit;
+#if defined(CONFIG_SPX15)
+	if ((adc_chan != 0x15) && (abs(adc_vol - def_vol) >= def_vol / 9))	/* adjust limit 10% */
+#else
 	if (abs(adc_vol - def_vol) >= def_vol / 10)	/* adjust limit 10% */
+#endif
 		goto exit;
 	else if (cal_vol < to_vol / 100) {	/* bias 1% */
 		goto exit;
@@ -458,6 +562,7 @@ int DCDC_Cal_ArmCore(void)
 	u16 regVal;
 	u32 res;
 	struct regulator_desc *desc = NULL;
+	struct regulator_desc *desc_end = NULL;
 
 	debug("%s\n", __FUNCTION__);
 	debug("Enable dcdc_arm, dcdc_core, dcdc_mem\n\r");
