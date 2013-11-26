@@ -59,7 +59,7 @@ static int AccessADCDataFile(uint8 flag, char *lpBuff, int size)
 	return 0;
     }
     if(nv_read_flag == 0){
-	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
+	if(do_fs_file_read("prodnv", "/adc.bin", (char *)nv_buffer,sizeof(nv_buffer)))
 		return 0;
 	nv_read_flag = 1;
     }

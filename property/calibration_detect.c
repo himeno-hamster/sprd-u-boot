@@ -485,7 +485,7 @@ int cali_file_check(void)
 	p_block_dev = get_dev("mmc", 1);
 	if(NULL == p_block_dev)
 		return 0;
-	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
+	if(do_fs_file_read("prodnv", "/adc.bin", (char *)nv_buffer,sizeof(nv_buffer)))
 		return 1;
 
 	if((nv_buffer[0] != CALI_MAGIC)||(nv_buffer[1]!=CALI_COMP))
@@ -542,7 +542,7 @@ int read_adc_calibration_data(char *buffer,int size)
 	p_block_dev = get_dev("mmc", 1);
 	if(NULL == p_block_dev)
 		return 0;
-	if(ext4_read_content(1, L"prodnv", "/adc.bin", (char *)nv_buffer, 0, sizeof(nv_buffer)))
+	if(do_fs_file_read("prodnv", "/adc.bin", (char *)nv_buffer,sizeof(nv_buffer)))
 	    	return 0;
 
 	if(size>48)

@@ -302,7 +302,7 @@ int is_factorymode()
   char factorymode_falg[8]={0};
   int ret = 0;
 
-	if ( ext4_read_content(1,factory_partition,"/factorymode.file",factorymode_falg,0,8))
+	if ( do_fs_file_read(factory_partition,"/factorymode.file",factorymode_falg,8))
 		return 0;
 	debugf("Checking factorymode :  factorymode_falg = %s \n", factorymode_falg);
 	if(!strcmp(factorymode_falg, "1"))
