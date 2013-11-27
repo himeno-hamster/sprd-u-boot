@@ -4,6 +4,8 @@
 #include <asm/arch/adi_hal_internal.h>
 #include <asm/arch/sprd_reg.h>
 
+#define DEBUG
+
 #ifdef DEBUG
 #define debug(format, arg...) printf("\t" format, ## arg)
 #define debug2(format, arg...) printf("\t\t" format, ## arg)
