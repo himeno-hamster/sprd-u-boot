@@ -1147,6 +1147,7 @@ LOCAL void __sdram_set_param(uint32 clk, SDRAM_CFG_INFO_T_PTR pCfg)
     	for (i=0; i<1000; i++){}
 }
 #endif
+static unsigned int emc_temperature_check(void);
 #ifdef SDRAM_AUTODETECT_SUPPORT
 LOCAL uint32 __colum_to_mode(uint32 colum)
 {
@@ -1666,7 +1667,11 @@ void ddr_init()
 	//REG32(0x20000014) = 0x223;
 
 	REG32(0x20000184) = 0x233a3566;
-	REG32(0x20000188) = 0x1a260322;
+	if(emc_temperature_check()){
+		REG32(0x20000188) = 0x1a260192;
+	} else {
+		REG32(0x20000188) = 0x1a260322;
+	}
 	//REG32(0x20000184) = 0x02371422;
 	//REG32(0x20000188) = 0x121c0322;
 
@@ -1721,6 +1726,30 @@ void 	set_emc_pad(uint32 clk_drv, uint32 ctl_drv, uint32 dat_drv, uint32 dqs_drv
 }
 
 #define ARMCLK_CONFIG_EN	1
+static unsigned int emc_temperature_check(void)
+{
+	volatile unsigned i,reg_val[2];
+	/*pin & gpio eb*/
+	REG32(0x8b000008) |= ((1 << 5)|(1 << 13));
+	/*set rfctl0 to gpio90*/
+	REG32(0x8c000378) |= (3 << 4);
+	/*set gpio90 data mask & input dir*/
+	REG32(0x8a000284) |= (1 << 10);
+	REG32(0x8a000288) &= ~(1 << 10);
+	/*debounce gpio90*/
+	for(i=0;i<10;i++);
+
+	reg_val[0] = (REG32(0x8a000280) & (1 << 10));
+	reg_val[1] = (REG32(0x8a000280) & (1 << 10));
+
+	while(reg_val[0] != reg_val[1])
+	{
+		reg_val[0] = reg_val[1];
+		reg_val[1] = (REG32(0x8a000280) & (1 << 10));
+	}
+
+	return reg_val[1];
+}
 void sc8810_emc_Init()
 {
 	
