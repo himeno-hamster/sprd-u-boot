@@ -327,6 +327,44 @@ void set_ddr_clk(uint32 ddr_clk)
 }
 #endif
 
+#if defined(CONFIG_VOL_PARA)
+typedef struct {
+	uint16 ideal_vol;
+	const char name[14];
+}vol_para_t;
+
+vol_para_t vol_para[] __align(16) = {
+	{ /* Begin Array, DO NOT remove it! */
+		.ideal_vol = 0xfaed,	.name = "volpara_begin",
+	},
+	{
+		.ideal_vol = 1100,	.name = "vddcore",
+	},
+	{
+		.ideal_vol = 1200,	.name = "vddarm",
+	},
+	{
+		.ideal_vol = 1200,	.name = "dcdcmem",
+	},
+	{
+		.ideal_vol = 1800,	.name = "vddsim2",
+	},
+	{ /* End Array, DO NOT remove it! */
+		.ideal_vol = 0xdeaf,	.name = "volpara_end",
+	},
+
+};
+
+int Vol_Init()
+{
+	/*
+	 * FIXME: Update LDOs voltage in u-boot
+	 */
+	BUG_ON(sizeof(vol_para_t) != 16);
+	return (sizeof(vol_para) << 16) + sizeof(vol_para_t);
+}
+#endif
+
 void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 {
     uint32 value;
@@ -344,6 +382,9 @@ void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
     #endif
     
     MCU_Init();
+#if defined(CONFIG_VOL_PARA)
+    Vol_Init();
+#endif
     sdram_init();
 }
 

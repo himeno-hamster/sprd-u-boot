@@ -55,6 +55,10 @@ _start: b	reset
  * 0x50000800
  *
  *************************************************************************/
+#ifdef CONFIG_VOL_PARA
+_vol_para:
+	.word	vol_para
+#endif
 
 _hang:
 	.word	do_hang

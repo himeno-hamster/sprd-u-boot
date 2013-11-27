@@ -39,7 +39,12 @@ ifdef CONFIG_AUTODLOADER
 COBJS   += chip_cfg.o
 endif
 
-COBJS += dcdc_cal.o misc.o
+COBJS += misc.o
+ifdef CONFIG_SPX15
+COBJS += dcdc_cal_x15.o
+else
+COBJS += dcdc_cal.o
+endif
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS) )

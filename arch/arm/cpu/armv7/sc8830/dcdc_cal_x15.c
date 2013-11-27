@@ -4,15 +4,13 @@
 #include <asm/arch/adi_hal_internal.h>
 #include <asm/arch/sprd_reg.h>
 
-#ifdef DEBUG
+int regulator_default_get(const char con_id[]);
+int regulator_default_set_all(void);
+
 #undef debug
+#define debug0(format, arg...)
 #define debug(format, arg...) printf("\t" format, ## arg)
 #define debug2(format, arg...) printf("\t\t" format, ## arg)
-#else
-#define debug(format, arg...)
-#define debug2(format, arg...)
-#endif
-#define debug0(format, arg...)
 
 /* abs() handles unsigned and signed longs, ints, shorts and chars.  For all input types abs()
  * returns a signed long.
@@ -54,7 +52,6 @@ static inline int fls(int x)
 
 #define MEASURE_TIMES				(15)
 
-#if defined(CONFIG_SPX15)
 #define ADC_DROP_CNT	( DIV_ROUND(MEASURE_TIMES, 5) )
 static int __average(int a[], int N)
 {
@@ -63,7 +60,6 @@ static int __average(int a[], int N)
 		sum += a[i];
 	return DIV_ROUND(sum, N);
 }
-#endif
 
 static void bubble_sort(int a[], int N)
 {
@@ -96,7 +92,7 @@ int sci_adc_request(int channel)
 	}
 	printf("\n");
 
-	return results[MEASURE_TIMES / 2];
+	return __average(&results[ADC_DROP_CNT], MEASURE_TIMES - ADC_DROP_CNT * 2);
 }
 
 #define RATIO(_n_, _d_) (_n_ << 16 | _d_)
@@ -104,28 +100,27 @@ int sci_adc_request(int channel)
 static int sci_adc_ratio(int channel, int mux)
 {
 	switch (channel) {
-		case 5://vbat
-			return RATIO(7, 29);
-		case 13://dcdcarm
-		case 14://dcdccore
-			return RATIO(4, 5);
-		case 15://dcdcmem
-			return RATIO(3, 5);
-		case 16://dcdcgen
-			return RATIO(4, 9);
-		case 18://dcdcwrf
-			return RATIO(1, 3);
-		case 21://ldo_mux0
-			return RATIO(1, 3);
-		case 22://ldo_mux1
-			if ((mux & 0xFFFF) == BIT(5))
-				return RATIO(1, 3);
-			else
-				return RATIO(1, 2);
-		case 23://ldo_mux2
-			return RATIO(1, 3);
-		default:
-			return RATIO(1, 1);
+	case 0x05:		//vbat
+		return RATIO(7, 29);
+	case 0x0D:		//dcdccore
+	case 0x0E:		//dcdcarm
+		return RATIO(4, 5);
+	case 0x0F:		//dcdcmem
+		return RATIO(3, 5);
+	case 0x10:		//dcdcgen
+		return RATIO(4, 9);
+	case 0x15:		//DCDC Supply LDO
+		return RATIO(1, 2);
+	case 0x13:		//DCDCVBATBK
+	case 0x14:		//DCDCHEADMIC
+	case 0x16:		//VBATD Domain LDO
+	case 0x17:		//VBATA Domain LDO
+	case 0x1E:		//DP from terminal
+	case 0x1F:		//DM from terminal
+		return RATIO(1, 3);
+
+	default:
+		return RATIO(1, 1);
 	}
 	return RATIO(1, 1);
 }
@@ -209,53 +204,19 @@ struct regulator_desc {
 		.regs = &REGS_##VDD,					\
 	};										\
 
+#include <asm/arch/chip_x15/__regs_regulator_map.h>
 
-#include <asm/arch/chip_x35/sprd_reg_regulator_map.h>
-
-
-typedef struct dcdc_cali_tag
-{
-	char name[32];
-	int	cali_vol;								/* ctl_vol - to_vol */
-} dcdc_cali_t;
-
-#define CALI_VOL_ADDR						0x1F00
-#define CALI_VOL_ADDR_NUM					8
-
-static dcdc_cali_t* get_cali_addr()
-{
-	dcdc_cali_t *p = (dcdc_cali_t *)CALI_VOL_ADDR;
-	u32 i = 0;
-
-	while ((*(u32 *)p != 0) && (i < 4))
-	{
-		p++;
-		i++;
-	}
-
-	if (i >= 4)
-		return (dcdc_cali_t*)0;
-	else
-		return p;
-}
 
 /* standard dcdc ops*/
-static int __dcdc_is_orig(struct regulator_desc *desc)
+static int __dcdc_is_up_down_adjust(struct regulator_desc *desc)
 {
-	if (0 == strcmp(desc->name, "vddmem") || 0 == strcmp(desc->name, "vddwrf"))
-		if (ANA_REG_GET(ANA_REG_GLB_CHIP_ID_LOW) & 0xff) /* BA CHIP */
-			return 0;
-	return 1;
+	return ((0 == strcmp(desc->name, "dcdcmem")) ? 1 : 0);
 }
 
 static int dcdc_get_trimming_step(struct regulator_desc *desc, int to_vol)
 {
 	/* FIXME: vddmem step 200/32mV */
-	if (0 == strcmp(desc->name, "vddmem") || 0 == strcmp(desc->name, "vddwrf"))
-	{
-		return 1000 * 200 / 32;	/*uV */
-	}
-	return 1000 * 100 / 32;	/*uV */
+	return (!strcmp(desc->name, "dcdcmem") ) ? (1000 * 200 / 32) : (1000 * 100 / 32) /*uV */;
 }
 
 static int __match_dcdc_vol(struct regulator_desc *desc, u32 vol)
@@ -272,7 +233,7 @@ static int __match_dcdc_vol(struct regulator_desc *desc, u32 vol)
 		}
 	}
 
-	if (j < 0 && !__dcdc_is_orig(desc)) {
+	if (j < 0) {
 		for (i = 0; i < regs->vol_sel_cnt; i++) {
 			ds = abs(vol - regs->vol_sel[i]);
 			if (ds < min_ds) {
@@ -296,7 +257,7 @@ static int dcdc_get_voltage(struct regulator_desc *desc)
 	mv = regs->vol_sel[i];
 
 	cal = (ANA_REG_GET(regs->vol_trm) & regs->vol_trm_bits) >> __ffs(regs->vol_trm_bits);
-	if (!__dcdc_is_orig(desc)) {
+	if (__dcdc_is_up_down_adjust(desc)) {
 		cal -= 0x10;
 	}
 	cal *= dcdc_get_trimming_step(desc, 0);	/*uV */
@@ -319,17 +280,19 @@ static int dcdc_set_voltage(struct regulator_desc *desc, int min_mV, int max_mV)
 
 	/* dcdc calibration control bits (default 0) small adjust voltage: 100/32mv ~= 3.125mv */
 	{
-		int shft = __ffs(regs->vol_ctl_bits);
-		int j = (mv - (int)regs->vol_sel[i]) * 1000 / dcdc_get_trimming_step(desc, mv);
+		int shft_ctl = __ffs(regs->vol_ctl_bits);
+		int shft_trm = __ffs(regs->vol_trm_bits);
+		int step = dcdc_get_trimming_step(desc, mv);
+		int j = (mv - (int)regs->vol_sel[i]) * 1000 / step;
 
-		if (!__dcdc_is_orig(desc))
+		if (__dcdc_is_up_down_adjust(desc))
 			j += 0x10;
 
-		debug2("regu_dcdc %p (%s) %d = %d %+dmv (trim=%d);\n", regs, desc->name,
-			   mv, regs->vol_sel[i], mv - regs->vol_sel[i], j);
+		debug2("regu_dcdc %p (%s) %d = %d %+dmv (trim=%d step=%duv);\n", regs, desc->name,
+			   mv, regs->vol_sel[i], mv - regs->vol_sel[i], j, step);
 
-		if (j >= 0 && j < 32)
-			ANA_REG_MSK_OR(regs->vol_ctl, j | (i << shft),
+		if (j >= 0 && j <= (regs->vol_trm_bits >> shft_trm))
+			ANA_REG_MSK_OR(regs->vol_ctl, (j << shft_trm) | (i << shft_ctl),
 				regs->vol_trm_bits | regs->vol_ctl_bits);
 	}
 	return 0;
@@ -337,23 +300,12 @@ static int dcdc_set_voltage(struct regulator_desc *desc, int min_mV, int max_mV)
 
 static int dcdc_set_trimming(struct regulator_desc *desc, int def_vol, int to_vol, int adc_vol)
 {
-	dcdc_cali_t *p = NULL;
-	int acc_vol = dcdc_get_trimming_step(desc, to_vol) / 1000;
-
-	/*FIXME: no need division?
-	int ctl_vol = DIV_ROUND_UP(def_vol * to_vol * 1000, adc_vol) + acc_vol;	*/
-	int ctl_vol = (def_vol - (adc_vol - to_vol)) + acc_vol;
-
-	p = get_cali_addr();
-	if (p != 0) {
-		strcpy(p->name, desc->name);
-		p->cali_vol = ctl_vol - to_vol;
-	}
+	//int acc_vol = dcdc_get_trimming_step(desc, to_vol) / 1000;
+	int ctl_vol = (def_vol - (adc_vol - to_vol));
 
 	return dcdc_set_voltage(desc, ctl_vol, ctl_vol);
 }
 
-#if defined(CONFIG_SPX15)
 static int ldo_get_voltage(struct regulator_desc *desc)
 {
 	const struct regulator_regs *regs = desc->regs;
@@ -371,80 +323,34 @@ static int ldo_get_voltage(struct regulator_desc *desc)
 
 	return -1;
 }
-#endif
 
-/* ldo trimming step about 0.625%, range 90% ~ 109.375%. that all maps as follow.
-
-	0x1F :  +9.375 : 109.375
-	0x1E :  +8.750 : 108.750
-	0x1D :  +8.125 : 108.125
-	0x1C :  +7.500 : 107.500
-	0x1B :  +6.875 : 106.875
-	0x1A :  +6.250 : 106.250
-	0x19 :  +5.625 : 105.625
-	0x18 :  +5.000 : 105.000
-	0x17 :  +4.375 : 104.375
-	0x16 :  +3.750 : 103.750
-	0x15 :  +3.125 : 103.125
-	0x14 :  +2.500 : 102.500
-	0x13 :  +1.875 : 101.875
-	0x12 :  +1.250 : 101.250
-	0x11 :  +0.625 : 100.625
-	0x10 :  +0.000 : 100.000
-	0x0F :  -0.625 : 99.375
-	0x0E :  -1.250 : 98.750
-	0x0D :  -1.875 : 98.125
-	0x0C :  -2.500 : 97.500
-	0x0B :  -3.125 : 96.875
-	0x0A :  -3.750 : 96.250
-	0x09 :  -4.375 : 95.625
-	0x08 :  -5.000 : 95.000
-	0x07 :  -5.625 : 94.375
-	0x06 :  -6.250 : 93.750
-	0x05 :  -6.875 : 93.125
-	0x04 :  -7.500 : 92.500
-	0x03 :  -8.125 : 91.875
-	0x02 :  -8.750 : 91.250
-	0x01 :  -9.375 : 90.625
-	0x00 : -10.000 : 90.000
-*/
 static int ldo_set_trimming(struct regulator_desc *desc, int def_vol, int to_vol, int adc_vol)
 {
 	const struct regulator_regs *regs = desc->regs;
 	int ret = -1;
 
-	if (regs->vol_trm) {
-		/* assert 5 valid trim bits, R = V_IDEAL / V_ADCIN - 1 */
-		u32 trim = DIV_ROUND_UP((to_vol * 100 - adc_vol * 90) * 32, (adc_vol * 20));
-		if (trim > BIT(5) - 1)
-			goto exit;
-		debug2("regu %p (%s) trimming %d = %d %+d%%, got [%02X]\n",
-			regs, desc->name, to_vol, adc_vol, (trim * 20 / 32 - 10), trim);
+	if (!regs->vol_ctl && regs->vol_sel_cnt == 2) {
+		/* ctl_vol = vol_base + reg[vol_trm] * vol_step  */
+		int shft = __ffs(regs->vol_trm_bits);
+		int ctl_vol = (def_vol - (adc_vol - to_vol));	//same as dcdc?
+		u32 trim = 0;
+		if(adc_vol > to_vol)
+			trim = DIV_ROUND_UP((ctl_vol - regs->vol_sel[0]) * 1000, regs->vol_sel[1]);
+		else
+			trim = ((ctl_vol - regs->vol_sel[0]) * 1000 / regs->vol_sel[1]);
 
-		ANA_REG_MSK_OR(regs->vol_trm,
-						trim << __ffs(regs->vol_trm_bits),
-						regs->vol_trm_bits);
-		ret = 0;
+		debug2("regu_ldo %p (%s) %d = %d %+dmv (trim=%d step=%duv);\n", regs, desc->name,
+			ctl_vol, regs->vol_sel[0], ctl_vol - regs->vol_sel[0], trim, regs->vol_sel[1]);
+
+		if ((trim >= 0) && (trim <= (regs->vol_trm_bits >> shft))) {
+			ANA_REG_MSK_OR(regs->vol_trm,
+					trim << shft,
+					regs->vol_trm_bits);
+			ret = 0;
+		}
 	}
 
-exit:
 	return ret;
-}
-
-static int dcdc_get_trimming_vol(struct regulator_desc *desc)
-{
-	int shft, trm_vol = 0;
-	int tmpVal;
-
-	shft = __ffs(desc->regs->vol_trm_bits);
-	tmpVal = (ANA_REG_GET(desc->regs->vol_trm) & desc->regs->vol_trm_bits) >> shft;
-
-	if (!__dcdc_is_orig(desc))
-		tmpVal -= 0x10;
-
-	trm_vol = tmpVal * (dcdc_get_trimming_step(desc, trm_vol))/1000;
-
-	return trm_vol;
 }
 
 static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
@@ -461,14 +367,20 @@ static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 	if (ldo_cal_sel)
 		ANA_REG_OR(regs->cal_ctl, ldo_cal_sel);
 
-	{
-		u16 tmpVal;
-		tmpVal = (ANA_REG_GET(regs->vol_ctl) & regs->vol_ctl_bits) >> __ffs(regs->vol_ctl_bits);
-		if (regs->typ == 2)
-			def_vol = to_vol = (int)regs->vol_sel[tmpVal] + dcdc_get_trimming_vol(desc);
-		else if (regs->typ == 0)
-			def_vol = to_vol = regs->vol_sel[tmpVal];
+	/*
+	 * FIXME: force get dcdc&ldo voltage from ana global regs
+	 * and get ideal voltage from vol para.
+	 */
+	if (desc->regs->typ == 2 /*DCDC*/) {
+		def_vol = dcdc_get_voltage(desc);
 	}
+	else if (desc->regs->typ == 0 /*LDO*/) {
+		def_vol = ldo_get_voltage(desc);
+	}
+
+	to_vol = regulator_default_get(desc->name);
+	if (!to_vol)
+		to_vol = regs->vol_def;
 
 	adc_vol = sci_adc_vol_request(adc_chan, ldo_cal_sel);
 	if (adc_vol <= 0) {
@@ -484,13 +396,13 @@ static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 
 	if (!def_vol || !to_vol || adc_vol <= 0)
 		goto exit;
-
-	if (abs(adc_vol - def_vol) >= def_vol / 10)	/* adjust limit 10% */
+	if (abs(adc_vol - def_vol) >= def_vol / 9)	/* adjust limit 9% */
 		goto exit;
 	else if (cal_vol < to_vol / 100) {	/* bias 1% */
 		goto exit;
 	}
-	else if (is_cal) {
+
+	if (is_cal) {
 		if (regs->typ == 2/*VDD_TYP_DCDC*/)
 			ret = dcdc_set_trimming(desc, def_vol, to_vol, adc_vol);
 		else if (regs->typ == 0/*VDD_TYP_LDO*/)
@@ -506,22 +418,28 @@ exit:
 
 int DCDC_Cal_ArmCore(void)
 {
-	u16 regVal;
+	u16 regval_dcdc_store, regval_ldo_store;
 	u32 res;
 	struct regulator_desc *desc = NULL;
 	struct regulator_desc *desc_end = NULL;
 
 	printf("%s\n", __FUNCTION__);
 
-	/* mem arm core bits are [11:9]*/
-	regVal = ANA_REG_GET(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR);
-	regVal |= BIT(11) | BIT(10) | BIT(9);
-	ANA_REG_SET(ANA_REG_GLB_LDO_DCDC_PD_RTCCLR, regVal);
+	regval_dcdc_store = ANA_REG_GET(ANA_REG_GLB_LDO_DCDC_PD);
+	ANA_REG_BIC(ANA_REG_GLB_LDO_DCDC_PD, (BIT(12) | BIT(11) | BIT(10) | BIT(9)));
+	regval_ldo_store = ANA_REG_GET(ANA_REG_GLB_LDO_PD_CTRL);
+	ANA_REG_BIC(ANA_REG_GLB_LDO_PD_CTRL, 0x7ff);
 
-	/* enable sim0, sim2. */
-	regVal = ANA_REG_GET(ANA_REG_GLB_LDO_PD_CTRL);
-	regVal &= ~(BIT(2) | BIT(4));
-	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, regVal);
+#if 1 //FIXME: vddcamio/vddcamd/vddemmcio/vdd18 real voltage value is greater than design value
+	ANA_REG_MSK_OR(ANA_REG_GLB_LDO_V_CTRL9, BITS_LDO_VDD18_V(0x40),
+			BITS_LDO_VDD18_V(-1)); //0x68D2 -->0x40D2
+	ANA_REG_MSK_OR(ANA_REG_GLB_LDO_V_CTRL2, BITS_LDO_EMMCIO_V(0x40),
+			BITS_LDO_EMMCIO_V(-1));  //0x3C68 -->0x3C40
+	ANA_REG_MSK_OR(ANA_REG_GLB_LDO_V_CTRL1, BITS_LDO_CAMIO_V(0x40) | BITS_LDO_CAMD_V(0x10),
+			BITS_LDO_CAMIO_V(-1) | BITS_LDO_CAMD_V(-1)); //0x6838 -->0x4010
+
+	udelay(200 * 1000); //wait 200ms
+#endif
 
 	/* FIXME: Update CHGMNG_AdcvalueToVoltage table before setup vbat ratio. */
 	/*ADC_CHANNEL_VBAT is 5*/
@@ -529,8 +447,6 @@ int DCDC_Cal_ArmCore(void)
 	bat_numerators = res >> 16;
 	bat_denominators = res & 0xffff;
 
-	/* initialize 4 struct free */
-	memset((u8 *)CALI_VOL_ADDR , 0x00, (sizeof(dcdc_cali_t) * (CALI_VOL_ADDR_NUM)));
 
 	/* TODO: calibrate all DCDCs */
 	desc = (struct regulator_desc *)(&__init_begin + 1);
@@ -538,18 +454,10 @@ int DCDC_Cal_ArmCore(void)
 	printf("%p (%x) -- %p -- %p (%x)\n", &__init_begin, __init_begin,
 		desc, &__init_end, __init_end);
 
-	while (desc < (struct regulator_desc *)&__init_end) {
-		if ((0 == strcmp("vddmem", desc->name))
-			|| (0 == strcmp("vddarm", desc->name))
-			|| (0 == strcmp("vddcore", desc->name))
-			|| (0 == strcmp("vddsim0", desc->name))
-			|| (0 == strcmp("vddsim2", desc->name))) {
-
-			printf("\nCalibrate %s ...\n", desc->name);
-			DCDC_Cal_One(desc, 1);
-		}
-
-		desc++;
+	desc_end = (struct regulator_desc *)&__init_end;
+	while (--desc_end >= desc) { /* reverse order */
+		printf("\nCalibrate %s ...\n", desc_end->name);
+		DCDC_Cal_One(desc_end, 1);
 	}
 
 	/* wait a moment for LDOs ready */
@@ -557,25 +465,129 @@ int DCDC_Cal_ArmCore(void)
 
 	/* TODO: verify all DCDCs */
 	desc = (struct regulator_desc *)(&__init_begin + 1);
-
-	while (desc < (struct regulator_desc *)&__init_end) {
-		if ((0 == strcmp("vddmem", desc->name))
-			|| (0 == strcmp("vddarm", desc->name))
-			|| (0 == strcmp("vddcore", desc->name))
-			|| (0 == strcmp("vddsim0", desc->name))
-			|| (0 == strcmp("vddsim2", desc->name))) {
-
-			printf("\nVerify %s ...\n", desc->name);
-			DCDC_Cal_One(desc, 0);
-		}
-
-		desc++;
+	desc_end = (struct regulator_desc *)&__init_end;
+	while (--desc_end >= desc) { /* reverse order */
+		printf("\nVerify %s ...\n", desc_end->name);
+		DCDC_Cal_One(desc_end, 0);
 	}
 
-	/* disable sim0, sim2. */
-	regVal |= (BIT(2) | BIT(4));
-	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, regVal);
+	/* restore adie dcdc/ldo PD bits */
+	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, regval_ldo_store);
+	ANA_REG_SET(ANA_REG_GLB_LDO_DCDC_PD, regval_dcdc_store);
 
 	return 0;
 }
 
+
+int regulator_init(void)
+{
+	/*
+	 * FIXME: turn on all DCDC/LDOs if need
+	 */
+	return 0;
+}
+
+struct regulator_desc *regulator_get(void/*struct device*/ *dev, const char *id)
+{
+	struct regulator_desc *desc =
+		(struct regulator_desc *)(&__init_begin + 1);
+	while (desc < (struct regulator_desc *)&__init_end) {
+		if (0 == strcmp(desc->name, id))
+			return desc;
+		desc++;
+	}
+	return 0;
+}
+
+int regulator_disable_all(void)
+{
+	ANA_REG_OR(ANA_REG_GLB_LDO_PD_CTRL, 0x7ff);
+	ANA_REG_OR(ANA_REG_GLB_LDO_DCDC_PD, 0x1fff);
+}
+
+int regulator_enable_all(void)
+{
+	ANA_REG_BIC(ANA_REG_GLB_LDO_DCDC_PD, 0x1fff);
+	ANA_REG_BIC(ANA_REG_GLB_LDO_PD_CTRL, 0x7ff);
+}
+
+int regulator_disable(const char con_id[])
+{
+	struct regulator_desc *desc = regulator_get(0, con_id);
+	if (desc) {
+		struct regulator_regs *regs = desc->regs;
+		ANA_REG_OR(regs->pd_set, regs->pd_set_bit);
+	}
+	return 0;
+}
+
+int regulator_enable(const char con_id[])
+{
+	struct regulator_desc *desc = regulator_get(0, con_id);
+	if (desc) {
+		struct regulator_regs *regs = desc->regs;
+		ANA_REG_BIC(regs->pd_set, regs->pd_set_bit);
+	}
+	return 0;
+}
+
+int regulator_set_voltage(const char con_id[], int to_vol)
+{
+	int ret = 0;
+	struct regulator_desc *desc = regulator_get(0, con_id);
+	if (desc) {
+		struct regulator_regs *regs = desc->regs;
+		if (regs->typ == 2/*VDD_TYP_DCDC*/)
+			ret = dcdc_set_voltage(desc, to_vol, 0);
+		else if (regs->typ == 0/*VDD_TYP_LDO*/)
+			ret = ldo_set_trimming(desc, 0, to_vol, 0);
+	}
+	return ret;
+}
+
+typedef struct {
+	uint16 ideal_vol;
+	const char name[14];
+}vol_para_t;
+
+vol_para_t **ppvol_para = 0x50005c20;
+
+int regulator_default_get(const char con_id[])
+{
+	int i = 0, res = 0;
+
+	if (!(ppvol_para && *ppvol_para))
+		return 0;
+
+	if(strcmp((*ppvol_para)[0].name, "volpara_begin") || (0xfaed != (*ppvol_para)[0].ideal_vol))
+		return 0;
+
+	while(0 != strcmp((*ppvol_para)[i++].name, "volpara_end")) {
+		if (0 == strcmp((*ppvol_para)[i].name, con_id)) {
+			debug("%s name %s, ideal_vol %d\n", __func__, (*ppvol_para)[i].name, (*ppvol_para)[i].ideal_vol);
+			return res = (*ppvol_para)[i].ideal_vol;
+		}
+	}
+
+	return res;
+}
+
+int regulator_default_set_all(void)
+{
+	int i = 0, ret = 0;
+
+	//dump & check all vol para
+	if (!(ppvol_para && *ppvol_para))
+		return -1;
+
+	if(strcmp((*ppvol_para)[0].name, "volpara_begin") || (0xfaed != (*ppvol_para)[0].ideal_vol))
+		return 0;
+
+	while(0 != strcmp((*ppvol_para)[i++].name, "volpara_end")) {
+		debug("regu: [%d] %s : %d\n", i, (*ppvol_para)[i].name, (*ppvol_para)[i].ideal_vol);
+
+		ret |= regulator_set_voltage((*ppvol_para)[i].name, (*ppvol_para)[i].ideal_vol);
+	}
+
+	return ret;
+}
