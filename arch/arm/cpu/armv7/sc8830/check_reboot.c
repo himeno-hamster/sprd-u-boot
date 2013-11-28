@@ -134,11 +134,11 @@ int charger_connected(void)
 {
 	sprd_eic_request(EIC_CHG_INT);
 #ifndef CONFIG_SPX15
-	if((ANA_REG_GET(ANA_APB_CHGR_CTL2) & (1 << 8)) == 0){
-		debugf("---err---ANA_APB_CHGR_CTL2 0x%x-------\n", ANA_REG_GET(ANA_APB_CHGR_CTL2));
+	if((ANA_REG_GET(ANA_REG_GLB_CHGR_CTRL2) & (1 << 8)) == 0){
+		debugf("---err---ANA_APB_CHGR_CTL2 0x%x-------\n", ANA_REG_GET(ANA_REG_GLB_CHGR_CTRL2));
 		while(1);
-		ANA_REG_OR(ANA_APB_CHGR_CTL2, 1<<8);
-		debugf("---set bit8---ANA_APB_CHGR_CTL2 0x%x-------\n", ANA_REG_GET(ANA_APB_CHGR_CTL2));
+		ANA_REG_OR(ANA_REG_GLB_CHGR_CTRL2, 1<<8);
+		debugf("---set bit8---ANA_APB_CHGR_CTL2 0x%x-------\n", ANA_REG_GET(ANA_REG_GLB_CHGR_CTRL2));
 	}
 #endif
 	udelay(3000);
