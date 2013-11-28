@@ -54,7 +54,6 @@ static inline int fls(int x)
 
 #define MEASURE_TIMES				(15)
 
-#if defined(CONFIG_SPX15)
 #define ADC_DROP_CNT	( DIV_ROUND(MEASURE_TIMES, 5) )
 static int __average(int a[], int N)
 {
@@ -63,7 +62,6 @@ static int __average(int a[], int N)
 		sum += a[i];
 	return DIV_ROUND(sum, N);
 }
-#endif
 
 static void bubble_sort(int a[], int N)
 {
@@ -353,7 +351,6 @@ static int dcdc_set_trimming(struct regulator_desc *desc, int def_vol, int to_vo
 	return dcdc_set_voltage(desc, ctl_vol, ctl_vol);
 }
 
-#if defined(CONFIG_SPX15)
 static int ldo_get_voltage(struct regulator_desc *desc)
 {
 	const struct regulator_regs *regs = desc->regs;
@@ -371,7 +368,6 @@ static int ldo_get_voltage(struct regulator_desc *desc)
 
 	return -1;
 }
-#endif
 
 /* ldo trimming step about 0.625%, range 90% ~ 109.375%. that all maps as follow.
 
