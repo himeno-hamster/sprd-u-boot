@@ -70,10 +70,10 @@ extern unsigned char raw_header[8192];
 #else
 #define WDSP_ADR        0x90020000
 #define WFIXNV_ADR      0x90440000
-#define WRUNTIMENV_ADR  0x90460000
+#define WRUNTIMENV_ADR  0x90480000
 #define WPRODINFO_ADR   0x904e0000
 #define WMODEM_ADR      0x90500000
-#define WCNMODEM_ADR      0x94080000
+#define WCNMODEM_ADR      0x94060000
 #define WCNFIXNV_ADR      0x94000000
 #define WCNRUNTIMENV_ADR  0x94020000
 #endif
