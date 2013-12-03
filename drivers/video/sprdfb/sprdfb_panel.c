@@ -113,11 +113,11 @@ static struct panel_cfg lcd_panel[] = {
 		},
 };
 #elif defined CONFIG_CORSICA_VE
-extern struct panel_spec lcd_panel_ili9486;
+extern struct panel_spec lcd_panel_ili9341;
 static struct panel_cfg lcd_panel[] = {
     [0]={
-        .lcd_id = 0x9486,
-        .panel = &lcd_panel_ili9486,
+        .lcd_id = 0x9341,
+        .panel = &lcd_panel_ili9341,
         },
 };
 #else
