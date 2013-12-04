@@ -58,7 +58,7 @@
 
 #define CONFIG_RAM512M
 
-#define CONFIG_EMMC_BOOT
+//#define CONFIG_EMMC_BOOT
 
 #ifdef  CONFIG_EMMC_BOOT
 #define EMMC_SECTOR_SIZE 512
@@ -209,10 +209,10 @@
 */
 
 /* DDR */
-#define DDR_CLK 533
+#define DDR_CLK 400
 //---these three macro below,only one can be open
 //#define DDR_LPDDR1
-#define DDR_LPDDR2
+//#define DDR_LPDDR2
 //#define DDR_DDR3
 
 #define DDR_TYPE DRAM_LPDDR2_2CS_8G_X32
@@ -231,9 +231,9 @@
 
 /* NAND */
 #define CONFIG_NAND_SC8830
-#define CONFIG_SPRD_NAND_REGS_BASE	(0x21100000)
+#define CONFIG_SPRD_NAND_REGS_BASE	(0x20B00000)
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define CONFIG_SYS_NAND_BASE		(0x21100000)
+#define CONFIG_SYS_NAND_BASE		(0x20B00000)
 //#define CONFIG_JFFS2_NAND
 //#define CONFIG_SPRD_NAND_HWECC
 #define CONFIG_SYS_NAND_HW_ECC
@@ -289,7 +289,7 @@
 #define str(s)	#s
 
 #define MTDIDS_DEFAULT "nand0=sprd-nand"
-#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),250m(system),180m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),3840k(productinfo),512k(kpanic)"
+#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),2m(2ndbl),256k(tdmodem),256k(tddsp),256k(tdfixnv1),256k(tdruntimenv),256k(wmodem),256k(wdsp),256k(wfixnv1),256k(wruntimenv1),256k(prodinfo1),256k(prodinfo3),1024k(logo),1024k(fastbootlogo),10m(boot),300m(system),150m(cache),10m(recovery),256k(misc),256k(sd),512k(userdata)"
 #define CONFIG_BOOTARGS "mem=1024M console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
 
 #define COPY_LINUX_KERNEL_SIZE	(0x600000)

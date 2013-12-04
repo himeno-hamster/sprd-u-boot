@@ -1,7 +1,7 @@
 #include "fdl_nand.h"
 #include "asm/arch/sci_types.h"
 #if     defined CONFIG_NAND_SC8830 
-#include <asm/arch/sprd_nfc_reg_v3.h>
+#include <asm/arch/sprd_nfc_reg_v2.h>
 #elif   defined CONFIG_NAND_TIGER
 #include <asm/arch/sprd_nfc_reg_v2.h>
 #elif   defined CONFIG_NAND_SC8810
@@ -42,7 +42,7 @@ typedef struct {
 } yaffs_PackedTags2;
 
 #define CONFIG_SYS_SPL_ECC_POS		8
-#define MAX_SPL_SIZE    0x4000
+#define MAX_SPL_SIZE    0x6000
 #define FDL_NAND_BUF_LEN	(8192 + 512)
 
 static unsigned int cur_write_pos;
@@ -634,9 +634,11 @@ int nand_write_spl(u8 *buf, struct mtd_info *mtd)
 	/* erase spl block in nand_start_write(), so erase spl block code is deleted */
 
 	/* write spl to flash*/
-	for (i = 0; i < 3; i++) {
-		pg_start = i * MAX_SPL_SIZE;
-		pg_end = (i + 1) * MAX_SPL_SIZE;
+//	for (i = 0; i < 3; i++) {
+{
+		i=0;
+		pg_start = i * MAX_SPL_SIZE/mtd->writesize;
+		pg_end = (i + 1) * MAX_SPL_SIZE/mtd->writesize;
 		data = buf;
 		for(pg  = pg_start; pg < pg_end; pg += mtd->writesize) {
 			ret = nand_write_spl_page(data, mtd, pg, CONFIG_SYS_SPL_ECC_POS);
@@ -666,7 +668,7 @@ struct bootloader_header
 	uint32_t info_pos;
 	uint32_t info_size;
 	uint32_t ecc_value[27];
-}
+};
 #elif defined CONFIG_NAND_TIGER
 struct bootloader_header
 {
@@ -743,7 +745,7 @@ void set_header_info(u8 *bl_data, struct mtd_info *nand, int ecc_pos)
 #ifdef CONFIG_NAND_SC8830
 	param.mode = 60;
 	param.ecc_pos = 0;
-	param.sinfo_size = 0;
+	param.sinfo_size = 1;
 #else
 	header->check_sum = CheckSum((unsigned int *)(bl_data + BOOTLOADER_HEADER_OFFSET + 4), (NAND_PAGE_LEN - BOOTLOADER_HEADER_OFFSET - 4));
 	param.mode = 24;
@@ -790,7 +792,9 @@ int nand_write_spl(u8 *buf, struct mtd_info *mtd)
 	/* erase spl block in nand_start_write(), so erase spl block code is deleted */
 
 	/* write spl to flash*/
-	for (i = 0; i < 3; i++) {
+	//for (i = 0; i < 3; i++) {
+	{
+		i=0;	
 		pg_start = i * MAX_SPL_SIZE / mtd->writesize;
 		pg_end = (i + 1) * MAX_SPL_SIZE / mtd->writesize;
 		data = buf;

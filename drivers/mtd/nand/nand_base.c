@@ -2519,7 +2519,7 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 	struct nand_flash_dev *type = NULL;
 	int i, dev_id, maf_idx;
 	int tmp_id, tmp_manf;
-#if defined(CONFIG_NAND_SC8810) || defined(CONFIG_TIGER)
+#if defined(CONFIG_NAND_SC8810) || defined(CONFIG_TIGER)|| defined(CONFIG_SC8830)
 	u8 id_data[8];
 #endif
 
@@ -2715,7 +2715,7 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 	          nand_manuf_ids[maf_idx].name, type->name);
 #endif
 
-#if defined(CONFIG_NAND_SC8810) || defined(CONFIG_TIGER)
+#if defined(CONFIG_NAND_SC8810) || defined(CONFIG_TIGER)|| defined(CONFIG_SC8830)
 	extern void nand_hardware_config(struct mtd_info *mtd, struct nand_chip*, u8[5]);
 	nand_hardware_config(mtd, chip, id_data);
 #endif
