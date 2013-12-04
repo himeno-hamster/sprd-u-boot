@@ -737,6 +737,14 @@ LOCAL BOOLEAN _read_nv_with_backup(wchar_t *partition_name, uint8* buf, uint32 s
 			return 0;
 		}
 	}
+
+	//write the backup image to origin image
+	base_sector = efi_GetPartBaseSec(partition_name);
+	if(NV_HEAD_MAGIC == magic){
+		Emmc_Write(PARTITION_USER, base_sector, 1, header_buf);
+		base_sector++;
+	}
+	Emmc_Write(PARTITION_USER, base_sector, (size>>9), (uint8*)buf);
 	return 1;
 }
 
@@ -1124,10 +1132,6 @@ PUBLIC int fdl2_read_midst(unsigned long size, unsigned long off, unsigned char 
 PUBLIC int fdl2_read_end(void)
 {
 	//Just send ack to tool in emmc
-	printf("g_dl_eMMCStatus.partitionpurpose = %d\n",g_dl_eMMCStatus.partitionpurpose);
-	if(PARTITION_PURPOSE_NV == g_dl_eMMCStatus.partitionpurpose){
-		_checkNVPartition();
-	}
 	FDL_SendAckPacket (BSL_REP_ACK);
 	return TRUE;
 }
