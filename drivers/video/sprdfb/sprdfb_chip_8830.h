@@ -118,9 +118,12 @@ enum{
 
 #define DISPC_PLL_DIV_DEFAULT	0
 #define DISPC_DBI_DIV_DEFAULT	0
+
+#ifdef CONFIG_LCD_720P
 #define DISPC_DPI_DIV_DEFAULT	6
-
-
+#else
+#define DISPC_DPI_DIV_DEFAULT	9
+#endif
 
 void dsi_enable(void);
 
