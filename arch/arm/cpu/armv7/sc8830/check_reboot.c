@@ -6,9 +6,6 @@
 #include <asm/arch/rtc_reg_v3.h>
 #include <asm/arch/regs_adi.h>
 #include <asm/arch/adi_hal_internal.h>
-#include <asm/arch/chip_x35/sprd_reg_aon_apb.h>
-#include <asm/arch/chip_drv_config.h>
-
 
 #define   HWRST_STATUS_POWERON_MASK 		(0xf0)
 #define   HWRST_STATUS_RECOVERY 		(0x20)

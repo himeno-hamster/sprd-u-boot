@@ -305,7 +305,7 @@ const ddr3_timing_t DDR3_ACTIMING =
 DRAM_INFO DRAM_INFO_ARRAY[] =
 { 
 /*-dram_type-----------cs_num--bank_num--BUS_WIDTH--BL-CL/RL-WL-AL-actiming-*/
-  //{DRAM_LPDDR2_1CS_2G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
+  {DRAM_LPDDR2_1CS_2G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
   {DRAM_LPDDR2_1CS_4G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},
   {DRAM_LPDDR2_1CS_8G_X32,   1,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	
   //{DRAM_LPDDR2_2CS_4G_X32,   2,   8,      32,        4,   8,  4, 0, (void *)(&LPDDR2_ACTIMING)},  	  	

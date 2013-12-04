@@ -511,6 +511,18 @@ void umctl2_addrmap_init(DRAM_INFO* dram)
     //to be confirm by johnnywang,refer to dolphin xiaohui doc,by I have some thing don't understand
     switch(dram->dram_type)
     {
+        case DRAM_LPDDR2_1CS_2G_X32:
+        {
+            UMCTL2_REG_SET(UMCTL_ADDRMAP0, 0X00001F14);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP1, 0X00060606);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP2, 0X00000000);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP3, 0X0F110000);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP4, 0X00000F0F);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP5, 0X05050505);
+            UMCTL2_REG_SET(UMCTL_ADDRMAP6, 0X0F0F0505);
+            break;
+            
+        }
         case DRAM_LPDDR2_2CS_2G_X32 :
         {
             UMCTL2_REG_SET(UMCTL_ADDRMAP0, 0X00001F14);
@@ -2327,7 +2339,7 @@ void sdram_init()
 			__cal_actiming(dram_info->ac_timing,&LPDDR2_ACTIMING_NATIVE,ddr_clk);
 			__sdram_init(ddr_clk, UMCTL2_PORT_CONFIG, dram_info);
 			#else
-	__sdram_init(DDR_CLK, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
+	__sdram_init(ddr_clk, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
 			#endif
 		#else
 	__sdram_init(DDR_CLK, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
