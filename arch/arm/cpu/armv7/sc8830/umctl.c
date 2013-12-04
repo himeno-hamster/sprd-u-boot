@@ -1242,8 +1242,6 @@ void sdram_clk_set(CLK_TYPE_E clock)
 	reg_val |= (clock>>2);
     UMCTL2_REG_SET(SHARK_DDR_CTL_CLK_DIV_ADDR,reg_val);
 
-	wait_pclk(20000);//wait dpll stable
-    
     //select DPLL 533MHZ source clock
     reg_val = UMCTL2_REG_GET(SHARK_DDR_CTL_CLK_SEL_ADDR);
     reg_val &= ~0x3;
@@ -1819,9 +1817,6 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 	sdram_vddmem_set(VDDMEM_1V20);
 #endif
     
-    //#if defined(CONFIG_SPX15)
-    //REG32(0x402b0128) = 1;
-    //#endif
     sdram_clk_set(dmc_clk);
     #if defined(CONFIG_SPX15)
     REG32(0x402b00f0) |= (1<<31);
@@ -1864,9 +1859,6 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 
     //enable AP port
     umctl2_port_en(UMCTL2_PORT_AP,TRUE);
-    //#if defined(CONFIG_SPX15)
-    //umctl2_allport_en();
-    //#endif
     
     //do training
     if(!publ_do_training())
@@ -1890,23 +1882,14 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 }
 
 
-#if defined(DDR_DFS_SUPPORT) || defined(CONFIG_SPX15)
+#if defined(CONFIG_SPX15)
 
 #ifdef DDR_LPDDR2
 CLK_TYPE_E DDR_DFS_POINT[] = 
 {
-#if defined(CONFIG_SPX15)
         CLK_192MHZ,
         CLK_332MHZ,
         CLK_400MHZ
-#else
-
-        CLK_100MHZ,
-	CLK_200MHZ,
-	CLK_333MHZ,
-	CLK_400MHZ, 
-	CLK_533MHZ,
-#endif
 };
 #else
 CLK_TYPE_E DDR_DFS_POINT[] = 
@@ -1949,6 +1932,61 @@ void  __cal_actiming(lpddr2_timing_t *cal_timing,void *native_timing,CLK_TYPE_E 
 	#endif
 	
 }
+#else
+
+#ifdef DDR_DFS_SUPPORT
+
+#ifdef DDR_LPDDR2
+CLK_TYPE_E DDR_DFS_POINT[] = 
+{
+    CLK_100MHZ,
+	CLK_200MHZ,
+	CLK_333MHZ,
+	CLK_400MHZ, 
+	CLK_533MHZ,
+};
+#else
+CLK_TYPE_E DDR_DFS_POINT[] = 
+{
+	CLK_200MHZ,
+	CLK_333MHZ,
+	CLK_400MHZ, 
+	CLK_533MHZ,
+};
+#endif
+#define NS2CLK_T(x_ns,clk) ((clk*x_ns)/1000 + 1)
+
+void  __cal_actiming(lpddr2_timing_t *cal_timing,void *native_timing,CLK_TYPE_E clk)
+{
+    lpddr2_timing_t* lpddr2_timing = (lpddr2_timing_t*)(native_timing);
+    ddr3_timing_t*   ddr3_timing   = (ddr3_timing_t*)(native_timing);
+	#ifdef DDR_LPDDR2	
+	cal_timing->tREFI 	= NS2CLK_T(lpddr2_timing->tREFI,clk);
+	cal_timing->tRAS  	= NS2CLK_T(lpddr2_timing->tRAS,clk);
+	cal_timing->tRC   	= NS2CLK_T(lpddr2_timing->tRC,clk);
+	cal_timing->tRFCab	= NS2CLK_T(lpddr2_timing->tRFCab,clk);
+	cal_timing->tRFCpb	= NS2CLK_T(lpddr2_timing->tRFCpb,clk);	
+	cal_timing->tRCD  	= NS2CLK_T(lpddr2_timing->tRCD,clk);
+	cal_timing->tRP   	= NS2CLK_T(lpddr2_timing->tRP,clk);
+	cal_timing->tRRD  	= NS2CLK_T(lpddr2_timing->tRRD,clk);	
+	cal_timing->tXP   	= NS2CLK_T(lpddr2_timing->tXP,clk);
+	cal_timing->tXSR  	= NS2CLK_T(lpddr2_timing->tXSR,clk);
+	cal_timing->tCKESR	= NS2CLK_T(lpddr2_timing->tCKESR,clk);	
+	cal_timing->tRTP  	= NS2CLK_T(lpddr2_timing->tRTP,clk);
+	cal_timing->tFAW  	= NS2CLK_T(lpddr2_timing->tFAW,clk);
+	cal_timing->tDPD  	= NS2CLK_T(lpddr2_timing->tDPD,clk);	
+	cal_timing->tZQINIT	= NS2CLK_T(lpddr2_timing->tZQINIT,clk);
+	cal_timing->tZQCL   = NS2CLK_T(lpddr2_timing->tZQCL,clk);
+	cal_timing->tZQCS   = NS2CLK_T(lpddr2_timing->tZQCS,clk);
+	cal_timing->tZQreset= NS2CLK_T(lpddr2_timing->tZQreset,clk);
+	cal_timing->tDQSCK  = NS2CLK_T(lpddr2_timing->tDQSCK,clk);
+	cal_timing->tDQSCKmax= NS2CLK_T(lpddr2_timing->tDQSCKmax,clk);
+	#else
+	cal_timing->tREFI 	= NS2CLK_T(ddr3_timing->tREFI,clk);
+	#endif
+	
+}
+#endif
 #endif
 
 #ifdef DDR_AUTO_DETECT
@@ -2228,11 +2266,6 @@ void sdram_init()
 	DRAM_INFO * dram_info = NULL;
 	void *ddr_timing_native = NULL;
 
-	#ifdef DDR_LPDDR2
-		ddr_timing_native = &LPDDR2_ACTIMING_NATIVE;
-	#else
-		ddr_timing_native = &DDR3_ACTIMING_NATIVE;
-	#endif
 
 
 
