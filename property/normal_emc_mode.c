@@ -57,7 +57,11 @@ static boot_image_required_t const s_boot_image_table[]={
 	{L"wfixnv1",L"wfixnv2",FIXNV_SIZE,WFIXNV_ADR},
 	{L"wruntimenv1",L"wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR},
 	{L"wmodem",NULL,MODEM_SIZE,WMODEM_ADR},
+#ifdef CONFIG_SP8830EB
+	{L"wdsp",NULL,WDSP_SIZE,WDSP_ADR},
+#else
 	{L"wdsp",NULL,DSP_SIZE,WDSP_ADR},
+#endif/*CONFIG_SP8830EB*/
 #endif
 #endif	
 
