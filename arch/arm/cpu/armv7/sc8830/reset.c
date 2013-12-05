@@ -50,7 +50,9 @@ void reset_cpu (ulong ignored)
 void rtc_clean_all_int(void);
 void power_down_cpu(ulong ignored)
 {
-    //LDO_TurnOffAllLDO();
+#if defined(CONFIG_SPX15)
+	LDO_TurnOffAllLDO();
+#else
 	int v = 0;
 	v = ANA_REG_GET(ANA_REG_GLB_POR_SRC_FLAG);
 	printf("power on src = 0x%.8x\n", v);
@@ -60,4 +62,7 @@ void power_down_cpu(ulong ignored)
 	rtc_clean_all_int();
 	sci_adi_set(ANA_REG_GLB_MP_PWR_CTRL0,  BIT_PWR_OFF_SEQ_EN); //auto poweroff by chip
 	while(1);
+#endif
+
+
 }
