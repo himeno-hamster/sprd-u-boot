@@ -737,9 +737,13 @@ void umctl2_allport_en()
 
 void umctl2_port_auto_gate()
 {
-	//for kevin
+	#if defined(CONFIG_SPX15)
+        REG32(0x402B00F0) = 0X83ff03FF;
+        #else
+        //for kevin
 	REG32(0x402B00F0) = 0X3ff03FF;
 	//REG32(0x402B00F0) = 0X3FF;
+        #endif
 }
 
 void umctl2_ctl_auto_gate()
