@@ -116,8 +116,8 @@
 
 #define FIXNV_SIZE		(256 * 1024)
 #define PRODUCTINFO_SIZE	(16 * 1024)
-#define MODEM_SIZE		(0xA00000)
-#define DSP_SIZE		(0x3E0400) /* 3968K */
+#define MODEM_SIZE		(0x800000)
+#define DSP_SIZE		(0x200000) /* 3968K */
 #define VMJALUNA_SIZE		(0x64000) /* 400K */
 #define RUNTIMENV_SIZE		(384 * 1024)
 #define CONFIG_SPL_LOAD_LEN	(0x6000)
@@ -407,7 +407,7 @@
 #define TD_CP_OFFSET_ADDR			0x8000000	/*128*/
 #define TD_CP_SDRAM_SIZE			0x1800000	/*24M*/
 #define WCDMA_CP_OFFSET_ADDR		0x8000000	/*128M*/
-#define WCDMA_CP_SDRAM_SIZE		    0x2800000	/*40M*/
+#define WCDMA_CP_SDRAM_SIZE		    0x2000000	/*32M*/
 
 #define WCN_CP_OFFSET_ADDR          0xa800000   /*168M*/
 #define WCN_CP_SDRAM_SIZE           0x400000    /*4M*/
