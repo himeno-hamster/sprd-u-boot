@@ -1,11 +1,9 @@
 #include <common.h>
 #include <asm/io.h>
-#if defined (CONFIG_SPX15)
-#include <asm/arch/chip_x35/sprd_reg_ana_glb.h>
-#endif
+
 #include <asm/arch/regs_adi.h>
 #include <asm/arch/adi_hal_internal.h>
-#include <asm/arch/analog_reg_v3.h>
+#include <asm/arch/sprd_reg.h>
 
 #ifdef DEBUG
 #define debugf(fmt, args...) do { printf("%s(): ", __func__); printf(fmt, ##args); } while (0)
@@ -41,17 +39,25 @@ uint16_t CHGMNG_AdcvalueToVoltage(uint16_t adcvalue)
 
 void CHG_TurnOn(void)
 {
-	ANA_REG_MSK_OR(ANA_APB_CHGR_CTL0, CHGR_PD_CLR_BIT, (CHGR_PD_SET_BIT | CHGR_PD_CLR_BIT));
+#if defined(CONFIG_SPX15)
+	ANA_REG_MSK_OR(ANA_REG_GLB_CHGR_CTRL0, 0, BIT_CHGR_PD);
+#else
+	ANA_REG_MSK_OR(ANA_REG_GLB_CHGR_CTRL0, BIT_CHGR_PD_RTCCLR, (BIT_CHGR_PD_RTCCLR | BIT_CHGR_PD_RTCSET));
+#endif
 }
 
 void CHG_ShutDown(void)
 {
-	ANA_REG_MSK_OR(ANA_APB_CHGR_CTL0, CHGR_PD_SET_BIT, (CHGR_PD_SET_BIT | CHGR_PD_CLR_BIT));
+#if defined(CONFIG_SPX15)
+	ANA_REG_MSK_OR(ANA_REG_GLB_CHGR_CTRL0, BIT_CHGR_PD, BIT_CHGR_PD);
+#else
+	ANA_REG_MSK_OR(ANA_REG_GLB_CHGR_CTRL0, BIT_CHGR_PD_RTCSET, (BIT_CHGR_PD_RTCCLR | BIT_CHGR_PD_RTCSET));
+#endif
 }
 
 void CHG_SetRecharge(void)
 {
-	ANA_REG_OR(ANA_APB_CHGR_CTL2, CHGR_RECHG_BIT);
+	ANA_REG_OR(ANA_REG_GLB_CHGR_CTRL2, BIT_RECHG);
 }
 
 uint32_t CHG_GetAdcCalType(void)
@@ -141,9 +147,12 @@ int sprd_charger_is_adapter(void)
 unsigned int fgu_vol, fgu_cur;
 void fgu_init(void)
 {
+#if defined(CONFIG_SPX15)
+    sci_adi_clr(ANA_REG_GLB_CHGR_DET_FGU_CTRL, (BIT_SD_CHOP_CAP_EN|BIT_CHOP_EN));
+#else
 	sci_adi_set(ANA_REG_GLB_MP_MISC_CTRL, (BIT(1)));
 	sci_adi_write(ANA_REG_GLB_DCDC_CTRL2, (4 << 8), (7 << 8));
-
+#endif
 	sci_adi_set(ANA_REG_GLB_ARM_MODULE_EN, BIT_ANA_FGU_EN);
 	sci_adi_set(ANA_REG_GLB_RTC_CLK_EN, BIT_RTC_FGU_EN | BIT_RTC_FGUA_EN);
 	//sci_adi_clr(REG_FGU_CONFIG, BIT_VOLT_H_VALID);
@@ -164,19 +173,17 @@ void CHG_Init(void)
 		enum sprd_adapter_type adp_type = sprd_charger_is_adapter();
 		if (adp_type == ADP_TYPE_CDP || adp_type == ADP_TYPE_DCP) {
 			debugf("uboot adp AC\n");
-			ANA_REG_MSK_OR(ANA_APB_CHGR_CTL1,
-				       (6 << CHGR_CHG_CUR_SHIFT) &
-				       CHGR_CHG_CUR_MSK, CHGR_CHG_CUR_MSK);
+			ANA_REG_MSK_OR(ANA_REG_GLB_CHGR_CTRL1,
+				      BITS_CHGR_CC_I(6), BITS_CHGR_CC_I(~0));
 		} else {
 			debugf("uboot adp USB\n");
-			ANA_REG_MSK_OR(ANA_APB_CHGR_CTL1,
-				       (4 << CHGR_CHG_CUR_SHIFT) &
-				       CHGR_CHG_CUR_MSK, CHGR_CHG_CUR_MSK);
+			ANA_REG_MSK_OR(ANA_REG_GLB_CHGR_CTRL1,
+				       BITS_CHGR_CC_I(4), BITS_CHGR_CC_I(~0));
 		}
 	}
 
 	CHG_SetRecharge();
-	ANA_REG_OR(ANA_APB_CHGR_CTL2, CHGR_CC_EN_BIT);
+	ANA_REG_OR(ANA_REG_GLB_CHGR_CTRL2, BIT_CHGR_CC_EN);
 
 	get_adc_cali_data();
 	fgu_init();
