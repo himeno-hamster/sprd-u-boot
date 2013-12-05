@@ -46,7 +46,7 @@ void init_ldo_sleep_gr(void)
 	//BIT_LDO_EMMCCORE_PD|
 	//BIT_LDO_EMMCIO_PD|
 	BIT_LDO_DCXO_PD|
-	BIT_LDO_CON_PD|
+	//BIT_LDO_CON_PD|
 	//BIT_LDO_VDD25_PD|
 	//BIT_LDO_VDD28_PD|
 	//BIT_LDO_VDD18_PD|
@@ -85,8 +85,8 @@ void init_ldo_sleep_gr(void)
 	BIT_SLP_LDOCAMD_PD_EN |
 	BIT_SLP_LDOCAMA_PD_EN |
 	BIT_SLP_LDOSIM2_PD_EN |
-	BIT_SLP_LDOSIM1_PD_EN |
-	BIT_SLP_LDOSIM0_PD_EN |
+	//BIT_SLP_LDOSIM1_PD_EN |
+	//BIT_SLP_LDOSIM0_PD_EN |
 	BIT_SLP_LDOSD_PD_EN |
 	0);
 
@@ -236,7 +236,7 @@ void init_ldo_sleep_gr(void)
 		//BIT_XTLBUF1_CP2_SEL |
 		//BIT_XTLBUF1_CP1_SEL |
 		//BIT_XTLBUF1_CP0_SEL |
-		//BIT_XTLBUF1_AP_SEL  |
+		BIT_XTLBUF1_AP_SEL  |
 		0
 	);
 

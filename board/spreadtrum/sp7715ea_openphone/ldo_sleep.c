@@ -27,11 +27,40 @@
 
 void init_ldo_sleep_gr(void)
 {
+	u32 reg_val;
+
+	ANA_REG_SET(ANA_REG_GLB_PWR_WR_PROT_VALUE,BITS_PWR_WR_PROT_VALUE(0x6e7f));
+
+	do{
+		reg_val = (ANA_REG_GET(ANA_REG_GLB_PWR_WR_PROT_VALUE) & BIT_PWR_WR_PROT);
+	}while(reg_val == 0);
+
+	ANA_REG_SET(ANA_REG_GLB_LDO_DCDC_PD,
+	BIT_DCDC_TOP_CLKF_EN|
+	BIT_DCDC_TOP_OSC_EN|
+	//BIT_DCDC_GEN_PD|
+	//BIT_DCDC_MEM_PD|
+	//BIT_DCDC_ARM_PD|
+	//BIT_DCDC_CORE_PD|
+	//BIT_LDO_RF0_PD|
+	//BIT_LDO_EMMCCORE_PD|
+	//BIT_LDO_EMMCIO_PD|
+	BIT_LDO_DCXO_PD|
+	//BIT_LDO_CON_PD|
+	//BIT_LDO_VDD25_PD|
+	//BIT_LDO_VDD28_PD|
+	//BIT_LDO_VDD18_PD|
+	//BIT_BG_PD|
+	0
+	);
+
+	ANA_REG_SET(ANA_REG_GLB_PWR_WR_PROT_VALUE,BITS_PWR_WR_PROT_VALUE(0));
+	
 	/**********************************************
 	 *   Following is AP LDO A DIE Sleep Control  *
 	 *********************************************/
 	ANA_REG_SET(ANA_REG_GLB_PWR_SLP_CTRL0,
-	//BIT_SLP_IO_EN	|
+	BIT_SLP_IO_EN |
 	//BIT_SLP_DCDCGEN_PD_EN |
 	BIT_SLP_DCDCWPA_PD_EN |
 	BIT_SLP_DCDCARM_PD_EN |
@@ -47,7 +76,7 @@ void init_ldo_sleep_gr(void)
 	);
 
 	ANA_REG_SET(ANA_REG_GLB_PWR_SLP_CTRL1,
-	//BIT_SLP_LDO_PD_EN |
+	BIT_SLP_LDO_PD_EN |
 	BIT_SLP_LDOLPREF_PD_EN |
 	BIT_SLP_LDOCLSG_PD_EN |
 	BIT_SLP_LDOUSB_PD_EN |
@@ -56,14 +85,14 @@ void init_ldo_sleep_gr(void)
 	BIT_SLP_LDOCAMD_PD_EN |
 	BIT_SLP_LDOCAMA_PD_EN |
 	BIT_SLP_LDOSIM2_PD_EN |
-	BIT_SLP_LDOSIM1_PD_EN |
-	BIT_SLP_LDOSIM0_PD_EN |
+	//BIT_SLP_LDOSIM1_PD_EN |
+	//BIT_SLP_LDOSIM0_PD_EN |
 	BIT_SLP_LDOSD_PD_EN |
 	0);
 
 	ANA_REG_SET(ANA_REG_GLB_PWR_SLP_CTRL2,
-	//BIT_SLP_DCDCCORE_LP_EN |
-	//BIT_SLP_DCDCMEM_LP_EN |
+	BIT_SLP_DCDCCORE_LP_EN |
+	BIT_SLP_DCDCMEM_LP_EN |
 	//BIT_SLP_DCDCARM_LP_EN |
 	//BIT_SLP_DCDCGEN_LP_EN |
 	//BIT_SLP_DCDCWPA_LP_EN |
@@ -78,6 +107,7 @@ void init_ldo_sleep_gr(void)
 	0);
 
 	ANA_REG_SET(ANA_REG_GLB_PWR_SLP_CTRL3,
+	BIT_SLP_BG_LP_EN|
 	//BIT_SLP_LDOCLSG_LP_EN |
 	//BIT_SLP_LDOUSB_LP_EN |
 	//BIT_SLP_LDOCAMMOT_LP_EN |
@@ -93,7 +123,7 @@ void init_ldo_sleep_gr(void)
 	*   Following is CP LDO Sleep Control  *
 	****************************************/
 	ANA_REG_SET(ANA_REG_GLB_PWR_XTL_EN0,
-	//BIT_LDO_XTL_EN |
+	BIT_LDO_XTL_EN |
 	//BIT_LDO_DCXO_EXT_XTL1_EN |
 	//BIT_LDO_DCXO_EXT_XTL0_EN |
 	//BIT_LDO_DCXO_XTL2_EN |
@@ -109,10 +139,10 @@ void init_ldo_sleep_gr(void)
 	0);
 
 	ANA_REG_SET(ANA_REG_GLB_PWR_XTL_EN1,
-	//BIT_LDO_RF0_EXT_XTL1_EN |
-	//BIT_LDO_RF0_EXT_XTL0_EN |
-	//BIT_LDO_RF0_XTL2_EN |
-	//BIT_LDO_RF0_XTL0_EN |
+	BIT_LDO_RF0_EXT_XTL1_EN |
+	BIT_LDO_RF0_EXT_XTL0_EN |
+	BIT_LDO_RF0_XTL2_EN |
+	BIT_LDO_RF0_XTL0_EN |
 	//BIT_LDO_VDD25_EXT_XTL1_EN |
 	//BIT_LDO_VDD25_EXT_XTL0_EN |
 	BIT_LDO_VDD25_XTL2_EN |
@@ -145,8 +175,8 @@ void init_ldo_sleep_gr(void)
 	//BIT_XO_XTL0_EN |
 	//BIT_BG_EXT_XTL1_EN |
 	//BIT_BG_EXT_XTL0_EN |
-	//BIT_BG_XTL2_EN |
-	//BIT_BG_XTL0_EN |
+	BIT_BG_XTL2_EN |
+	BIT_BG_XTL0_EN |
 	0);
 	
 	ANA_REG_SET(ANA_REG_GLB_PWR_XTL_EN4,
@@ -164,8 +194,8 @@ void init_ldo_sleep_gr(void)
 	//BIT_DCDC_GEN_XTL0_EN |
 	//BIT_DCDC_CORE_EXT_XTL1_EN |
 	//BIT_DCDC_CORE_EXT_XTL0_EN |
-	//BIT_DCDC_CORE_XTL2_EN |
-	//BIT_DCDC_CORE_XTL0_EN |
+	BIT_DCDC_CORE_XTL2_EN |
+	BIT_DCDC_CORE_XTL0_EN |
 	0);
 	/************************************************
 	*   Following is AP/CP LDO D DIE Sleep Control   *
@@ -181,7 +211,7 @@ void init_ldo_sleep_gr(void)
 	CHIP_REG_SET(REG_PMU_APB_XTL1_REL_CFG,
 		//BIT_XTL1_AP_SEL |
 		//BIT_XTL1_CP0_SEL |
-		BIT_XTL1_CP1_SEL |
+		//BIT_XTL1_CP1_SEL |
 		//BIT_XTL1_CP2_SEL |
 		0
 	);
@@ -204,9 +234,9 @@ void init_ldo_sleep_gr(void)
 
 	CHIP_REG_SET(REG_PMU_APB_XTLBUF1_REL_CFG,
 		//BIT_XTLBUF1_CP2_SEL |
-		BIT_XTLBUF1_CP1_SEL |
+		//BIT_XTLBUF1_CP1_SEL |
 		//BIT_XTLBUF1_CP0_SEL |
-		//BIT_XTLBUF1_AP_SEL  |
+		BIT_XTLBUF1_AP_SEL  |
 		0
 	);
 
@@ -222,7 +252,7 @@ void init_ldo_sleep_gr(void)
 	CHIP_REG_SET(REG_PMU_APB_DPLL_REL_CFG,
 		//BIT_DPLL_REF_SEL |
 		BIT_DPLL_CP2_SEL |
-		BIT_DPLL_CP1_SEL |
+		//BIT_DPLL_CP1_SEL |
 		BIT_DPLL_CP0_SEL |
 		BIT_DPLL_AP_SEL  |
 		0
@@ -231,7 +261,7 @@ void init_ldo_sleep_gr(void)
 	CHIP_REG_SET(REG_PMU_APB_TDPLL_REL_CFG,
 		//BIT_TDPLL_REF_SEL |
 		BIT_TDPLL_CP2_SEL |
-		BIT_TDPLL_CP1_SEL |
+		//BIT_TDPLL_CP1_SEL |
 		BIT_TDPLL_CP0_SEL |
 		BIT_TDPLL_AP_SEL  |
 		0
