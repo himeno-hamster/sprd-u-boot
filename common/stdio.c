@@ -35,7 +35,7 @@
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
-
+long long lcd_init_time = 0;
 static struct stdio_dev devs;
 struct stdio_dev *stdio_devices[] = { NULL, NULL, NULL };
 char *stdio_names[MAX_FILES] = { "stdin", "stdout", "stderr" };
@@ -215,7 +215,10 @@ int stdio_init (void)
 	i2c_init (CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 #endif
 #ifdef CONFIG_LCD
+    unsigned long long start=0;
+    start = get_ticks();
 	drv_lcd_init ();
+    lcd_init_time = get_ticks()-start;
 #endif
 #if defined(CONFIG_VIDEO) || defined(CONFIG_CFB_CONSOLE)
 	drv_video_init ();

@@ -13,6 +13,8 @@
 
 #define KERNL_PAGE_SIZE 2048
 
+long long load_image_time = 0;
+
 static boot_image_required_t const s_boot_image_table[]={
 #ifdef CONFIG_SC8830
 
@@ -426,7 +428,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	char * buf = NULL;
 	char * mode_ptr = NULL;
 	int i;
-
+	long long start = get_ticks();
 #if (defined CONFIG_SC8810) || (defined CONFIG_SC8825) || (defined CONFIG_SC8830)
 	MMU_Init(CONFIG_MMU_TABLE_ADDR);
 #endif
@@ -452,6 +454,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	//loader kernel and ramdisk
 	if(!_boot_load_kernel_ramdisk_image(dev, kernel_pname, hdr))
 		return;
+	load_image_time = get_ticks() - start;
 	//secure check for secure boot
 	_boot_secure_check();
 

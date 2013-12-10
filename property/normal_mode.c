@@ -1020,7 +1020,18 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 		sprintf(&buf[str_len], " fgu_init=%d,%d",fgu_vol,fgu_cur);
 	}
 #endif
-
+   {
+       extern long long lcd_init_time;
+       str_len = strlen(buf);
+       sprintf(&buf[str_len], " lcd_init=%lld",lcd_init_time);
+   }
+   {
+       extern long long load_image_time;
+       str_len = strlen(buf);
+       sprintf(&buf[str_len], " load_image=%lld",load_image_time);
+   }
+   str_len = strlen(buf);
+   sprintf(&buf[str_len], " pl_t=%lld",get_ticks());
 }
 #endif
     debugf("cmdline_len = %d \n pass cmdline: %s \n",strlen(buf), buf);

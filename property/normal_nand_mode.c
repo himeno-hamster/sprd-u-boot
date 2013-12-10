@@ -17,6 +17,7 @@ static vol_image_required_t s_boot_img_table[]={
 	{NULL,NULL,0,0,IMG_MAX}
 };
 
+long long load_image_time = 0;
 
 int read_logoimg(char *bmp_img,size_t size)
 {
@@ -328,6 +329,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	int ubi_dev_num;
 	int ret;
 	int i;
+	long long start = get_ticks();
 
 	//init mmu
 	MMU_Init(CONFIG_MMU_TABLE_ADDR);
@@ -357,6 +359,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		return;
 	}
 
+	load_image_time = get_ticks() - start;
 	creat_cmdline(cmdline,hdr);
 #if BOOT_NATIVE_LINUX_MODEM
 	//sipc addr clear
