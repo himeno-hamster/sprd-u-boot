@@ -45,6 +45,11 @@
 #include <boot_mode.h>
 #include <asm/arch/secure_boot.h>
 
+struct	dl_image_inf{
+	uint32_t base_address;
+	uint32_t max_size;
+	uint32_t data_size;
+}ImageInfo[2];
 
 #ifdef CONFIG_EXT4_SPARSE_DOWNLOAD
 #include "../disk/part_uefi.h"
@@ -78,11 +83,7 @@ typedef struct{
 	uint32 hashLen;
 }EMMC_BootHeader;
 #endif
-struct	dl_image_inf{
-	uint32 base_address;
-	uint32 max_size;
-	uint32 data_size;
-}ImageInfo[2];
+
 
 typedef struct  _NV_HEADER {
      uint32 magic;
@@ -130,6 +131,13 @@ static FB_PARTITION_INFO const s_fb_special_partition_cfg[]={
 };
 
 #endif
+/*
+struct	dl_image_inf{
+	uint32 base_address;
+	uint32 max_size;
+	uint32 data_size;
+}ImageInfo[2];
+*/
 
 typedef struct {
     unsigned char colParity;
