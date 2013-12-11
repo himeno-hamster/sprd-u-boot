@@ -180,6 +180,7 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 	dsih_ctrl_t* dsi_instance = &(dsi_ctx.dsi_inst);
 	dphy_t *phy = &(dsi_instance->phy_instance);
 	struct info_mipi * mipi = dev->panel->info.mipi;
+	int i = 0;
 
 	dsi_enable();
 
@@ -233,7 +234,12 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 		return -1;
 	}
 
-	while(5 != (dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_STATUS) & 5));
+	while(5 != (dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_STATUS) & 5)){
+		if(0x0 == ++i%10000){
+			printf("sprdfb: [%s] warning: busy waiting!\n", __FUNCTION__);
+		}
+	}
+
 	if(SPRDFB_MIPI_MODE_CMD == mipi->work_mode){
 		dsi_edpi_setbuswidth(mipi);
 	}
