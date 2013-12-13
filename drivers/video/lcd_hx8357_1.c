@@ -17,7 +17,7 @@
 #include <asm/arch/sc8810_lcd.h>
 #define printk printf
 
-//#define  LCD_DEBUG
+/* #define  LCD_DEBUG */
 #ifdef LCD_DEBUG
 #define LCD_PRINT printk
 #else
@@ -31,114 +31,114 @@ static int32_t hx8357_init(struct lcd_spec *self)
 	Send_data send_data = self->info.mcu->ops->send_data;
 
 	LCD_PRINT("hx8357_init\n");
+	self->ops->lcd_reset(self);
 
-	send_cmd_data(0x00ff, 0x00);  //Command page 0
-	LCD_DelayMS(15);  //delay
-	send_cmd_data(0x001a, 0x0004);  //VGH VGL VCL DDVDH
-	send_cmd_data(0x001b, 0x001c);
+	send_cmd(0x11);				// SLPOUT 
+	LCD_DelayMS(120);
+	send_cmd(0xB9);
+	send_data(0xFF);
+	send_data(0x83);
+	send_data(0x57);
+	LCD_DelayMS(1);
 
-	/*power setting*/
-	send_cmd_data(0x0023, 0x0091);// set VCOM offset,VMF=0x52
-	send_cmd_data(0x0024, 0x0069);//set VCOMH voltage,VHH=0x64
-	send_cmd_data(0x0025, 0x0063); //set VCOML voltage,VML=0x71
-	send_cmd_data(0x0019, 0x0001);
-	LCD_DelayMS(10);  //delay
-	send_cmd_data(0x001a, 0x0001); //VGH VGL VCL DDVDH
-	send_cmd_data(0x001f, 0x008a);
-	send_cmd_data(0x0001, 0x0000);
-	send_cmd_data(0x001c, 0x0005);
-	send_cmd_data(0x001f, 0x0082);
-	LCD_DelayMS(10); //delay
-	send_cmd_data(0x001f, 0x0092);
-	LCD_DelayMS(10); //delay
-	send_cmd_data(0x001f, 0x00d4);
+	send_cmd(0xB1);	  //SETPower 
+	send_data(0x00);	 //STB 
+	send_data(0x14);	 //VGH = 13V, VGL = -10V 
+	send_data(0x1C);	 //VSPR = 4.41V 
+	send_data(0x1C);	 //VSNR = -4.41V 
+	send_data(0xC3);	 //AP 
+	send_data(0x6C); //38		 //FS 
+	LCD_DelayMS(1); 
 
-	/* set GRAM area 320*480 */
-	send_cmd_data(0x0002, 0x0000);
-	send_cmd_data(0x0003, 0x0000);
-	send_cmd_data(0x0004, 0x0001);
-	send_cmd_data(0x0005, 0x003f);
-	send_cmd_data(0x0006, 0x0000);
-	send_cmd_data(0x0007, 0x0000);
-	send_cmd_data(0x0008, 0x0001);
 
-	send_cmd_data(0x0016, 0x0009); //set my mx mv bgr
-	send_cmd_data(0x0017, 0x0005); //16-bit pixel
-	send_cmd_data(0x0018, 0x0022); //Fosc=130%*5.2MHZ 21
-	send_cmd_data(0x001d, 0x0000); //FS0[1:0]=01,set the operating frequency of the step-up circuit 1
-	send_cmd_data(0x001e, 0x0000);
+	send_cmd(0xB4);   //SETCYC 
+	send_data(0x22);		 //2-dot 
+	send_data(0x40);	 //RTN 
+	send_data(0x00);	 //DIV 
+	send_data(0x2A);	 //N_DUM 
+	send_data(0x2A);	 //I_DUM 
+	send_data(0x20);	 //GDON 
+	send_data(0x78);	 //GDOFF  ==4E
+	LCD_DelayMS(1); 
 
-	send_cmd_data(0x0026, 0x0033);
-	send_cmd_data(0x0027, 0x0001);
-	send_cmd_data(0x0029, 0x0000);
-	send_cmd_data(0x002a, 0x0000);
-	send_cmd_data(0x002b, 0x0001); //0A
-	send_cmd_data(0x002c, 0x000a);
-	send_cmd_data(0x002d, 0x0020);
-	send_cmd_data(0x002e, 0x00a3);
-	send_cmd_data(0x002f, 0x0000);
-	send_cmd_data(0x0031, 0x0000);
-	send_cmd_data(0x0032, 0x0000);
-	send_cmd_data(0x0033, 0x0008);
-	send_cmd_data(0x0034, 0x0002);
-	send_cmd_data(0x0036, 0x0002);  //REV
-	
-	/* Gamma  */
-	send_cmd_data(0x0040, 0x0001);
-	send_cmd_data(0x0041, 0x0012);
-	send_cmd_data(0x0042, 0x0019);
-	send_cmd_data(0x0043, 0x0026);
-	send_cmd_data(0x0044, 0x002c);
-	send_cmd_data(0x0045, 0x003c);
-	send_cmd_data(0x0046, 0x000b);
-	send_cmd_data(0x0047, 0x005f);
-	send_cmd_data(0x0048, 0x0000);
-	send_cmd_data(0x0049, 0x0008);
-	send_cmd_data(0x004a, 0x000b);
-	send_cmd_data(0x004b, 0x0010);
-	send_cmd_data(0x004c, 0x0016);
+	send_cmd(0xB6);	//VCOMDC 
+	send_data(0x22);
+	LCD_DelayMS(1);
 
-	send_cmd_data(0x0050, 0x0001);
-	send_cmd_data(0x0051, 0x001d);
-	send_cmd_data(0x0052, 0x0021);
-	send_cmd_data(0x0053, 0x0034);
-	send_cmd_data(0x0054, 0x0037);
-	send_cmd_data(0x0055, 0x003f);
-	send_cmd_data(0x0056, 0x0029);
-	send_cmd_data(0x0057, 0x007f);
-	send_cmd_data(0x0058, 0x0001);
-	send_cmd_data(0x0059, 0x0012);
-	send_cmd_data(0x005a, 0x001b);
-	send_cmd_data(0x005b, 0x001e);
-	send_cmd_data(0x005c, 0x001a);
-	send_cmd_data(0x005d, 0x0055);
+	send_cmd(0xC0);   //SETSTBA 
+	send_data(0x34);	 //N_OPON 
+	send_data(0x34);	 //I_OPON 
+	send_data(0x02);	 //STBA 
+	send_data(0x3C);	 //STBA 
+	send_data(0xC8);	 //STBA 
+	send_data(0x08);	 //GENON 
+	LCD_DelayMS(1); 
 
-	send_cmd_data(0x0060, 0x0008);
-	send_cmd_data(0x00f2, 0x0000);
-	send_cmd_data(0x00e4, 0x001f); //EQVCI_M1=0x00
-	send_cmd_data(0x00e5, 0x001f); //EQGND_M1=0x1c
-	send_cmd_data(0x00e6, 0x0020); //EQVCI_M0=0x1c
-	send_cmd_data(0x00e7, 0x0000); //EQGND_M0=0x1c
-	send_cmd_data(0x00e8, 0x00d1);
-	send_cmd_data(0x00e9, 0x00c0);
-	send_cmd_data(0x0028, 0x0038);
-	LCD_DelayMS(80);  //delay
-	send_cmd_data(0x0028, 0x003c); //GON=0,DTE=0,D[1:0]=01
+	send_cmd(0xC2);   // Set Gate EQ 
+	send_data(0x00); 
+	send_data(0x08); 
+	send_data(0x04); 
+	LCD_DelayMS(1); 
 
-	send_cmd_data(0x0080, 0x0000);
-	send_cmd_data(0x0081, 0x0000);
-	send_cmd_data(0x0082, 0x0000);
-	send_cmd_data(0x0083, 0x0000);
+	send_cmd(0xCC);   //Set Panel 
+	send_data(0x01);  
 
-	send_cmd(0x0022);
 
-	if (0) {
-		int i;
-		for (i=0; i<320*480/2; i++)
-			send_data(0x1234);
-		for (i=0; i< 320*480/2; i++)
-			send_data(0x4321);
-	}
+	send_cmd(0xE0);	//Set Gamma 
+	send_data(0x03);		  //VRP0[6:0]
+	send_data(0x07);		  //VRP1[6:0]
+	send_data(0x13);		  //VRP2[6:0]
+	send_data(0x20);		  //VRP3[6:0]
+	send_data(0x29);		  //VRP4[6:0]
+	send_data(0x3C);		  //VRP5[6:0]
+	send_data(0x49);		  //VRP6[6:0]
+	send_data(0x52);		  //VRP7[6:0]
+	send_data(0x47);		  //VRP8[6:0]
+	send_data(0x40);		  //VRP9[6:0]
+	send_data(0x3A);		  //VRP10[6:0]
+	send_data(0x32);		  //VRP11[6:0]
+	send_data(0x30);		  //VRP12[6:0]
+	send_data(0x2B);		  //VRP13[6:0]
+	send_data(0x27);		  //VRP14[6:0]
+	send_data(0x1C);		  //VRP15[6:0]
+
+	send_data(0x03);		  //VRP0[6:0]
+	send_data(0x07);		  //VRP1[6:0]
+	send_data(0x13);		  //VRP2[6:0]
+	send_data(0x20);		  //VRP3[6:0]
+	send_data(0x29);		  //VRP4[6:0]
+	send_data(0x3C);		  //VRP5[6:0]
+	send_data(0x49);		  //VRP6[6:0]
+	send_data(0x52);		  //VRP7[6:0]
+	send_data(0x47);		  //VRP8[6:0]
+	send_data(0x40);		  //VRP9[6:0]
+	send_data(0x3A);		  //VRP10[6:0]
+	send_data(0x32);		  //VRP11[6:0]
+	send_data(0x30);		  //VRP12[6:0]
+	send_data(0x2B);		  //VRP13[6:0]
+	send_data(0x27);		  //VRP14[6:0]
+	send_data(0x1C);		  //VRP15[6:0]
+
+	send_data(0x00);
+	send_data(0x01);		
+	LCD_DelayMS(1); 
+
+
+	send_cmd(0x3A);			   
+	send_data(0x55);	   
+
+
+	send_cmd(0x36);
+	//send_data(0x48);
+	send_data(0x40);
+	//send_data(0x08);  
+
+	send_cmd(0x35);	// TE on
+	send_data(0x00);
+
+	send_cmd(0x29); // display on
+	LCD_DelayMS(5);
+	send_cmd(0x2C);
 
 	return 0;
 }
@@ -152,6 +152,20 @@ static int32_t hx8357_set_window(struct lcd_spec *self,
 
 	LCD_PRINT("hx8357_set_window: %d, %d, %d, %d\n",left, top, right, bottom);
     
+	send_cmd(0x2A); // col
+	send_data((left >> 8));
+	send_data((left & 0xFF));
+	send_data((right >> 8));
+	send_data((right & 0xFF));
+
+	send_cmd(0x2B); // row
+	send_data((top >> 8));
+	send_data((top & 0xFF));
+	send_data((bottom >> 8));
+	send_data((bottom & 0xFF));
+	
+	send_cmd(0x2C); //Write data	
+    #if 0
 	/* set window size  */
 	send_cmd_data(0x0002, (left  >> 8));
 	send_cmd_data(0x0003, (left  & 0xff));
@@ -210,7 +224,7 @@ static int32_t hx8357_set_window(struct lcd_spec *self,
 	}
 	
 	send_cmd(0x0022);
-
+#endif
 	return 0;
 }
 
@@ -228,17 +242,61 @@ static int32_t hx8357_invalidate_rect(struct lcd_spec *self,
 				uint16_t right, uint16_t bottom)
 {
 	Send_cmd_data send_cmd_data = self->info.mcu->ops->send_cmd_data;
-
+	Send_data send_cmd = self->info.mcu->ops->send_cmd;
+	Send_data send_data = self->info.mcu->ops->send_data;
 	LCD_PRINT("hx8357_invalidate_rect \n");
-
 	// TE scaneline
-	send_cmd_data(0x000b, (top >> 8));
-	send_cmd_data(0x000c, (top & 0xff));
+	//send_cmd_data(0x000b, (top >> 8));
+	//send_cmd_data(0x000c, (top & 0xff));
+	send_cmd(0x44); // TE scanline
+	send_data((top >> 8));
+	send_data((top & 0xFF));	
 	return self->ops->lcd_set_window(self, left, top, 
 			right, bottom);
 }
 
+static int32_t hx8357_set_direction(struct lcd_spec *self, uint16_t direction)
+{
+	Send_data send_cmd = self->info.mcu->ops->send_cmd;
+	Send_data send_data = self->info.mcu->ops->send_data;
 
+	LCD_PRINT("hx8369_set_direction\n");
+	send_cmd(0x36);
+
+	switch (direction) {
+	case LCD_DIRECT_NORMAL:
+		send_data(0);
+		break;
+	case LCD_DIRECT_ROT_90:
+		send_data(0xA0);
+		break;
+	case LCD_DIRECT_ROT_180:
+		send_data(0x60);
+		break;
+	case LCD_DIRECT_ROT_270:
+		send_data(0xB0);
+		break;
+	case LCD_DIRECT_MIR_H:
+		send_data(0x40);
+		break;
+	case LCD_DIRECT_MIR_V:
+		send_data(0x10);
+		break;
+	case LCD_DIRECT_MIR_HV:
+		send_data(0xE0);
+		break;
+	default:
+		LCD_PRINT("unknown lcd direction!\n");
+		send_data(0x0);
+		direction = LCD_DIRECT_NORMAL;
+		break;
+	}
+
+	self->direction = direction;
+	
+	return 0;
+}
+#if 0
 static int32_t hx8357_set_direction(struct lcd_spec *self, uint16_t direction)
 {
 	Send_cmd_data send_cmd_data = self->info.mcu->ops->send_cmd_data;
@@ -278,7 +336,28 @@ static int32_t hx8357_set_direction(struct lcd_spec *self, uint16_t direction)
 	
 	return 0;
 }
+#endif
+static int32_t hx8357_enter_sleep(struct lcd_spec *self, uint8_t is_sleep)
+{
+	Send_data send_cmd = self->info.mcu->ops->send_cmd;
 
+	if(is_sleep) {
+		//Sleep In
+		send_cmd(0x28);
+		LCD_DelayMS(120); 
+		send_cmd(0x10);
+		LCD_DelayMS(120); 
+	}
+	else {
+		//Sleep Out
+		send_cmd(0x11);
+		LCD_DelayMS(120); 
+		send_cmd(0x29);
+		LCD_DelayMS(120); 
+	}
+	return 0;
+}
+#if 0
 static int32_t hx8357_enter_sleep(struct lcd_spec *self, uint8_t is_sleep)
 {
 	Send_cmd_data send_cmd_data = self->info.mcu->ops->send_cmd_data;
@@ -326,6 +405,32 @@ static int32_t hx8357_enter_sleep(struct lcd_spec *self, uint8_t is_sleep)
 	}
 	return 0;
 }
+#endif	
+static int32_t hx8357_read_id(struct lcd_spec *self)
+{
+	Send_data send_cmd = self->info.mcu->ops->send_cmd;
+	Send_data send_data = self->info.mcu->ops->send_data;
+	Read_data read_data = self->info.mcu->ops->read_data;
+	int32_t   chip_id = 0;
+
+	send_cmd(0xB9);
+	send_data(0xFF);
+	send_data(0x83);
+	send_data(0x57);
+	send_cmd(0xC2);
+	send_cmd(0x30);
+	
+	LCD_DelayMS(10);
+	send_cmd(0xD0);
+	chip_id = read_data();
+	LCD_PRINT("hx8357_read_id1  u-boot chip_id = 0x%x!\n", chip_id);
+	chip_id = read_data();
+	LCD_PRINT("hx8357_read_id2  u-boot chip_id = 0x%x!\n", chip_id);
+	if(0x99 == chip_id){
+		chip_id=0x57;
+	}
+	return chip_id;
+}
 
 static struct lcd_operations lcd_hx8357_operations = {
 	.lcd_init = hx8357_init,
@@ -334,6 +439,7 @@ static struct lcd_operations lcd_hx8357_operations = {
 	.lcd_invalidate = hx8357_invalidate,
 	.lcd_set_direction = hx8357_set_direction,
 	.lcd_enter_sleep = hx8357_enter_sleep,
+	.lcd_readid = hx8357_read_id,
 };
 
 static struct timing_mcu lcd_hx8357_timing[] = {

@@ -64,20 +64,28 @@ extern unsigned char raw_header[8192];
 #define KERNEL_ADR       (0x8000)
 
 #else
-#define DSP_ADR          0x00020000
-#define VMJALUNA_ADR     0x00400000
-#define FIXNV_ADR        0x00480000
-#define RUNTIMENV_ADR    0x004a0000
-#define MODEM_ADR        0x00500000
-#define RAMDISK_ADR      0x05500000
+
+#define DSP_ADR			0x00020000
+#define VMJALUNA_ADR		0x00400000
+#define FIXNV_ADR		0x00480000
+#define RUNTIMENV_ADR		0x004a0000
+#define MODEM_ADR		0x00500000
+#define RAMDISK_ADR 		0x04f00000
+#ifdef CONFIG_SP8810W
+#define PRODUCTINFO_ADR		0x0049E000
+#define FIRMWARE_ADR		0x01600000
+#else
+#define PRODUCTINFO_ADR		0x00490000
+#define SIMLOCK_ADR		0x4fe000
+#endif
 
 #if BOOT_NATIVE_LINUX
 //pls make sure uboot running area
-#define VLX_TAG_ADDR     (0x100)
-#define KERNEL_ADR       (0x8000)
+#define VLX_TAG_ADDR            (0x100)
+#define KERNEL_ADR		(0x8000)
 #else
-#define KERNEL_ADR       0x04508000
-#define VLX_TAG_ADDR     0x5100000 //after initrd
+#define VLX_TAG_ADDR            0x5100000 //after initrd
+#define KERNEL_ADR		0x04508000
 #endif
 #endif
 /////////////////////////////////////////////////////////

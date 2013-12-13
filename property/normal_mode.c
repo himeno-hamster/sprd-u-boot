@@ -721,6 +721,8 @@ void creat_cmdline(char * cmdline,boot_img_hdr *hdr)
     sprintf(&buf[str_len], " ram=512M");
 #elif defined (CONFIG_RAM768M)
     sprintf(&buf[str_len], " ram=768M");
+#elif defined (CONFIG_RAM128M)
+    sprintf(&buf[str_len], " ram=128M");
 #else
     sprintf(&buf[str_len], " ram=256M");
 #endif

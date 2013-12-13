@@ -228,7 +228,9 @@ LOCAL void __ClkConfig(uint32 *emcclk, uint32 *ahbclk)
     return;
 }
 #endif
-#ifndef CONFIG_SC8810
+
+#if 0
+//#ifndef CONFIG_SC8810
 /**---------------------------------------------------------------------------*
  ** FUNCTION                                                                  *
  **     void SDRAM_GenMemCtlCfg(SDRAM_CFG_INFO_T_PTR sdram_cfg_ptr)           *
@@ -613,7 +615,9 @@ LOCAL void __sdram_set_param(uint32 clk, SDRAM_CFG_INFO_T_PTR pCfg)
    
     for (i=0; i<1000; i++){}
 }
-#else
+#endif 
+//#else
+#if 0
 LOCAL CONST EMC_PHY_L1_TIMING_T EMC_PHY_TIMING_L1_INFO[EMC_PHY_TIMING_MATRIX_MAX] = 
 {
 	//dpad_ie, dpad_oe, dqs_gate_pst, dqs_gate_pre, dqs_ie, dqs_oe
@@ -1953,6 +1957,11 @@ PUBLIC void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*
 	for (i = 0; i < 0xff1; ++i);	
 	sc8810_emc_Init();
 	g_ahb_clk = 200000000;
+	for (i=0; i<0xff1; i++);
+
+	// reconfig clkwr
+	s_emc_config.read_value = (REG32(0x20000174) & 0xff);
+	REG32(0x2000010C) = (0x8000|((64*s_emc_config.clk_wr)/(s_emc_config.read_value/2)));
 	for (i=0; i<0xff1; i++);
 
 	// AHB master priority:  DSP > lcdc > other > GPU

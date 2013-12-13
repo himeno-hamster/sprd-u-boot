@@ -198,7 +198,8 @@ static struct sc8810_nand_page_oob nand_config_table[] =
 	{0x2c, 0xb3, 0x90, 0x66, 0x64, 4096, 224, 512, 8},
 	{0x2c, 0xbc, 0x90, 0x66, 0x54, 4096, 224, 512, 8},
 	{0xec, 0xb3, 0x01, 0x66, 0x5a, 4096, 128, 512, 4},
-	{0xec, 0xbc, 0x00, 0x6a, 0x56, 4096, 256, 512, 8}
+	{0xec, 0xbc, 0x00, 0x6a, 0x56, 4096, 256, 512, 8},
+    {0x98, 0xba, 0x90, 0x55, 0x76, 2048, 128, 512, 8}
 };
 
 /* some nand id could not be calculated the pagesize by mtd, replace it with a known id which has the same format. */
@@ -218,6 +219,7 @@ static const struct nand_spec_str nand_spec_table[] = {
     {0x98, 0xbc, 0x90, 0x55, 0x76, {12, 10, 12, 10, 20, 50}},// TYBC0A111430KC, KSLCBBL1FB4G3A, KSLCBBL1FB2G3A
     {0xad, 0xbc, 0x90, 0x11, 0x00, {25, 15, 25, 10, 20, 50}},// H9DA4VH4JJMMCR-4EMi, H9DA4VH2GJMMCR-4EM
     {0xad, 0xbc, 0x90, 0x55, 0x54, {25, 15, 25, 10, 20, 50}},//
+    {0x98, 0xba, 0x90, 0x55, 0x76, {12, 15, 15, 10, 20, 50}},
 
     {0xec, 0xb3, 0x01, 0x66, 0x5a, {21, 10, 21, 10, 20, 50}},// KBY00U00VA-B450
     {0xec, 0xbc, 0x00, 0x55, 0x54, {21, 10, 21, 10, 20, 50}},// KA100O015M-AJTT
@@ -816,7 +818,10 @@ void nand_spl_hardware_config(struct nand_chip *this, u8 id[5])
 			case 8:
 				/* 8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 14 bytes */
 				this->ecc.bytes = 14;
-				if (nand_config_table[index].oobsize == 224)
+
+                if(nand_config_table[index].oobsize == 128)
+                        this->ecc.layout = &_nand_oob_128;
+                else if (nand_config_table[index].oobsize == 224)
 					this->ecc.layout = &_nand_oob_224;
 				else
 					this->ecc.layout = &_nand_oob_256;
@@ -860,7 +865,9 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *this, unsigned
 			case 8:
 				/* 8 bit ecc, per 512 bytes can creat 13 * 8 = 104 bit , 104 / 8 = 14 bytes */
 				this->ecc.bytes = 14;
-				if (nand_config_table[index].oobsize == 224)
+                if(nand_config_table[index].oobsize == 128){
+                        this->ecc.layout = &_nand_oob_128;}
+                else if (nand_config_table[index].oobsize == 224)
 					this->ecc.layout = &_nand_oob_224;
 				else
 					this->ecc.layout = &_nand_oob_256;
