@@ -58,6 +58,21 @@ void addbuf(char *buf)
 }
 void addcmdline(char *buf)
 {
+#if BOOT_NATIVE_LINUX_MODEM
+	int str_len = strlen(buf);
+	str_len = strlen(buf);
+	buf[str_len] = '\0';
+	char* nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG));
+	sprintf(nv_infor, buf);
+	nv_infor[str_len] = '\0';
+	debugf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
+#if defined (CONFIG_SC8830)
+	nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG_WCDMA));
+	sprintf(nv_infor, buf);
+	nv_infor[str_len] = '\0';
+	debugf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
+#endif
+#endif
 
 }
 int read_spldata()
