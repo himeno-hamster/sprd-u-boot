@@ -112,7 +112,7 @@
 #define FIXNV_SIZE		(2*128 * 1024)
 #define PRODUCTINFO_SIZE	(16 * 1024)
 #define MODEM_SIZE		(0x800000)
-#define DSP_SIZE		(0x2E0000)
+#define DSP_SIZE		(0x200000)
 #define VMJALUNA_SIZE		(0x64000) /* 400K */
 #define RUNTIMENV_SIZE		(3*128 * 1024)
 #define CONFIG_SPL_LOAD_LEN	(0x6000)
@@ -299,8 +299,6 @@
 
 #define MTDIDS_DEFAULT "nand0=sprd-nand"
 #define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),250m(system),180m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),3840k(productinfo),512k(kpanic)"
-//#define CONFIG_BOOTARGS "mem=512M loglevel=1 console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
-// FANGHUACHECK
 #define CONFIG_BOOTARGS "mem=768M loglevel=1 console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
 
 #define COPY_LINUX_KERNEL_SIZE	(0x600000)
@@ -383,7 +381,7 @@
 #define TD_CP_OFFSET_ADDR			0x8000000	/*128*/
 #define TD_CP_SDRAM_SIZE			0x1200000	/*18M*/
 #define WCDMA_CP_OFFSET_ADDR		0x10000000	/*256M*/
-#define WCDMA_CP_SDRAM_SIZE		0x4000000	/*64M*/
+#define WCDMA_CP_SDRAM_SIZE		0x2100000	/*33M*/
 //#define WCN_CP_OFFSET_ADDR		0x14000000	/*320M*/
 //#define WCN_CP_SDRAM_SIZE		0x400000	/*4M*/
 
