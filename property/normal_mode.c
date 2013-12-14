@@ -2,6 +2,9 @@
 #include <mmc.h>
 #include <fat.h>
 
+#define FACTORY_PART "prodnv"
+#define PRODUCTINFO_FILE_PATITION  "miscdata"
+
 unsigned spl_data_buf[0x1000] __attribute__((align(4)))={0};
 unsigned harsh_data_buf[8]__attribute__((align(4)))={0};
 void *spl_data = spl_data_buf;
@@ -677,6 +680,181 @@ void lcd_display_logo(int backlight_set,ulong bmp_img,size_t size)
 #endif
 }
 
+int is_factorymode()
+{
+  char factorymode_falg[8]={0};
+  int ret = 0;
+
+	if ( do_fs_file_read(FACTORY_PART,"/factorymode.file",factorymode_falg,8))
+		return 0;
+	debugf("Checking factorymode :  factorymode_falg = %s \n", factorymode_falg);
+	if(!strcmp(factorymode_falg, "1"))
+		ret = 1;
+	else
+		ret = 0;
+	debugf("Checking factorymode :  ret = %d \n", ret);
+	return ret;
+}
+
+static char* get_product_sn(void)
+{
+	SP09_PHASE_CHECK_T phase_check;
+	block_dev_desc_t *p_block_dev = NULL;
+	static char sn[SP09_MAX_SN_LEN];
+
+	memset(sn, 0x0, SP09_MAX_SN_LEN);
+	p_block_dev = get_dev("mmc", 1);
+	if(NULL == p_block_dev){
+		debugf("%s:  get_dev() error\n", __FUNCTION__);
+		return NULL;
+	}
+
+	if(do_raw_data_read(PRODUCTINFO_FILE_PATITION, 
+					sizeof(phase_check),
+					0,
+					(char *)&phase_check)){
+		debugf("%s: read miscdata error.\n", __func__);
+		return NULL;
+	}
+
+	if(phase_check.Magic == SP09_SPPH_MAGIC_NUMBER){
+		memcpy(sn, phase_check.SN1, SP09_MAX_SN_LEN);
+		return sn;
+	}
+
+	return NULL;
+}
+
+void addcmdline(char *buf)
+{
+#if (!BOOT_NATIVE_LINUX) || BOOT_NATIVE_LINUX_MODEM
+#if defined (CONFIG_SC8830)
+	/* tdfixnv=0x????????,0x????????*/
+	int str_len = strlen(buf);
+	sprintf(&buf[str_len], " tdfixnv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", TDFIXNV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", FIXNV_SIZE);
+
+	/* tdruntimenv=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " tdruntimenv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", TDRUNTIMENV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
+
+	/* wfixnv=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " wfixnv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", WFIXNV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", FIXNV_SIZE);
+
+	/* wruntimenv=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " wruntimenv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", WRUNTIMENV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
+
+#ifdef CONFIG_SP8830WCN
+	/* wcnfixnv=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " wcnfixnv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", WCNFIXNV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", FIXNV_SIZE);
+
+	/* wcnruntimenv=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " wcnruntimenv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", WCNRUNTIMENV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
+#endif
+
+	/* productinfo=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " productinfo=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", PRODUCTINFO_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", PRODUCTINFO_SIZE);
+#else
+	/* fixnv=0x????????,0x????????*/
+	int str_len = strlen(buf);
+	sprintf(&buf[str_len], " fixnv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", FIXNV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", FIXNV_SIZE);
+
+	/* productinfo=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " productinfo=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", PRODUCTINFO_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", PRODUCTINFO_SIZE);
+
+	/* productinfo=0x????????,0x????????*/
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], " runtimenv=0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%08x", RUNTIMENV_ADR);
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], ",0x");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
+#endif
+#endif
+{
+	char *sn = get_product_sn();
+	if(NULL != sn)
+	{
+		str_len = strlen(buf);
+		sprintf(&buf[str_len], " androidboot.serialno=%s", sn);
+	}
+}
+#if BOOT_NATIVE_LINUX_MODEM
+	str_len = strlen(buf);
+	buf[str_len] = '\0';
+	char* nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG));
+	sprintf(nv_infor, buf);
+	nv_infor[str_len] = '\0';
+	debugf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
+#if defined (CONFIG_SC8830)
+	nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG_WCDMA));
+	sprintf(nv_infor, buf);
+	nv_infor[str_len] = '\0';
+	debugf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
+#endif
+#endif
+}
 
 char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 {
@@ -688,7 +866,6 @@ char * creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 
 	if(hdr){
 		sprintf(buf, "initrd=0x%x,0x%x", RAMDISK_ADR, hdr->ramdisk_size);
-		addbuf(buf);
 	}
 	/* preset loop_per_jiffy */
 #ifdef CONFIG_LOOP_PER_JIFFY
@@ -976,3 +1153,159 @@ void panic_reboot_mode(void)
 	vlx_nand_boot(BOOT_PART, "androidboot.mode=panic", BACKLIGHT_OFF);
 #endif
 }
+
+#if BOOT_NATIVE_LINUX_MODEM
+void modem_entry()
+{
+#ifdef CONFIG_SC8825
+	//  *(volatile u32 *)0x4b00100c=0x100;
+	u32 cpdata[3] = {0xe59f0000, 0xe12fff10, MODEM_ADR};
+	*(volatile u32*)0x20900250 = 0;//disbale cp clock, cp iram select to ap
+	//*(volatile u32*)0x20900254 = 0;// hold cp
+	memcpy((volatile u32*)0x30000, cpdata, sizeof(cpdata));
+	*(volatile u32*)0x20900250 =0xf;// 0x3;//enale cp clock, cp iram select to cp
+	*(volatile u32*)0x20900254 = 1;// reset cp
+#elif defined (CONFIG_SC8830)
+	u32 state;
+
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
+	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
+
+	memcpy(0x50001800, cp1data, sizeof(cp1data));	   /* copy cp1 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000002;	   /* reset cp1 */
+	*((volatile u32*)0x402B0050) &= ~0x02000000;	   /* clear cp1 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00BC);
+		if (!(state & (0xf<<16)))
+			break;
+	}
+	*((volatile u32*)0x402B0050) &= ~0x10000000;	   /* clear cp1 force deep sleep */
+#ifdef CONFIG_SP8830WCN
+	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
+	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
+	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00C0);
+		if (!(state & (0xf<<16)))
+		break;
+	}
+	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
+	*((volatile u32*)0x402B00A8) &= ~0x00000006;       /* clear reset cp0 cp1 cp2 */
+#else
+	*((volatile u32*)0x402B00A8) &= ~0x00000002;	   /* clear reset cp0 cp1 */
+#endif
+
+#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15)
+
+	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
+
+	memcpy(0x50000000, cp0data, sizeof(cp0data));	   /* copy cp0 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000001;	   /* reset cp0 */
+	*((volatile u32*)0x402B003C) &= ~0x02000000;	   /* clear cp0 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00B8);
+		if (!(state & (0xf<<28)))
+			break;
+	}
+	*((volatile u32*)0x402B003C) &= ~0x10000000;	   /* clear cp0 force deep sleep */
+#ifdef CONFIG_SP8830WCN
+	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
+	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
+	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00C0);
+		if (!(state & (0xf<<16)))
+		break;
+	}
+	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
+	*((volatile u32*)0x402B00A8) &= ~0x00000005;       /* clear reset cp0 cp1 cp2 */
+#else	
+	*((volatile u32*)0x402B00A8) &= ~0x00000001;	   /* clear reset cp0 cp1 */
+#endif
+
+#else
+#ifndef CONFIG_NOT_BOOT_W_MODEM
+{
+	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
+	memcpy(0x50000000, cp0data, sizeof(cp0data));      /* copy cp0 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000001;       /* reset cp0 */
+	*((volatile u32*)0x402B003C) &= ~0x02000000;       /* clear cp0 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00B8);
+		if (!(state & (0xf<<28)))
+			break;
+	}
+	*((volatile u32*)0x402B003C) &= ~0x10000000;       /* clear cp0 force deep sleep */
+}
+#endif
+
+#ifndef CONFIG_NOT_BOOT_TD_MODEM
+{
+	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
+	memcpy(0x50001800, cp1data, sizeof(cp1data));      /* copy cp1 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000002;       /* reset cp1 */
+	*((volatile u32*)0x402B0050) &= ~0x02000000;       /* clear cp1 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00BC);
+		if (!(state & (0xf<<16)))
+			break;
+	}
+	*((volatile u32*)0x402B0050) &= ~0x10000000;       /* clear cp1 force deep sleep */
+}
+#endif
+
+#ifdef CONFIG_SP8830WCN
+	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
+	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
+	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
+	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
+	while(1)
+	{
+		state = *((volatile u32*)0x402B00C0);
+		if (!(state & (0xf<<16)))
+		break;
+	}
+	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
+	*((volatile u32*)0x402B00A8) &= ~0x00000007;       /* clear reset cp0 cp1 cp2 */
+#else
+	*((volatile u32*)0x402B00A8) &= ~0x00000003;       /* clear reset cp0 cp1 */
+#endif	
+#endif	
+#endif
+}
+
+void sipc_addr_reset()
+{
+#ifdef CONFIG_SC8825
+	memset((void *)SIPC_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+#elif defined (CONFIG_SC8830)
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
+	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+
+#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15)
+
+	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+#else
+#ifndef CONFIG_NOT_BOOT_TD_MODEM
+	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+#endif
+#ifndef CONFIG_NOT_BOOT_W_MODEM
+	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+#endif
+#endif
+#ifdef CONFIG_SP8830WCN
+	memset((void *)SIPC_WCN_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
+#endif
+#endif
+}
+
+#endif
+

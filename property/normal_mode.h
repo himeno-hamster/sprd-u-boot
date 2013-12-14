@@ -302,13 +302,19 @@ typedef struct boot_image_required
 
 extern const int SP09_MAX_PHASE_BUFF_SIZE;
 
+#define NV_HEAD_MAGIC   0x00004e56
+#define NV_VERSION      101
+typedef struct  _NV_HEADER {
+     uint32_t magic;
+     uint32_t len;
+     uint32_t checksum;
+     uint32_t   version;
+}nv_header_t;
+
 void set_vibrator(int on);
 void vibrator_hw_init(void);
 void MMU_InvalideICACHEALL(void);
-int is_factorymode();
 int read_spldata();
-void addbuf(char *buf);
-void addcmdline(char *buf);
 int eng_getphasecheck(SP09_PHASE_CHECK_T* phase_check);
 int eng_phasechecktest(unsigned char *array, int len);
 int fixnv_is_correct(unsigned char *array, unsigned long size);

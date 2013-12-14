@@ -17,64 +17,13 @@ static vol_image_required_t s_boot_img_table[]={
 	{NULL,NULL,0,0,IMG_MAX}
 };
 
-static int flash_page_size = 0;
-void nand_block_info(struct mtd_info *nand, int *good, int *bad)
-{
-    loff_t off;
-    int goodblk, badblk;
 
-    goodblk = badblk = 0;
-
-    for (off = 0; off < nand->size; off += nand->erasesize)
-        if (nand_block_isbad(nand, off)) {
-
-            badblk ++;
-        } else {
-
-            goodblk ++;
-        }
-    *good = goodblk;
-    *bad = badblk;
-}
-int is_factorymode()
-{
-	int ret = 0;
-	//TODO
-	return ret;
-}
 int read_logoimg(char *bmp_img,size_t size)
 {
 	//TODO
 	return 0;
 }
-void addbuf(char *buf)
-{
-#if !(BOOT_NATIVE_LINUX)
-    int str_len = strlen(buf);
-    char * mtdpart_def = NULL;
-    mtdpart_def = get_mtdparts();
-    sprintf(&buf[str_len], " %s", mtdpart_def);
-#endif
-}
-void addcmdline(char *buf)
-{
-#if BOOT_NATIVE_LINUX_MODEM
-	int str_len = strlen(buf);
-	str_len = strlen(buf);
-	buf[str_len] = '\0';
-	char* nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG));
-	sprintf(nv_infor, buf);
-	nv_infor[str_len] = '\0';
-	debugf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
-#if defined (CONFIG_SC8830)
-	nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG_WCDMA));
-	sprintf(nv_infor, buf);
-	nv_infor[str_len] = '\0';
-	debugf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
-#endif
-#endif
 
-}
 int read_spldata()
 {
     struct mtd_device *dev;
@@ -94,7 +43,6 @@ int read_spldata()
     }
     off = part->offset;
     nand = &nand_info[dev->id->num];
-    flash_page_size = nand->writesize;
 
     ret = nand_read_offset_ret(nand, off, &size, (void*)spl_data, &off);
     if(ret != 0) {
@@ -104,154 +52,6 @@ int read_spldata()
     return 0;
 }
 
-/*The function is temporary, will move to the chip directory*/
-void modem_entry()
-{
-#ifdef CONFIG_SC8825
-	//  *(volatile u32 *)0x4b00100c=0x100;
-	u32 cpdata[3] = {0xe59f0000, 0xe12fff10, MODEM_ADR};
-	*(volatile u32*)0x20900250 = 0;//disbale cp clock, cp iram select to ap
-	//*(volatile u32*)0x20900254 = 0;// hold cp
-	memcpy((volatile u32*)0x30000, cpdata, sizeof(cpdata));
-	*(volatile u32*)0x20900250 =0xf;// 0x3;//enale cp clock, cp iram select to cp
-	*(volatile u32*)0x20900254 = 1;// reset cp
-#elif defined (CONFIG_SC8830)
-	u32 state;
-
-#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
-	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
-
-	memcpy(0x50001800, cp1data, sizeof(cp1data));	   /* copy cp1 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000002;	   /* reset cp1 */
-	*((volatile u32*)0x402B0050) &= ~0x02000000;	   /* clear cp1 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00BC);
-		if (!(state & (0xf<<16)))
-			break;
-	}
-	*((volatile u32*)0x402B0050) &= ~0x10000000;	   /* clear cp1 force deep sleep */
-#ifdef CONFIG_SP8830WCN
-	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
-	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
-	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00C0);
-		if (!(state & (0xf<<16)))
-		break;
-	}
-	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
-	*((volatile u32*)0x402B00A8) &= ~0x00000006;       /* clear reset cp0 cp1 cp2 */
-#else
-	*((volatile u32*)0x402B00A8) &= ~0x00000002;	   /* clear reset cp0 cp1 */
-#endif
-#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SPX15)
-	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
-
-	memcpy(0x50000000, cp0data, sizeof(cp0data));	   /* copy cp0 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000001;	   /* reset cp0 */
-	*((volatile u32*)0x402B003C) &= ~0x02000000;	   /* clear cp0 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00B8);
-		if (!(state & (0xf<<28)))
-			break;
-	}
-	*((volatile u32*)0x402B003C) &= ~0x10000000;	   /* clear cp0 force deep sleep */
-#ifdef CONFIG_SP8830WCN
-	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
-	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
-	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00C0);
-		if (!(state & (0xf<<16)))
-		break;
-	}
-	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
-	*((volatile u32*)0x402B00A8) &= ~0x00000005;       /* clear reset cp0 cp1 cp2 */
-#else	
-	*((volatile u32*)0x402B00A8) &= ~0x00000001;	   /* clear reset cp0 cp1 */
-#endif
-
-#else
-	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
-	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
-	
-	memcpy(0x50000000, cp0data, sizeof(cp0data));      /* copy cp0 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000001;       /* reset cp0 */
-	*((volatile u32*)0x402B003C) &= ~0x02000000;       /* clear cp0 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00B8);
-		if (!(state & (0xf<<28)))
-			break;
-	}
-	*((volatile u32*)0x402B003C) &= ~0x10000000;       /* clear cp0 force deep sleep */
-
-	memcpy(0x50001800, cp1data, sizeof(cp1data));      /* copy cp1 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000002;       /* reset cp1 */
-	*((volatile u32*)0x402B0050) &= ~0x02000000;       /* clear cp1 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00BC);
-		if (!(state & (0xf<<16)))
-			break;
-	}
-	*((volatile u32*)0x402B0050) &= ~0x10000000;       /* clear cp1 force deep sleep */
-#ifdef CONFIG_SP8830WCN
-	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
-	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
-	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00C0);
-		if (!(state & (0xf<<16)))
-		break;
-	}
-	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
-	*((volatile u32*)0x402B00A8) &= ~0x00000007;       /* clear reset cp0 cp1 cp2 */
-#else
-	*((volatile u32*)0x402B00A8) &= ~0x00000003;       /* clear reset cp0 cp1 */
-#endif	
-#endif	
-#endif
-}
-
-void sipc_addr_reset()
-{
-#ifdef CONFIG_SC8825
-	memset((void *)SIPC_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#elif defined (CONFIG_SC8830)
-#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
-	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SPX15)
-	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#else
-	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#endif
-#ifdef CONFIG_SP8830WCN
-	memset((void *)SIPC_WCN_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#endif
-#endif
-}
-
-int nand_part_read(char *partname,char *buffer, int size)
-{
-	//TODO
-	return 0;
-}
-
-int nand_part_write(char *partname,char *buffer, int size)
-{
-	//TODO
-	return 0;
-}
 
 int uboot_ubi_read(struct ubi_volume_desc *desc, char *buf,
 			   int offset, int size)

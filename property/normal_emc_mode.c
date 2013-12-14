@@ -8,20 +8,6 @@
 #include <ext4fs.h>
 
 #define KERNL_PAGE_SIZE 2048
-#define PRODUCTINFO_FILE_PATITION  L"miscdata"
-#define SP09_SPPH_MAGIC             (0X53503039)    // "SP09"
-static char     	product_SN[20+1];
-static int		product_SN_flag = 0;
-static wchar_t *factory_partition = L"prodnv";
-
-typedef struct  _NV_HEADER {
-     uint32 magic;
-     uint32 len;
-     uint32 checksum;
-     uint32   version;
-}nv_header_t;
-#define NV_HEAD_MAGIC   0x00004e56
-#define NV_VERSION      101
 
 static boot_image_required_t const s_boot_image_table[]={
 #ifdef CONFIG_SC8830
@@ -80,208 +66,6 @@ static boot_image_required_t const s_boot_image_table[]={
 #endif
 	{NULL,NULL,0,0}
 };
-static void product_SN_get(void);
-int Calibration_read_partition(block_dev_desc_t *p_block_dev, wchar_t* partition_name, char *buf, int len)
-{
-	disk_partition_t info;
-	unsigned long size = len % EMMC_SECTOR_SIZE;
-	uint32 numb = len / EMMC_SECTOR_SIZE;
-	int ret = 0; /* success */
-	char * buffer =NULL;
-
-	if ( 0 != get_partition_info_by_name(p_block_dev, partition_name, &info)) {
-		debugf("## %s partition not found ##\n", partition_name);
-		return -1;
-	}
-	debugf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
-
-	if(len == 0){
-		debugf("The size for reading error \n");
-		return -1;
-	}
-
-	if(size == 0){
-		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-			debugf("emmc image0 read error \n");
-			return -1;
-		}
-		return ret;
-	}
-
-	if(numb >0){
-		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-			debugf("emmc image1 read error \n");
-			return -1;
-		}
-		info.start = info.start + numb * EMMC_SECTOR_SIZE;
-	}
-
-	buffer = malloc(EMMC_SECTOR_SIZE);
-	if(buffer == NULL){
-		debugf("malloc memory  error \n");
-		return -1;
-	}
-	memset(buffer, 0xff, EMMC_SECTOR_SIZE);
-	if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
-		debugf("emmc image2 read error \n");
-		free(buffer);
-		return -1;
-	}
-	memcpy((buf+numb*EMMC_SECTOR_SIZE),buffer,size);
-	free(buffer);
-	return ret;
-}
-
-int Calibration_write_partition(block_dev_desc_t *p_block_dev, wchar_t* partition_name, char *buf, int len)
-{
-	disk_partition_t info;
-	unsigned long size = len % EMMC_SECTOR_SIZE;
-	uint32 numb = len / EMMC_SECTOR_SIZE;
-	int ret = 0; /* success */
-	char * buffer =NULL;
-
-	if ( 0 != get_partition_info_by_name(p_block_dev, partition_name, &info)) {
-		debugf("## %s partition not found ##\n", partition_name);
-		return -1;
-	}
-	debugf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
-
-	if(len == 0){
-		debugf("The size for writing error \n");
-		return -1;
-	}
-
-	if(size == 0){
-		if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-			debugf("emmc image0 write error \n");
-			return -1;
-		}
-		return ret;
-	}
-
-	if(numb >0){
-		if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-			debugf("emmc image1 write error \n");
-			return -1;
-		}
-		info.start = info.start + numb * EMMC_SECTOR_SIZE;
-	}
-
-	buffer = malloc(EMMC_SECTOR_SIZE);
-	if(buffer == NULL){
-		debugf("malloc memory  error \n");
-		return -1;
-	}
-	memset(buffer, 0xff, EMMC_SECTOR_SIZE);
-	memcpy(buffer,(buf+numb*EMMC_SECTOR_SIZE),size);
-	if (TRUE !=  Emmc_Write(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
-		debugf("emmc image2 write error \n");
-		free(buffer);
-		return -1;
-	}
-	free(buffer);
-	return ret;
-}
-
-unsigned long char2u32(unsigned char *buf, int offset)
-{
-	unsigned long ret = 0;
-
-	ret = (buf[offset + 3] & 0xff) \
-		| ((buf[offset + 2] & 0xff) << 8) \
-		| ((buf[offset + 1] & 0xff) << 16) \
-		| ((buf[offset] & 0xff) << 24);
-
-	return ret;
-}
-
-int prodinfo_read_partition(block_dev_desc_t *p_block_dev, wchar_t *partition, int offset, char *buf, int len)
-{
-	disk_partition_t info;
-	unsigned long size = len % EMMC_SECTOR_SIZE;
-	uint32 numb = len / EMMC_SECTOR_SIZE;
-	int ret = 0; /* success */
-	unsigned long crc;
-	unsigned long offset_block = offset / EMMC_SECTOR_SIZE;
-	char * buffer =NULL;
-
-	if ( 0 != get_partition_info_by_name(p_block_dev, partition, &info)) {
-		debugf("## %s partition not found ##\n", partition);
-		return 1;
-	}
-	debugf("%s: numb = %d  size= %d\n", __FUNCTION__, numb, size);
-	if(len == 0){
-		debugf("The size for reading error \n");
-		return 1;
-	}
-	info.start = info.start + offset_block;
-	if(size != 0){
-		if(numb >0){
-			if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-				debugf("emmc image1 read error \n");
-				return 1;
-			}
-			info.start = info.start + numb * EMMC_SECTOR_SIZE;
-		}
-
-		buffer = malloc(EMMC_SECTOR_SIZE);
-		if(buffer == NULL){
-			debugf("malloc memory  error \n");
-			return 1;
-		}
-		memset(buffer, 0xff, EMMC_SECTOR_SIZE);
-		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, 1, (uint8*)buffer)) {
-			debugf("emmc image2 read error \n");
-			free(buffer);
-			return 1;
-		}
-		memcpy((buf+numb*EMMC_SECTOR_SIZE),buffer,size);
-		free(buffer);
-	}
-	else{
-		if (TRUE !=  Emmc_Read(PARTITION_USER, info.start, numb, (uint8*)buf)) {
-			debugf("emmc image3 read error \n");
-			return 1;
-		}
-	}
-
-	crc = crc32b(0xffffffff, buf, len);
-	if (offset == 0) {
-		/* phasecheck */
-		if ((buf[PRODUCTINFO_SIZE + 7] == (crc & 0xff)) \
-			&& (buf[PRODUCTINFO_SIZE + 6] == ((crc & (0xff << 8)) >> 8)) \
-			&& (buf[PRODUCTINFO_SIZE + 5] == ((crc & (0xff << 16)) >> 16)) \
-			&& (buf[PRODUCTINFO_SIZE + 4] == ((crc & (0xff << 24)) >> 24))) {
-				buf[PRODUCTINFO_SIZE + 7] = 0xff;
-				buf[PRODUCTINFO_SIZE + 6] = 0xff;
-				buf[PRODUCTINFO_SIZE + 5] = 0xff;
-				buf[PRODUCTINFO_SIZE + 4] = 0xff;
-				/* clear 5a flag */
-				buf[PRODUCTINFO_SIZE] = 0xff;
-				buf[PRODUCTINFO_SIZE + 1] = 0xff;
-				buf[PRODUCTINFO_SIZE + 2] = 0xff;
-				buf[PRODUCTINFO_SIZE + 3] = 0xff;
-		} else
-			ret = 1;
-	} else if ((offset == 4096) || (offset == 8192) || (offset == 12288)) {
-		/* factorymode or alarm mode */
-		if ((buf[PRODUCTINFO_SIZE + 11] == (crc & 0xff)) \
-			&& (buf[PRODUCTINFO_SIZE + 10] == ((crc & (0xff << 8)) >> 8)) \
-			&& (buf[PRODUCTINFO_SIZE + 9] == ((crc & (0xff << 16)) >> 16)) \
-			&& (buf[PRODUCTINFO_SIZE + 8] == ((crc & (0xff << 24)) >> 24))) {
-				buf[PRODUCTINFO_SIZE + 11] = 0xff;
-				buf[PRODUCTINFO_SIZE + 10] = 0xff;
-				buf[PRODUCTINFO_SIZE + 9] = 0xff;
-				buf[PRODUCTINFO_SIZE + 8] = 0xff;
-		} else
-			ret = 1;
-	} else
-		ret = 1;
-
-	return ret;
-}
-
-
 
 int read_logoimg(char *bmp_img,size_t size)
 {
@@ -301,156 +85,6 @@ int read_logoimg(char *bmp_img,size_t size)
 	return 0;
 }
 
-int is_factorymode()
-{
-  char factorymode_falg[8]={0};
-  int ret = 0;
-
-	if ( do_fs_file_read(factory_partition,"/factorymode.file",factorymode_falg,8))
-		return 0;
-	debugf("Checking factorymode :  factorymode_falg = %s \n", factorymode_falg);
-	if(!strcmp(factorymode_falg, "1"))
-		ret = 1;
-	else
-		ret = 0;
-	debugf("Checking factorymode :  ret = %d \n", ret);
-	return ret;
-}
-
-void addbuf(char *buf)
-{
-}
-
-void addcmdline(char *buf)
-{
-#if (!BOOT_NATIVE_LINUX) || BOOT_NATIVE_LINUX_MODEM
-#if defined (CONFIG_SC8830)
-	/* tdfixnv=0x????????,0x????????*/
-	int str_len = strlen(buf);
-	sprintf(&buf[str_len], " tdfixnv=0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%08x", TDFIXNV_ADR);
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], ",0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%x", FIXNV_SIZE);
-
-	/* tdruntimenv=0x????????,0x????????*/
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], " tdruntimenv=0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%08x", TDRUNTIMENV_ADR);
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], ",0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
-
-	/* wfixnv=0x????????,0x????????*/
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], " wfixnv=0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%08x", WFIXNV_ADR);
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], ",0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%x", FIXNV_SIZE);
-
-	/* wruntimenv=0x????????,0x????????*/
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], " wruntimenv=0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%08x", WRUNTIMENV_ADR);
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], ",0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
-
-#ifdef CONFIG_SP8830WCN
-	/* wcnfixnv=0x????????,0x????????*/
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], " wcnfixnv=0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%08x", WCNFIXNV_ADR);
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], ",0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%x", FIXNV_SIZE);
-
-	/* wcnruntimenv=0x????????,0x????????*/
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], " wcnruntimenv=0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%08x", WCNRUNTIMENV_ADR);
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], ",0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
-#endif
-
-	/* productinfo=0x????????,0x????????*/
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], " productinfo=0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%08x", PRODUCTINFO_ADR);
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], ",0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%x", PRODUCTINFO_SIZE);
-#else
-	/* fixnv=0x????????,0x????????*/
-	int str_len = strlen(buf);
-	sprintf(&buf[str_len], " fixnv=0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%08x", FIXNV_ADR);
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], ",0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%x", FIXNV_SIZE);
-
-	/* productinfo=0x????????,0x????????*/
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], " productinfo=0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%08x", PRODUCTINFO_ADR);
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], ",0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%x", PRODUCTINFO_SIZE);
-
-	/* productinfo=0x????????,0x????????*/
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], " runtimenv=0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%08x", RUNTIMENV_ADR);
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], ",0x");
-	str_len = strlen(buf);
-	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
-#endif
-#endif
-
-	if(product_SN_flag ==1)
-	{
-		str_len = strlen(buf);
-		sprintf(&buf[str_len], " androidboot.serialno=%s", product_SN);
-	}
-
-#if BOOT_NATIVE_LINUX_MODEM
-	str_len = strlen(buf);
-	buf[str_len] = '\0';
-	char* nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG));
-	sprintf(nv_infor, buf);
-	nv_infor[str_len] = '\0';
-	debugf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
-#if defined (CONFIG_SC8830)
-	nv_infor = (char*)(((volatile u32*)CALIBRATION_FLAG_WCDMA));
-	sprintf(nv_infor, buf);
-	nv_infor[str_len] = '\0';
-	debugf("nv_infor:[%08x]%s \n", nv_infor, nv_infor);
-#endif
-#endif
-}
-
 int read_spldata()
 {
 	int size = CONFIG_SPL_LOAD_LEN;
@@ -461,161 +95,15 @@ int read_spldata()
 	return 0;
 }
 
-/*The function is temporary, will move to the chip directory*/
-#if BOOT_NATIVE_LINUX_MODEM
-void modem_entry()
+
+LOCAL BOOLEAN _chkNVEcc(uint8* buf, uint32 size,uint32 checksum)
 {
-#ifdef CONFIG_SC8825
-	//  *(volatile u32 *)0x4b00100c=0x100;
-	u32 cpdata[3] = {0xe59f0000, 0xe12fff10, MODEM_ADR};
-	*(volatile u32*)0x20900250 = 0;//disbale cp clock, cp iram select to ap
-	//*(volatile u32*)0x20900254 = 0;// hold cp
-	memcpy((volatile u32*)0x30000, cpdata, sizeof(cpdata));
-	*(volatile u32*)0x20900250 =0xf;// 0x3;//enale cp clock, cp iram select to cp
-	*(volatile u32*)0x20900254 = 1;// reset cp
-#elif defined (CONFIG_SC8830)
-	u32 state;
+	uint16 crc;
 
-#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
-	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
-
-	memcpy(0x50001800, cp1data, sizeof(cp1data));	   /* copy cp1 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000002;	   /* reset cp1 */
-	*((volatile u32*)0x402B0050) &= ~0x02000000;	   /* clear cp1 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00BC);
-		if (!(state & (0xf<<16)))
-			break;
-	}
-	*((volatile u32*)0x402B0050) &= ~0x10000000;	   /* clear cp1 force deep sleep */
-#ifdef CONFIG_SP8830WCN
-	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
-	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
-	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00C0);
-		if (!(state & (0xf<<16)))
-		break;
-	}
-	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
-	*((volatile u32*)0x402B00A8) &= ~0x00000006;       /* clear reset cp0 cp1 cp2 */
-#else
-	*((volatile u32*)0x402B00A8) &= ~0x00000002;	   /* clear reset cp0 cp1 */
-#endif
-
-#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15)
-
-	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
-
-	memcpy(0x50000000, cp0data, sizeof(cp0data));	   /* copy cp0 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000001;	   /* reset cp0 */
-	*((volatile u32*)0x402B003C) &= ~0x02000000;	   /* clear cp0 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00B8);
-		if (!(state & (0xf<<28)))
-			break;
-	}
-	*((volatile u32*)0x402B003C) &= ~0x10000000;	   /* clear cp0 force deep sleep */
-#ifdef CONFIG_SP8830WCN
-	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
-	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
-	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00C0);
-		if (!(state & (0xf<<16)))
-		break;
-	}
-	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
-	*((volatile u32*)0x402B00A8) &= ~0x00000005;       /* clear reset cp0 cp1 cp2 */
-#else	
-	*((volatile u32*)0x402B00A8) &= ~0x00000001;	   /* clear reset cp0 cp1 */
-#endif
-
-#else
-#ifndef CONFIG_NOT_BOOT_W_MODEM
-{
-	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
-	memcpy(0x50000000, cp0data, sizeof(cp0data));      /* copy cp0 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000001;       /* reset cp0 */
-	*((volatile u32*)0x402B003C) &= ~0x02000000;       /* clear cp0 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00B8);
-		if (!(state & (0xf<<28)))
-			break;
-	}
-	*((volatile u32*)0x402B003C) &= ~0x10000000;       /* clear cp0 force deep sleep */
+	crc = calc_checksum(buf,size);
+	debugf("_chkNVEcc crc 0x%x\n",crc);
+	return (crc == (uint16)checksum);
 }
-#endif
-
-#ifndef CONFIG_NOT_BOOT_TD_MODEM
-{
-	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
-	memcpy(0x50001800, cp1data, sizeof(cp1data));      /* copy cp1 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000002;       /* reset cp1 */
-	*((volatile u32*)0x402B0050) &= ~0x02000000;       /* clear cp1 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00BC);
-		if (!(state & (0xf<<16)))
-			break;
-	}
-	*((volatile u32*)0x402B0050) &= ~0x10000000;       /* clear cp1 force deep sleep */
-}
-#endif
-
-#ifdef CONFIG_SP8830WCN
-	u32 cp2data[3] = {0xe59f0000, 0xe12fff10, WCNMODEM_ADR};
-	memcpy(0x50003000, cp2data, sizeof(cp2data));	   /* copy cp2 source code */
-	*((volatile u32*)0x402B00A8) |=  0x00000004;	   /* reset cp2 */
-	*((volatile u32*)0x402B0054) &= ~0x02000000;	   /* clear cp2 force shutdown */
-	while(1)
-	{
-		state = *((volatile u32*)0x402B00C0);
-		if (!(state & (0xf<<16)))
-		break;
-	}
-	*((volatile u32*)0x402B0060) &= ~0x12000000;	   /*system force shutdown deep_sleep*/
-	*((volatile u32*)0x402B00A8) &= ~0x00000007;       /* clear reset cp0 cp1 cp2 */
-#else
-	*((volatile u32*)0x402B00A8) &= ~0x00000003;       /* clear reset cp0 cp1 */
-#endif	
-#endif	
-#endif
-}
-
-void sipc_addr_reset()
-{
-#ifdef CONFIG_SC8825
-	memset((void *)SIPC_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#elif defined (CONFIG_SC8830)
-#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
-	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-
-#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15)
-
-	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#else
-#ifndef CONFIG_NOT_BOOT_TD_MODEM
-	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#endif
-#ifndef CONFIG_NOT_BOOT_W_MODEM
-	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#endif
-#endif
-#ifdef CONFIG_SP8830WCN
-	memset((void *)SIPC_WCN_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
-#endif
-#endif
-}
-
-#endif
 
 /**
 	just convert partition name wchar to char with violent.
@@ -656,29 +144,43 @@ LOCAL void _boot_secure_check(void)
 */
 PUBLIC int _boot_partition_read(block_dev_desc_t *dev, wchar_t* partition_name, u32 offsetsector, u32 size, u8* buf)
 {
+	int ret =0;
+	u32 left;
+	u32 nsct;
+	char *sctbuf=NULL;
 	disk_partition_t info;
 
 	if(NULL == buf){
-		debugf("%s:buf is NULL!\n", __FUNCTION__);
-		return 0;
+		debugf("%s:buf is NULL!\n", __func__);
+		goto end;
 	}
-	size = (size +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1));
-	size = size/EMMC_SECTOR_SIZE;
-	if(0 == get_partition_info_by_name(dev, partition_name, &info))
-	{
-		if(TRUE != Emmc_Read(PARTITION_USER, info.start+offsetsector, size, buf))
-		{
-			debugf("%s: partition:%s read error!\n", __FUNCTION__,w2c(partition_name));
-			return 0;
+	nsct = size/EMMC_SECTOR_SIZE;
+	left = size%EMMC_SECTOR_SIZE;
+
+	if(get_partition_info_by_name(dev, partition_name, &info)){
+		debugf("get partition %s info failed!\n", w2c(partition_name));
+		goto end;
+	}
+
+	if(TRUE != Emmc_Read(PARTITION_USER, info.start+offsetsector, nsct, buf))
+		goto end;
+
+	if(left){
+		sctbuf = malloc(EMMC_SECTOR_SIZE);
+		if(NULL != sctbuf){
+			if(TRUE == Emmc_Read(PARTITION_USER, info.start+offsetsector+nsct, 1, sctbuf)){
+				memcpy(buf+(nsct*EMMC_SECTOR_SIZE), sctbuf, left);
+				ret = 1;
+			}
+			free(sctbuf);
 		}
+	}else{
+		ret = 1;
 	}
-	else
-	{
-		debugf("%s: partition:%s >>>get partition info failed!\n", __FUNCTION__,w2c(partition_name));
-		return 0;
-	}
-	debugf("%s: partition:%s read success!\n", __FUNCTION__,w2c(partition_name));
-	return 1;
+
+end:
+	debugf("%s: partition %s read %s!\n", __func__,w2c(partition_name),ret?"success":"failed");
+	return ret;
 }
 
 /**
@@ -739,15 +241,6 @@ end:
 	return;
 }
 
-LOCAL BOOLEAN _chkNVEcc(uint8* buf, uint32 size,uint32 checksum)
-{
-	uint16 crc;
-
-	crc = calc_checksum(buf,size);
-	debugf("_chkNVEcc crc 0x%x\n",crc);
-	return (crc == (uint16)checksum);
-}
-
 /**
 	we assume partition with backup must check ecc.
 */
@@ -757,16 +250,21 @@ LOCAL __inline int _boot_read_partition_with_backup(block_dev_desc_t *dev, boot_
 	uint8 *oribuf = NULL;
 	u8 status=0;
 	uint8 header[EMMC_SECTOR_SIZE];
-	uint32 checksum = 0;//,magic = 0;
+	uint32 checksum = 0;
 	nv_header_t * header_p = NULL;
+	uint32 bufsize = info.size+EMMC_SECTOR_SIZE;
 
 	header_p = header;
-	bakbuf = malloc(info.size+EMMC_SECTOR_SIZE);
-	if(NULL != bakbuf)
-		memset(bakbuf, 0xff, info.size+EMMC_SECTOR_SIZE);
-	oribuf = malloc(info.size+EMMC_SECTOR_SIZE);
-	if(NULL != oribuf)
-		memset(oribuf,0xff,info.size+EMMC_SECTOR_SIZE);
+	bakbuf = malloc(bufsize);
+	if(NULL == bakbuf)
+		return 0;
+	memset(bakbuf, 0xff, bufsize);
+	oribuf = malloc(bufsize);
+	if(NULL == oribuf){
+		free(bakbuf);
+		return 0;
+	}
+	memset(oribuf, 0xff, bufsize);
 
 	if(_boot_partition_read(dev, info.partition, 0, info.size+EMMC_SECTOR_SIZE, oribuf)){
 		memset(header,0,EMMC_SECTOR_SIZE);
@@ -933,7 +431,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 		return;
 	//secure check for secure boot
 	_boot_secure_check();
-	product_SN_get();
+
 	buf = creat_cmdline(cmdline,hdr);
 	if (buf != NULL) {
 		free(buf);
@@ -951,28 +449,3 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	vlx_entry();
 }
 
-static void product_SN_get(void)
-{
-   SP09_PHASE_CHECK_T phase_check;
-   block_dev_desc_t *p_block_dev = NULL;
-
-	p_block_dev = get_dev("mmc", 1);
-	if(NULL == p_block_dev){
-		debugf("%s:  get_dev() error\n", __FUNCTION__);
-		product_SN_flag =0;
-		return;
-	}
-
-	if(-1 == Calibration_read_partition(p_block_dev, PRODUCTINFO_FILE_PATITION, (char *)&phase_check,sizeof(phase_check))){
-		debugf("%s:  read miscdata error\n", __FUNCTION__);
-		product_SN_flag =0;
-		return ;
-	}
-	debugf("%s: phase_check.Magic = %d \n", __FUNCTION__, phase_check.Magic);
-	if(phase_check.Magic == SP09_SPPH_MAGIC){
-		product_SN_flag =1;
-		memcpy(product_SN, phase_check.SN1, 21);
-	}else{
-		product_SN_flag =0;
-	}
-}
