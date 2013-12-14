@@ -235,7 +235,7 @@ int32_t sprdfb_dsi_init(struct sprdfb_device *dev)
 	}
 
 	while(5 != (dsi_core_read_function(DSI_CTL_BEGIN, R_DSI_HOST_PHY_STATUS) & 5)){
-		if(0x0 == ++i%10000){
+		if(0x0 == ++i%500000){
 			printf("sprdfb: [%s] warning: busy waiting!\n", __FUNCTION__);
 		}
 	}

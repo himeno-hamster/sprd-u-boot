@@ -399,12 +399,12 @@ static struct panel_operations lcd_hx8363_rgb_spi_operations = {
 };
 
 static struct timing_rgb lcd_hx8363_rgb_timing = {
-	.hfp = 10,  /* unit: pixel */
-	.hbp = 6,
-	.hsync = 8,
-	.vfp = 3, /*unit: line*/
-	.vbp = 3,
-	.vsync = 4,
+	.hfp = 15,//10,  /* unit: pixel */
+	.hbp = 15, //6,
+	.hsync = 10, //8,
+	.vfp = 8, // 3, /*unit: line*/
+	.vbp = 8, // 3,
+	.vsync = 6, // 4,
 };
 
 static struct spi_info lcd_hx8363_rgb_spi_info = {
@@ -426,7 +426,7 @@ static struct info_rgb lcd_hx8363_rgb_info = {
 struct panel_spec lcd_panel_hx8363_rgb_spi_spec = {
 	.width = 480,
 	.height = 854,
-	.fps = 58,
+	.fps = 61,
 	.type = LCD_MODE_RGB,
 	.direction = LCD_DIRECT_NORMAL,
 	.info = {
