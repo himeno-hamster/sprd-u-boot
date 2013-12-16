@@ -34,22 +34,22 @@ endif
 COBJS-$(CONFIG_SC7710G2) += sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_i2c.o sprdfb_spi.o sprdfb_chip_common.o sprdfb_chip_7710.o
 COBJS-$(CONFIG_SPX15) += sprdfb_main.o sprdfb_panel.o sprdfb_dispc.o sprdfb_mcu.o sprdfb_rgb.o sprdfb_i2c.o sprdfb_spi.o sprdfb_chip_common.o sprdfb_chip_7715.o
 
-COBJS-$(CONFIG_FB_LCD_HX8363_RGB_SPI) += lcd_hx8363_rgb_spi.o
-COBJS-$(CONFIG_FB_LCD_HX8363_MCU) += lcd_hx8363_mcu.o
-COBJS-$(CONFIG_FB_LCD_S6D0139) += lcd_s6d0139.o
-COBJS-$(CONFIG_FB_LCD_NT35516_MCU) += lcd_nt35516_mcu.o
-COBJS-$(CONFIG_FB_LCD_NT35516_MIPI) += lcd_nt35516_mipi.o
-COBJS-$(CONFIG_FB_LCD_NT35516_RGB_I2C) += lcd_nt35516_rgb_i2c.o
-COBJS-$(CONFIG_FB_LCD_NT35516_RGB_SPI) += lcd_nt35516_rgb_spi.o
-COBJS-$(CONFIG_FB_LCD_NT35510_MIPI) += lcd_nt35510_mipi.o
-COBJS-$(CONFIG_FB_LCD_NT35512_MIPI) += lcd_nt35512_mipi.o
-COBJS-$(CONFIG_FB_LCD_OTM8018B_MIPI) += lcd_otm_8018b_mipi.o
-COBJS-$(CONFIG_FB_LCD_SSD2075_MIPI) += lcd_ssd2075_mipi.o
-COBJS-$(CONFIG_FB_LCD_ILI9486)  += lcd_ili9486.o
-COBJS-$(CONFIG_FB_LCD_NT51017_LVDS) += lcd_nt51017_mipi_lvds.o
-COBJS-$(CONFIG_FB_LCD_HX8369B_MIPI) += lcd_hx8369b_mipi.o
-COBJS-$(CONFIG_FB_LCD_ILI9341)  += lcd_ili9341.o
-COBJS-$(CONFIG_FB_LCD_ST7789V_MCU)  += lcd_st7789v_mcu.o
+#COBJS-$(CONFIG_FB_LCD_HX8363_RGB_SPI) += lcd_hx8363_rgb_spi.o
+#COBJS-$(CONFIG_FB_LCD_HX8363_MCU) += lcd_hx8363_mcu.o
+#COBJS-$(CONFIG_FB_LCD_S6D0139) += lcd_s6d0139.o
+#COBJS-$(CONFIG_FB_LCD_NT35516_MCU) += lcd_nt35516_mcu.o
+#COBJS-$(CONFIG_FB_LCD_NT35516_MIPI) += lcd_nt35516_mipi.o
+#COBJS-$(CONFIG_FB_LCD_NT35516_RGB_I2C) += lcd_nt35516_rgb_i2c.o
+#COBJS-$(CONFIG_FB_LCD_NT35516_RGB_SPI) += lcd_nt35516_rgb_spi.o
+#COBJS-$(CONFIG_FB_LCD_NT35510_MIPI) += lcd_nt35510_mipi.o
+#COBJS-$(CONFIG_FB_LCD_NT35512_MIPI) += lcd_nt35512_mipi.o
+#COBJS-$(CONFIG_FB_LCD_OTM8018B_MIPI) += lcd_otm_8018b_mipi.o
+#COBJS-$(CONFIG_FB_LCD_SSD2075_MIPI) += lcd_ssd2075_mipi.o
+#COBJS-$(CONFIG_FB_LCD_ILI9486)  += lcd_ili9486.o
+#COBJS-$(CONFIG_FB_LCD_NT51017_LVDS) += lcd_nt51017_mipi_lvds.o
+#COBJS-$(CONFIG_FB_LCD_HX8369B_MIPI) += lcd_hx8369b_mipi.o
+#COBJS-$(CONFIG_FB_LCD_ILI9341)  += lcd_ili9341.o
+#COBJS-$(CONFIG_FB_LCD_ST7789V_MCU)  += lcd_st7789v_mcu.o
 #endif
 
 COBJS	:= $(COBJS-y)

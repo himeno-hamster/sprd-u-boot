@@ -19,7 +19,7 @@
 #include "sp8830_i2c.h"
 //#include "sc8830_i2c_cfg.h"
 
-#include "sprdfb.h"
+#include "../sprdfb.h"
 
 #define printk printf
 

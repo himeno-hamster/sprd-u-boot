@@ -15,7 +15,7 @@
  */
 
 #include <asm/arch/sprd_lcd.h>
-#include "sprdfb.h"
+#include "../sprdfb.h"
 
 #define printk printf
 

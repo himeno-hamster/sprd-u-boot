@@ -263,6 +263,7 @@ LIBS += modem_boot/bootup.o
 LIBS += nvitem/nvitemd.o
 endif
 LIBS += drivers/video/sprdfb/libsprdfb.o
+LIBS += drivers/video/sprdfb/lcd/liblcd.o
 LIBS += property/libproperty.o
 LIBS += drivers/watchdog/libwatchdog.o
 LIBS += common/libcommon.o
