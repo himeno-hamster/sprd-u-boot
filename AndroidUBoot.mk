@@ -20,6 +20,9 @@ $(UBOOT_CONFIG): u-boot/include/configs/$(addsuffix .h,$(UBOOT_DEFCONFIG)) $(UBO
 	@mkdir -p $(UBOOT_OUT)
 	$(MAKE) -C u-boot CROSS_COMPILE=$(LOCAL_TOOLCHAIN) O=../$(UBOOT_OUT) distclean
 	$(MAKE) -C u-boot CROSS_COMPILE=$(LOCAL_TOOLCHAIN) O=../$(UBOOT_OUT) $(UBOOT_DEFCONFIG)_config
+ifeq ($(strip $(BOARD_KERNEL_SEPARATED_DT)),true)
+	@echo "#define CONFIG_OF_LIBFDT" >> $(UBOOT_CONFIG)
+endif
 
 $(INSTALLED_UBOOT_TARGET) : $(UBOOT_CONFIG)
 	$(MAKE) -C u-boot CROSS_COMPILE=$(LOCAL_TOOLCHAIN) AP_VERSION="$(ANDROID_BUILD_DESC)" O=../$(UBOOT_OUT)

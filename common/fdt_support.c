@@ -214,6 +214,52 @@ int fdt_initrd(void *fdt, ulong initrd_start, ulong initrd_end, int force)
 	return 0;
 }
 
+int fdt_initrd_norsvmem(void *fdt, ulong initrd_start, ulong initrd_end, int force)
+{
+	int   nodeoffset;
+	int   err;
+	u32   tmp;
+	const char *path;
+	uint64_t addr, size;
+
+	/* Find the "chosen" node.  */
+	nodeoffset = fdt_path_offset (fdt, "/chosen");
+
+	/* If there is no "chosen" node in the blob return */
+	if (nodeoffset < 0) {
+		printf("fdt_initrd: %s\n", fdt_strerror(nodeoffset));
+		return nodeoffset;
+	}
+
+	/* just return if initrd_start/end aren't valid */
+	if ((initrd_start == 0) || (initrd_end == 0))
+		return 0;
+
+	path = fdt_getprop(fdt, nodeoffset, "linux,initrd-start", NULL);
+	if ((path == NULL) || force) {
+		tmp = __cpu_to_be32(initrd_start);
+		err = fdt_setprop(fdt, nodeoffset,
+				"linux,initrd-start", &tmp, sizeof(tmp));
+		if (err < 0) {
+			printf("WARNING: "
+					"could not set linux,initrd-start %s.\n",
+					fdt_strerror(err));
+			return err;
+		}
+		tmp = __cpu_to_be32(initrd_end);
+		err = fdt_setprop(fdt, nodeoffset,
+				"linux,initrd-end", &tmp, sizeof(tmp));
+		if (err < 0) {
+			printf("WARNING: could not set linux,initrd-end %s.\n",
+					fdt_strerror(err));
+
+			return err;
+		}
+	}
+
+	return 0;
+}
+
 int fdt_chosen(void *fdt, int force)
 {
 	int   nodeoffset;

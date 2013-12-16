@@ -20,6 +20,15 @@
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
+
+//#define CONFIG_OF_LIBFDT
+//#ifdef CONFIG_OF_LIBFDT
+//ask for detect it
+#define DT_PLATFROM_ID 7715
+#define DT_HARDWARE_ID 1
+#define DT_SOC_VER     0x20000
+//#endif
+
 //only used in fdl2 .in uart download, the debug infors  from  serial will break the download process.
 #define CONFIG_FDL2_PRINT        0
 #define BOOT_NATIVE_LINUX        1

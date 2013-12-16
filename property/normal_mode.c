@@ -1,6 +1,10 @@
 #include "normal_mode.h"
 #include <mmc.h>
 #include <fat.h>
+#if defined(CONFIG_OF_LIBFDT)
+#include <libfdt.h>
+#include <fdt_support.h>
+#endif
 
 #define FACTORY_PART "prodnv"
 #define PRODUCTINFO_FILE_PATITION  "miscdata"
@@ -638,6 +642,10 @@ static int start_linux()
 	u32 exec_at = (u32)-1;
 	u32 parm_at = (u32)-1;
 	u32 machine_type;
+	u8* fdt_blob;
+	u32 fdt_size;
+	boot_img_hdr *hdr=raw_header;
+	int err;
 
 	machine_type = machine_arch_type;         /* get machine type */
 	theKernel = (void (*)(int, int, u32))KERNEL_ADR; /* set the kernel address */
@@ -647,7 +655,25 @@ static int start_linux()
 	*(volatile u32*)0x84001000 = 'p';
 #endif
 
+#ifdef CONFIG_OF_LIBFDT
+	fdt_blob = (u8*)DT_ADR;
+	if (fdt_check_header(fdt_blob) != 0) {
+		printk("image is not a fdt\n");
+	}
+	fdt_size=fdt_totalsize(fdt_blob);
+
+	err = fdt_open_into(fdt_blob, fdt_blob, fdt_size);
+	if (err != 0) {
+		printf ("libfdt fdt_open_into(): %s\n",
+				fdt_strerror(err));
+	}
+
+	fdt_initrd_norsvmem(fdt_blob,RAMDISK_ADR,RAMDISK_ADR+hdr->ramdisk_size, 1);
+
+	theKernel(0, machine_type, (unsigned long)fdt_blob);
+#else
 	theKernel(0, machine_type, VLX_TAG_ADDR);    /* jump to kernel with register set */
+#endif
 	while(1);
 	return 0;
 }

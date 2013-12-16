@@ -198,7 +198,7 @@ static int bootm_linux_fdt(int machid, bootm_headers_t *images)
 	if (ret)
 		return ret;
 
-	ret = boot_relocate_fdt(lmb, bootmap_base, of_flat_tree, &of_size);
+	//ret = boot_relocate_fdt(lmb, bootmap_base, of_flat_tree, &of_size);
 	if (ret)
 		return ret;
 
@@ -236,7 +236,6 @@ static int bootm_linux_fdt(int machid, bootm_headers_t *images)
 	while(1);
 #endif
 	kernel_entry(0, machid, *of_flat_tree);
->>>>>>> update_test
 	/* does not return */
 
 	return 1;

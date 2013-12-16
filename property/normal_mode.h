@@ -52,6 +52,7 @@ extern unsigned char raw_header[8192];
 #if defined(CONFIG_SC8830)
 #define KERNEL_ADR      0x80008000
 #define VLX_TAG_ADDR    0x82000100
+#define DT_ADR          0x85400000
 #define RAMDISK_ADR     0x85500000
 #define TDDSP_ADR       0x88020000
 #define TDFIXNV_ADR     0x89060000

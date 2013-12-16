@@ -7,6 +7,10 @@
 #include <ext_common.h>
 #include <ext4fs.h>
 
+#ifdef CONFIG_OF_LIBFDT
+#include "dev_tree.h"
+#endif
+
 #define KERNL_PAGE_SIZE 2048
 
 static boot_image_required_t const s_boot_image_table[]={
@@ -340,7 +344,7 @@ LOCAL int _boot_load_kernel_ramdisk_image(block_dev_desc_t *dev, char* bootmode,
 {
 	wchar_t* partition = NULL;
 	uint32 size,offset;
-	
+	uint32 dt_img_adr;
 	if(0 == memcmp(bootmode, RECOVERY_PART, strlen(RECOVERY_PART))){
 		partition = L"recovery";
 		debugf("enter recovery mode!\n");
@@ -383,6 +387,25 @@ LOCAL int _boot_load_kernel_ramdisk_image(block_dev_desc_t *dev, char* bootmode,
 		debugf("%s:ramdisk read error!\n",__FUNCTION__);
 		return 0;
 	}
+#ifdef CONFIG_OF_LIBFDT
+	//read dt image
+	offset += size/512;
+	offset = ((offset+3)/4)*4;
+	size = (hdr->dt_size+(KERNL_PAGE_SIZE - 1)) & (~(KERNL_PAGE_SIZE - 1));
+	dt_img_adr = RAMDISK_ADR - size - KERNL_PAGE_SIZE;
+	if(size<0){
+		debugf("dt size error\n");
+		return 0;
+	}
+	if(!_boot_partition_read(dev, partition, offset, size, (u8*)dt_img_adr)){
+		debugf("%s:dt read error!\n",__FUNCTION__);
+		return 0;
+	}
+	if (load_dtb((int)DT_ADR,(void*)dt_img_adr)){
+		debugf("%s:dt load error!\n",__FUNCTION__);
+		return 0;
+	}
+#endif
 #ifdef CONFIG_SDRAMDISK
 	{
 	int sd_ramdisk_size = 0;
