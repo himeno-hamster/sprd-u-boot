@@ -185,7 +185,8 @@ static struct sc8810_nand_page_oob nand_config_table[] =
 	{0x2c, 0xbc, 0x90, 0x55, 0x56, 2048, 64,  512, 4},
 	{0x2c, 0xb3, 0xd1, 0x55, 0x56, 2048, 64,  512, 4},
 	{0xc8, 0xbc, 0x90, 0x55, 0x54, 2048, 64,  512, 4},
-        {0xec, 0xbc, 0x01, 0x55, 0x48, 2048, 64,  512, 4}
+        {0xec, 0xbc, 0x01, 0x55, 0x48, 2048, 64,  512, 4},
+        {0x98, 0xbc, 0x90, 0x66, 0x76, 4096, 224, 512, 8}
 };
 
 /* some nand id could not be calculated the pagesize by mtd, replace it with a known id which has the same format. */
@@ -205,8 +206,7 @@ static const struct nand_spec_str nand_spec_table[] = {
 
         {0x98, 0xac, 0x90, 0x15, 0x76, {10, 12, 10, 20, 50, 12, 12, 25}},// TYBC0A111392KC
         {0x98, 0xbc, 0x90, 0x55, 0x76, {15, 15, 10, 20, 50, 12, 12, 25}},// TYBC0A111430KC, KSLCBBL1FB4G3A, KSLCBBL1FB2G3A
-        {0x98, 0xbc, 0x90, 0x66, 0x76, {15, 15, 10, 20, 50, 12, 12, 25}},// KSLCCBL1FB2G3A
-
+        {0x98, 0xbc, 0x90, 0x66, 0x76, {35, 40, 10, 20, 50, 12, 12, 25}},// KSLCCBL1FB2G3A,mvr673,mvr594
         {0xad, 0xbc, 0x90, 0x11, 0x00, {15, 25, 10, 20, 50, 25, 25, 30}},// H9DA4VH4JJMMCR-4EMi, H9DA4VH2GJMMCR-4EM
         {0xad, 0xbc, 0x90, 0x55, 0x54, {15, 25, 10, 20, 50, 25, 25, 30}},//
         {0xad, 0xbc, 0x90, 0x55, 0x56, {20, 30, 10, 20, 30, 25, 25, 30}},//H9DA4GH2GJBMCR

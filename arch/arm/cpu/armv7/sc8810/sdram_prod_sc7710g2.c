@@ -47,6 +47,7 @@ LOCAL CONST EMC_PARAM_T s_emc_parm[] =
 
       //{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        1,          2,          2,      1,          11,                     {0xec, 0xbc, 0x00, 0x66, 0x56}},  // K524G2GACJ-B050, mvr658, just example ,scan your board then modify para
        //{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        1,                2,          0,      2,          10,                     {0x2c, 0xbc, 0x90, 0x66, 0x54}},  // mvr527
+        //{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,        1,                2,          0,      1,          11,                     {0x98, 0xbc, 0x90, 0x66, 0x76}},  // KSLCCBL1FB2G3A,mvr673
 
   //{CHIP_CLK_1000MHZ, EMC_CLK_400MHZ, DDR_DRV_STR_TR_Q,		1,		2,			1,		2,			12, 		{0x2c, 0xb3, 0x90, 0x66, 0x64}},  // custom para, just example
 
