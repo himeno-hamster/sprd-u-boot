@@ -19,8 +19,11 @@
 #define   HWRST_STATUS_AUTODLOADER (0Xa0)
 #define   HWRST_STATUS_NORMAL2			(0Xf0)
 
+#define   HW_PBINT2_STATUS			(0x8)
+#define   HW_VCHG_STATUS			(0x20)
 #define   HW_7SRST_STATUS			(0x80)
 #define   SW_7SRST_STATUS			(0x1000)
+
 
 #ifdef DEBUG
 #define debugf(fmt, args...) do { printf("%s(): ", __func__); printf(fmt, ##args); } while (0)
@@ -79,6 +82,17 @@ unsigned check_reboot_mode(void)
 			return 0;
 	}
 
+}
+
+int get_mode_from_gpio()
+{
+	int ret = 0;
+	unsigned hw_rst_mode;
+
+	hw_rst_mode = ANA_REG_GET(ANA_REG_GLB_POR_SRC_FLAG);
+	ret = (hw_rst_mode & HW_PBINT2_STATUS) && !charger_connected();
+
+	return ret;
 }
 
 void reboot_devices(unsigned reboot_mode)
