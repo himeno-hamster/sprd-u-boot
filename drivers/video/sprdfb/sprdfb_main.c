@@ -126,12 +126,21 @@ void set_backlight(uint32_t value)
 #elif defined(CONFIG_SP8830SSW)
 	FB_PRINT("set_backlight\n");
 	/* GPIO214 */
-	/* Enable GPIO in APB global register */
-        __raw_bits_or((1<<3), 0x402E0000);
-	/* Set GPIO high  */
-        __raw_bits_or((1<<6), 0x40280684);
-        __raw_bits_or((1<<6), 0x40280688);
-        __raw_bits_or((1<<6), 0x40280680);
+#define BACKLIGHT_GPIO 214
+	static int is_init = 0;
+
+	if (!is_init) {
+		sprd_gpio_request(NULL, BACKLIGHT_GPIO);
+		sprd_gpio_direction_output(NULL, BACKLIGHT_GPIO, 0);
+		is_init = 1;
+	}
+
+	if (0 == value) {
+		sprd_gpio_set(NULL, BACKLIGHT_GPIO, 0);
+	}
+	else {
+		sprd_gpio_set(NULL, BACKLIGHT_GPIO, 1);
+	}
 #endif
 
 #if defined (CONFIG_STAR2)
