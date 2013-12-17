@@ -21,6 +21,7 @@ extern int power_button_pressed(void);
 extern int charger_connected(void);
 extern int alarm_triggered(void);
 extern int cali_file_check(void);
+extern int get_mode_from_gpio();
 unsigned check_reboot_mode(void);
 
 int boot_pwr_check(void)
@@ -171,12 +172,10 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
             charge_mode();
         }
     }
-#if defined(CONFIG_SP8830SSW)
-	else if (1)
-	{
-		;
-	}
-#endif
+    else if (get_mode_from_gpio()) {
+        DBG("pbint2 triggered, do normal mode\n");
+        normal_mode();
+    }
     else{
         DBG("cboot:get mode fail , and shutdown device\n");
         power_down_devices();
