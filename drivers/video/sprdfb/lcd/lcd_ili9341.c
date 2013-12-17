@@ -358,23 +358,23 @@ static struct timing_mcu lcd_ili9341_timing[] = {
 		.rlpw = 45,
 		.rhpw = 90,
 		.wcss = 30,
-		.wlpw = 15,
-		.whpw = 15,
+		.wlpw = 20,
+		.whpw = 20,
 	},
 	[1] = {
 		.rcss = 25,
 		.rlpw = 45,
 		.rhpw = 90,
 		.wcss = 30,
-		.wlpw = 15,
-		.whpw = 15,
+		.wlpw = 20,
+		.whpw = 20,
 	}
 };
 
 static struct info_mcu lcd_ili9341_info = {
 	.bus_mode = LCD_BUS_8080,
-	.bus_width = 18,
-	.bpp = 18,
+	.bus_width = 16,
+	.bpp = 16,
 	.timing = &lcd_ili9341_timing,
 	.ops = NULL,
 };
