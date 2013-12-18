@@ -109,6 +109,9 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
         case SPECIAL_MODE:
             special_mode();
         break;
+        case EXT_RSTN_REBOOT_MODE:
+            normal_mode();
+        break;
         case ALARM_MODE:
         default:
         break;

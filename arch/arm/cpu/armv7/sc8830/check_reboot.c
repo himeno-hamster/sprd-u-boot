@@ -22,6 +22,7 @@
 #define   HW_PBINT2_STATUS			(0x8)
 #define   HW_VCHG_STATUS			(0x20)
 #define   HW_7SRST_STATUS			(0x80)
+#define   SW_EXT_RSTN_STATUS			(0x800)
 #define   SW_7SRST_STATUS			(0x1000)
 
 
@@ -77,6 +78,10 @@ unsigned check_reboot_mode(void)
 		else if(hw_rst_mode & HW_7SRST_STATUS)
 		{
 			return UNKNOW_REBOOT_MODE;
+		}
+		else if(hw_rst_mode & SW_EXT_RSTN_STATUS)
+		{
+			return EXT_RSTN_REBOOT_MODE;
 		}
 		else
 			return 0;

@@ -33,6 +33,7 @@ int read_adc_calibration_data(char *buffer,int size);
 #define PANIC_REBOOT 0x77665509
 #define CALIBRATION_MODE 0x7766550a
 #define AUTODLOADER_REBOOT 0x77665510
+#define EXT_RSTN_REBOOT_MODE 0x77665511
 
 #define BOOT_NORAML 0xf1
 #define BOOT_FASTBOOT 0xf2
