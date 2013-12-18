@@ -50,6 +50,12 @@ extern unsigned char raw_header[8192];
 #define LOGO_PART "logo"
 #define SIMLOCK_SIZE	1024
 
+#if defined (CONFIG_SP8835EB) ||defined(CONFIG_SP8830EB)||defined(CONFIG_SP8830EC)  //for TD CP1
+#define SIMLOCK_ADR      (0x891FE800+0x4)   //0x4 just for data header
+#elif defined (CONFIG_SP7735EC) || defined(CONFIG_SP7730EC)  //for W CP0
+#define SIMLOCK_ADR      (0x920FE800+0x4)   //0x4(32bit) just for data header
+#endif
+
 #if defined(CONFIG_SC8830)
 #define KERNEL_ADR      0x80008000
 #define VLX_TAG_ADDR    0x82000100
