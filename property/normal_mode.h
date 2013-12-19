@@ -28,6 +28,7 @@ extern unsigned harsh_data_buf[8]__attribute__((align(4)));
 extern void *spl_data;
 extern void *harsh_data;
 extern unsigned char raw_header[8192];
+#define DEBUG 1
 
 #ifdef DEBUG
 #define debugf(fmt, args...) do { printf("%s(): ", __func__); printf(fmt, ##args); } while (0)

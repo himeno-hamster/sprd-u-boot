@@ -16,6 +16,8 @@
 #define EMMC_INVALID_ADDR           5
 #define EMMC_INVALID_SIZE           6
 
+#define DEBUG 1
+
 //TODO, not well here
 #ifdef DEBUG
 #define debugf(fmt, args...) do { printf("%s(): ", __func__); printf(fmt, ##args); } while (0)
