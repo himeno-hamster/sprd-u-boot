@@ -67,6 +67,8 @@ typedef struct{
     volatile uint32 aon_apb_freq;
     volatile uint32 dcdc_arm;
     volatile uint32 dcdc_core;
+    volatile uint32 dcdc_mem;
+    volatile uint32 dcdc_gen;
     volatile uint32 magic_end;
 }MCU_CLK_PARA_T;
 

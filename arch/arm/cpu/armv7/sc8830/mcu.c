@@ -14,22 +14,25 @@
 #include <asm/arch/clk_para_config.h>
 const MCU_CLK_PARA_T mcu_clk_para=
 {
-    MAGIC_HEADER,
-    CONFIG_PARA_VERSION,
-    0,
-    0,
-    0,
-    CLK_CA7_CORE,
-    DDR_FREQ,
-    CLK_CA7_AXI,
-    CLK_CA7_DGB,
-    CLK_CA7_AHB,
-    CLK_CA7_APB,
-    CLK_PUB_AHB,
-    CLK_AON_APB,
-    DCDC_ARM,
-    DCDC_CORE,
-    MAGIC_END
+    .magic_header = MAGIC_HEADER,
+    .version = CONFIG_PARA_VERSION,
+    .core_freq = CLK_CA7_CORE,
+    .ddr_freq = DDR_FREQ,
+    .axi_freq = CLK_CA7_AXI,
+    .dgb_freq = CLK_CA7_DGB,
+    .ahb_freq = CLK_CA7_AHB,
+    .apb_freq = CLK_CA7_APB,
+    .pub_ahb_freq = CLK_PUB_AHB,
+    .aon_apb_freq = CLK_AON_APB,
+    .dcdc_arm = DCDC_ARM,
+    .dcdc_core = DCDC_CORE,
+#ifdef DCDC_MEM
+	.dcdc_mem = DCDC_MEM,
+#endif
+#ifdef DCDC_GEN
+	.dcdc_gen = DCDC_GEN,
+#endif
+    .magic_end = MAGIC_END
 };
 #endif
 
@@ -185,7 +188,6 @@ static uint32 McuClkConfig(uint32 arm_clk)
 static const int dcdc_ctl_vol[][2] = {
 	{5,650},{1,700},{2,800},{3,900},{4,1000},{0,1100},{6,1200},{7,1300}
 };
-
 void dcdc_calibrate(int chan, int to_vol)
 {
 	int i;
@@ -219,6 +221,85 @@ void dcdc_calibrate(int chan, int to_vol)
 	for(i = 0; i < 0x1000; ++i){};
 	return ;
 }
+
+/* DCDC MEM output select:
+ * [BONDOPT2 BONDOPT1]
+ * 00: DDR2 application (1.2v)
+ * 01: DDR3L application (1.35v)
+ * 10: DDR3 application (1.5v)
+ * 11: DDR1 application (1.8v)
+ * DCDC MEM converter control bits with two bonding options as [bpt2 bpt1 xxx], list below:
+ * 000: 1.2v
+ * 001: 1.25v
+ * 010: 1.35v
+ * 011: 1.30v
+ * 100: 1.50v
+ * 101: 1.40v
+ * 110: 1.80v
+ * 111: 1.90v
+ * DCDC MEM calibration control bits with small adjust step is 200/32mv.
+ */
+
+struct dcdc_ctl_t {
+	int idx:4, vol:12;
+};
+
+/* FIXME: manual sort dcdc control voltage
+ */
+const struct dcdc_ctl_t dcdc_mem_vols[] = {
+	{.idx = 0, .vol = 1200,},	//chip default
+	{.idx = 1, .vol = 1250,},
+	{.idx = 3, .vol = 1300,},
+	{.idx = 2, .vol = 1350,},
+	{.idx = 5, .vol = 1400,},
+	{.idx = 4, .vol = 1500,},
+	{.idx = 6, .vol = 1800,},
+	{.idx = 7, .vol = 1900,},
+};
+
+const struct dcdc_ctl_t dcdc_gen_vols[] = {
+	{.idx = 1, .vol = 1800,},
+	{.idx = 3, .vol = 1900,},
+	{.idx = 2, .vol = 2000,},
+	{.idx = 5, .vol = 2100,},
+	{.idx = 0, .vol = 2200,},
+	{.idx = 4, .vol = 2300,},
+	{.idx = 6, .vol = 2400,},	//chip default
+	{.idx = 7, .vol = 2500,},
+};
+
+void dcdc_mem_calibrate(int to_vol)
+{
+	int i;
+	for (i = ARRAY_SIZE(dcdc_mem_vols) - 1; i >= 0; i--) {
+		if (to_vol >= dcdc_mem_vols[i].vol) break;
+	}
+	if (i >= 0) {
+		int cal = (to_vol - dcdc_mem_vols[i].vol) * 32 / 200;	/* FIXME: non roundup*/
+		cal += 0x10;
+		if (cal <= BITS_DCDC_MEM_CAL_ADI(~0)) {
+			ANA_REG_SET(ANA_REG_GLB_DCDC_MEM_ADI, (dcdc_mem_vols[i].idx << 5) | (cal << 0));
+		}
+	}
+	else {
+		//TODO: downward adjustment
+	}
+}
+
+void dcdc_gen_calibrate(int to_vol)
+{
+	int i;
+	for (i = ARRAY_SIZE(dcdc_gen_vols) - 1; i >= 0; i--) {
+		if (to_vol >= dcdc_gen_vols[i].vol) break;
+	}
+	if (i >= 0) {
+		int cal = (to_vol - dcdc_gen_vols[i].vol) * 32 / 100;	/* FIXME: non roundup*/
+		if (cal <= BITS_DCDC_GEN_CAL_ADI(~0)) {
+			ANA_REG_SET(ANA_REG_GLB_DCDC_MEM_ADI, (dcdc_gen_vols[i].idx << 5) | (cal << 0));
+		}
+	}
+}
+
 #endif
 
 static uint32 ArmCoreConfig(uint32 arm_clk)
@@ -228,6 +309,8 @@ static uint32 ArmCoreConfig(uint32 arm_clk)
 #if defined(CONFIG_VOL_PARA)
     dcdc_calibrate(10,mcu_clk_para.dcdc_arm);	//dcdc arm
     dcdc_calibrate(11,mcu_clk_para.dcdc_core);	//dcdc core
+    dcdc_mem_calibrate(mcu_clk_para.dcdc_mem);	//dcdc mem
+    //dcdc_gen_calibrate(mcu_clk_para.dcdc_gen);	//dcdc gen for LDOs
 
     REG32(REG_AP_APB_APB_EB) |= BIT_AP_CKG_EB;
 #else
@@ -334,21 +417,28 @@ typedef struct {
 }vol_para_t;
 
 vol_para_t vol_para[] __align(16) = {
-	{ /* Begin Array, DO NOT remove it! */
+	[0] = { /* Begin Array, DO NOT remove it! */
 		.ideal_vol = 0xfaed,	.name = "volpara_begin",
 	},
-	{
-		.ideal_vol = 1100,	.name = "vddcore",
-	},
-	{
+	[1] = {
 		.ideal_vol = 1200,	.name = "vddarm",
 	},
-	{
-		.ideal_vol = 1200,	.name = "dcdcmem",
+	[2] = {
+		.ideal_vol = 1100,	.name = "vddcore",
 	},
+	[3] = {
+		.ideal_vol = 0,	.name = "dcdcmem",
+	},
+
+	[4] = {
+		.ideal_vol = 0,	.name = "dcdcgen",
+	},
+
+	//TODO: add your ideal ldo here like the following example
 	{
 		.ideal_vol = 1800,	.name = "vddsim2",
 	},
+
 	{ /* End Array, DO NOT remove it! */
 		.ideal_vol = 0xdeaf,	.name = "volpara_end",
 	},
@@ -361,6 +451,10 @@ int Vol_Init()
 	 * FIXME: Update LDOs voltage in u-boot
 	 */
 	BUG_ON(sizeof(vol_para_t) != 16);
+	(mcu_clk_para.dcdc_arm)?vol_para[1].ideal_vol = mcu_clk_para.dcdc_arm:0;
+	(mcu_clk_para.dcdc_core)?vol_para[2].ideal_vol = mcu_clk_para.dcdc_core:0;
+	(mcu_clk_para.dcdc_mem)?vol_para[3].ideal_vol = mcu_clk_para.dcdc_mem:0;
+	(mcu_clk_para.dcdc_gen)?vol_para[4].ideal_vol = mcu_clk_para.dcdc_gen:0;
 	return (sizeof(vol_para) << 16) + sizeof(vol_para_t);
 }
 #endif
