@@ -3,7 +3,6 @@
 #include <linux/string.h>
 #include <malloc.h>
 
-#include "fdl_nand.h"
 #include "asm/arch/sci_types.h"
 #include "asm/arch/nand_controller.h"
 #include <linux/mtd/mtd.h>

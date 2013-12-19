@@ -1,6 +1,5 @@
 #include "mcu_command.h"
 #include <asm/arch/packet.h>
-#include "fdl_nand.h"
 #include <linux/string.h>
 #include <asm/arch/sci_types.h>
 #include <asm/arch/sc_reg.h>
