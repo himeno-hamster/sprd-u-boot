@@ -225,6 +225,46 @@ static void dispc_update_clock(struct sprdfb_device *dev)
 
 }
 
+#ifdef CONFIG_SPX15
+//#define GSP_IOMMU_WORKAROUND1
+#endif
+
+#ifdef GSP_IOMMU_WORKAROUND1
+
+static void cycle_delay(uint32_t delay)
+{
+	while(delay--);
+}
+
+/*
+func:gsp_iommu_workaround
+desc:dolphin IOMMU workaround, configure GSP-IOMMU CTL REG before dispc_emc enable,
+     including config IO base addr and enable gsp-iommu
+warn:when dispc_emc disabled, reading ctl or entry register will hung up AHB bus .
+     only 4-writting operations are allowed to exeute, over 4 ops will also hung uo AHB bus
+     GSP module soft reset is not allowed , beacause it will clear gsp-iommu-ctrl register
+*/
+static void gsp_iommu_workaround(void)
+{
+	uint32_t emc_en_cfg = 0;
+	uint32_t gsp_en_cfg = 0;
+	#define REG_WRITE(reg,value)	(*(volatile uint32_t*)reg = value)
+	#define GSP_MMU_CTRL_BASE		(0x21404000)
+
+	emc_en_cfg = __raw_readl(DISPC_EMC_EN);
+	gsp_en_cfg = __raw_readl(DISPC_AHB_EN);
+	printf("ytc:gsp_iommu_workaround: emc_eb_cfg:%x; gsp_eb_cfg:%x;\n", emc_en_cfg, gsp_en_cfg);
+	REG_WRITE(DISPC_EMC_EN,emc_en_cfg & (~0x800)); // disable emc clk
+	REG_WRITE(DISPC_AHB_EN,gsp_en_cfg | 0x8); // enable gsp
+	cycle_delay(5); // delay for a while
+	REG_WRITE(GSP_MMU_CTRL_BASE,0x10000001);//set iova base as 0x10000000, and enable gsp_iommu
+	cycle_delay(5); // delay for a while
+	printf("ytc:gsp_iommu_workaround: %x, gsp_eb_cfg: %x\n", __raw_readl(DISPC_EMC_EN), __raw_readl(DISPC_AHB_EN));
+	REG_WRITE(DISPC_AHB_EN,gsp_en_cfg); // restore gsp
+	REG_WRITE(DISPC_EMC_EN,emc_en_cfg); // restore emc clk
+}
+
+#endif
 static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 {
 	FB_PRINT("sprdfb:[%s]\n", __FUNCTION__);
@@ -246,6 +286,9 @@ static int32_t sprdfb_dispc_early_init(struct sprdfb_device *dev)
 
 
 	__raw_bits_or(BIT_DISPC_CORE_EN, DISPC_CORE_EN);  //core_clock_en
+#ifdef GSP_IOMMU_WORKAROUND1
+	gsp_iommu_workaround();
+#endif
 	__raw_bits_or(BIT_DISPC_EMC_EN, DISPC_EMC_EN);  //matrix clock en
 
 	__raw_bits_or(BIT_DISPC_AHB_EN, DISPC_AHB_EN);//enable DISPC clock
