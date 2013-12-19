@@ -49,7 +49,7 @@ COM_OBJS = $(addprefix $(obj),$(COM_COBJS))
 
 FDL2_COBJS_LIST = migrate.o fdl2_signature.o fdl_main.o fdl_cmd_proc.o fdl_ldo.o
 ifdef CONFIG_EMMC_BOOT
-FDL2_COBJS_LIST += newfs_msdos.o fdl_emmc_operate.o phasecheck.o
+FDL2_COBJS_LIST += newfs_msdos.o fdl_emmc_operate.o
 else
 FDL2_COBJS_LIST += fdl_fill_spl.o fdl_nand_operate.o parsemtdparts.o fdl_mtdparts.o fdl_ubi.o
 endif
@@ -64,7 +64,7 @@ FDL2_OBJS = $(FDL2_COBJS) $(FDL2_SOBJS)
 
 MTD_LIB = $(OBJTREE)/drivers/mtd/libmtd.o 
 NAND_LIB = $(OBJTREE)/drivers/mtd/nand/libnand.o
-COMMON_OBJ = dlmalloc.o idh_layout.o dload_op.o
+COMMON_OBJ = dlmalloc.o idh_layout.o
 COMMON_LIB = $(addprefix $(OBJTREE)/common/,$(COMMON_OBJ))
 DRIVERS_LIB = $(OBJTREE)/drivers/serial/serial_sc8800x.o
 ARCH_LIB =

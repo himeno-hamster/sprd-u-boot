@@ -2,7 +2,6 @@
 #include "fdl_conf.h"
 #ifdef CONFIG_EMMC_BOOT
 #include "card_sdio.h"
-#include "dload_op.h"
 #include "packet.h"
 #include "fdl_crc.h"
 #include "fdl_stdio.h"
