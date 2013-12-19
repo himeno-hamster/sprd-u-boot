@@ -168,6 +168,13 @@ void fgu_init(void)
 
 void CHG_Init(void)
 {
+#ifdef  CONFIG_SHARK_PAD_HW_V102
+	sprd_gpio_request(NULL,USB_CHG_EN);
+	sprd_gpio_direction_output(NULL, USB_CHG_EN, 1);
+	sprd_gpio_set(NULL, USB_CHG_EN, 1);
+	mdelay(20);
+	sprd_gpio_set(NULL, USB_CHG_EN, 0);
+#endif
 	//set charge current 500mA(USB) or 600mA(AC)
 	if (charger_connected()) {
 		enum sprd_adapter_type adp_type = sprd_charger_is_adapter();

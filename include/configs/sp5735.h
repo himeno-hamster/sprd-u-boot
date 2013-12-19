@@ -406,4 +406,9 @@
 
 #define CONFIG_RAMDUMP_NO_SPLIT 1 /* Don't split sysdump file */
 
+/* For pad hardware v0.2 */
+#ifdef  CONFIG_SHARK_PAD_HW_V102
+#define EIC_USB_DETECT EIC_PBINT2
+#define USB_CHG_EN 83
+#endif
 #endif /* __CONFIG_H */

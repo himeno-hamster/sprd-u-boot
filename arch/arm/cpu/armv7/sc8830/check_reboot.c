@@ -157,7 +157,14 @@ int charger_connected(void)
 #endif
 	udelay(3000);
 	debugf("eica status %x\n", sprd_eic_get(EIC_CHG_INT));
+#ifdef  CONFIG_SHARK_PAD_HW_V102
+	sprd_eic_request(EIC_USB_DETECT);
+	udelay(3000);
+	debugf("eica status %x\n", sprd_eic_get(EIC_USB_DETECT));
+	return (!!sprd_eic_get(EIC_USB_DETECT)) ||(!!sprd_eic_get(EIC_CHG_INT));
+#else
 	return !!sprd_eic_get(EIC_CHG_INT);
+#endif
 }
 
 int alarm_triggered(void)
