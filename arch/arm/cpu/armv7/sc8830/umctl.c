@@ -1941,7 +1941,7 @@ void  __cal_actiming(lpddr2_timing_t *cal_timing,void *native_timing,CLK_TYPE_E 
 
 #ifdef DDR_DFS_SUPPORT
 
-#ifdef DDR_LPDDR2
+#if defined(DDR_LPDDR2)
 CLK_TYPE_E DDR_DFS_POINT[] = 
 {
     CLK_100MHZ,
@@ -1954,9 +1954,8 @@ CLK_TYPE_E DDR_DFS_POINT[] =
 CLK_TYPE_E DDR_DFS_POINT[] = 
 {
 	CLK_200MHZ,
-	CLK_333MHZ,
-	CLK_400MHZ, 
-	CLK_533MHZ,
+	CLK_384MHZ,
+	CLK_464MHZ,
 };
 #endif
 #define NS2CLK_T(x_ns,clk) ((clk*x_ns)/1000 + 1)
