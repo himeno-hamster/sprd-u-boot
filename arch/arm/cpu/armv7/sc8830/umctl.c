@@ -1944,10 +1944,8 @@ void  __cal_actiming(lpddr2_timing_t *cal_timing,void *native_timing,CLK_TYPE_E 
 #if defined(DDR_LPDDR2)
 CLK_TYPE_E DDR_DFS_POINT[] = 
 {
-    CLK_100MHZ,
 	CLK_200MHZ,
-	CLK_333MHZ,
-	CLK_400MHZ, 
+	CLK_384MHZ,
 	CLK_533MHZ,
 };
 #else
