@@ -480,11 +480,7 @@ int cali_file_check(void)
 #define CALI_MAGIC      (0x49424143) //CALI
 #define CALI_COMP       (0x504D4F43) //COMP
 
-	block_dev_desc_t *p_block_dev = NULL;
 
-	p_block_dev = get_dev("mmc", 1);
-	if(NULL == p_block_dev)
-		return 0;
 	if(do_fs_file_read("prodnv", "/adc.bin", (char *)nv_buffer,sizeof(nv_buffer)))
 		return 1;
 
