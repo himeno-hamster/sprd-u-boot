@@ -2374,10 +2374,10 @@ void sdram_init()
 			__cal_actiming(dram_info->ac_timing,&LPDDR2_ACTIMING_NATIVE,ddr_clk);
 			__sdram_init(ddr_clk, UMCTL2_PORT_CONFIG, dram_info);
 			#else
-	__sdram_init(ddr_clk, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
+	        __sdram_init(ddr_clk, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
 			#endif
 		#else
-	__sdram_init(DDR_CLK, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
+        __sdram_init(DDR_CLK, UMCTL2_PORT_CONFIG, get_dram_cfg(DDR_TYPE));
 		#endif		
 	#endif
 
@@ -2388,9 +2388,5 @@ void sdram_init()
 	
 	umctl2_low_power_open();
 	
-	//{
-	//	volatile uint32 i;
-	//	for(i=0;i<0xffffffff;i++);
-	//}	
 }
 
