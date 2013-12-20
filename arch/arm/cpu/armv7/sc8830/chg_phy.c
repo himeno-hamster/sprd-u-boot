@@ -191,6 +191,7 @@ void CHG_Init(void)
 
 	CHG_SetRecharge();
 	ANA_REG_OR(ANA_REG_GLB_CHGR_CTRL2, BIT_CHGR_CC_EN);
+	CHG_TurnOn();
 
 	get_adc_cali_data();
 	fgu_init();
