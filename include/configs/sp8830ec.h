@@ -39,6 +39,7 @@
 #define CONFIG_GPIOLIB 1
 //#define NAND_DEBUG  
 //#define DEBUG
+#define CONFIG_SDRAMDISK
 #define U_BOOT_SPRD_VER 1
 /*#define SPRD_EVM_TAG_ON 1*/
 #ifdef SPRD_EVM_TAG_ON
