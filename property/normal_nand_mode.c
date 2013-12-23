@@ -229,6 +229,9 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	}
    lcd_display_logo(backlight_set,(ulong)bmp_img,size);
 #endif
+    //printf("function: %s clear vibrator.\n", __FUNCTION__);
+    //need a bit of delay
+    udelay(0);
     set_vibrator(0);
 
 #if !(BOOT_NATIVE_LINUX)
