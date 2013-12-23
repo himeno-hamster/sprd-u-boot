@@ -407,7 +407,7 @@
 #define WCDMA_CP_SDRAM_SIZE		    0x2000000	/*40M*/
 
 #define WCN_CP_OFFSET_ADDR          0xa800000   /*168M*/
-#define WCN_CP_SDRAM_SIZE           0x400000    /*4M*/
+#define WCN_CP_SDRAM_SIZE           0x500000    /*5M*/
 
 #define SIPC_APCP_RESET_ADDR_SIZE	0xC00	/*3K*/
 #define SIPC_APCP_RESET_SIZE	    0x1000	/*4K*/

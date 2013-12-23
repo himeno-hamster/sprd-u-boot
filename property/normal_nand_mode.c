@@ -10,7 +10,7 @@ static vol_image_required_t s_boot_img_table[]={
 #ifdef CONFIG_SP8830WCN
 	{"wcnfixnv1","wcnfixnv2",FIXNV_SIZE,WCNFIXNV_ADR,IMG_RAW},
 	{"wcnruntimenv1","wcnruntimenv2",RUNTIMENV_SIZE,WCNRUNTIMENV_ADR,IMG_RAW},
-	{"wcnmodem",NULL,MODEM_SIZE,WCNMODEM_ADR,IMG_RAW},
+	{"wcnmodem",NULL,WCNMODEM_SIZE,WCNMODEM_ADR,IMG_RAW},
 #endif
 
 #endif
