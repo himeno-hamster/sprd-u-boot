@@ -459,20 +459,32 @@ int Vol_Init()
 }
 #endif
 
+static uint32 get_adie_chipid(void)
+{
+	uint32 chip_id;
+
+	chip_id = (ANA_REG_GET(ANA_REG_GLB_CHIP_ID_HIGH) & 0xffff) << 16;
+	chip_id |= ANA_REG_GET(ANA_REG_GLB_CHIP_ID_LOW) & 0xffff;
+
+	return chip_id;
+}
+
 void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 {
     uint32 value;
     
     #if defined(CONFIG_SPX15)
-    value = ANA_REG_GET(0x4003883c);
-    value &= ~0x7f00;
-    value |= 0x38 << 8;
-    ANA_REG_SET(0x4003883c,value);
+	if(0x2711A000 == get_adie_chipid()) {
+	    value = ANA_REG_GET(0x4003883c);
+	    value &= ~0x7f00;
+	    value |= 0x38 << 8;
+	    ANA_REG_SET(0x4003883c,value);
 
-    value = ANA_REG_GET(0x40038820);
-    value &= ~0xff;
-    value |= 0x38 << 0;
-    ANA_REG_SET(0x40038820,value);
+	    value = ANA_REG_GET(0x40038820);
+	    value &= ~0xff;
+	    value |= 0x38 << 0;
+	    ANA_REG_SET(0x40038820,value);
+	}
     #endif
     
     MCU_Init();

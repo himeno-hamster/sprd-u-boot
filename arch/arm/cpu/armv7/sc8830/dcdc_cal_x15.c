@@ -208,6 +208,33 @@ struct regulator_desc {
 
 
 /* standard dcdc ops*/
+static uint32 get_adie_chipid(void)
+{
+	uint32 chip_id;
+
+	chip_id = (ANA_REG_GET(ANA_REG_GLB_CHIP_ID_HIGH) & 0xffff) << 16;
+	chip_id |= ANA_REG_GET(ANA_REG_GLB_CHIP_ID_LOW) & 0xffff;
+
+	return chip_id;
+}
+
+static int adjust_ldo_vol_base(struct regulator_desc *desc)
+{
+	struct regulator_regs *regs = desc->regs;
+
+	if (regs->vol_sel_cnt == 2) {
+		if ((0 == strcmp(desc->name, "vdd18"))
+			|| (0 == strcmp(desc->name, "vddemmcio"))
+			|| (0 == strcmp(desc->name, "vddcamd"))
+			|| (0 == strcmp(desc->name, "vddcamio"))) {
+
+			regs->vol_sel[0] = 1400;
+		}
+	}
+	debug0("%s vol base %dmv\n", desc->name, regs->vol_sel[0]);
+	return regs->vol_sel[0];
+}
+
 static int __dcdc_is_up_down_adjust(struct regulator_desc *desc)
 {
 	return ((0 == strcmp(desc->name, "dcdcmem")) ? 1 : 0);
@@ -283,7 +310,7 @@ static int dcdc_set_voltage(struct regulator_desc *desc, int min_mV, int max_mV)
 		int shft_ctl = __ffs(regs->vol_ctl_bits);
 		int shft_trm = __ffs(regs->vol_trm_bits);
 		int step = dcdc_get_trimming_step(desc, mv);
-		int j = (mv - (int)regs->vol_sel[i]) * 1000 / step;
+		int j = (int)(mv - (int)regs->vol_sel[i]) * 1000 / step;
 
 		if (__dcdc_is_up_down_adjust(desc))
 			j += 0x10;
@@ -339,8 +366,8 @@ static int ldo_set_trimming(struct regulator_desc *desc, int def_vol, int to_vol
 		else
 			trim = ((ctl_vol - regs->vol_sel[0]) * 1000 / regs->vol_sel[1]);
 
-		debug2("regu_ldo %p (%s) %d = %d %+dmv (trim=%d step=%duv);\n", regs, desc->name,
-			ctl_vol, regs->vol_sel[0], ctl_vol - regs->vol_sel[0], trim, regs->vol_sel[1]);
+		debug2("regu_ldo %p (%s) %d = %d %+dmv (trim=%d step=%duv vol_base=%dmv)\n", regs, desc->name,
+			ctl_vol, regs->vol_sel[0], ctl_vol - regs->vol_sel[0], trim, regs->vol_sel[1], regs->vol_sel[0]);
 
 		if ((trim >= 0) && (trim <= (regs->vol_trm_bits >> shft))) {
 			ANA_REG_MSK_OR(regs->vol_trm,
@@ -363,6 +390,12 @@ static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 
 	if (!adc_chan || !regs->vol_def)
 		return -1;
+
+	if(0x2711A000 == get_adie_chipid()) {
+		if (desc->regs->typ == 0) {
+			adjust_ldo_vol_base(desc);
+		}
+	}
 
 	if (ldo_cal_sel)
 		ANA_REG_OR(regs->cal_ctl, ldo_cal_sel);
@@ -422,24 +455,25 @@ int DCDC_Cal_ArmCore(void)
 	u32 res;
 	struct regulator_desc *desc = NULL;
 	struct regulator_desc *desc_end = NULL;
+	uint32 chip_id = get_adie_chipid();
 
-	printf("%s\n", __FUNCTION__);
+	printf("%s; adie chip id 0x%08x\n", __FUNCTION__, chip_id);
 
 	regval_dcdc_store = ANA_REG_GET(ANA_REG_GLB_LDO_DCDC_PD);
 	ANA_REG_BIC(ANA_REG_GLB_LDO_DCDC_PD, (BIT(12) | BIT(11) | BIT(10) | BIT(9)));
 	regval_ldo_store = ANA_REG_GET(ANA_REG_GLB_LDO_PD_CTRL);
 	ANA_REG_BIC(ANA_REG_GLB_LDO_PD_CTRL, 0x7ff);
 
-#if 1 //FIXME: vddcamio/vddcamd/vddemmcio/vdd18 real voltage value is greater than design value
-	ANA_REG_MSK_OR(ANA_REG_GLB_LDO_V_CTRL9, BITS_LDO_VDD18_V(0x40),
-			BITS_LDO_VDD18_V(-1)); //0x68D2 -->0x40D2
-	ANA_REG_MSK_OR(ANA_REG_GLB_LDO_V_CTRL2, BITS_LDO_EMMCIO_V(0x40),
-			BITS_LDO_EMMCIO_V(-1));  //0x3C68 -->0x3C40
-	ANA_REG_MSK_OR(ANA_REG_GLB_LDO_V_CTRL1, BITS_LDO_CAMIO_V(0x40) | BITS_LDO_CAMD_V(0x10),
-			BITS_LDO_CAMIO_V(-1) | BITS_LDO_CAMD_V(-1)); //0x6838 -->0x4010
-
-	udelay(200 * 1000); //wait 200ms
-#endif
+	if(0x2711A000 == chip_id) {
+		//FIXME: vddcamio/vddcamd/vddemmcio/vdd18 real voltage value is greater than design value
+		ANA_REG_MSK_OR(ANA_REG_GLB_LDO_V_CTRL9, BITS_LDO_VDD18_V(0x40),
+				BITS_LDO_VDD18_V(-1)); //0x68D2 -->0x40D2
+		ANA_REG_MSK_OR(ANA_REG_GLB_LDO_V_CTRL2, BITS_LDO_EMMCIO_V(0x40),
+				BITS_LDO_EMMCIO_V(-1));  //0x3C68 -->0x3C40
+		ANA_REG_MSK_OR(ANA_REG_GLB_LDO_V_CTRL1, BITS_LDO_CAMIO_V(0x40) | BITS_LDO_CAMD_V(0x10),
+				BITS_LDO_CAMIO_V(-1) | BITS_LDO_CAMD_V(-1)); //0x6838 -->0x4010
+		udelay(200 * 1000); //wait 200ms
+	}
 
 	/* FIXME: Update CHGMNG_AdcvalueToVoltage table before setup vbat ratio. */
 	/*ADC_CHANNEL_VBAT is 5*/
