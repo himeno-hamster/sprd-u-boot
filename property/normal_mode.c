@@ -9,7 +9,7 @@
 #define FACTORY_PART "prodnv"
 #define PRODUCTINFO_FILE_PATITION  "miscdata"
 
-unsigned spl_data_buf[0x1000] __attribute__((align(4)))={0};
+unsigned spl_data_buf[0x2000] __attribute__((align(4)))={0};
 unsigned harsh_data_buf[8]__attribute__((align(4)))={0};
 void *spl_data = spl_data_buf;
 void *harsh_data = harsh_data_buf;
@@ -83,6 +83,15 @@ unsigned short calc_checksum(unsigned char *dat, unsigned long len)
         chkSum = (chkSum >> 16) + (chkSum & 0xffff);
         chkSum += (chkSum >> 16);
         return (~chkSum);
+}
+
+unsigned char _chkNVEcc(uint8_t* buf, uint32_t size,uint32_t checksum)
+{
+	uint16_t crc;
+
+	crc = calc_checksum(buf,size);
+	debugf("_chkNVEcc calcout 0x%lx, org 0x%llx\n",crc,checksum);
+	return (crc == (uint16_t)checksum);
 }
 
 int chkEcc(unsigned char* buf, int size)
@@ -725,15 +734,9 @@ int is_factorymode()
 static char* get_product_sn(void)
 {
 	SP09_PHASE_CHECK_T phase_check;
-	block_dev_desc_t *p_block_dev = NULL;
 	static char sn[SP09_MAX_SN_LEN];
 
 	memset(sn, 0x0, SP09_MAX_SN_LEN);
-	p_block_dev = get_dev("mmc", 1);
-	if(NULL == p_block_dev){
-		debugf("%s:  get_dev() error\n", __FUNCTION__);
-		return NULL;
-	}
 
 	if(do_raw_data_read(PRODUCTINFO_FILE_PATITION, 
 					sizeof(phase_check),

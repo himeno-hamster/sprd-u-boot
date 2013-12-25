@@ -4,7 +4,7 @@ static vol_image_required_t s_boot_img_table[]={
 #if defined(CONFIG_SPX15)
 	//dolphin
 	{"wfixnv1","wfixnv2",FIXNV_SIZE,WFIXNV_ADR,IMG_RAW},
-	{"wruntimenv1","wruntimenv1",RUNTIMENV_SIZE,WRUNTIMENV_ADR,IMG_RAW},
+	{"wruntimenv1","wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR,IMG_RAW},
 	{"wdsp",NULL,DSP_SIZE,WDSP_ADR,IMG_RAW},
 	{"wmodem",NULL,MODEM_SIZE,WMODEM_ADR,IMG_RAW},
 #ifdef CONFIG_SP8830WCN
@@ -212,20 +212,107 @@ end:
 	return;
 }
 
+static void _boot_check_and_load_nv(int ubidev, char*vol, char *bakvol, char *addr, int size)
+{
+	char *buf, *bakbuf;
+	char status=0;
+	nv_header_t *header;
+	int len = size + NV_HEAD_LEN;
+	struct ubi_volume_desc *vol_desc;
+	struct ubi_volume_desc *bakvol_desc;
+
+	buf = malloc(len);
+	if(!buf) {
+		printf("%s malloc buf failed.\n",__func__);
+		return;
+	}
+	bakbuf = malloc(len);
+	if(!bakbuf) {
+		printf("%s malloc bakbuf failed.\n",__func__);
+		return;
+	}
+
+	vol_desc = ubi_open_volume_nm(ubidev, vol, UBI_READWRITE);
+	if (IS_ERR(vol_desc)){
+		printf("cannot open \"%s\", error %d\n",vol, (int)PTR_ERR(vol_desc));
+		goto bak;
+	}
+	if(len == uboot_ubi_read(vol_desc, buf, 0, len)) {
+		header = (nv_header_t *)buf;
+		if(NV_HEAD_MAGIC == header->magic){
+			if(_chkNVEcc(buf+NV_HEAD_LEN, header->len,header->checksum))
+				status += 1;
+		}
+	}else {
+		printf("%s: ubi vol %s read failed!\n",__func__,vol);
+	}
+bak:
+	bakvol_desc = ubi_open_volume_nm(ubidev, bakvol, UBI_READWRITE);
+	if (IS_ERR(bakvol_desc)){
+		printf("cannot open \"%s\", error %d\n",bakvol, (int)PTR_ERR(bakvol_desc));
+		goto end;
+	}
+	if(len == uboot_ubi_read(bakvol_desc, bakbuf, 0, len)) {
+		header = (nv_header_t *)bakbuf;
+		if(NV_HEAD_MAGIC == header->magic){
+			if(_chkNVEcc(bakbuf+NV_HEAD_LEN, header->len,header->checksum))
+				status += 1<<1;
+		}
+	}else {
+		printf("%s: ubi vol %s read failed!\n",__func__,bakvol);
+	}
+end:
+	//TODO: restore damaged image need
+	switch(status){
+		case 0:
+			printf("vol %s:both org and bak are damaged!\n",vol);
+			memcpy(addr,buf+NV_HEAD_LEN,size);
+			break;
+		case 1:
+			printf("vol %s:bak is damaged!\n",vol);
+			memcpy(addr,buf+NV_HEAD_LEN,size);
+			break;
+		case 2:
+			printf("vol %s:org is damaged!\n",vol);
+			memcpy(addr,bakbuf+NV_HEAD_LEN,size);
+			break;
+		case 3:
+			printf("vol %s:both org and bak are ok!\n",vol);
+			memcpy(addr,buf+NV_HEAD_LEN,size);
+			break;
+		default:
+			printf("%s status error!\n",__func__);
+			break;
+	}
+
+	if (!IS_ERR(vol_desc))
+		ubi_close_volume(vol_desc);
+	if (!IS_ERR(vol_desc))
+		ubi_close_volume(bakvol_desc);
+	free(buf);
+	free(bakbuf);
+
+	return;
+}
+
 static void _boot_load_required_image(int ubidev, vol_image_required_t info)
 {
 	struct ubi_volume_desc *vol;
 	if(IMG_RAW == info.fs_type){
-		vol = ubi_open_volume_nm(ubidev, info.vol, UBI_READWRITE);
-		if (IS_ERR(vol)){
-			printf("cannot open \"%s\", error %d",
-				  info.vol, (int)PTR_ERR(vol));
-			return;
+		if(NULL != info.bak_vol){
+			_boot_check_and_load_nv(ubidev, info.vol, info.bak_vol, info.mem_addr, info.size);
+		}else{
+			vol = ubi_open_volume_nm(ubidev, info.vol, UBI_READWRITE);
+			if (IS_ERR(vol)){
+				printf("cannot open \"%s\", error %d",
+					  info.vol, (int)PTR_ERR(vol));
+				return;
+			}
+			if(info.size != uboot_ubi_read(vol, info.mem_addr, 0, info.size)){
+				printf("%s: ubi vol %s read failed!\n",__FUNCTION__,info.vol);
+			}
+			ubi_close_volume(vol);
 		}
-		if(info.size != uboot_ubi_read(vol, info.mem_addr, 0, info.size)){
-			printf("%s: ubi vol %s read failed!\n",__FUNCTION__,info.vol);
-		}
-		ubi_close_volume(vol);
 	}
 	else{
 		TODO:

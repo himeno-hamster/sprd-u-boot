@@ -102,15 +102,6 @@ int read_spldata()
 }
 
 
-LOCAL BOOLEAN _chkNVEcc(uint8* buf, uint32 size,uint32 checksum)
-{
-	uint16 crc;
-
-	crc = calc_checksum(buf,size);
-	debugf("_chkNVEcc crc 0x%x\n",crc);
-	return (crc == (uint16)checksum);
-}
-
 /**
 	just convert partition name wchar to char with violent.
 */
