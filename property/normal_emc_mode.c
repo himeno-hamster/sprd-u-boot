@@ -67,7 +67,7 @@ static boot_image_required_t const s_boot_image_table[]={
 #if !BOOT_NATIVE_LINUX
 	{L"vm",NULL,VMJALUNA_SIZE,VMJALUNA_ADR},
 #endif
-#ifdef CONFIG_SIMLOCK
+#ifdef CONFIG_SIMLOCK_ENABLE
 	{L"simlock",NULL,SIMLOCK_SIZE,SIMLOCK_ADR},
 #endif
 	{NULL,NULL,0,0}
