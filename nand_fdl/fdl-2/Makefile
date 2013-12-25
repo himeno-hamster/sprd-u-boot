@@ -47,7 +47,7 @@ FDL2_SOBJS_LIST = init.o
 COM_COBJS	= dl_engine.o fdl_crc.o packet.o fdl_channel.o fdl_stdio.o mcu_command.o usb_boot.o drv_usb.o virtual_com.o
 COM_OBJS = $(addprefix $(obj),$(COM_COBJS))
 
-FDL2_COBJS_LIST = migrate.o fdl2_signature.o fdl_main.o fdl_cmd_proc.o fdl_ldo.o
+FDL2_COBJS_LIST = migrate.o fdl2_signature.o fdl_main.o fdl_cmd_proc.o fdl_ldo.o fdl_common.o
 ifdef CONFIG_EMMC_BOOT
 FDL2_COBJS_LIST += newfs_msdos.o fdl_emmc_operate.o
 else

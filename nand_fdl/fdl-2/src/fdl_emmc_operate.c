@@ -9,6 +9,7 @@
 #include <linux/crc32b.h>
 #include <malloc.h>
 #include <asm/arch/secure_boot.h>
+#include "fdl_common.h"
 #include "fdl_emmc_operate.h"
 
 #define EFI_SECTOR_SIZE 		(512)
@@ -20,15 +21,6 @@
 
 #define MAX_GPT_PARTITION_SUPPORT  (50)
 #define EMMC_ERASE_ALIGN_LENGTH  (0x800)
-
-typedef struct  _NV_HEADER {
-     uint32 magic;
-     uint32 len;
-     uint32 checksum;
-     uint32   version;
-}nv_header_t;
-#define NV_HEAD_MAGIC   0x00004e56
-#define NV_VERSION      101
 
 static DL_EMMC_FILE_STATUS g_status;
 static DL_EMMC_STATUS g_dl_eMMCStatus = {0, 0, 0xffffffff,0, 0, 0,0};
@@ -76,13 +68,12 @@ static __inline void FDL2_eMMC_SendRep (unsigned long err)
 	FDL_SendAckPacket (convert_err (err));
 }
 
-
 /**
 	just convert partition name wchar to char with violent.
 */
 LOCAL __inline char* _w2c(wchar_t *wchar)
 {
-	static char buf[72]={0};
+	static char buf[73]={0};
 	unsigned int i=0;
 	while((NULL != wchar[i]) && (i<72))
 	{
@@ -94,65 +85,6 @@ LOCAL __inline char* _w2c(wchar_t *wchar)
 	return buf;
 }
 
-LOCAL unsigned short calc_checksum(unsigned char *dat, unsigned long len)
-{
-        unsigned short num = 0;
-        unsigned long chkSum = 0;
-        while(len>1){
-                num = (unsigned short)(*dat);
-                dat++;
-                num |= (((unsigned short)(*dat))<<8);
-                dat++;
-                chkSum += (unsigned long)num;
-                len -= 2;
-        }
-        if(len){
-                chkSum += *dat;
-        }
-        chkSum = (chkSum >> 16) + (chkSum & 0xffff);
-        chkSum += (chkSum >> 16);
-        return (~chkSum);
-}
-
-/*
-	TRUE(1): pass
-	FALSE(0): fail
-*/
-LOCAL BOOLEAN _chkEcc(uint8* buf, uint32 size)
-{
-#if 0  //don't checksum for a period of time
-	uint16 crc,crcOri;
-
-	crc = calc_checksum(buf,size-4);
-	crcOri = (uint16)((((uint16)buf[size-3])<<8) | ((uint16)buf[size-4]) );
-
-	return (crc == crcOri);
-#else
-	return 1;
-#endif
-}
-
-LOCAL BOOLEAN _chkNVEcc(uint8* buf, uint32 size,uint32 checksum)
-{
-	uint16 crc;
-
-	crc = calc_checksum(buf,size);
-	debugf("_chkNVEcc  crc = 0x%x,checksum = 0x%x\n",crc,checksum);
-	return (crc == (uint16)checksum);
-}
-
-LOCAL void _makEcc(uint8* buf, uint32 size)
-{
-	uint16 crc;
-	//crc = __crc_16_l_calc(buf, size-2);
-	crc = calc_checksum(buf,size-4);
-	buf[size-4] = (uint8)(0xFF&crc);
-	buf[size-3] = (uint8)(0xFF&(crc>>8));
-	buf[size-2] = 0;
-	buf[size-1] = 0;
-
-	return;
-}
 LOCAL unsigned short eMMCCheckSum(const unsigned int *src, int len)
 {
     unsigned int   sum = 0;
@@ -247,31 +179,10 @@ LOCAL int _uefi_get_part_info(void)
 		return 0;
 	}
 
-	#ifdef CONFIG_EBR_PARTITION
-		debugf("EBR PARTITION \n");
-		for(i=0; i < MAX_PARTITION_INFO; i++) {
-			if(part_num ==PARTITION_EMPTY) {
-				part_num++;
-				continue;
-				}
-			if (get_partition_info(dev_desc, part_num, &info))
-				return 0;
-
-			if(info.size <= 0 )
-				return 0;
-			uefi_part_info[i].partition_index =part_num;
-			uefi_part_info[i].partition_size = info.size;
-			uefi_part_info[i].partition_offset = info.start;
-			debugf("partiton num =%d,size=%d,offset=%d\n",part_num,info.size,info.start);
-			part_num++;
-		}
-	#else
 	debugf("%s:GPT PARTITION \n",__FUNCTION__);
 
 	if (get_all_partition_info(dev_desc, uefi_part_info, &g_total_partition_number) != 0)
 		return 0;
-
-	#endif
 
 	uefi_part_info_ok_flag = 1;
 	return 1;
@@ -657,6 +568,9 @@ LOCAL int _emmc_download_image(unsigned long nSectorCount, unsigned long each_wr
 	return 1;
 }
 
+/**
+	Function used for reading nv partition which has crc protection.
+*/
 LOCAL BOOLEAN _read_nv_with_backup(wchar_t *partition_name, uint8* buf, uint32 size)
 {
 	wchar_t *backup_partition_name = NULL;
@@ -692,8 +606,8 @@ LOCAL BOOLEAN _read_nv_with_backup(wchar_t *partition_name, uint8* buf, uint32 s
 			len = size-4;
 			checkSum = (uint16)((((uint16)buf[size-3])<<8) | ((uint16)buf[size-4]));
 		}
-		//check ecc
-		if(_chkNVEcc(buf, len,checkSum)){
+		//check crc
+		if(fdl_check_crc(buf, len,checkSum)){
 			return 1;
 		}
 	}
@@ -730,8 +644,8 @@ LOCAL BOOLEAN _read_nv_with_backup(wchar_t *partition_name, uint8* buf, uint32 s
 			len = size-4;
 			checkSum = (uint16)((((uint16)buf[size-3])<<8) | ((uint16)buf[size-4]));
 		}
-		//check ecc
-		if(!_chkNVEcc(buf, len,checkSum)){
+		//check crc
+		if(!fdl_check_crc(buf, len,checkSum)){
 			debugf("read backup image checksum error \n");;
 			return 0;
 		}
@@ -761,12 +675,11 @@ LOCAL int _nv_img_check_and_write(wchar_t* partition, unsigned long size)
 	else
 		nSectorCount = (size + 4) / EFI_SECTOR_SIZE + 1;
 
-	//checksum = (unsigned long)calc_checksum(g_eMMCBuf,size);
 	memset(header_buf,0x00,EFI_SECTOR_SIZE);
 	nv_header_p = header_buf;
 	nv_header_p->magic = NV_HEAD_MAGIC;
 	nv_header_p->len = size;
-	nv_header_p->checksum = (unsigned long)calc_checksum(g_eMMCBuf,size);
+	nv_header_p->checksum = (unsigned long)fdl_calc_checksum(g_eMMCBuf,size);
 	nv_header_p->version = NV_VERSION;
 	//write the original partition
 	_emmc_real_erase_partition(partition);
@@ -802,51 +715,6 @@ LOCAL int _nv_img_check_and_write(wchar_t* partition, unsigned long size)
 		return 0;
 	}
 	g_status.unsave_recv_size = 0;
-	return 1;
-}
-
-/**
-	Function used for reading NV or ProdInfo partition which has backup partition.
-*/
-LOCAL BOOLEAN _read_partition_with_backup(wchar_t *partition_name, uint8* buf, uint32 size)
-{
-	wchar_t *backup_partition_name = NULL;
-	u32 base_sector;
-
-	//read origin image
-	memset(buf, 0xFF, size);
-	base_sector = efi_GetPartBaseSec(partition_name);
-	if(Emmc_Read(PARTITION_USER, base_sector, (size>>9)+1, (uint8*)buf)){
-		//check crc
-		if(_chkEcc(buf, size)){
-			return 1;
-		}
-	}
-
-	//get the backup partition name
-	backup_partition_name = _get_backup_partition_name(partition_name);
-
-	//read bakup image
-	if(NULL== backup_partition_name){
-		return 0;
-	}
-	memset(buf, 0xFF, size);
-	base_sector = efi_GetPartBaseSec(backup_partition_name);
-	if(!Emmc_Read(PARTITION_USER, base_sector, (size>>9), (uint8*)buf))
-	{
-		debugf("%s:partition %s read error!\n", __FUNCTION__,_w2c(backup_partition_name));
-		return 0;
-	}
-	if(!_chkEcc(buf, size)){
-		debugf("%s:partition:%s checksum error!\n", __FUNCTION__,_w2c(backup_partition_name));
-		SEND_ERROR_RSP(BSL_EEROR_CHECKSUM);
-		return 0;
-	}
-
-	//write the backup image to origin image
-	base_sector = efi_GetPartBaseSec(partition_name);
-	Emmc_Write(PARTITION_USER, base_sector, (size>>9), (uint8*)buf);
-
 	return 1;
 }
 
@@ -1198,16 +1066,9 @@ PUBLIC int fdl2_repartition(unsigned short* partition_cfg, unsigned short total_
 	}
 
 	for (i = 0; i < 3; i++) {
-		#ifdef CONFIG_EBR_PARTITION
-			if(write_mbr_partition_table()) {
-				FDL2_eMMC_SendRep (EMMC_SUCCESS);
-				return 1;
-				}
-		#else
-			write_uefi_partition_table(s_sprd_emmc_partition_cfg);
-		#endif
-			if (_fdl2_check_partition_table(s_sprd_emmc_partition_cfg, uefi_part_info, total_partition_num))
-				break;
+		write_uefi_partition_table(s_sprd_emmc_partition_cfg);
+		if (_fdl2_check_partition_table(s_sprd_emmc_partition_cfg, uefi_part_info, total_partition_num))
+			break;
 	}
 
 	if (i < 3) {

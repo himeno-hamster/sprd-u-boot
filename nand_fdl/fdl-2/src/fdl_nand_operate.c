@@ -9,7 +9,13 @@
 #include <malloc.h>
 #include <ubi_uboot.h>
 #include "fdl_ubi.h"
+#include "fdl_common.h"
 #include "fdl_nand_operate.h"
+
+typedef struct {
+	char *vol;
+	char *bakvol;
+}dl_nv_info_t;
 
 typedef struct {
 	char *name;  //mtd partition name
@@ -57,6 +63,17 @@ typedef struct{
 static dl_status_t dl_stat={0};
 static char fdl_buf[FDL_BUF_LEN];
 extern struct ubi_selected_dev cur_ubi;
+static dl_nv_info_t s_nv_backup_cfg[]={
+	{"fixnv1",			"fixnv2"},
+	{"runtimenv1",	"runtimenv2"},
+	{"tdfixnv1",		"tdfixnv2"},
+	{"tdruntimenv1",	"tdruntimenv2"},
+	{"wfixnv1",		"wfixnv2"},
+	{"wruntimenv1",	"wruntimenv2"},
+	{"wcnfixnv1",		"wcnfixnv2"},
+	{"wcnruntimenv1",	"wcnruntimenv2"},
+	{NULL,NULL}
+};
 
 static __inline void _send_rsp(unsigned long err)
 {
@@ -72,6 +89,22 @@ static struct mtd_info* _get_cur_nand(void)
 		return NULL;
 	}
 	return &nand_info[nand_curr_device];
+}
+
+/**
+ * check whether is a nv volume.
+ * return backup nv volume in case of true, otherwise null.
+ */
+static char* _is_nv_volume(char *volume)
+{
+	int i;
+
+	for(i=0; s_nv_backup_cfg[i].vol !=NULL; i++) {
+		if(0 == strcmp(volume, s_nv_backup_cfg[i].vol)) {
+			return s_nv_backup_cfg[i].bakvol;
+		}
+	}
+	return NULL;
 }
 
 /**
@@ -134,6 +167,125 @@ static void _fdl2_parse_volume_cfg(unsigned short* vol_cfg, unsigned short total
 		printf("volume name:%s,size:0x%llx,autoresize flag:%d\n",vtbl[i].name,vtbl[i].size,vtbl[i].autoresize);
 	}
 	return;
+}
+
+/**
+ * update the nv volume with nv header.
+ */
+static int _fdl2_update_nv(char *vol, char *bakvol, int size, char *data)
+{
+	int ret,time=1;
+	char *buf;
+	char *curvol;
+	char tmp[NV_HEAD_LEN];
+	nv_header_t *header;
+
+	if(size>dl_stat.bufsize){
+		buf = malloc(size+NV_HEAD_LEN);
+		if(!buf){
+			printf("%s buf malloc failed.\n",__func__);
+			return -1;
+		}
+		fdl_ubi_volume_read(dl_stat.ubi.dev, dl_stat.ubi.cur_volnm, buf, size, 0);
+		if(size != ret) {
+			printf("%s read volume %s failed.\n",__func__,dl_stat.ubi.cur_volnm);
+			return -1;
+		}
+	}else {
+		buf = data;
+	}
+
+	memset(tmp,0x0,NV_HEAD_LEN);
+	header = (nv_header_t *)tmp;
+	header->magic = NV_HEAD_MAGIC;
+	header->version = NV_VERSION;
+	header->len = size;
+	header->checksum = fdl_calc_checksum(buf,size);
+	curvol = vol;
+	do{
+		ret = fdl_ubi_volume_start_update(dl_stat.ubi.dev, curvol, size+NV_HEAD_LEN);
+		if(ret) {
+			printf("%s: vol %s start update failed!\n",__func__,curvol);
+			return -1;
+		}
+		ret = fdl_ubi_volume_write(dl_stat.ubi.dev, curvol, tmp, NV_HEAD_LEN);
+		if(ret) {
+			printf("%s volume write error %d!\n",curvol,ret);
+			return -1;
+		}
+		ret = fdl_ubi_volume_write(dl_stat.ubi.dev, curvol, buf, size);
+		if(ret) {
+			printf("%s volume write error %d!\n",curvol,ret);
+			return -1;
+		}
+		curvol = bakvol;
+	}while(time--);
+
+	printf("update nv success!\n");
+	return 0;
+}
+
+static int _fdl2_check_nv(char *vol)
+{
+	char *buf,*bakbuf,*bakvol;
+	nv_header_t *header;
+	int ret = NAND_SYSTEM_ERROR;
+	int size = FIXNV_SIZE+NV_HEAD_LEN;
+	//read org image
+	buf = malloc(size);
+	if(!buf){
+		printf("%s buf malloc failed.\n",__func__);
+		goto err;
+	}
+
+	ret = fdl_ubi_volume_read(dl_stat.ubi.dev, 
+							vol,
+							buf,
+							size,
+							0);
+	if(size != ret){
+		printf("%s can read 0x%x data from vol %s!!\n",__func__,size,vol);
+	}
+	header = (nv_header_t *)buf;
+	ret = fdl_check_crc(buf+NV_HEAD_LEN, header->len, header->checksum);
+	free(buf);
+	if(ret)
+		return 0;
+	//read backup image needed
+	bakbuf = malloc(size);
+	if(!bakbuf){
+		printf("%s buf malloc failed.\n",__func__);
+		goto err;
+	}
+
+	ret = fdl_ubi_volume_read(dl_stat.ubi.dev, 
+							_is_nv_volume(vol),
+							bakbuf,
+							size,
+							0);
+	if(size != ret){
+		printf("%s can read 0x%x data from bakup of %s!!!\n",__func__,size,vol);
+	}
+	header = (nv_header_t *)bakbuf;
+	ret = fdl_check_crc(bakbuf+NV_HEAD_LEN, header->len, header->checksum);
+	if(!ret){
+		printf("%s both org and bak nv is crash.\n",__func__);
+		free(bakbuf);
+		goto err;
+	}
+	//restore org image
+	fdl_ubi_volume_start_update(dl_stat.ubi.dev, vol, size);
+	ret = fdl_ubi_volume_write(dl_stat.ubi.dev, vol, bakbuf, size);
+	if(ret){
+		printf("%s ubi volume write error %d!\n",__func__,ret);
+		free(bakbuf);
+		goto err;
+	}
+	free(bakbuf);
+	return 0;
+err:
+	//_send_rsp(NAND_SYSTEM_ERROR);
+	return -1;
 }
 
 /**
@@ -429,6 +581,7 @@ int fdl2_download_midst(unsigned short size, char *buf)
 int fdl2_download_end(void)
 {
 	int i=0;
+	int ret = NAND_SUCCESS;
 
 	while(0 != dl_stat.unsv_size){
 		_fdl2_nand_write(dl_stat.nand, dl_stat.mtd.rw_point, dl_stat.unsv_size, dl_stat.buf);
@@ -440,10 +593,21 @@ int fdl2_download_end(void)
 	}
 	//close opened ubi volume
 	if(PART_TYPE_UBI == dl_stat.part_type){
+		int err;
+		char *bakvol;
+		bakvol = _is_nv_volume(dl_stat.ubi.cur_volnm);
+		if(bakvol) {
+			err = _fdl2_update_nv(dl_stat.ubi.cur_volnm, 
+							bakvol,
+							dl_stat.total_dl_size,
+							dl_stat.buf);
+			if(err)
+				ret = NAND_SYSTEM_ERROR;
+		}
 		ubi_close_volume(dl_stat.ubi.cur_voldesc);
 	}
 
-	_send_rsp(NAND_SUCCESS);
+	_send_rsp(ret);
 	return 1;
 }
 
@@ -479,6 +643,9 @@ int fdl2_read_start(char* part, unsigned long size)
 				printf("%s:read size 0x%x > partition size 0x%llx\n",__FUNCTION__,size,dl_stat.ubi.cur_voldesc->vol->used_bytes);
 				ret = NAND_INVALID_SIZE;
 				goto err;
+			}
+			if(_is_nv_volume(dl_stat.ubi.cur_volnm)) {
+				_fdl2_check_nv(dl_stat.ubi.cur_volnm);
 			}
 			break;
 		default:
@@ -519,7 +686,14 @@ int fdl2_read_midst(unsigned long size, unsigned long off, unsigned char *buf)
 				goto err;
 			break;
 		case PART_TYPE_UBI:
-			ret = fdl_ubi_volume_read(dl_stat.ubi.dev, dl_stat.ubi.cur_volnm, buf, size, off);
+			if(_is_nv_volume(dl_stat.ubi.cur_volnm)) {
+				off += NV_HEAD_LEN;
+			}
+			ret = fdl_ubi_volume_read(dl_stat.ubi.dev, 
+								dl_stat.ubi.cur_volnm,
+								buf,
+								size,
+								off);
 			if(size != ret)
 				goto err;
 			break;

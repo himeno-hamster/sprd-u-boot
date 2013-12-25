@@ -23,7 +23,7 @@
 #include <linux/mtd/partitions.h>
 #endif
 
-extern unsigned spl_data_buf[0x1000] __attribute__((align(4)));
+extern unsigned spl_data_buf[0x2000] __attribute__((align(4)));
 extern unsigned harsh_data_buf[8]__attribute__((align(4)));
 extern void *spl_data;
 extern void *harsh_data;
@@ -304,13 +304,14 @@ typedef struct boot_image_required
 
 extern const int SP09_MAX_PHASE_BUFF_SIZE;
 
-#define NV_HEAD_MAGIC   0x00004e56
-#define NV_VERSION      101
+#define NV_HEAD_MAGIC	(0x00004e56)
+#define NV_VERSION		(101)
+#define NV_HEAD_LEN	(512)
 typedef struct  _NV_HEADER {
      uint32_t magic;
      uint32_t len;
      uint32_t checksum;
-     uint32_t   version;
+     uint32_t version;
 }nv_header_t;
 
 void set_vibrator(int on);
