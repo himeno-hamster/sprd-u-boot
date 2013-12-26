@@ -27,6 +27,7 @@
 #endif
 #include <asm/arch/regs_global.h>
 #include <asm/arch/regs_cpc.h>
+#include <asm/arch/sprd_reg.h>
 
 #include "sprdfb.h"
 
@@ -100,29 +101,98 @@ void LCD_SetBackLightBrightness( unsigned long  value)
 	LCD_SetPwmRatio(duty_mod);
 }
 
+static uint32 get_adie_chipid(void)
+{
+       uint32 chip_id;
+       chip_id = (ANA_REG_GET(ANA_REG_GLB_CHIP_ID_HIGH) & 0xffff) << 16;
+       chip_id |= ANA_REG_GET(ANA_REG_GLB_CHIP_ID_LOW) & 0xffff;
+       return chip_id;
+}
+
+void sprd_white_led_init(void)
+{
+	__raw_writel(0xc000,0x400388d8);
+
+	__raw_writel(0x0100,0x40038020);
+	__raw_writel(0xffff,0x40038024);
+	__raw_writel(0xffff,0x4003802c);
+	__raw_writel(0xffff,0x40038030);
+
+	__raw_writel(0x0100,0x40038020);
+
+	__raw_writel(0x0081,0x400388d4);
+//	__raw_writel(0xff80,0x400388d8);
+}
 
 void set_backlight(uint32_t value)
 {
-#ifdef CONFIG_SP8830 || defined (CONFIG_SPX15)
-#if 0
-	/*backlight is driven by PWMD */
-#define DEFAULT_BRIGHTNESS (0xff >> 2)
-	/*enbale pwm3*/
-	__raw_bits_or((0x1 << 7), 0x402e0000);
-	/*config pwm3*/
-	__raw_writel(DEFAULT_BRIGHTNESS << 8 | 0xff, 0x40260064);
-	__raw_writel(0xffff, 0x4026006c);
-	__raw_writel(0xffff, 0x40260070);
-	__raw_writel(0x101,  0x40260060);
+#if (defined(CONFIG_SP8830) || defined(CONFIG_SPX15))
 
+int white_led = 0;
+#if (defined(CONFIG_SPX15))
+	#if (defined(CONFIG_EMMC_BOOT))
+		uint32 chip_id;
+		chip_id = get_adie_chipid();
+		printf("adie chip id: 0x%08X\n", chip_id);
+		if(0x2711A000 == chip_id) {
+			white_led = 1;
+			printf("CONFIG_EMMC_BOOT is set, and the adie chip id is 0x2711A000, therefore, white_led=1\n");
+		}
+		else {
+			white_led = 0;
+			printf("CONFIG_EMMC_BOOT is set, but the adie chip id is NOT 0x2711A000, therefore, white_led=0\n");
+		}
+	#else
+		white_led = 0;
+		printf("CONFIG_EMMC_BOOT is NOT set, therefore, white_led=0\n");
+	#endif
+#else
+	white_led = 1;
+	printf("CONFIG_SP8830 is set and CONFIG_SPX15 is NOT set, therefore, white_led=1\n");
+#endif
+
+#if (defined(CONFIG_SPX15))
+	if(1 == white_led) {
+		/*backlight is driven by whiteled */
+		sprd_white_led_init();
+		if (value == 0) {
+			ANA_REG_SET(0x400388d4,0);
+			printf("sprd backlight power off (SPX15 use WHITE_LED backlight control)\n");
+		} else {
+			__raw_writel(0x0181,0x400388d4);
+			__raw_writel(0x0480,0x400388d8);
+			printf("sprd backlight power on (SPX15 use WHITE_LED backlight control)\n");
+		}
+	}
+	else {
+		/*backlight is driven by PWMC (PWMC=PWM2) */
+		if(0 == value) {
+			__raw_writel(0x0000, 0x40260040);
+			printf("sprd backlight power off (SPX15 use PWM2 for external backlight control)\n");
+		}
+		else {
+			value = (value & 0xff) >> 2;
+			/*enbale pwm2*/
+			__raw_bits_or((0x1 << 6), 0x402e0000);
+			/*config pwm2*/
+			__raw_writel((value << 8) | 0xff, 0x40260044);
+			__raw_writel(0xffff, 0x4026004c);
+			__raw_writel(0xffff, 0x40260050);
+			__raw_writel(0x0100, 0x40260040);
+			printf("sprd backlight power on (SPX15 use PWM2 for external backlight control)\n");
+		}
+	}
 #else
 	/*backlight is driven by whiteled */
 	if (value == 0) {
 		ANA_REG_SET(0x40038894,0);
+		printf("sprd backlight power off (SP8830 use WHITE_LED backlight control)\n");
 	} else {
 		ANA_REG_SET(0x40038894,(ANA_REG_GET(0x40038894)|(0x3 << 7)));
+		printf("sprd backlight power on (SP8830 use WHITE_LED backlight control)\n");
 	}
 #endif
+
 #elif defined(CONFIG_SP8830SSW)
 	FB_PRINT("set_backlight\n");
 	/* GPIO214 */
