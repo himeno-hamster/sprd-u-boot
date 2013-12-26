@@ -1215,7 +1215,7 @@ void modem_entry()
 #elif defined (CONFIG_SC8830)
 	u32 state;
 
-#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB) || defined(CONFIG_SC9620OPENPHONE)
 	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
 
 	memcpy(0x50001800, cp1data, sizeof(cp1data));	   /* copy cp1 source code */
@@ -1334,7 +1334,7 @@ void sipc_addr_reset()
 #ifdef CONFIG_SC8825
 	memset((void *)SIPC_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 #elif defined (CONFIG_SC8830)
-#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB) || defined(CONFIG_SC9620OPENPHONE)
 	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 
 #elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15)
