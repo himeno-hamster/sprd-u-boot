@@ -24,8 +24,8 @@
 #define CONFIG_FDL2_PRINT        0
 #define BOOT_NATIVE_LINUX        1
 #define BOOT_NATIVE_LINUX_MODEM  1
-#define CALIBRATION_FLAG         0x89FFFC00
-#define	CALIBRATION_FLAG_WCDMA	 0x89FFFC00
+#define CALIBRATION_FLAG         0x897FFC00
+#define	CALIBRATION_FLAG_WCDMA	 0x897FFC00
 #define CONFIG_SILENT_CONSOLE
 #define CONFIG_GPIOLIB 1
 //#define NAND_DEBUG  
@@ -53,7 +53,7 @@
  * SPREADTRUM BIGPHONE board - SoC Configuration
  */
 #define CONFIG_SPX15
-#define CONFIG_SPX15_WCDMA
+#define CONFIG_SPX15_TD
 #define CONFIG_SC8830
 
 #define CONFIG_AUTODLOADER
@@ -62,7 +62,8 @@
 #define CHIP_ENDIAN_LITTLE
 #define _LITTLE_ENDIAN 1
 
-#define CONFIG_RAM512M
+//#define CONFIG_RAM512M
+#define CONFIG_RAM256M
 
 //#define CONFIG_EMMC_BOOT
 
@@ -118,7 +119,7 @@
 #define FIXNV_SIZE		(256 * 1024)
 #define PRODUCTINFO_SIZE	(16 * 1024)
 #define MODEM_SIZE		(0x800000)
-#define DSP_SIZE		(0x200000) /* 3968K */
+#define DSP_SIZE		(0x2E0000)
 #define WCNMODEM_SIZE           (0x100000)
 #define VMJALUNA_SIZE		(0x64000) /* 400K */
 #define RUNTIMENV_SIZE		(384 * 1024)
@@ -243,7 +244,8 @@
 //#define DDR_DDR3
 
 //#define DDR_TYPE DRAM_LPDDR2_2CS_8G_X32
-#define DDR_TYPE DRAM_LPDDR2_1CS_4G_X32
+//#define DDR_TYPE DRAM_LPDDR2_1CS_4G_X32
+#define DDR_TYPE DRAM_LPDDR2_1CS_2G_X32
 //#define DDR_TYPE DRAM_LPDDR2_1CS_8G_X32
 //#define DDR_TYPE DRAM_LPDDR2_2CS_16G_X32
 //#define DDR_TYPE DRAM_DDR3_1CS_2G_X8_4P
@@ -252,7 +254,7 @@
 #define DDR3_DLL_ON TRUE
 //#define DLL_BYPASS
 #define DDR_APB_CLK 128
-//#define DDR_DFS_SUPPORT
+#define DDR_DFS_SUPPORT
 #define DDR_DFS_VAL_BASE 0X1c00
 
 //#define DDR_SCAN_SUPPORT
@@ -328,7 +330,8 @@
 #define MTDIDS_DEFAULT "nand0=sprd-nand"
 //#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),2m(2ndbl),256k(tdmodem),256k(tddsp),256k(tdfixnv1),256k(tdruntimenv),256k(wmodem),256k(wdsp),256k(wfixnv1),256k(wruntimenv1),256k(prodinfo1),256k(prodinfo3),1024k(logo),1024k(fastbootlogo),10m(boot),300m(system),150m(cache),10m(recovery),256k(misc),256k(sd),512k(userdata)"
 #define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),768k(2ndbl),512k(kpanic),-(ubipac)"
-#define CONFIG_BOOTARGS "mem=512M loglevel=1 console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
+//#define CONFIG_BOOTARGS "mem=512M console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
+#define CONFIG_BOOTARGS "mem=256M console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
 #define COPY_LINUX_KERNEL_SIZE	(0x600000)
 #define LINUX_INITRD_NAME	"modem"
 
@@ -396,7 +399,8 @@
 
 #define CONFIG_SPRD_SYSDUMP
 #include <asm/sizes.h>
-#define SPRD_SYSDUMP_MAGIC      ((PHYS_OFFSET_ADDR & (~(SZ_512M - 1))) + SZ_512M - SZ_1M)
+//#define SPRD_SYSDUMP_MAGIC      ((PHYS_OFFSET_ADDR & (~(SZ_512M - 1))) + SZ_512M - SZ_1M)
+#define SPRD_SYSDUMP_MAGIC      ((PHYS_OFFSET_ADDR & (~(SZ_256M - 1))) + SZ_256M - SZ_1M)
 #define CALIBRATE_ENUM_MS 3000
 #define CALIBRATE_IO_MS 2000
 
@@ -409,7 +413,7 @@
 
 #define PHYS_OFFSET_ADDR			0x80000000
 #define TD_CP_OFFSET_ADDR			0x8000000	/*128*/
-#define TD_CP_SDRAM_SIZE			0x1800000	/*24M*/
+#define TD_CP_SDRAM_SIZE			0x1200000	/*24M*/
 #define WCDMA_CP_OFFSET_ADDR		0x8000000	/*128M*/
 #define WCDMA_CP_SDRAM_SIZE		    0x2000000	/*32M*/
 
@@ -418,6 +422,7 @@
 
 #define SIPC_APCP_RESET_ADDR_SIZE	0xC00	/*3K*/
 #define SIPC_APCP_RESET_SIZE	    0x1000	/*4K*/
+#define SIPC_TD_APCP_START_ADDR		(PHYS_OFFSET_ADDR + TD_CP_OFFSET_ADDR + TD_CP_SDRAM_SIZE - SIPC_APCP_RESET_SIZE)	/*0x897FF000*/
 #define SIPC_WCDMA_APCP_START_ADDR	(PHYS_OFFSET_ADDR + WCDMA_CP_OFFSET_ADDR + WCDMA_CP_SDRAM_SIZE - SIPC_APCP_RESET_SIZE)
 #define SIPC_WCN_APCP_START_ADDR    (PHYS_OFFSET_ADDR + WCN_CP_OFFSET_ADDR + WCN_CP_SDRAM_SIZE - SIPC_APCP_RESET_SIZE)
 

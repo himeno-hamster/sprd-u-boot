@@ -61,12 +61,8 @@ extern unsigned char raw_header[8192];
 #define VLX_TAG_ADDR    0x82000100
 #define DT_ADR          0x85400000
 #define RAMDISK_ADR     0x85500000
-#define TDDSP_ADR       0x88020000
-#define TDFIXNV_ADR     0x89060000
-#define TDRUNTIMENV_ADR 0x890a0000
-//#define TDPRODINFO_ADR  0x884e0000
-#define TDMODEM_ADR     0x88300000
 #if defined(CONFIG_SPX15)
+#if defined(CONFIG_SPX15_WCDMA)
 #define WDSP_ADR        0x88020000
 #define WFIXNV_ADR      0x88240000
 #define WRUNTIMENV_ADR  0x88280000
@@ -75,7 +71,21 @@ extern unsigned char raw_header[8192];
 #define WCNMODEM_ADR     0x8a860000
 #define WCNFIXNV_ADR     0x8a800000
 #define WCNRUNTIMENV_ADR 0x8a820000
+#elif defined(CONFIG_SPX15_TD)
+#define TDDSP_ADR       0x88020000
+#define TDFIXNV_ADR     0x89060000
+#define TDRUNTIMENV_ADR 0x890a0000
+#define TDMODEM_ADR     0x88300000
+#define WCNMODEM_ADR     0x8a860000
+#define WCNFIXNV_ADR     0x8a800000
+#define WCNRUNTIMENV_ADR 0x8a820000
+#endif
 #else
+#define TDDSP_ADR       0x88020000
+#define TDFIXNV_ADR     0x89060000
+#define TDRUNTIMENV_ADR 0x890a0000
+//#define TDPRODINFO_ADR  0x884e0000
+#define TDMODEM_ADR     0x88300000
 #define WDSP_ADR        0x90020000
 #define WFIXNV_ADR      0x90240000
 #define WRUNTIMENV_ADR  0x90280000
