@@ -645,6 +645,10 @@ int sn_is_correct_endflag(unsigned char *array, unsigned long size)
 	return -1;
 }
 
+/*FDT_ADD_SIZE used to describe the size of the new bootargs items*/
+/*include lcd id, lcd base, etc*/
+#define FDT_ADD_SIZE (500)
+
 static int start_linux()
 {
 	void (*theKernel)(int zero, int arch, u32 params);
@@ -671,13 +675,16 @@ static int start_linux()
 	}
 	fdt_size=fdt_totalsize(fdt_blob);
 
-	err = fdt_open_into(fdt_blob, fdt_blob, fdt_size);
+	err = fdt_open_into(fdt_blob, fdt_blob, fdt_size + FDT_ADD_SIZE);
 	if (err != 0) {
 		printf ("libfdt fdt_open_into(): %s\n",
 				fdt_strerror(err));
 	}
 
 	fdt_initrd_norsvmem(fdt_blob,RAMDISK_ADR,RAMDISK_ADR+hdr->ramdisk_size, 1);
+
+	fdt_fixup_lcdid(fdt_blob);
+	fdt_fixup_lcdbase(fdt_blob);
 
 	theKernel(0, machine_type, (unsigned long)fdt_blob);
 #else

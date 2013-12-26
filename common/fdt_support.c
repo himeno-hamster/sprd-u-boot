@@ -330,6 +330,99 @@ int fdt_chosen(void *fdt, int force)
 	return err;
 }
 
+int fdt_chosen_bootargs_append(void *fdt, char* append_args,int force)
+{
+	int   nodeoffset;
+	int   err;
+	char  *str;/* used to set string properties */
+	const char *path;
+	char *strargs;
+
+	if (!append_args)
+		return -1;
+
+	err = fdt_check_header(fdt);
+	if (err < 0) {
+		printf("fdt_chosen_bootargs_append: %s\n", fdt_strerror(err));
+		return err;
+	}
+
+	/*
+	 * Find the "chosen" node.
+	 */
+	nodeoffset = fdt_path_offset (fdt, "/chosen");
+
+	/*
+	 * If there is no "chosen" node in the blob, leave.
+	 */
+	if (nodeoffset < 0) {
+		printf("fdt_chosen_bootargs_append: cann't find chosen");
+		return -1;
+	}
+
+	/*
+	 * If the property exists, update it only if the "force" parameter
+	 * is true.
+	 */
+	path = fdt_getprop(fdt, nodeoffset, "bootargs", NULL);
+	if ((path == NULL) || force) {
+		strargs = malloc(1024);
+		if (!strargs)
+			return -1;
+		memset(strargs, 0, 1024);
+		sprintf(strargs,"%s %s",path,append_args);
+		err = fdt_setprop(fdt, nodeoffset,
+				"bootargs", strargs, strlen(strargs)+1);
+		if (err < 0)
+			printf("WARNING: could not set bootargs %s.\n",
+				fdt_strerror(err));
+		free(strargs);
+	}
+
+	return err;
+}
+
+int fdt_fixup_lcdid(void *fdt)
+{
+	char buf[16];
+	extern uint32_t load_lcd_id_to_kernel();
+	uint32_t lcd_id = 0;
+	int str_len;
+	int ret;
+
+	lcd_id = load_lcd_id_to_kernel();
+	memset(buf, 0, 16);
+
+	sprintf(buf, "lcd_id=ID");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x",lcd_id);
+	str_len = strlen(buf);
+	buf[str_len] = '\0';
+
+	ret = fdt_chosen_bootargs_append(fdt, buf, 1);
+	return ret;
+}
+
+int fdt_fixup_lcdbase(void *fdt)
+{
+	char buf[32];
+	int str_len;
+	int ret;
+	extern void *lcd_base;
+
+	memset(buf, 0, 32);
+
+	//add lcd frame buffer base, length should be lcd w*h*2(RGB565)
+	sprintf(buf, "lcd_base=");
+	str_len = strlen(buf);
+	sprintf(&buf[str_len], "%x",lcd_base);
+	str_len = strlen(buf);
+	buf[str_len] = '\0';
+
+	ret = fdt_chosen_bootargs_append(fdt, buf, 1);
+	return ret;
+}
+
 void do_fixup_by_path(void *fdt, const char *path, const char *prop,
 		      const void *val, int len, int create)
 {

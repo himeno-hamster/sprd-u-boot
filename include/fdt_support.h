@@ -90,5 +90,9 @@ int fdt_node_offset_by_compat_reg(void *blob, const char *compat,
 int fdt_alloc_phandle(void *blob);
 int fdt_add_edid(void *blob, const char *compat, unsigned char *buf);
 
+
+int fdt_fixup_lcdid(void *fdt);
+int fdt_fixup_lcdbase(void *fdt);
+
 #endif /* ifdef CONFIG_OF_LIBFDT */
 #endif /* ifndef __FDT_SUPPORT_H */
