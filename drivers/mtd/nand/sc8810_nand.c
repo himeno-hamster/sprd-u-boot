@@ -209,8 +209,7 @@ static const struct nand_spec_str nand_spec_table[] = {
         {0x98, 0xbc, 0x90, 0x66, 0x76, {35, 40, 10, 20, 50, 12, 12, 25}},// KSLCCBL1FB2G3A,mvr673,mvr594
         {0xad, 0xbc, 0x90, 0x11, 0x00, {15, 25, 10, 20, 50, 25, 25, 30}},// H9DA4VH4JJMMCR-4EMi, H9DA4VH2GJMMCR-4EM
         {0xad, 0xbc, 0x90, 0x55, 0x54, {15, 25, 10, 20, 50, 25, 25, 30}},//
-        {0xad, 0xbc, 0x90, 0x55, 0x56, {20, 30, 10, 20, 30, 25, 25, 30}},//H9DA4GH2GJBMCR
-
+        {0xad, 0xbc, 0x90, 0x55, 0x56, {25, 35, 10, 20, 50, 25, 25, 30}},//H9DA4GH2GJBMCR, mvr52     5,mvr543
         {0xec, 0xb3, 0x01, 0x66, 0x5a, {10, 21, 10, 20, 50, 21, 21, 30}},// KBY00U00VA-B450
         {0xec, 0xbc, 0x00, 0x55, 0x54, {10, 21, 10, 20, 50, 21, 21, 30}},// KA100O015M-AJTT
         {0xec, 0xbc, 0x00, 0x6a, 0x56, {10, 21, 10, 20, 50, 21, 21, 30}},// K524G2GACH-B050
