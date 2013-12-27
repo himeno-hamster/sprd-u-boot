@@ -767,6 +767,7 @@ void addcmdline(char *buf)
 #if defined (CONFIG_SC8830)
 	/* tdfixnv=0x????????,0x????????*/
 	int str_len = strlen(buf);
+#ifndef CONFIG_SPX15_WCDMA
 	sprintf(&buf[str_len], " tdfixnv=0x");
 	str_len = strlen(buf);
 	sprintf(&buf[str_len], "%08x", TDFIXNV_ADR);
@@ -784,7 +785,8 @@ void addcmdline(char *buf)
 	sprintf(&buf[str_len], ",0x");
 	str_len = strlen(buf);
 	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
-
+#endif
+#ifndef CONFIG_SPX15_TD
 	/* wfixnv=0x????????,0x????????*/
 	str_len = strlen(buf);
 	sprintf(&buf[str_len], " wfixnv=0x");
@@ -804,6 +806,7 @@ void addcmdline(char *buf)
 	sprintf(&buf[str_len], ",0x");
 	str_len = strlen(buf);
 	sprintf(&buf[str_len], "%x", RUNTIMENV_SIZE);
+#endif
 
 #ifdef CONFIG_SP8830WCN
 	/* wcnfixnv=0x????????,0x????????*/
@@ -1215,7 +1218,7 @@ void modem_entry()
 #elif defined (CONFIG_SC8830)
 	u32 state;
 
-#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB) || defined(CONFIG_SC9620OPENPHONE)
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB)|| defined(CONFIG_SC9620OPENPHONE) || defined(CONFIG_SPX15_TD)
 	u32 cp1data[3] = {0xe59f0000, 0xe12fff10, TDMODEM_ADR};
 
 	memcpy(0x50001800, cp1data, sizeof(cp1data));	   /* copy cp1 source code */
@@ -1245,7 +1248,7 @@ void modem_entry()
 	*((volatile u32*)0x402B00A8) &= ~0x00000002;	   /* clear reset cp0 cp1 */
 #endif
 
-#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15)
+#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15_WCDMA)
 
 	u32 cp0data[3] = {0xe59f0000, 0xe12fff10, WMODEM_ADR};
 
@@ -1334,10 +1337,10 @@ void sipc_addr_reset()
 #ifdef CONFIG_SC8825
 	memset((void *)SIPC_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 #elif defined (CONFIG_SC8830)
-#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB) || defined(CONFIG_SC9620OPENPHONE)
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB) || defined(CONFIG_SC9620OPENPHONE) || defined(CONFIG_SPX15_TD)
 	memset((void *)SIPC_TD_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 
-#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15)
+#elif defined(CONFIG_SP7735EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SPX15_WCDMA)
 
 	memset((void *)SIPC_WCDMA_APCP_START_ADDR, 0x0, SIPC_APCP_RESET_ADDR_SIZE);
 #else

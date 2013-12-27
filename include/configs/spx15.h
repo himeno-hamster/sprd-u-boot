@@ -51,6 +51,7 @@
  * SPREADTRUM BIGPHONE board - SoC Configuration
  */
 #define CONFIG_SPX15
+#define CONFIG_SPX15_WCDMA
 #define CONFIG_SC8830
 
 #define CONFIG_AUTODLOADER

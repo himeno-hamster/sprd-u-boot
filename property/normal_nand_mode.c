@@ -1,19 +1,24 @@
 #include "normal_mode.h"
 
 static vol_image_required_t s_boot_img_table[]={
-#if defined(CONFIG_SPX15)
+#if defined(CONFIG_SPX15_WCDMA)
 	//dolphin
 	{"wfixnv1","wfixnv2",FIXNV_SIZE,WFIXNV_ADR,IMG_RAW},
 	{"wruntimenv1","wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR,IMG_RAW},
 	{"wdsp",NULL,DSP_SIZE,WDSP_ADR,IMG_RAW},
 	{"wmodem",NULL,MODEM_SIZE,WMODEM_ADR,IMG_RAW},
+#elif defined(CONFIG_SPX15_TD)
+	{"tdfixnv1","tdfixnv2",FIXNV_SIZE,TDFIXNV_ADR,IMG_RAW},
+	{"tdruntimenv1","tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR,IMG_RAW},
+	/*{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},*/
+	{"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR,IMG_RAW},
+	{"tddsp",NULL,DSP_SIZE,TDDSP_ADR,IMG_RAW}, 
+#endif
 #ifdef CONFIG_SP8830WCN
 	{"wcnfixnv1","wcnfixnv2",FIXNV_SIZE,WCNFIXNV_ADR,IMG_RAW},
 	{"wcnruntimenv1","wcnruntimenv2",RUNTIMENV_SIZE,WCNRUNTIMENV_ADR,IMG_RAW},
 	{"wcnmodem",NULL,WCNMODEM_SIZE,WCNMODEM_ADR,IMG_RAW},
-#endif
-
-#endif
+#endif		
 	{NULL,NULL,0,0,IMG_MAX}
 };
 
