@@ -402,7 +402,11 @@ LOCAL int _boot_load_kernel_ramdisk_image(block_dev_desc_t *dev, char* bootmode,
 #ifdef CONFIG_SDRAMDISK
 	{
 	int sd_ramdisk_size = 0;
+#ifdef CONFIG_SPX15_WCDMA
+	size = WDSP_ADR - RAMDISK_ADR;
+#else
 	size = TDDSP_ADR - RAMDISK_ADR;
+#endif
 	if (size>0)
 		sd_ramdisk_size = load_sd_ramdisk((uint8*)RAMDISK_ADR,size);
 	if (sd_ramdisk_size>0)
