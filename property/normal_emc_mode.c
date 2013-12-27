@@ -18,7 +18,7 @@ long long load_image_time = 0;
 static boot_image_required_t const s_boot_image_table[]={
 #ifdef CONFIG_SC8830
 
-#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB) || defined(CONFIG_SC9620OPENPHONE)
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB) || defined(CONFIG_SC9620OPENPHONE) || defined(CONFIG_SC9620FPGA)
 	{L"tdfixnv1",L"tdfixnv2",FIXNV_SIZE,TDFIXNV_ADR},
 	{L"tdruntimenv1",L"tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR},
 	{L"tdmodem",NULL,MODEM_SIZE,TDMODEM_ADR},
