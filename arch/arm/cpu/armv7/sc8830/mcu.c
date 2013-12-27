@@ -321,7 +321,7 @@ static uint32 ArmCoreConfig(uint32 arm_clk)
     //1.2V  1200M
 
 
-#if (defined(CONFIG_SP8830EB)||defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SPX15) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SC9620OPENPHONE))
+#if (defined(CONFIG_SP8830EB)||defined(CONFIG_SP8830EC) || defined(CONFIG_SP8835EB) || defined(CONFIG_SP7730EC) || defined(CONFIG_SP5735) || defined(CONFIG_SPX15) || defined(CONFIG_SP7730ECTRISIM) || defined(CONFIG_SC9620OPENPHONE) || defined(CONFIG_SC9620FPGA))
 
     if (arm_clk <= ARM_CLK_900M)
     {
@@ -378,7 +378,7 @@ uint32 MCU_Init()
 #if defined(CONFIG_CLK_PARA)
     if (ClkConfig(mcu_clk_para.core_freq))
 #else
-#if (defined(CONFIG_SP8830EB)||defined(CONFIG_SP8830EC)||defined(CONFIG_SP8835EB)||defined(CONFIG_SP7730EC)||defined(CONFIG_SP5735)||defined(CONFIG_SPX15) || defined(CONFIG_SP7730ECTRISIM)||defined(CONFIG_SC9620OPENPHONE))
+#if (defined(CONFIG_SP8830EB)||defined(CONFIG_SP8830EC)||defined(CONFIG_SP8835EB)||defined(CONFIG_SP7730EC)||defined(CONFIG_SP5735)||defined(CONFIG_SPX15) || defined(CONFIG_SP7730ECTRISIM)||defined(CONFIG_SC9620OPENPHONE)||defined(CONFIG_SC9620FPGA))
     if (ClkConfig(ARM_CLK_1000M))
 #else
     if (ClkConfig(ARM_CLK_800M))
