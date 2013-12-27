@@ -213,7 +213,7 @@ int white_led = 0;
 	}
 #endif
 
-#if defined (CONFIG_STAR2)
+#if defined (CONFIG_STAR2) || defined (CONFIG_CORSICA_VE)
 	FB_PRINT("sprdfb: [%s] turn on the backlight\n", __FUNCTION__);
 
 	sprd_gpio_request(NULL, 190);
@@ -321,7 +321,7 @@ static int sprdfb_probe(void * lcdbase)
 	__raw_writel((__raw_readl(0x20900220) | 0x00500000), 0x20900220);
 */
 #ifdef CONFIG_SPX15
-#ifndef CONFIG_STAR2
+#if !defined (CONFIG_STAR2) && !defined (CONFIG_CORSICA_VE)
 	sprd_gpio_request(NULL, 190);
 	sprd_gpio_direction_output(NULL, 190, 1);
 #endif
