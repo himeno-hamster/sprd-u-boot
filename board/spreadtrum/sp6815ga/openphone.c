@@ -38,6 +38,17 @@ int board_mmc_init(bd_t *bd)
 
 extern struct eic_gpio_resource sprd_gpio_resource[];
 
+typedef enum
+{
+	TD_MODE,
+	W_MODE
+}COMM_STD_MODE_E;
+static void TD_comm_misc_init(COMM_STD_MODE_E csm)
+{
+	if(TD_MODE == csm){
+		REG32(REG_AON_APB_WTG_TEST) |= BIT_TG_DAC_OUT_SEL;
+	}
+}
 int board_init()
 {
 	gd->bd->bi_arch_number = MACH_TYPE_OPENPHONE;
@@ -52,6 +63,7 @@ int board_init()
 	sound_init();
 	init_ldo_sleep_gr();
 	TDPllRefConfig(1);
+	TD_comm_misc_init(TD_MODE);
 
 	return 0;
 }
