@@ -1,13 +1,13 @@
 #include "normal_mode.h"
 
 static vol_image_required_t s_boot_img_table[]={
-#if defined(CONFIG_SPX15_WCDMA)
+#if defined(CONFIG_SPX15_WCDMA) || defined(CONFIG_SP7730GA)
 	//dolphin
 	{"wfixnv1","wfixnv2",FIXNV_SIZE,WFIXNV_ADR,IMG_RAW},
 	{"wruntimenv1","wruntimenv2",RUNTIMENV_SIZE,WRUNTIMENV_ADR,IMG_RAW},
 	{"wdsp",NULL,DSP_SIZE,WDSP_ADR,IMG_RAW},
 	{"wmodem",NULL,MODEM_SIZE,WMODEM_ADR,IMG_RAW},
-#elif defined(CONFIG_SPX15_TD)
+#elif defined(CONFIG_SPX15_TD) || defined(CONFIG_SP8830GA)
 	{"tdfixnv1","tdfixnv2",FIXNV_SIZE,TDFIXNV_ADR,IMG_RAW},
 	{"tdruntimenv1","tdruntimenv2",RUNTIMENV_SIZE,TDRUNTIMENV_ADR,IMG_RAW},
 	/*{L"prodinfo1",L"prodinfo2",PRODUCTINFO_SIZE,TDPRODINFO_ADR},*/
