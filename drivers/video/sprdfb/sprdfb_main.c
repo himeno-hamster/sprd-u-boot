@@ -166,6 +166,7 @@ int white_led = 0;
 	}
 	else {
 		/*backlight is driven by PWMC (PWMC=PWM2) */
+		__raw_bits_or((0x1 << 0), 0x402d0040);//use ext_26m for clk_pwm2 parent clk
 		if(0 == value) {
 			__raw_writel(0x0000, 0x40260040);
 			printf("sprd backlight power off (SPX15 use PWM2 for external backlight control)\n");
