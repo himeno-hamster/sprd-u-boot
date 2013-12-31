@@ -246,7 +246,7 @@
 //#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),128k(params),512k(vmjaluna),10m(modem),10m(boot)"
 //#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),250m(system),180m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),3840k(productinfo),512k(kpanic)"
 //#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),768k(2ndbl),256k(params),512k(vmjaluna),6m(modem),2816k(fixnv),2816k(backupfixnv),4m(dsp),3840k(runtimenv),6m(boot),6m(recovery),110m(system),97m(userdata),7m(cache),256k(misc),512k(boot_logo),512k(fastboot_logo),2816k(productinfo),512k(kpanic),512k(simlock)"
-#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),768k(2ndbl),256k(params),512k(vmjaluna),6m(modem),2816k(fixnv),2816k(backupfixnv),4m(dsp),3840k(runtimenv),8m(boot),10m(recovery),110m(system),91m(userdata),7m(cache),256k(misc),512k(boot_logo),512k(fastboot_logo),2816k(productinfo),512k(kpanic),512k(simlock)"
+#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),768k(2ndbl),256k(params),512k(vmjaluna),6m(modem),2816k(fixnv),2816k(backupfixnv),4m(dsp),3840k(runtimenv),6m(boot),6m(recovery),110m(system),97m(userdata),7m(cache),256k(misc),512k(boot_logo),512k(fastboot_logo),2816k(productinfo),512k(kpanic),512k(simlock)"
 #define CONFIG_BOOTARGS "mem=240M console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
 #endif
 
