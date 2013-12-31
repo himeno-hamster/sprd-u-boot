@@ -45,6 +45,8 @@
 #define BOOT_PART "boot"
 //#define BOOT_PART "kernel"
 #define RECOVERY_PART "recovery"
+#define UBIPAC_PART  "ubipac"
+
 /*
  * SPREADTRUM BIGPHONE board - SoC Configuration
  */
@@ -64,8 +66,6 @@
 /*
 #define CONFIG_EMMC_BOOT
 */
-
-
 
 #ifdef  CONFIG_EMMC_BOOT
 #define EMMC_SECTOR_SIZE 512
@@ -249,9 +249,9 @@
 
 /* NAND */
 #define CONFIG_NAND_SC8830
-#define CONFIG_SPRD_NAND_REGS_BASE	(0x21100000)
+#define CONFIG_SPRD_NAND_REGS_BASE	(0x20B00000)
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define CONFIG_SYS_NAND_BASE		(0x21100000)
+#define CONFIG_SYS_NAND_BASE		(0x20B00000)
 //#define CONFIG_JFFS2_NAND
 //#define CONFIG_SPRD_NAND_HWECC
 #define CONFIG_SYS_NAND_HW_ECC
@@ -265,6 +265,12 @@
 #define CONFIG_MTD_DEVICE
 #define CONFIG_CMD_UBI
 #define CONFIG_RBTREE
+
+#define CONFIG_CMD_UBIFS
+#define CONFIG_LZO
+#ifdef CONFIG_CMD_UBIFS
+#define CONFIG_FS_UBIFS
+#endif
 
 /* U-Boot general configuration */
 #define CONFIG_SYS_PROMPT	"=> "	/* Monitor Command Prompt */
@@ -307,7 +313,8 @@
 #define str(s)	#s
 
 #define MTDIDS_DEFAULT "nand0=sprd-nand"
-#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),250m(system),180m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),3840k(productinfo),512k(kpanic)"
+//#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),512k(2ndbl),256k(params),512k(vmjaluna),10m(modem),3840k(fixnv),3840k(backupfixnv),5120k(dsp),3840k(runtimenv),10m(boot),10m(recovery),250m(system),180m(userdata),20m(cache),256k(misc),1m(boot_logo),1m(fastboot_logo),3840k(productinfo),512k(kpanic)"
+#define MTDPARTS_DEFAULT "mtdparts=sprd-nand:256k(spl),768k(2ndbl),512k(kpanic),-(ubipac)"
 #define CONFIG_BOOTARGS "mem=512M loglevel=1 console=ttyS1,115200n8 init=/init " MTDPARTS_DEFAULT
 
 #define COPY_LINUX_KERNEL_SIZE	(0x600000)
@@ -374,7 +381,6 @@
 #include <asm/sizes.h>
 #define SPRD_SYSDUMP_MAGIC      ((PHYS_OFFSET_ADDR & (~(SZ_512M - 1))) + SZ_512M - SZ_1M)
 
-#define UBIPAC_PART  "ubipac"
 
 #define CALIBRATE_ENUM_MS 3000
 #define CALIBRATE_IO_MS 2000
