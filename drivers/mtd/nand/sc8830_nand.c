@@ -1597,7 +1597,7 @@ static void sprd_dolphin_nand_hw_init(struct sprd_dolphin_nand_info *dolphin)
 	}
 #endif
 
-#if 1
+#if 0
 	sprd_dolphin_reg_or(DOLPHIN_PIN_BASE + REG_PIN_NFRB, BIT(7));
 	for (i = REG_PIN_NFWPN; i <= REG_PIN_NFD15; i += 4)
 	{
