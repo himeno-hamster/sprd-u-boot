@@ -51,6 +51,7 @@
  * SPREADTRUM BIGPHONE board - SoC Configuration
  */
 #define CONFIG_STAR2
+#define CONFIG_SS_FUNCTION    /*Only for samsung project*/
 #define CONFIG_SPX15
 #define CONFIG_SPX15_WCDMA
 #define CONFIG_SC8830
