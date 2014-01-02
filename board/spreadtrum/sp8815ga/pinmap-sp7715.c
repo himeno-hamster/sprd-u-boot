@@ -17,7 +17,7 @@
 static pinmap_t  pinmap[] = {
 	{REG_PIN_CTRL0,			0},	//modify it later
 	{REG_PIN_CTRL1,			0},	//modify it later
-{REG_PIN_CTRL2,(4<<28)|(1<<27)|(1<<24)|(1<<22)|(0<<20)|(1<<16)|(2<<10)},
+{REG_PIN_CTRL2,(4<<28)|(1<<27)|(1<<24)|(1<<22)|(1<<20)|(1<<16)|(2<<10)},
 	{REG_PIN_CTRL3,			0},	//modify it later1
 {REG_PIN_U0TXD,               BIT_PIN_SLP_AP|BIT_PIN_SLP_CP2|BIT_PIN_NULL|BITS_PIN_DS(1)|BITS_PIN_AF(1)|BIT_PIN_NUL|BIT_PIN_SLP_WPD|BIT_PIN_SLP_Z},//CON_SDA
 {REG_PIN_U0RXD,               BIT_PIN_SLP_AP|BIT_PIN_SLP_CP2|BIT_PIN_NULL|BITS_PIN_DS(1)|BITS_PIN_AF(1)|BIT_PIN_NUL|BIT_PIN_SLP_WPD|BIT_PIN_SLP_Z},//CON_SCLK
