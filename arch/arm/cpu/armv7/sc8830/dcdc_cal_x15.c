@@ -5,7 +5,10 @@
 #include <asm/arch/sprd_reg.h>
 
 int regulator_default_get(const char con_id[]);
+void regulator_default_set(const char con_id[], int vol);
 int regulator_default_set_all(void);
+u32 regulator_get_calibration_mask(void);
+
 
 #undef debug
 #define debug0(format, arg...)
@@ -173,14 +176,14 @@ struct regulator_regs {
 struct regulator_desc {
 	int id;
 	const char *name;
-	const struct regulator_regs *regs;
+	struct regulator_regs *regs;
 };
 
 #define REGU_VERIFY_DLY	(1000)	/*ms */
 #define SCI_REGU_REG(VDD, TYP, PD_SET, SET_BIT, PD_RST, RST_BIT, SLP_CTL, SLP_CTL_BIT, \
                      VOL_TRM, VOL_TRM_BITS, CAL_CTL, CAL_CTL_BITS, VOL_DEF,	\
                      VOL_CTL, VOL_CTL_BITS, VOL_SEL_CNT, ...)					\
-	static const struct regulator_regs REGS_##VDD = {						\
+	static struct regulator_regs REGS_##VDD = {						\
 		.typ = TYP,							\
 		.pd_set = PD_SET, 					\
 		.pd_set_bit = SET_BIT,					\
@@ -208,16 +211,6 @@ struct regulator_desc {
 
 
 /* standard dcdc ops*/
-static uint32 get_adie_chipid(void)
-{
-	uint32 chip_id;
-
-	chip_id = (ANA_REG_GET(ANA_REG_GLB_CHIP_ID_HIGH) & 0xffff) << 16;
-	chip_id |= ANA_REG_GET(ANA_REG_GLB_CHIP_ID_LOW) & 0xffff;
-
-	return chip_id;
-}
-
 static int adjust_ldo_vol_base(struct regulator_desc *desc)
 {
 	struct regulator_regs *regs = desc->regs;
@@ -391,7 +384,7 @@ static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 	if (!adc_chan || !regs->vol_def)
 		return -1;
 
-	if(0x2711A000 == get_adie_chipid()) {
+	if(0x2711A000 == ANA_GET_CHIP_ID()) {
 		if (desc->regs->typ == 0) {
 			adjust_ldo_vol_base(desc);
 		}
@@ -417,7 +410,7 @@ static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 
 	adc_vol = sci_adc_vol_request(adc_chan, ldo_cal_sel);
 	if (adc_vol <= 0) {
-		debug("%s default %dmv, maybe not enable\n", desc->name, def_vol);
+		debug("%s default %dmv, adc channel %d, maybe not enable\n", desc->name, def_vol, adc_chan);
 		goto exit;
 	}
 
@@ -440,13 +433,16 @@ static int DCDC_Cal_One(struct regulator_desc *desc, int is_cal)
 			ret = dcdc_set_trimming(desc, def_vol, to_vol, adc_vol);
 		else if (regs->typ == 0/*VDD_TYP_LDO*/)
 			ret = ldo_set_trimming(desc, def_vol, to_vol, adc_vol);
+
+		if(ret < 0)
+			regulator_default_set(desc->name, 0);
 	}
 
 exit:
 	if (ldo_cal_sel)
 		ANA_REG_BIC(regs->cal_ctl, ldo_cal_sel);
 
-	return 0;
+	return ret;
 }
 
 int DCDC_Cal_ArmCore(void)
@@ -455,14 +451,18 @@ int DCDC_Cal_ArmCore(void)
 	u32 res;
 	struct regulator_desc *desc = NULL;
 	struct regulator_desc *desc_end = NULL;
-	uint32 chip_id = get_adie_chipid();
+	u32 cali_mask = regulator_get_calibration_mask();
+	u32 chip_id = ANA_GET_CHIP_ID();
 
 	printf("%s; adie chip id 0x%08x\n", __FUNCTION__, chip_id);
 
-	regval_dcdc_store = ANA_REG_GET(ANA_REG_GLB_LDO_DCDC_PD);
-	ANA_REG_BIC(ANA_REG_GLB_LDO_DCDC_PD, (BIT(12) | BIT(11) | BIT(10) | BIT(9)));
-	regval_ldo_store = ANA_REG_GET(ANA_REG_GLB_LDO_PD_CTRL);
-	ANA_REG_BIC(ANA_REG_GLB_LDO_PD_CTRL, 0x7ff);
+	regval_dcdc_store = ANA_REG_GET(ANA_REG_GLB_LDO_DCDC_PD) & 0xFFFF;
+	ANA_REG_MSK_OR(ANA_REG_GLB_PWR_WR_PROT_VALUE, BITS_PWR_WR_PROT_VALUE(0x6e7f), 0x7FFF);
+	ANA_REG_BIC(ANA_REG_GLB_LDO_DCDC_PD, (cali_mask >> 16));
+	ANA_REG_MSK_OR(ANA_REG_GLB_PWR_WR_PROT_VALUE, 0, 0x7FFF);
+
+	regval_ldo_store = ANA_REG_GET(ANA_REG_GLB_LDO_PD_CTRL) & 0xFFFF;
+	ANA_REG_BIC(ANA_REG_GLB_LDO_PD_CTRL, cali_mask & 0xFFFF);
 
 	if(0x2711A000 == chip_id) {
 		//FIXME: vddcamio/vddcamd/vddemmcio/vdd18 real voltage value is greater than design value
@@ -507,7 +507,9 @@ int DCDC_Cal_ArmCore(void)
 
 	/* restore adie dcdc/ldo PD bits */
 	ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL, regval_ldo_store);
+	ANA_REG_MSK_OR(ANA_REG_GLB_PWR_WR_PROT_VALUE, BITS_PWR_WR_PROT_VALUE(0x6e7f), 0x7FFF);
 	ANA_REG_SET(ANA_REG_GLB_LDO_DCDC_PD, regval_dcdc_store);
+	ANA_REG_MSK_OR(ANA_REG_GLB_PWR_WR_PROT_VALUE, 0, 0x7FFF);
 
 	return 0;
 }
@@ -586,9 +588,9 @@ typedef struct {
 
 vol_para_t **ppvol_para = 0x50005c20;
 
-int regulator_default_get(const char con_id[])
+static int get_vol_para_num(void)
 {
-	int i = 0, res = 0;
+	int i = 0;
 
 	if (!(ppvol_para && *ppvol_para))
 		return 0;
@@ -596,14 +598,48 @@ int regulator_default_get(const char con_id[])
 	if(strcmp((*ppvol_para)[0].name, "volpara_begin") || (0xfaed != (*ppvol_para)[0].ideal_vol))
 		return 0;
 
+	while(0 != strcmp((*ppvol_para)[i++].name, "volpara_end"))
+		;
+
+	return (i+1);
+}
+
+static vol_para_t * match_vol_para(const char* vol_name)
+{
+	int i = 0;
+
+	BUG_ON(NULL == vol_name);
+
+	if (!(ppvol_para && *ppvol_para))
+		return NULL;
+
+	if(strcmp((*ppvol_para)[0].name, "volpara_begin") || (0xfaed != (*ppvol_para)[0].ideal_vol))
+		return NULL;
+
 	while(0 != strcmp((*ppvol_para)[i++].name, "volpara_end")) {
-		if (0 == strcmp((*ppvol_para)[i].name, con_id)) {
+		if (0 == strcmp((*ppvol_para)[i].name, vol_name)) {
 			debug("%s name %s, ideal_vol %d\n", __func__, (*ppvol_para)[i].name, (*ppvol_para)[i].ideal_vol);
-			return res = (*ppvol_para)[i].ideal_vol;
+			return (vol_para_t*)(&(*ppvol_para)[i]);
 		}
 	}
 
-	return res;
+	return NULL;
+}
+
+int regulator_default_get(const char con_id[])
+{
+	vol_para_t * pvol_para = match_vol_para(con_id);
+
+	return (int)(pvol_para ? pvol_para->ideal_vol : 0);
+}
+
+void regulator_default_set(const char con_id[], int vol)
+{
+	vol_para_t * pvol_para = match_vol_para(con_id);
+
+	if(pvol_para) {
+		pvol_para->ideal_vol = vol;
+	}
 }
 
 int regulator_default_set_all(void)
@@ -625,3 +661,55 @@ int regulator_default_set_all(void)
 
 	return ret;
 }
+
+/********************************************************************
+*
+* regulator_get_calibration_mask - get dcdc/ldo calibration flag
+*
+//
+//High 16bit: dcdc ctrl calibration flag
+//
+* bit[13] ~ bit[15] : reserved
+* bit[12] : dcdcgen
+* bit[11] : dcdcmem
+* bit[10] : dcdcarm
+* bit[9]   : dcdccore
+* bit[8]   : vddrf0
+* bit[7]   : vddemmccore
+* bit[6]   : vddemmcio
+* bit[5]   : vdddcxo
+* bit[4]   : vddcon
+* bit[3]   : vdd25
+* bit[2]   : vdd28
+* bit[1]   : vdd18
+* bit[0]   : vddbg
+
+//
+//Low 16bit: ldo ctrl calibration flag
+//
+* bit[12] ~ bit[15] : reserved
+* bit[11] : vddlpref
+* bit[10] : dcdcwpa
+* bit[9]   : vddclsg
+* bit[8]   : vddusb
+* bit[7]   : vddcammot
+* bit[6]   : vddcamio
+* bit[5]   : vddcamd
+* bit[4]   : vddcama
+* bit[3]   : vddsim2
+* bit[2]   : vddsim1
+* bit[1]   : vddsim0
+* bit[0]   : vddsd
+********************************************************************/
+u32 regulator_get_calibration_mask(void)
+{
+	int len = get_vol_para_num();
+	volatile vol_para_t *pvol_para = (volatile vol_para_t *)(*ppvol_para);
+	volatile u32* pdebug_flag = (u32*)(&pvol_para[len-1]);
+
+	if(len > 2) {
+		printf("%s, vol_para_tbl_len %d, ldo_pd_mask 0x%08x; \n", __func__, len, *pdebug_flag);
+		return (*pdebug_flag);
+	}
+}
+

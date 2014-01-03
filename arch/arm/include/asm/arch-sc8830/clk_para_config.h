@@ -69,6 +69,7 @@ typedef struct{
     volatile uint32 dcdc_core;
     volatile uint32 dcdc_mem;
     volatile uint32 dcdc_gen;
+    volatile uint32 debug_flags[4];
     volatile uint32 magic_end;
 }MCU_CLK_PARA_T;
 

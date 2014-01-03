@@ -49,5 +49,6 @@
 
 #define ANA_REG_GET(reg_addr)           sci_adi_read(reg_addr)
 
+#define ANA_GET_CHIP_ID                 sci_get_adie_chip_id
 
 #endif  //_ADI_HAL_INTERNAL_H_
