@@ -32,6 +32,7 @@ const MCU_CLK_PARA_T mcu_clk_para=
 #ifdef DCDC_GEN
 	.dcdc_gen = DCDC_GEN,
 #endif
+	.debug_flags[0] = 0x1FFF07F1, //0x1FFF07FF
     .magic_end = MAGIC_END
 };
 #endif
@@ -416,7 +417,7 @@ typedef struct {
 	const char name[14];
 }vol_para_t;
 
-vol_para_t vol_para[] __align(16) = {
+vol_para_t vol_para[7 + 1] __align(16) = {
 	[0] = { /* Begin Array, DO NOT remove it! */
 		.ideal_vol = 0xfaed,	.name = "volpara_begin",
 	},
@@ -435,14 +436,56 @@ vol_para_t vol_para[] __align(16) = {
 	},
 
 	//TODO: add your ideal ldo here like the following example
-	{
+	[5] = {
 		.ideal_vol = 1800,	.name = "vddsim2",
 	},
 
-	{ /* End Array, DO NOT remove it! */
+	[6] = { /* End Array, DO NOT remove it! */
 		.ideal_vol = 0xdeaf,	.name = "volpara_end",
 	},
 
+	/* Note: 16bytes debug datas at the end! */
+
+	/****************************************
+	//
+	//byte 5~16: reserved
+	//
+
+	//
+	//byte 3~4: dcdc ctrl calibration flag
+	//
+	* bit[13] ~ bit[15] : reserved
+	* bit[12] : dcdcgen
+	* bit[11] : dcdcmem
+	* bit[10] : dcdcarm
+	* bit[9]   : dcdccore
+	* bit[8]   : vddrf0
+	* bit[7]   : vddemmccore
+	* bit[6]   : vddemmcio
+	* bit[5]   : vdddcxo
+	* bit[4]   : vddcon
+	* bit[3]   : vdd25
+	* bit[2]   : vdd28
+	* bit[1]   : vdd18
+	* bit[0]   : vddbg
+
+	//
+	//byte 1~2: ldo ctrl calibration flag
+	//
+	* bit[12] ~ bit[15] : reserved
+	* bit[11] : vddlpref
+	* bit[10] : dcdcwpa
+	* bit[9]   : vddclsg
+	* bit[8]   : vddusb
+	* bit[7]   : vddcammot
+	* bit[6]   : vddcamio
+	* bit[5]   : vddcamd
+	* bit[4]   : vddcama
+	* bit[3]   : vddsim2
+	* bit[2]   : vddsim1
+	* bit[1]   : vddsim0
+	* bit[0]   : vddsd
+	******************************************/
 };
 
 int Vol_Init()
@@ -455,26 +498,24 @@ int Vol_Init()
 	(mcu_clk_para.dcdc_core)?vol_para[2].ideal_vol = mcu_clk_para.dcdc_core:0;
 	(mcu_clk_para.dcdc_mem)?vol_para[3].ideal_vol = mcu_clk_para.dcdc_mem:0;
 	(mcu_clk_para.dcdc_gen)?vol_para[4].ideal_vol = mcu_clk_para.dcdc_gen:0;
+
+	if(mcu_clk_para.debug_flags[0]) {
+		int num = sizeof(vol_para)/sizeof(vol_para[0]);
+		volatile uint32* p_flag = (volatile uint32*)(&vol_para[num-1]);
+		*p_flag = mcu_clk_para.debug_flags[0];
+	}
+
 	return (sizeof(vol_para) << 16) + sizeof(vol_para_t);
 }
 #endif
 
-static uint32 get_adie_chipid(void)
-{
-	uint32 chip_id;
-
-	chip_id = (ANA_REG_GET(ANA_REG_GLB_CHIP_ID_HIGH) & 0xffff) << 16;
-	chip_id |= ANA_REG_GET(ANA_REG_GLB_CHIP_ID_LOW) & 0xffff;
-
-	return chip_id;
-}
 
 void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 {
     uint32 value;
     
-    #if defined(CONFIG_SPX15)
-	if(0x2711A000 == get_adie_chipid()) {
+#if defined(CONFIG_SPX15)
+	if(0x2711A000 == ANA_GET_CHIP_ID()) {
 	    value = ANA_REG_GET(0x4003883c);
 	    value &= ~0x7f00;
 	    value |= 0x38 << 8;
@@ -485,7 +526,7 @@ void Chip_Init (void) /*lint !e765 "Chip_Init" is used by init.s entry.s*/
 	    value |= 0x38 << 0;
 	    ANA_REG_SET(0x40038820,value);
 	}
-    #endif
+#endif
     
     MCU_Init();
 #if defined(CONFIG_VOL_PARA)

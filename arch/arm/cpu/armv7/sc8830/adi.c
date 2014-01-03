@@ -81,6 +81,7 @@
 /* soc defined end*/
 
 static u32 readback_addr_mak = 0;
+static u8 is_ana_init = 0;
 
 #if defined(CONFIG_NAND_SPL) || defined(CONFIG_FDL1)
 #define panic(x...) do{}while(0)
@@ -296,11 +297,36 @@ static void __adi_init(void)
 
 void sci_adi_init(void)
 {
-	/* enable adi in global regs */
-	CHIP_REG_OR(REG_AON_APB_APB_EB0, BIT_ADI_EB);
-	/* reset adi */
-	CHIP_REG_OR(REG_AON_APB_APB_RST0, BIT_ADI_SOFT_RST);
-	udelay(2);
-	CHIP_REG_AND(REG_AON_APB_APB_RST0, (~BIT_ADI_SOFT_RST));
-	__adi_init();
+	if(!is_ana_init) {
+		/* enable adi in global regs */
+		CHIP_REG_OR(REG_AON_APB_APB_EB0, BIT_ADI_EB);
+		/* reset adi */
+		CHIP_REG_OR(REG_AON_APB_APB_RST0, BIT_ADI_SOFT_RST);
+		udelay(2);
+		CHIP_REG_AND(REG_AON_APB_APB_RST0, (~BIT_ADI_SOFT_RST));
+		__adi_init();
+
+		is_ana_init = 1;
+	}
 }
+
+/*
+ * sci_get_adie_chip_id - read a-die chip id
+ *
+ * return:
+ * the a-die chip id, example: 0x2711A000
+ */
+u32 sci_get_adie_chip_id(void)
+{
+	u32 chip_id;
+
+	if(!is_ana_init) {
+		sci_adi_init();
+	}
+
+	chip_id = (sci_adi_read(ANA_REG_GLB_CHIP_ID_HIGH) & 0xffff) << 16;
+	chip_id |= sci_adi_read(ANA_REG_GLB_CHIP_ID_LOW) & 0xffff;
+
+	return chip_id;
+}
+

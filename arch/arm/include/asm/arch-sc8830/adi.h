@@ -16,6 +16,11 @@
 
 void sci_adi_init(void);
 
+/*
+ * sci_get_adie_chip_id - read a-die chip id
+ */
+u32 sci_get_adie_chip_id(void);
+
 int sci_adi_read(u32 reg);
 
 /*
