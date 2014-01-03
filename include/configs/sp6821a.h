@@ -49,6 +49,7 @@
 
 #define CONFIG_SC8810
 #define CONFIG_SP8810
+#define CONFIG_SP6821A
 
 #ifdef CONFIG_SC8810
 #define CHIP_ENDIAN_LITTLE
