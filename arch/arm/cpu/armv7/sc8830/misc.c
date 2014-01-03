@@ -144,8 +144,12 @@ int pbint_7s_rst_cfg(uint32 en, uint32 sw_rst)
 #elif defined CONFIG_PBINT_7S_RST_SW_LONG
 		pbint_7s_rst_set_sw(PBINT_7S_RST_SW_MODE);
 		pbint_7s_rst_set_swmode(PBINT_7S_RST_SW_LONG_MODE);
+#elif defined CONFIG_PBINT_7S_RST_HW_LONG
+		pbint_7s_rst_set_sw(PBINT_7S_RST_HW_MODE);
+		pbint_7s_rst_set_swmode(PBINT_7S_RST_SW_LONG_MODE);
 #else
 		pbint_7s_rst_set_sw(PBINT_7S_RST_HW_MODE);
+		pbint_7s_rst_set_swmode(PBINT_7S_RST_SW_SHORT_MODE);
 #endif
 	}
 	return pbint_7s_rst_disable(!en);
@@ -225,6 +229,33 @@ void scx35_pmu_reconfig(void)
 void scx35_pmu_reconfig(void) {}
 #endif
 
+#ifdef CONFIG_SMPL_MODE
+int is_smpl_bootup(void)
+{
+	return sci_adi_read(ANA_REG_GLB_BA_CTRL1) & BIT_IS_SMPL_ON;
+}
+
+#define SMPL_MODE_ENABLE_SET	(0x1935)
+static int smpl_config(void)
+{
+	u32 val = BITS_SMPL_ENABLE(SMPL_MODE_ENABLE_SET);
+#ifdef CONFIG_SMPL_THRESHOLD
+	val |= BITS_SMPL_THRESHOLD(CONFIG_SMPL_THRESHOLD);
+#endif
+	return sci_adi_write_fast(ANA_REG_GLB_BA_CTRL0, val, 1);
+}
+#else
+inline int is_smpl_bootup(void)
+{
+	return 0;
+}
+
+inline static int smpl_config(void)
+{
+	return 0;
+}
+#endif
+
 void misc_init()
 {
 	scx35_pmu_reconfig();
@@ -238,5 +269,6 @@ void misc_init()
 	bb_bg_auto_en();
 	bb_ldo_auto_en();
 	pbint_7s_rst_cfg(1, 0);
+	smpl_config();
 }
 
