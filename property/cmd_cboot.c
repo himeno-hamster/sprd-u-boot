@@ -113,6 +113,17 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
             normal_mode();
         break;
         case ALARM_MODE:
+        if(alarm_flag_check()){
+            int flag =alarm_flag_check();
+            if(flag == 1){
+                DBG("cboot:get mode from alarm:alarm_mode\n");
+                alarm_mode();
+            }
+            else if(flag == 2){
+                DBG("cboot:get mode from alarm:normal_mode\n");
+                normal_mode();
+            }
+        }
         default:
         break;
     }
