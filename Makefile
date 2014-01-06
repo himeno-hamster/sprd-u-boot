@@ -1376,10 +1376,10 @@ sp6815ga_config	: unconfig
 	@mkdir -p $(obj)include
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 	@$(MKCONFIG) $@ arm armv7 sp6815ga spreadtrum sc8830
-sp7715ea_openphone_config	: unconfig
+sp7715eaopenphone_config	: unconfig
 	@mkdir -p $(obj)include
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
-	@$(MKCONFIG) $@ arm armv7 sp7715ea_openphone spreadtrum sc8830
+	@$(MKCONFIG) $@ arm armv7 sp7715eaopenphone spreadtrum sc8830
 sp8815ga_config	: unconfig
 	@mkdir -p $(obj)include
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
