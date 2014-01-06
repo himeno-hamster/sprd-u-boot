@@ -1,4 +1,5 @@
 #include <common.h>
+#include <asm/io.h>
 #include <asm/arch/sprd_reg.h>
 #include <asm/arch/sci_types.h>
 #include <asm/arch/adi_hal_internal.h>
@@ -191,8 +192,42 @@ void pbint_7s_rst_cfg(uint32 en_rst, uint32 sw_rst)
 }
 #endif
 
+#ifdef CONFIG_OF_LIBFDT
+void scx35_pmu_reconfig(void)
+{
+	/* FIXME:
+	 * turn on gpu/mm domain for clock device initcall, and then turn off asap.
+	 */
+	__raw_writel(__raw_readl(REG_PMU_APB_PD_MM_TOP_CFG)
+		     & ~(BIT_PD_MM_TOP_FORCE_SHUTDOWN),
+		     REG_PMU_APB_PD_MM_TOP_CFG);
+
+	__raw_writel(__raw_readl(REG_PMU_APB_PD_GPU_TOP_CFG)
+		     & ~(BIT_PD_GPU_TOP_FORCE_SHUTDOWN),
+		     REG_PMU_APB_PD_GPU_TOP_CFG);
+
+	__raw_writel(__raw_readl(REG_AON_APB_APB_EB0) | BIT_MM_EB |
+		     BIT_GPU_EB, REG_AON_APB_APB_EB0);
+
+	__raw_writel(__raw_readl(REG_MM_AHB_AHB_EB) | BIT_MM_CKG_EB,
+		     REG_MM_AHB_AHB_EB);
+
+	__raw_writel(__raw_readl(REG_MM_AHB_GEN_CKG_CFG)
+		     | BIT_MM_MTX_AXI_CKG_EN | BIT_MM_AXI_CKG_EN,
+		     REG_MM_AHB_GEN_CKG_CFG);
+
+	__raw_writel(__raw_readl(REG_MM_CLK_MM_AHB_CFG) | 0x3,
+		     REG_MM_CLK_MM_AHB_CFG);
+
+}
+
+#else
+void scx35_pmu_reconfig(void) {}
+#endif
+
 void misc_init()
 {
+	scx35_pmu_reconfig();
 	ap_slp_cp_dbg_cfg();
 	ap_cpll_rel_cfg();
 #ifndef  CONFIG_SPX15
