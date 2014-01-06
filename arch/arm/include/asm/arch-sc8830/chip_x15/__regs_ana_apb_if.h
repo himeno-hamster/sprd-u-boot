@@ -110,6 +110,8 @@
 #define ANA_REG_GLB_ARCH_EN                        SCI_ADDR(REGS_ANA_APB_IF_BASE, 0x0140)
 #define ANA_REG_GLB_MCU_WR_PROT_VALUE              SCI_ADDR(REGS_ANA_APB_IF_BASE, 0x0144)
 #define ANA_REG_GLB_PWR_WR_PROT_VALUE              SCI_ADDR(REGS_ANA_APB_IF_BASE, 0x0148)
+#define ANA_REG_GLB_BA_CTRL0              	   SCI_ADDR(REGS_ANA_APB_IF_BASE, 0x014C)
+#define ANA_REG_GLB_BA_CTRL1              	   SCI_ADDR(REGS_ANA_APB_IF_BASE, 0x0150)
 #define ANA_REG_GLB_DCDC_CORE_ADI                  SCI_ADDR(REGS_ANA_APB_IF_BASE, 0x0160)
 #define ANA_REG_GLB_DCDC_ARM_ADI                   SCI_ADDR(REGS_ANA_APB_IF_BASE, 0x0164)
 #define ANA_REG_GLB_DCDC_MEM_ADI                   SCI_ADDR(REGS_ANA_APB_IF_BASE, 0x0168)
@@ -765,5 +767,12 @@
 
 /* bits definitions for register REG_APB_IF_DCDC_WPA_DCM_ADI */
 #define BIT_DCDC_WPA_DCM_ADI                          ( BIT(0) )
+
+/* bits definitions for register ANA_REG_GLB_BA_CTRL0 */
+#define BITS_SMPL_THRESHOLD(_X_)                      ( (_X_) << 13 & (BIT(13)|BIT(14)|BIT(15)) )
+#define BITS_SMPL_ENABLE(_X_)                         ( (_X_) & (BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4)|BIT(5)|BIT(6)|BIT(7)|BIT(8)|BIT(9)|BIT(10)|BIT(11)|BIT(12)) )
+
+/* bits definitions for register ANA_REG_GLB_BA_CTRL1 */
+#define BIT_IS_SMPL_ON                                ( BIT(11) )
 
 #endif

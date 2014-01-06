@@ -439,7 +439,13 @@
 #define CONFIG_PBINT_7S_RST_SW_SHORT 1
 /* reset then release the power key when reset trigged */
 /* #define CONFIG_PBINT_7S_RST_SW_LONG 1 */
+/* reset then release the power key when reset trigged */
+/* #define CONFIG_PBINT_7S_RST_HW_LONG 1 */
 /* rang:2-16 unit: s */
 /* #define CONFIG_PBINT_7S_RST_THRESHOLD 7 */
+
+/* #define CONFIG_SMPL_MODE */
+/* rang:0(0.5s) - 7(4s) unit: s step: 0.5s */
+/* #define CONFIG_SMPL_THRESHOLD 0 */
 
 #endif /* __CONFIG_H */
