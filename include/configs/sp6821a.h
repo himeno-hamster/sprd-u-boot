@@ -338,4 +338,8 @@
 #define PWR_KEY_DETECT_CNT 12 /*this should match the count of boot_pwr_check() function */
 #define ALARM_LEAD_SET_MS 0   /* time set for alarm boot in advancd */
 
+#define CONFIG_SPRD_SYSDUMP
+#define SPRD_SYSDUMP_MAGIC      (128*1024*1024 - SZ_1M)
+#define CONFIG_RAMDUMP_NO_SPLIT 1 /* Don't split sysdump file */
+
 #endif /* __CONFIG_H */

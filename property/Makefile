@@ -25,6 +25,7 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)libproperty.o
 
+COBJS-$(CONFIG_SPRD_SYSDUMP) += sysdump.o
 COBJS-y += cmd_cboot.o
 ifdef CONFIG_EMMC_BOOT
 COBJS-y += normal_emc_mode.o

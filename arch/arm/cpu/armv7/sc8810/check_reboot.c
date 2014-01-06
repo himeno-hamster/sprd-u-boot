@@ -23,6 +23,10 @@ unsigned check_reboot_mode(void)
 		return NORMAL_MODE;
 	else if(rst_mode == HWRST_STATUS_NORMAL2)
 		return WATCHDOG_REBOOT;
+        else if(rst_mode == HWRST_STATUS_PANIC)
+		return PANIC_REBOOT;
+	else if(rst_mode == HWRST_STATUS_SPECIAL)
+		return SPECIAL_MODE;
 	else if(rst_mode == HWRST_STATUS_ALARM)
 		return ALARM_MODE;
 	else if(rst_mode == HWRST_STATUS_SLEEP)

@@ -848,3 +848,36 @@ void watchdog_mode(void)
 	vlx_nand_boot(BOOT_PART, "wdgreboot", BACKLIGHT_ON);
 #endif
 }
+
+void special_mode(void)
+{
+    printf("special_mode\n");
+#if BOOT_NATIVE_LINUX
+    vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=special", BACKLIGHT_OFF);
+#else
+    vlx_nand_boot(BOOT_PART, "androidboot.mode=special", BACKLIGHT_OFF);
+#endif
+
+}
+void unknow_reboot_mode(void)
+{
+        printf("unknow_reboot_mode\n");
+#ifdef CONFIG_GENERIC_MMC
+        write_modem_memory();
+#endif
+#if BOOT_NATIVE_LINUX
+        vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=unknowreboot", BACKLIGHT_OFF);
+#else
+        vlx_nand_boot(BOOT_PART, "androidboot.mode=unknowreboot", BACKLIGHT_OFF);
+#endif
+}
+
+void panic_reboot_mode(void)
+{
+    printf("%s\n", __func__);
+#if BOOT_NATIVE_LINUX
+    vlx_nand_boot(BOOT_PART, CONFIG_BOOTARGS " androidboot.mode=panic", BACKLIGHT_OFF);
+#else
+    vlx_nand_boot(BOOT_PART, "androidboot.mode=panic", BACKLIGHT_OFF);
+#endif
+}
