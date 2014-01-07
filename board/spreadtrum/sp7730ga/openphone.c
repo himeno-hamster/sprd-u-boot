@@ -41,8 +41,8 @@ int board_init()
 {
 	gd->bd->bi_arch_number = MACH_TYPE_OPENPHONE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
-	misc_init();
 	ADI_init();
+	misc_init();
 	LDO_Init();
 	ADC_Init();
 	pin_init();
@@ -50,7 +50,7 @@ int board_init()
 	sprd_gpio_init();
 	sound_init();
 	init_ldo_sleep_gr();
-	TDPllRefConfig(1);
+	//TDPllRefConfig(1);
 
 	return 0;
 }
