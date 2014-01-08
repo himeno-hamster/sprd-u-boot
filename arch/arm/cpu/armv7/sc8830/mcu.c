@@ -3,6 +3,7 @@
 
 ******************************************************************************/
 
+
 #include <common.h>
 #include <asm/arch/sci_types.h>
 #include <asm/arch/chip_drv_common_io.h>
