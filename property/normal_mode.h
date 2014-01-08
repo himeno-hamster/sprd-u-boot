@@ -64,10 +64,10 @@ extern unsigned char raw_header[8192];
 #if defined(CONFIG_SPX15)
 #if defined(CONFIG_SPX15_WCDMA)
 #define WDSP_ADR        0x88020000
-#define WFIXNV_ADR      0x88240000
-#define WRUNTIMENV_ADR  0x88280000
-#define WPRODINFO_ADR   0x882e0000
-#define WMODEM_ADR      0x88300000
+#define WFIXNV_ADR      0x88220000
+#define WRUNTIMENV_ADR  0x88260000
+//#define WPRODINFO_ADR   0x882e0000
+#define WMODEM_ADR      0x882c0000
 #define WCNMODEM_ADR     0x8a860000
 #define WCNFIXNV_ADR     0x8a800000
 #define WCNRUNTIMENV_ADR 0x8a820000
