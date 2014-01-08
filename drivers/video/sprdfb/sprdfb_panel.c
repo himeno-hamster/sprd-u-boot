@@ -126,6 +126,14 @@ static struct panel_cfg lcd_panel[] = {
         .panel = &lcd_panel_ili9341,
         },
 };
+#elif defined CONFIG_FAME2
+extern struct panel_spec lcd_panel_ili9486_rgb_spi;
+static struct panel_cfg lcd_panel[] = {
+	[0]={
+	.lcd_id = 0x9486,
+	.panel = &lcd_panel_ili9486_rgb_spi,
+	},
+};
 #else
 
 
