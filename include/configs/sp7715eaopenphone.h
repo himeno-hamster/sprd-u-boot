@@ -405,7 +405,7 @@
 #define TD_CP_OFFSET_ADDR			0x8000000	/*128*/
 #define TD_CP_SDRAM_SIZE			0x1800000	/*24M*/
 #define WCDMA_CP_OFFSET_ADDR		0x8000000	/*128M*/
-#define WCDMA_CP_SDRAM_SIZE		    0x2000000	/*40M*/
+#define WCDMA_CP_SDRAM_SIZE		    0x19d0000
 
 #define WCN_CP_OFFSET_ADDR          0xa800000   /*168M*/
 #define WCN_CP_SDRAM_SIZE           0x500000    /*5M*/
