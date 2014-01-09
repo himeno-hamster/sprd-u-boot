@@ -30,15 +30,24 @@
 #define LCD_PRINT(...)
 #endif
 
-/* the following can define ONLY ONE! */
-#define SN65DSI83
-//#define CHIPONE
+/***************** Important Macro! *****************/
+/* For TI! ONLY ONE of the flowing marco can be defined! */
+//#define LINES_ALL_RIGHT_TI
+#define LINES_ONLY_CLK_RIGHT_TI
 
-/* MUST define ONLY ONE */
-//#define LINES_ALL_RIGHT
-#define LINES_ONLY_CLK_RIGHT
-//#define LINES_ALL_WRONG // this macro defined only for chipone
+/* For CHIPONE! ONLY ONE of the flowing marco can be defined! */
+#define LINES_ALL_RIGHT_C1
+//#define LINES_ONLY_CLK_RIGHT_C1
+//#define LINES_ALL_WRONG_C1
+/***************** Important Macro! *****************/
 
+struct bridge_ops {
+	int32_t (*init)(struct panel_spec *self);
+};
+
+static struct bridge_ops b_ops = {
+	.init = NULL,
+};
 
 #define ARRAY_SIZE(array) ( sizeof(array) / sizeof(array[0]))
 
@@ -47,14 +56,7 @@
 #define I2C_NT51017_ADDR_WRITE      0xD0 /* NT51017 110_1000 0 */
 #define I2C_BRIDGE_ADDR_WRITE0      0x58 /* 0101_100 0 ADDR=Low */
 #define I2C_BRIDGE_ADDR_WRITE1      0x5A /* 0101_101 0 ADDR=High */
-
-#ifdef SN65DSI83
-#define BRIDEG_INIT    sn65dsi83_init
 #define I2C_BRIDGE_ADDR             I2C_BRIDGE_ADDR_WRITE0
-#elif defined CHIPONE
-#define BRIDEG_INIT    chipone_init
-#define I2C_BRIDGE_ADDR             I2C_BRIDGE_ADDR_WRITE1
-#endif
 
 #define GPIOID_BRIDGE_EN  231
 #define GPIOID_VDDPWR     232
@@ -79,8 +81,7 @@ static I2C_DEV i2c_dev_bridge = {
 	.no_stop = 0,
 };
 
-const static I2C_Init_Code lvds_init_data[] = {
-#ifdef SN65DSI83
+const static I2C_Init_Code lvds_init_data_ti[] = {
         {0x09, 0x00},
 		{0x0A, 0x03},
 		{0x0B, 0x18},
@@ -89,9 +90,9 @@ const static I2C_Init_Code lvds_init_data[] = {
 		{0x11, 0x00},
 		{0x12, 0x31},
 		{0x13, 0x00},
-#ifdef LINES_ALL_RIGHT
+#ifdef LINES_ALL_RIGHT_TI
 		{0x18, 0x18},/* all the line is right */
-#elif defined LINES_ONLY_CLK_RIGHT
+#elif defined LINES_ONLY_CLK_RIGHT_TI
         {0x18, 0xF8},/* only clock line is right */
 #endif
 		{0x19, 0x0C},/* 0x00 */
@@ -128,7 +129,8 @@ const static I2C_Init_Code lvds_init_data[] = {
 		{0x3C, 0x00},
 		{0x3D, 0x00},
 		{0x3E, 0x00},
-#elif defined CHIPONE
+};
+const static I2C_Init_Code lvds_init_data_c1[] = {
         /*{0x10, 0x4E},add*/
         {0x20, 0x00},
 		{0x21, 0x00},
@@ -150,11 +152,11 @@ const static I2C_Init_Code lvds_init_data[] = {
 		{0x69, 0x1C},/*0x1F*/
 		{0x6B, 0x22},
 		{0x5C, 0xFF},
-#ifdef LINES_ALL_RIGHT
+#ifdef LINES_ALL_RIGHT_C1
         {0x13, 0x10},
-#elif defined LINES_ONLY_CLK_RIGHT
+#elif defined LINES_ONLY_CLK_RIGHT_C1
         {0x13, 0x1F},
-#elif defined LINES_ALL_WRONG
+#elif defined LINES_ALL_WRONG_C1
 		{0x13, 0x5F},
 #endif
 		/*{0x10, 0x47},add*/
@@ -164,7 +166,6 @@ const static I2C_Init_Code lvds_init_data[] = {
 		{0x09, 0x10},
 		/*{0x7B, 0xF2},*/
         /*{0x7C, 0xF3},*/
-#endif
 };
 
 /* Init SN65DSI83 */
@@ -174,8 +175,8 @@ static int32_t sn65dsi83_init(struct panel_spec *self)
 	int32 handle = 0;
 	uint32 err_code = 0;
 	
-    uint8 ti_pll_en = lvds_init_data[3].val | 0x01;               /* (CSR 0x0D.0) */
-    uint8 ti_soft_reset = lvds_init_data[0].val | 0x01;           /* (CSR 0x09.0) */
+    uint8 ti_pll_en = lvds_init_data_ti[3].val | 0x01;               /* (CSR 0x0D.0) */
+    uint8 ti_soft_reset = lvds_init_data_ti[0].val | 0x01;           /* (CSR 0x09.0) */
 
 	mipi_set_lp_mode_t mipi_set_lp_mode = self->info.mipi->ops->mipi_set_lp_mode;/* u-boot\arch\arm\include\asm\arch\sprd_lcd.h */
 	mipi_set_hs_mode_t mipi_set_hs_mode = self->info.mipi->ops->mipi_set_hs_mode;
@@ -199,9 +200,9 @@ static int32_t sn65dsi83_init(struct panel_spec *self)
     handle = I2C_HAL_Open(&i2c_dev_bridge);
 	
 	/* step 4 : init CSR reg*/
-	for(i=0; i<ARRAY_SIZE(lvds_init_data); i++){
-		err_code = I2C_HAL_Write(handle, &lvds_init_data[i].addr, &lvds_init_data[i].val, 1);
-		LCD_PRINT("I2C Write Reg=0x%x, Val=0x%x, WriteBytes=%d\n",lvds_init_data[i].addr, lvds_init_data[i].val,err_code);
+	for(i=0; i<ARRAY_SIZE(lvds_init_data_ti); i++){
+		err_code = I2C_HAL_Write(handle, &lvds_init_data_ti[i].addr, &lvds_init_data_ti[i].val, 1);
+		LCD_PRINT("I2C Write Reg=0x%x, Val=0x%x, WriteBytes=%d\n",lvds_init_data_ti[i].addr, lvds_init_data_ti[i].val,err_code);
 	}
 
 	/* step 5 : Start the DSI video stream */
@@ -210,15 +211,15 @@ static int32_t sn65dsi83_init(struct panel_spec *self)
 	mdelay(5);
 
 	/* step 6 : Set the PLL_EN bit(CSR 0x0D.0) */
-	err_code = I2C_HAL_Write(handle, &lvds_init_data[3].addr, &ti_pll_en, 1);
-	LCD_PRINT("I2C Write Reg=0x%x, Val=0x%x, WriteBytes=%d\n",lvds_init_data[3].addr, ti_pll_en,err_code);
+	err_code = I2C_HAL_Write(handle, &lvds_init_data_ti[3].addr, &ti_pll_en, 1);
+	LCD_PRINT("I2C Write Reg=0x%x, Val=0x%x, WriteBytes=%d\n",lvds_init_data_ti[3].addr, ti_pll_en,err_code);
 
 	/* step 7 : Wait for the PLL_LOCK bit to be set(CSR 0x0A.7) */
 	mdelay(5);
     
 	/* step 8 : Set the SOFT_RESET bit (CSR 0x09.0) */
-	err_code = I2C_HAL_Write(handle, &lvds_init_data[0].addr, &ti_soft_reset, 1);
-	LCD_PRINT("I2C Write Reg=0x%x, Val=0x%x, WriteBytes=%d\n",lvds_init_data[0].addr, ti_soft_reset, err_code);
+	err_code = I2C_HAL_Write(handle, &lvds_init_data_ti[0].addr, &ti_soft_reset, 1);
+	LCD_PRINT("I2C Write Reg=0x%x, Val=0x%x, WriteBytes=%d\n",lvds_init_data_ti[0].addr, ti_soft_reset, err_code);
 
     /* close i2c */
 	I2C_HAL_Close(handle);
@@ -240,15 +241,57 @@ static int32_t chipone_init(struct panel_spec *self)
     handle = I2C_HAL_Open(&i2c_dev_bridge);
 	
 	/* init CSR reg*/
-	for(i=0; i<ARRAY_SIZE(lvds_init_data); i++){
-		err_code = I2C_HAL_Write(handle, &lvds_init_data[i].addr, &lvds_init_data[i].val, 1);
-		LCD_PRINT("I2C Write Reg=0x%x, Val=0x%x, WriteBytes=%d\n",lvds_init_data[i].addr, lvds_init_data[i].val,err_code);
+	for(i=0; i<ARRAY_SIZE(lvds_init_data_c1); i++){
+		err_code = I2C_HAL_Write(handle, &lvds_init_data_c1[i].addr, &lvds_init_data_c1[i].val, 1);
+		LCD_PRINT("I2C Write Reg=0x%x, Val=0x%x, WriteBytes=%d\n",lvds_init_data_c1[i].addr, lvds_init_data_c1[i].val,err_code);
 	}
 
     /* close i2c */
 	I2C_HAL_Close(handle);
 
     return 0;
+}
+
+static int32_t get_bridge_info(struct panel_spec *self)
+{
+	uint8_t reg = 0x00;
+	uint8_t flag = 0xFF;
+	int32 handle = 0;
+	uint32 err_code = 0;
+
+	sprd_gpio_request(NULL, GPIOID_BRIDGE_EN);
+	sprd_gpio_direction_output(NULL, GPIOID_BRIDGE_EN, 0);
+	mdelay(30);
+	sprd_gpio_direction_output(NULL, GPIOID_BRIDGE_EN, 1);
+	mdelay(5);
+
+	sprd_gpio_request(NULL, GPIOID_ADDR);
+	sprd_gpio_direction_output(NULL, GPIOID_ADDR, 0);//drive ADDR to low
+	mdelay(5);
+
+	/* open i2c */
+    handle = I2C_HAL_Open(&i2c_dev_bridge);
+
+	err_code = I2C_HAL_Read(handle, &reg, &flag, 1);
+	if (0 == err_code) {
+		printf("I2C Read Error! err_code=%d\n", err_code);
+		return 1;
+	}
+
+	if (0x35 == flag){//TI
+		b_ops.init = sn65dsi83_init;
+	} else if (0xC1 == flag) {//ChipOne
+		b_ops.init = chipone_init;
+	} else {
+		printf("Unknown bridge! flag=0x%x\n",flag);
+		I2C_HAL_Close(handle);
+		return 1;
+	}
+
+	/* close i2c */
+	I2C_HAL_Close(handle);
+
+	return 0;
 }
 
 static int32_t nt51017_mipi_lvds_init(struct panel_spec *self)
@@ -263,13 +306,9 @@ static int32_t nt51017_mipi_lvds_init(struct panel_spec *self)
 	sprd_gpio_direction_output(NULL, GPIOID_LCDPWR, 1);
 	mdelay(5);
 
-#ifdef CHIPONE
-	sprd_gpio_request(NULL, GPIOID_ADDR);
-	sprd_gpio_direction_output(NULL, GPIOID_ADDR, 1);//drive ADDR to High
-	mdelay(5);
-#endif
-
-    BRIDEG_INIT(self);
+    if (b_ops.init) {
+		b_ops.init(self);
+    }
 
 	return 0;
 }
@@ -277,6 +316,11 @@ static int32_t nt51017_mipi_lvds_init(struct panel_spec *self)
 static uint32_t nt51017_mipi_lvds_readid(struct panel_spec *self)
 {
 	LCD_PRINT("nt51017_mipi_lvds_readid\n");
+
+	if(get_bridge_info(self)){
+		printk("u-boot get bridge info fail!\n");
+		return 0x00;
+	}
 
     return 0xC749;/*51017*/
 }
