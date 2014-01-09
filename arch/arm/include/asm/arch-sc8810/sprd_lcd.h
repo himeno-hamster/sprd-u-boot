@@ -265,6 +265,10 @@ struct panel_spec {
 	uint32_t cap;
 	uint16_t width;
 	uint16_t height;
+#ifdef CONFIG_FB_LOW_RES_SIMU_SUPPORT
+	uint16_t display_width;
+	uint16_t display_height;
+#endif
 	uint32_t fps;
 	uint16_t type; /*mcu, rgb, mipi*/
 	uint16_t direction;
