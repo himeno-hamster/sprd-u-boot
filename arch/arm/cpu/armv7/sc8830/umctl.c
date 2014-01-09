@@ -1691,7 +1691,7 @@ void publ_reg_init(CLK_TYPE_E clk,DRAM_INFO* dram)
 
 BOOLEAN publ_do_training()
 {
-	uint32 reg_val = 0;
+	volatile uint32 reg_val = 0;
 	
 	//do dqs training
 	wait_pclk(50);	
@@ -1699,11 +1699,13 @@ BOOLEAN publ_do_training()
 	wait_pclk(50);	
 
     //wait training done
-    do reg_val = UMCTL2_REG_GET(PUBL_PGSR);
-    while( (!reg_val&BIT_0) || (!reg_val&BIT_5));
+    do{reg_val = UMCTL2_REG_GET(PUBL_PGSR);}
+    while( (!(reg_val&BIT_0)) || (!(reg_val&BIT_4)));
+    wait_pclk(50);
 
+    reg_val = UMCTL2_REG_GET(PUBL_PGSR);
     //check if training success or fail
-	if(reg_val&BIT_8||reg_val&BIT_9)
+	if(reg_val&0x3E0)
 	{
 		return FALSE;
 	}
@@ -1823,23 +1825,27 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 #endif
     
     sdram_clk_set(dmc_clk);
+
     #if defined(CONFIG_SPX15)
     REG32(0x402b00f0) |= (1<<31);
     #endif
+
     //enable umctl,publ,phy
     umctl2_ctl_en(TRUE);
     
     //to assert umctl reset,in order to prevent umctl issue mode register cmd to SDRAM automatically
     umctl2_soft_reset(TRUE);
 
-	//open umctl and publ reg
-	umctl2_publ_reg_open();
+    //open umctl and publ reg
+    umctl2_publ_reg_open();
 
     // EVB FIX for dolphin----------------------------------------------
-    //#if defined(CONFIG_SPX15)
-    //reg_bits_set(PUBL_PGCR,12,2,1);  //dp dm 
-    //reg_bits_set(PUBL_PGCR,14,1,1);  //dp dm 
-    //#endif
+    #if 0
+    #if defined(CONFIG_SPX15)
+    reg_bits_set(PUBL_PGCR,12,2,1);  //dp dm 
+    reg_bits_set(PUBL_PGCR,14,1,1);  //dp dm 
+    #endif
+    #endif
 
     //to dis-assert to not prevent sdram init
     UMCTL2_REG_SET(UMCTL_DFIMISC, 0x0);
@@ -1864,11 +1870,12 @@ static BOOLEAN __sdram_init(CLK_TYPE_E dmc_clk,umctl2_port_info_t* port_info,DRA
 
     //enable AP port
     umctl2_port_en(UMCTL2_PORT_AP,TRUE);
-    
+
+    wait_pclk(1500); //to wait dfi_init fsm finished, 1500/153.6mhz=10us,this delay is necessary
     //do training
     if(!publ_do_training())
     {
-		ddr_print("ERROR!!! DDR TRAINING ERROR");
+	ddr_print("ERROR!!! DDR TRAINING ERROR");
         return FALSE;
     }    
     
