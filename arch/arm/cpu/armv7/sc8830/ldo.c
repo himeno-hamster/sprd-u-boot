@@ -55,7 +55,7 @@ struct {
 		.id = LDO_LDO_EMMCIO, .name = "vddemmcio",
 	},
 	{
-		.id = LDO_LDO_SDIO3, .name = "vddsd",
+		.id = LDO_LDO_SDIO0, .name = "vddsd",
 	},
 	{
 		.id = LDO_LDO_SIM0, .name = "vddsim0",
