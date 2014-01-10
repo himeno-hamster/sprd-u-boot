@@ -45,4 +45,8 @@
 
 #define PUB_APB_CLK_SEL_SHIFT		(0x0)
 #define PUB_APB_CLK_SEL_MASK		(0x3 << PUB_AHB_CLK_SEL_SHIFT)
+
+#define BIT_CLK_FM_SEL			(0x1)
+#define BIT_CLK_FM_PAD_SEL		(0x1 << 16)
+
 #endif //__REGS_AON_CLK_H__
