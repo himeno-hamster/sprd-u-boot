@@ -63,6 +63,16 @@ extern unsigned char raw_header[8192];
 #define RAMDISK_ADR     0x85500000
 #if defined(CONFIG_SPX15)
 #if defined(CONFIG_SPX15_WCDMA)
+#if defined(CONFIG_SS_FUNCTION)
+#define WDSP_ADR        0x88020000
+#define WFIXNV_ADR      0x88240000
+#define WRUNTIMENV_ADR  0x88280000
+#define WPRODINFO_ADR   0x882e0000
+#define WMODEM_ADR      0x88300000
+#define WCNMODEM_ADR     0x8a860000
+#define WCNFIXNV_ADR     0x8a800000
+#define WCNRUNTIMENV_ADR 0x8a820000
+#else
 #define WDSP_ADR        0x88020000
 #define WFIXNV_ADR      0x88220000
 #define WRUNTIMENV_ADR  0x88260000
@@ -71,6 +81,7 @@ extern unsigned char raw_header[8192];
 #define WCNMODEM_ADR     0x8a860000
 #define WCNFIXNV_ADR     0x8a800000
 #define WCNRUNTIMENV_ADR 0x8a820000
+#endif
 #elif defined(CONFIG_SPX15_TD)
 #define TDDSP_ADR       0x88020000
 #define TDFIXNV_ADR     0x89060000
