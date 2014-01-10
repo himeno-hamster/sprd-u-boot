@@ -2766,7 +2766,7 @@ PUBLIC BOOLEAN SDCARD_Init()
 	sdcard_handle = CARD_SDIO_Open(CARD_SDIO_SLOT_6);
 
 	SDIO_Card_Pal_SetType(sdcard_handle->sdioPalHd, SDIO_CARD_PAL_TYPE_SD);
-
+	CARD_SDIO_PwrCtl(sdcard_handle, FALSE);
 	CARD_SDIO_PwrCtl(sdcard_handle, TRUE);
 	return SDCARD_SDIO_InitCard(sdcard_handle, HIGH_SPEED_MODE);
 }
