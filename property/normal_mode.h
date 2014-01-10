@@ -260,7 +260,7 @@ unsigned long get_productinfo_index(unsigned char *array);
 int nv_is_correct(unsigned char *array, unsigned long size);
 int nv_is_correct_endflag(unsigned char *array, unsigned long size);
 void lcd_display_logo(int backlight_set,ulong bmp_image,size_t size);
-void creat_cmdline(char * cmdline,boot_img_hdr *hdr);
+void creat_cmdline(char * cmdline,boot_img_hdr *hdr,struct mtd_info *nand);
 void vlx_entry();
 
 #endif /* NORMAL_MODE_H */

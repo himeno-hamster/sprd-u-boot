@@ -74,7 +74,8 @@ SDRAM_TIMING_PARA_T_PTR sdram_parameters;
 SDRAM_CFG_INFO_T s_sdram_raw_cfg;
 #endif
 
-#ifdef PLATFORM_SC8800G
+//#ifdef PLATFORM_SC8800G
+#if 0
 #define INTERFACE_CLK_MAX   ARM_CLK_200M
 typedef struct ARM_EMC_AHB_CLK_TAG 
 {
@@ -1357,6 +1358,7 @@ LOCAL void __sdram_detect(uint32 clk)
     }
 }
 #endif
+#if 0
 /**---------------------------------------------------------------------------*
  ** FUNCTION                                                                  *
  **     void SDRAM_Init(uint32 sdram_clk)                                     *
@@ -1542,6 +1544,7 @@ LOCAL uint32 Chip_ConfigClk (void)
 
     return arm_ahb_clk;
 }
+#endif
 
 int timer_init(void);
 unsigned long long get_ticks(void);

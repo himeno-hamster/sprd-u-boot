@@ -5,6 +5,7 @@ extern void cmd_yaffs_umount(char *mp);
 extern int cmd_yaffs_ls_chk(const char *dirfilename);
 extern void cmd_yaffs_mread_file(char *fn, unsigned char *addr);
 static int flash_page_size = 0;
+struct nand_chip *chip;
 int is_factorymode()
 {
 	int ret = 0;
@@ -215,6 +216,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 
 	off=part->offset;
 	nand = &nand_info[dev->id->num];
+	chip = (struct nand_chip *)(nand->priv);
 	//read boot image header
 	size = 1<<19;//where the size come from????
 	char * bmp_img = malloc(size);
@@ -749,7 +751,7 @@ void vlx_nand_boot(char * kernel_pname, char * cmdline, int backlight_set)
 	}
 	secure_check(VMJALUNA_ADR, 0, VMJALUNA_ADR + VMJALUNA_SIZE - VLR_INFO_OFF, CONFIG_SYS_NAND_U_BOOT_DST + CONFIG_SYS_NAND_U_BOOT_SIZE - KEY_INFO_SIZ - VLR_INFO_OFF);
 #endif
-	creat_cmdline(cmdline,hdr);
+	creat_cmdline(cmdline,hdr,nand);
 	vlx_entry();
 }
 

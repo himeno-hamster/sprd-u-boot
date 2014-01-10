@@ -8,7 +8,7 @@ void *spl_data = spl_data_buf;
 void *harsh_data = harsh_data_buf;
 unsigned char raw_header[8192];
 const int SP09_MAX_PHASE_BUFF_SIZE = sizeof(SP09_PHASE_CHECK_T);
-
+//extern struct nand_chip *chip;
 int eng_getphasecheck(SP09_PHASE_CHECK_T* phase_check)
 {
 	int aaa;
@@ -667,8 +667,10 @@ void lcd_display_logo(int backlight_set,ulong bmp_img,size_t size)
 #endif
 }
 
-void creat_cmdline(char * cmdline,boot_img_hdr *hdr)
+void creat_cmdline(char * cmdline,boot_img_hdr *hdr,struct mtd_info *nand)
 {
+	//struct mtd_info *nand;
+	struct nand_chip *chip;
 	int str_len;
 	char * buf;
 	buf = malloc(1024);
@@ -745,8 +747,20 @@ void creat_cmdline(char * cmdline,boot_img_hdr *hdr)
 			*(uint32_t*)(harsh_data+8), *(uint32_t*)(harsh_data+12));
 	}
 
-    printf("pass cmdline: %s\n", buf);
-    //lcd_printf(" pass cmdline : %s\n",buf);
+    chip = (struct nand_chip *)(nand->priv) ;
+    str_len = strlen(buf);
+    sprintf(&buf[str_len], " nandflash=nandid(0x%02x,", chip->nandid[0]);
+    str_len = strlen(buf);
+    sprintf(&buf[str_len], "0x%02x,", chip->nandid[1]);
+    str_len = strlen(buf);
+    sprintf(&buf[str_len], "0x%02x,", chip->nandid[2]);
+    str_len = strlen(buf);
+    sprintf(&buf[str_len], "0x%02x,", chip->nandid[3]);
+    str_len = strlen(buf);
+    sprintf(&buf[str_len], "0x%02x),", chip->nandid[4]);
+    str_len = strlen(buf);
+    sprintf(&buf[str_len], "pagesize(%d),oobsize(%d),eccsize(%d),eccbit(%d)", nand->writesize, nand->oobsize, chip->ecc.size, chip->eccbitmode);
+    printf(" pass cmdline : %s\n",buf);
     //lcd_display();
     creat_atags(VLX_TAG_ADDR, buf, NULL, 0);
 }
