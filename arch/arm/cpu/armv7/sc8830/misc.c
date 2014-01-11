@@ -230,9 +230,17 @@ void scx35_pmu_reconfig(void) {}
 #endif
 
 #ifdef CONFIG_SMPL_MODE
+#define CONFIG_SMPL_SW_FLAG
+#ifdef CONFIG_SMPL_SW_FLAG
+static u32 smpl_flag = 0;
+#endif
 int is_smpl_bootup(void)
 {
+#ifdef CONFIG_SMPL_SW_FLAG
+	return smpl_flag & BIT_IS_SMPL_ON_SW_FLAG;
+#else
 	return sci_adi_read(ANA_REG_GLB_BA_CTRL1) & BIT_IS_SMPL_ON;
+#endif
 }
 
 #define SMPL_MODE_ENABLE_SET	(0x1935)
@@ -241,6 +249,10 @@ static int smpl_config(void)
 	u32 val = BITS_SMPL_ENABLE(SMPL_MODE_ENABLE_SET);
 #ifdef CONFIG_SMPL_THRESHOLD
 	val |= BITS_SMPL_THRESHOLD(CONFIG_SMPL_THRESHOLD);
+#endif
+#ifdef CONFIG_SMPL_SW_FLAG
+	smpl_flag = sci_adi_read(ANA_REG_GLB_BA_CTRL1);
+	sci_adi_set(ANA_REG_GLB_BA_CTRL1, BIT_IS_SMPL_ON_SW_CLR);
 #endif
 	return sci_adi_write_fast(ANA_REG_GLB_BA_CTRL0, val, 1);
 }

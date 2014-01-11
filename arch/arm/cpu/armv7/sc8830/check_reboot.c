@@ -34,6 +34,7 @@
 
 
 extern int hw_watchdog_rst_pending(void);
+extern inline int is_smpl_bootup(void);
 unsigned check_reboot_mode(void)
 {
 	unsigned val, rst_mode= 0;
@@ -82,6 +83,11 @@ unsigned check_reboot_mode(void)
 		else if(hw_rst_mode & SW_EXT_RSTN_STATUS)
 		{
 			return EXT_RSTN_REBOOT_MODE;
+		}
+		else if(is_smpl_bootup())
+		{
+			debugf("SMPL bootup! 0x%04x\n", sci_adi_read(ANA_REG_GLB_BA_CTRL1));
+			return UNKNOW_REBOOT_MODE;
 		}
 		else
 			return 0;
