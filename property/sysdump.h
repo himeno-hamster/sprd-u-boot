@@ -25,7 +25,7 @@
 #define PAGE_OFFSET 0xC0000000
 
 
-#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SPX15)
+#if defined(CONFIG_SP8830EC) || defined(CONFIG_SP7730EC) || defined(CONFIG_SPX15) || defined(CONFIG_SP5735)
 #define MEM_TOTAL_SIZE 0x20000000
 #else
 #define MEM_TOTAL_SIZE 0x40000000
