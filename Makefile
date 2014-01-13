@@ -1340,6 +1340,11 @@ sp7710g2_config	: unconfig
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 	@$(MKCONFIG) $@ arm armv7 sp7710g2 spreadtrum sc8810
 
+sp7710g2_hvga_128_config : unconfig
+	@mkdir -p $(obj)include
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@$(MKCONFIG) $@ arm armv7 sp7710g2 spreadtrum sc8810
+
 sp7710g2fpga_config : unconfig
 	@mkdir -p $(obj)include
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
