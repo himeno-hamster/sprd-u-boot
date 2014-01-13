@@ -726,7 +726,7 @@ int ubifs_load(char *filename, u32 addr, u32 size)
 		/*
 		 * Make sure to not read beyond the requested size
 		 */
-		if (((i + 1) == count) && (size < inode->i_size))
+		if ((i + 1) == count)
 			last_block_size = size - (i * PAGE_SIZE);
 
 		err = do_readpage(c, inode, &page, last_block_size);
