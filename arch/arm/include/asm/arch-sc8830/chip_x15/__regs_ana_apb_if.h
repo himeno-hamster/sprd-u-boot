@@ -773,6 +773,10 @@
 #define BITS_SMPL_ENABLE(_X_)                         ( (_X_) & (BIT(0)|BIT(1)|BIT(2)|BIT(3)|BIT(4)|BIT(5)|BIT(6)|BIT(7)|BIT(8)|BIT(9)|BIT(10)|BIT(11)|BIT(12)) )
 
 /* bits definitions for register ANA_REG_GLB_BA_CTRL1 */
+#define BIT_IS_SMPL_ON_SW_FLAG                        ( BIT(15) )
+#define BIT_SMPL_WR_ACK_FLAG                          ( BIT(14) )
+#define BIT_IS_SMPL_ON_SW_CLR                         ( BIT(13) )
+#define BIT_SMPL_WR_ACK_CLR                           ( BIT(12) )
 #define BIT_IS_SMPL_ON                                ( BIT(11) )
 
 #endif
