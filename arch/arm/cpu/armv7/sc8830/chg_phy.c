@@ -157,7 +157,13 @@ void fgu_init(void)
 	sci_adi_set(ANA_REG_GLB_RTC_CLK_EN, BIT_RTC_FGU_EN | BIT_RTC_FGUA_EN);
 	//sci_adi_clr(REG_FGU_CONFIG, BIT_VOLT_H_VALID);
 	//sci_adi_clr(REG_FGU_CONFIG, BIT_AD1_ENABLE);
+#if defined(CONFIG_SPX15)
+	if(sci_get_adie_chip_id() < 0x2711A100) {
+		sci_adi_write(REG_FGU_CONFIG, BITS_VOLT_DUTY(3), BITS_VOLT_DUTY(3)|BIT_VOLT_H_VALID);
+	}
+#else
 	sci_adi_write(REG_FGU_CONFIG, BITS_VOLT_DUTY(3), BITS_VOLT_DUTY(3)|BIT_VOLT_H_VALID);
+#endif
 	//mdelay(1000);
 
 	fgu_vol = 0; //sci_adi_read(REG_FGU_VOLT_VAL);
