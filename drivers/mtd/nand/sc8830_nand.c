@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#define DOLPHIN_UBOOT	 
+#define DOLPHIN_UBOOT
 
 #ifdef DOLPHIN_UBOOT
 #include <common.h>
@@ -37,27 +37,15 @@
 //#include <asm/arch/regs_cpc.h>
 //#include <asm/arch/pin_reg_v3.h>
 
-#define mdelay(ms) do{ int volatile i = 0; for(i; i < 0xFFFF; i++); } while(0)
+#define mdelay(ms) do{ int volatile i = 0; for(i; i < 0xFFFFF; i++); } while(0)
 
-//#define NAND_DBG
-#ifdef CONFIG_NAND_SPL
-#define printf(arg...) do{}while(0)
-#endif
-#ifndef NAND_DBG
-#define printf(arg...) do{}while(0)
-#endif
+#define NAND_DBG
 
+#if defined(CONFIG_NAND_SPL) || !defined(NAND_DBG)
 #define DPRINT(arg...) do{}while(0)
-
-/* 2 bit correct, sc8810 support 1, 2, 4, 8, 12,14, 24 */
-#define CONFIG_SYS_NAND_ECC_MODE	2
-//#define CONFIG_SYS_NAND_ECC_MODE	4
-/* Number of ECC bytes per OOB - S3C6400 calculates 4 bytes ECC in 1-bit mode */
-#define CONFIG_SYS_NAND_ECCBYTES	4
-//#define CONFIG_SYS_NAND_ECCBYTES	7
-/* Size of the block protected by one OOB (Spare Area in Samsung terminology) */
-#define CONFIG_SYS_NAND_ECCSIZE	512
-#define CONFIG_SYS_NAND_5_ADDR_CYCLE	5
+#else
+#define DPRINT printf
+#endif
 
 #define NFC_MC_ICMD_ID	(0xCD)
 #define NFC_MC_ADDR_ID	(0x0A)
@@ -109,28 +97,66 @@ static int mtdoobsize = 0;
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <mach/globalregs.h>
-#include "sc8830_nand.h"
 #include <mach/pinmap.h>
 
-#define DPRINT(arg...) do{}while(0)
+#include "sc8830_nand.h"
+#define DPRINT printk
 #endif  //DOLPHIN_KERNEL
 
 
-struct sprd_dolphin_nand_param {
-	uint8_t id[5];
-	uint8_t bus_width;
-	uint8_t a_cycles;
-	uint8_t sct_pg; //sector per page
-	uint8_t oob_size; /* oob size per sector*/
-	uint8_t ecc_pos; /* oob size per sector*/
-	uint8_t info_pos; /* oob size per sector*/
-	uint8_t info_size; /* oob size per sector*/
-	uint8_t eccbit; /* ecc level per eccsize */
-	uint16_t eccsize; /*bytes per sector for ecc calcuate once time */
-	uint8_t	ace_ns;	/* ALE, CLE end of delay timing, unit: ns */
-	uint8_t	rwl_ns;	/* WE, RE, IO, pulse  timing, unit: ns */
-	uint8_t	rwh_ns;	/* WE, RE, IO, high hold  timing, unit: ns */
+
+
+#define STATIC_FUNC static
+
+#include "sprd_nand_param.h"
+
+
+/* 2 bit correct, sc8810 support 1, 2, 4, 8, 12,14, 24 */
+#define CONFIG_SYS_NAND_ECC_MODE    (2)
+//#define CONFIG_SYS_NAND_ECC_MODE	8
+/* Number of ECC bytes per OOB - S3C6400 calculates 4 bytes ECC in 1-bit mode */
+#define CONFIG_SYS_NAND_ECCBYTES    (4)
+//#define CONFIG_SYS_NAND_ECCBYTES	14
+
+#define NAND_MC_BUFFER_SIZE         (24)
+#define CONFIG_SYS_NAND_ECCSIZE     (512)
+#define CONFIG_SYS_NAND_5_ADDR_CYCLE	5
+#define SPRD_NAND_CLOCK (153)
+
+#define IRQ_TIMEOUT  100//unit:ms,IRQ timeout value
+#define DRIVER_NAME "sc8830_nand"
+
+
+enum NAND_ERR_CORRECT_S {
+    NAND_FATAL_ERROR=0,
+    NAND_ERR_NEED_RETRY,
+    NAND_ERR_FIXED,
+    NAND_NO_ERROR
 };
+
+enum NAND_HANDLE_STATUS_S {
+    NAND_HANDLE_DONE=0,
+    NAND_HANDLE_TIMEOUT,
+    NAND_HANDLE_ERR
+};
+
+static enum NAND_HANDLE_STATUS_S  handle_status = NAND_HANDLE_DONE;
+static enum NAND_ERR_CORRECT_S ret_irq_en = NAND_NO_ERROR;
+
+STATIC_FUNC void nfc_enable_interrupt(void);
+STATIC_FUNC void nfc_disable_interrupt(void);
+STATIC_FUNC void nfc_clear_interrupt(void);
+
+
+//#define NAND_IRQ_EN
+#ifdef NAND_IRQ_EN
+#include <linux/completion.h>
+#include <mach/irqs.h>
+
+static struct completion nfc_op_completion;
+STATIC_FUNC void nfc_wait_op_done(void);
+#endif
+
 
 struct sprd_dolphin_nand_info {
 	struct mtd_info *mtd;
@@ -144,7 +170,7 @@ struct sprd_dolphin_nand_info {
 	struct platform_device *pdev;
 	#endif
 
-	struct sprd_dolphin_nand_param *param;
+	struct sprd_nand_param *param;
 	uint32_t chip; //chip index
 	uint32_t v_mbuf; //virtual main buffer address
 	uint32_t p_mbuf; //phy main buffer address
@@ -187,30 +213,58 @@ static __attribute__((aligned(4))) uint8_t s_oob_data[NAND_MAX_OOBSIZE];
 //static __attribute__((aligned(4))) uint8_t s_oob_data[8];
 //static __attribute__((aligned(4))) uint8_t s_id_status[8];
 
-static void sprd_dolphin_nand_read_id(struct sprd_dolphin_nand_info *dolphin, uint32_t *buf);
-static void sprd_dolphin_nand_reset(struct sprd_dolphin_nand_info *dolphin);
-static int sprd_dolphin_nand_wait_finish(struct sprd_dolphin_nand_info *dolphin); 
+STATIC_FUNC int sprd_dolphin_nand_read_id(struct sprd_dolphin_nand_info *dolphin, uint32_t *buf);
+STATIC_FUNC int sprd_dolphin_nand_reset(struct sprd_dolphin_nand_info *dolphin);
+STATIC_FUNC int sprd_dolphin_nand_wait_finish(struct sprd_dolphin_nand_info *dolphin); 
 
-static uint32_t sprd_dolphin_reg_read(uint32_t addr)
+STATIC_FUNC uint32_t sprd_dolphin_reg_read(uint32_t addr)
 {
 	return readl(addr);
 }
-static void sprd_dolphin_reg_write(uint32_t addr, uint32_t val)
+STATIC_FUNC void sprd_dolphin_reg_write(uint32_t addr, uint32_t val)
 {
 	writel(val, addr);
 }
-static void sprd_dolphin_reg_or(uint32_t addr, uint32_t val)
+STATIC_FUNC void sprd_dolphin_reg_or(uint32_t addr, uint32_t val)
 {
 	sprd_dolphin_reg_write(addr, sprd_dolphin_reg_read(addr) | val);
 }
-static void sprd_dolphin_reg_and(uint32_t addr, uint32_t mask)
+STATIC_FUNC void sprd_dolphin_reg_and(uint32_t addr, uint32_t mask)
 {
 	sprd_dolphin_reg_write(addr, sprd_dolphin_reg_read(addr) & mask);
 }
-static void sprd_dolphin_nand_int_clr(uint32_t bit_clear)
+STATIC_FUNC void sprd_dolphin_nand_int_clr(uint32_t bit_clear)
 {
 	sprd_dolphin_reg_write(NFC_INT_REG, bit_clear);
 }
+
+STATIC_FUNC void nfc_clear_interrupt(void)
+{
+	uint32_t value = 0;
+	
+	value = ( INT_STSMCH_CLR | INT_WP_CLR | INT_TO_CLR | INT_DONE_CLR);
+	sprd_dolphin_reg_or(NFC_INT_REG, value); /* clear all interrupt status */
+
+	//value = NFC_CMD_CLR;
+	//sprd_dolphin_reg_or(NFC_START_REG, value); /* clear all interrupt status */
+}
+
+STATIC_FUNC void nfc_enable_interrupt(void)
+{
+	uint32_t value = 0;
+	
+	value = (INT_TO_EN | INT_DONE_EN);
+	sprd_dolphin_reg_or(NFC_INT_REG, value); /* clear all interrupt status */
+}
+
+STATIC_FUNC void nfc_disable_interrupt(void)
+{
+	uint32_t value = 0;
+	
+	value = ~(INT_TO_EN | INT_DONE_EN);
+	sprd_dolphin_reg_and(NFC_INT_REG, value); /* clear all interrupt status */
+}
+
 unsigned int ecc_mode_convert(uint32_t mode)
 {
 	uint32_t mode_m;
@@ -250,20 +304,50 @@ unsigned int ecc_mode_convert(uint32_t mode)
 	return mode_m;
 }
 
-/*spare info must be align to ecc pos, info_pos + info_size = ecc_pos, 
- *the hardware must be config info_size and info_pos when ecc enable,and the ecc_info size can't be zero,
- *to simplify the nand_param_tb, the info is align with ecc and ecc at the last postion in one sector
-*/
-static struct sprd_dolphin_nand_param sprd_dolphin_nand_param_tb[] = {
-	{{0xec, 0xbc, 0x00,0x55, 0x54}, 	1, 	5, 	4, 	16, 	12, 	11, 	1, 	2, 	512, 5, 21, 10},
-	{{0xec, 0xbc, 0x00,0x6A, 0x56}, 	1, 	5, 	8, 	16, 	12, 	11, 	1, 	2, 	512, 10, 25, 15},
-	//{{0xec, 0xbc, 0x00,0x6A, 0x56}, 	1, 	5, 	8, 	16, 	12, 	11, 	1, 	2, 	512, 5, 21, 10},
-	//{{0xec, 0xbc, 0x00,0x6A, 0x56}, 	1,	5,	8,	8, 		4,		3,		1,	2,	512, 5, 21, 10},
-	{{0xad, 0xbc, 0x90,0x55, 0x54}, 	1, 	5, 	4, 	16, 	12, 	11, 	1, 	2, 	512, 10, 25, 15},
-	{{0x2c, 0xbc, 0x90,0x66, 0x54}, 	1,	5,	8,	16, 	12, 	11, 	1,	2,	512, 10, 25, 15},
-};
+STATIC_FUNC void dolphin_set_timing_config(struct sprd_nand_timing *timing  , uint32_t nfc_clk_MHz) {
+	u32 reg_val, temp_val;
 
+		reg_val = 0;
 
+		/* get acs value : 0ns */
+		reg_val |= ((2 & 0x1F) << NFC_ACS_OFFSET);
+
+		/* get ace value + 6ns read delay time, and rwl added */
+		temp_val = (timing->ace_ns + 6) * nfc_clk_MHz / 1000;
+		if (((timing->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+			temp_val++;
+		}
+		reg_val |= ((temp_val & 0x1F) << NFC_ACE_OFFSET);
+
+		/* get rws value : 20 ns */
+		temp_val = 20 * nfc_clk_MHz / 1000;
+		if (((timing->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+			temp_val++;
+		}
+		reg_val |= ((temp_val & 0x3F) << NFC_RWS_OFFSET);
+
+		/* get rws value : 0 ns */
+		reg_val |= ((2 & 0x1F) << NFC_RWE_OFFSET);
+
+		/* get rwh value */
+		temp_val = (timing->rwh_ns + 6) * nfc_clk_MHz / 1000;
+		if (((timing->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+			temp_val++;
+		}
+		reg_val |= ((temp_val & 0x1F) << NFC_RWH_OFFSET);
+
+		/* get rwl value, 6 is read delay time*/
+		temp_val = (timing->rwl_ns + 6) * nfc_clk_MHz / 1000;
+		if (((timing->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
+			temp_val++;
+		}
+		reg_val |= (temp_val & 0x3F);
+
+		DPRINT("%s nand timing val: 0x%x\n\r", __func__, reg_val);
+
+		sprd_dolphin_reg_write(NFC_TIMING_REG, reg_val);
+
+}
 
 #ifdef CONFIG_NAND_SPL
 struct sprd_dolphin_boot_header_info {
@@ -326,40 +410,50 @@ void boad_nand_param_init(struct sprd_dolphin_nand_info *dolphin, struct nand_ch
  * so in nand_spl, don't need read the id or use the onfi spec to calculate the nand param,
  * just use the param at the nand_spl header instead of
  */
-void nand_hardware_config(struct mtd_info *mtd,struct nand_chip *chip)
+void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *chip)
 {
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
-	struct sprd_dolphin_boot_header_info *header;
-	int index;
-	int array;
-	struct sprd_dolphin_nand_param * param;
+	struct sprd_nand_param* param;
+	struct sprd_nand_oob* oob;
+	struct sprd_nand_timing* timing;
+
 	uint8 *id;
 	sprd_dolphin_nand_reset(dolphin);
+	mdelay(1);
 	sprd_dolphin_nand_read_id(dolphin, (uint32_t *)s_oob_data);
 	boad_nand_param_init(dolphin, dolphin->nand, s_oob_data);
 	id = s_oob_data;
-	array = ARRAY_SIZE(sprd_dolphin_nand_param_tb);
+	
+	param = SprdGetNandParam(id);
 
-	for (index = 0; index < array; index ++) {
-		param = sprd_dolphin_nand_param_tb + index;
-		if ((param->id[0] == id[0]) 
-			&& (param->id[1] == id[1]) 
-			&& (param->id[2] == id[2]) 
-			&& (param->id[3] == id[3]) 
-			&& (param->id[4] == id[4]))
-			break;
-	}
-	if (index < array) {
-		dolphin->ecc_mode = ecc_mode_convert(param->eccbit);
-		dolphin->m_size = param->eccsize;
-		dolphin->s_size = param->oob_size;
-		dolphin->a_cycles = param->a_cycles;
-		dolphin->sct_pg = param->sct_pg;
-		dolphin->info_pos = param->info_pos;
-		dolphin->info_size = param->info_size;
-		dolphin->write_size = dolphin->m_size * dolphin->sct_pg;
-		dolphin->ecc_pos = param->ecc_pos;
-		if(param->bus_width)
+	if (param != NULL) {
+		dolphin->param = param;
+		oob = &param->sOOB;
+		timing = &param->sTiming;
+		
+		dolphin_set_timing_config(timing, SPRD_NAND_CLOCK);
+		
+		//save the param config
+		dolphin->write_size = param->nPageSize;
+		dolphin->page_per_bl = param->nBlkSize / param->nPageSize;
+		dolphin->m_size = param->nSecSize;
+		dolphin->sct_pg = (param->nPageSize / param->nSecSize);
+		dolphin->oob_size = param->nSpareSize;
+		dolphin->a_cycles = param->nCycles;
+		
+		dolphin->s_size = oob->nOOBSize;
+		dolphin->info_pos = oob->nInfoPos;
+		dolphin->info_size = oob->nInfoSize;
+		dolphin->ecc_pos = oob->nEccPos;
+		dolphin->ecc_mode = ecc_mode_convert(oob->nEccBits);
+		dolphin->nand=chip;
+		dolphin->mtd = mtd;
+
+		chip->ecc.bytes  = (oob->nEccBits * 14 + 7) / 8;
+#ifdef DOLPHIN_UBOOT
+		chip->eccbitmode = oob->nEccBits;
+#endif
+		if(param->nBusWidth)
 		{
 			chip->options |= NAND_BUSWIDTH_16;
 		}
@@ -367,81 +461,85 @@ void nand_hardware_config(struct mtd_info *mtd,struct nand_chip *chip)
 		{
 			chip->options &= ~NAND_BUSWIDTH_16;
 		}
-		mtd->writesize = dolphin->write_size;
-		mtd->oobsize = dolphin->s_size * dolphin->sct_pg;
-		dolphin->nand=chip;
 	}
 	mtd->writesize = dolphin->write_size;
 	mtd->oobsize = dolphin->s_size * dolphin->sct_pg;
 	mtd->erasesize = dolphin->page_per_bl * dolphin->write_size;
 }
+
 #else 
 
-static void sprd_dolphin_nand_ecc_layout_gen(struct sprd_dolphin_nand_info *dolphin, struct sprd_dolphin_nand_param *param, struct nand_ecclayout *layout)
+STATIC_FUNC void sprd_dolphin_nand_ecc_layout_gen(struct sprd_nand_oob *oob, uint8_t sector_num, struct nand_ecclayout *layout)
 {
-	uint32_t sct = 0;
+	uint8_t sct = 0;
 	uint32_t i = 0;
 	uint32_t offset;
 	uint32_t used_len ; //one sector ecc data size(byte)
 	uint32_t eccbytes = 0; //one page ecc data size(byte)
 	uint32_t oobfree_len = 0;
-	used_len = (14 * param->eccbit + 7) / 8 + param->info_size;
-	if(param->sct_pg > ARRAY_SIZE(layout->oobfree))
+
+	used_len = (14 * oob->nEccBits + 7) / 8 + oob->nInfoSize;
+	if(sector_num > ARRAY_SIZE(layout->oobfree))
 	{
 		while(1);
 	}
-	for(sct = 0; sct < param->sct_pg; sct++)
+	for(sct = 0; sct < sector_num; sct++)
 	{
 		//offset = (oob_size * sct) + ecc_pos;
 		//for(i = 0; i < ecc_len; i++)
-		offset = (param->oob_size * sct) + param->info_pos;
+		offset = (oob->nOOBSize * sct) + oob->nInfoPos;
 		for(i = 0; i < used_len; i++)
 		{
 			layout->eccpos[eccbytes++] = offset + i;
 		}
-		layout->oobfree[sct].offset = param->oob_size * sct;
-		layout->oobfree[sct].length = param->oob_size - used_len ;
-		oobfree_len += param->oob_size - used_len;
+		layout->oobfree[sct].offset = oob->nOOBSize * sct;
+		layout->oobfree[sct].length = oob->nOOBSize - used_len ;
+		oobfree_len += oob->nOOBSize - used_len;
 	}
 	//for bad mark postion
 	layout->oobfree[0].offset = 2;
-	layout->oobfree[0].length = param->oob_size - used_len - 2;
+	layout->oobfree[0].length = oob->nOOBSize - used_len - 2;
 	oobfree_len -= 2;
-	layout->eccbytes = used_len * param->sct_pg;
+	layout->eccbytes = used_len * sector_num;
 }
 
-void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *chip, u8 id[5])
+void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *chip, uint8_t id[5])
 {
-	int index;
-	int array;
-	struct sprd_dolphin_nand_param * param;
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
+	struct sprd_nand_param* param;
+	struct sprd_nand_oob* oob;
+	struct sprd_nand_timing* timing;
 	
-	array = ARRAY_SIZE(sprd_dolphin_nand_param_tb);
-	for (index = 0; index < array; index ++) {
-		param = sprd_dolphin_nand_param_tb + index;
-		if ((param->id[0] == id[0]) 
-			&& (param->id[1] == id[1]) 
-			&& (param->id[2] == id[2]) 
-			&& (param->id[3] == id[3]) 
-			&& (param->id[4] == id[4]))
-			break;
-	}
-	if (index < array) {
+	param = SprdGetNandParam(id);
+
+	if (param != NULL) {
+		dolphin->param = param;
+		oob = &param->sOOB;
+		timing = &param->sTiming;
+		
+		dolphin_set_timing_config(timing, SPRD_NAND_CLOCK);
+		
 		//save the param config
-		dolphin->ecc_mode = ecc_mode_convert(param->eccbit);
-		dolphin->m_size = param->eccsize;
-		dolphin->s_size = param->oob_size;
-		dolphin->a_cycles = param->a_cycles;
-		dolphin->sct_pg = param->sct_pg;
-		dolphin->info_pos = param->info_pos;
-		dolphin->info_size = param->info_size;
-		dolphin->write_size = dolphin->m_size * dolphin->sct_pg;
-		dolphin->ecc_pos = param->ecc_pos;
-		chip->eccbitmode = param->eccbit;
-		chip->ecc.bytes  = (param->eccbit*14+7)/8;
-		//dolphin->bus_width = param->bus_width;
-		if(param->bus_width)
+		dolphin->write_size = param->nPageSize;
+		dolphin->page_per_bl = param->nBlkSize / param->nPageSize;
+		dolphin->m_size = param->nSecSize;
+		dolphin->sct_pg = (param->nPageSize / param->nSecSize);
+		dolphin->oob_size = param->nSpareSize;
+		dolphin->a_cycles = param->nCycles;
+		
+		dolphin->s_size = oob->nOOBSize;
+		dolphin->info_pos = oob->nInfoPos;
+		dolphin->info_size = oob->nInfoSize;
+		dolphin->ecc_pos = oob->nEccPos;
+		dolphin->ecc_mode = ecc_mode_convert(oob->nEccBits);
+		dolphin->nand=chip;
+		dolphin->mtd = mtd;
+
+		chip->ecc.bytes  = (oob->nEccBits * 14 + 7) / 8;
+#ifdef DOLPHIN_UBOOT
+		chip->eccbitmode = oob->nEccBits;
+#endif
+		if(param->nBusWidth)
 		{
 			chip->options |= NAND_BUSWIDTH_16;
 		}
@@ -449,22 +547,21 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *chip, u8 id[5]
 		{
 			chip->options &= ~NAND_BUSWIDTH_16;
 		}
-		dolphin->param = param;
-		//update the mtd and nand default param after nand scan
-		mtd->writesize = dolphin->write_size;
-		mtd->oobsize = dolphin->s_size * dolphin->sct_pg;
-		dolphin->oob_size = mtd->oobsize;
+
 		/* Calculate the address shift from the page size */
 		chip->page_shift = ffs(mtd->writesize) - 1;
 		/* Convert chipsize to number of pages per chip -1. */
 		chip->pagemask = (chip->chipsize >> chip->page_shift) - 1;
-		sprd_dolphin_nand_ecc_layout_gen(dolphin, param, &sprd_dolphin_nand_oob_default);
+		sprd_dolphin_nand_ecc_layout_gen(oob, dolphin->sct_pg, &sprd_dolphin_nand_oob_default);
 		chip->ecc.layout = &sprd_dolphin_nand_oob_default;
-		dolphin->mtd = mtd;
+
+		mtd->writesize = dolphin->write_size;
+		mtd->oobsize = dolphin->oob_size;
+		mtd->erasesize = dolphin->page_per_bl * dolphin->write_size;
 	}
 	else {
 		int steps;
-		struct sprd_dolphin_nand_param  param1;
+		struct sprd_nand_oob oob_tmp;
 		
 		//save the param config
 		steps = mtd->writesize / CONFIG_SYS_NAND_ECCSIZE;
@@ -476,32 +573,31 @@ void nand_hardware_config(struct mtd_info *mtd, struct nand_chip *chip, u8 id[5]
 		dolphin->info_pos = dolphin->s_size - CONFIG_SYS_NAND_ECCBYTES - 1;
 		dolphin->info_size = 1;
 		dolphin->write_size = mtd->writesize;
+		dolphin->page_per_bl = mtd->erasesize / mtd->writesize;
 		dolphin->oob_size = mtd->oobsize;
 		dolphin->ecc_pos = dolphin->s_size - CONFIG_SYS_NAND_ECCBYTES;
-		param1.sct_pg = dolphin->sct_pg;
-		param1.info_pos = dolphin->info_pos;
-		param1.info_size = dolphin->info_size;
-		param1.oob_size = dolphin->s_size;
-		param1.eccbit = CONFIG_SYS_NAND_ECC_MODE;
-		param1.eccsize = dolphin->s_size;
+		dolphin->mtd = mtd;
 
+		oob_tmp.nOOBSize = dolphin->s_size;
+		oob_tmp.nInfoPos = dolphin->info_pos;
+		oob_tmp.nInfoSize = dolphin->info_size;
+		oob_tmp.nEccPos = dolphin->ecc_pos;
+		oob_tmp.nEccBits = CONFIG_SYS_NAND_ECC_MODE;
+		sprd_dolphin_nand_ecc_layout_gen(&oob_tmp, dolphin->sct_pg, &sprd_dolphin_nand_oob_default);
+
+		chip->ecc.layout = &sprd_dolphin_nand_oob_default;
+#ifdef DOLPHIN_UBOOT
 		chip->eccbitmode = CONFIG_SYS_NAND_ECC_MODE;
-		chip->ecc.bytes  = (CONFIG_SYS_NAND_ECC_MODE * 14 + 7) / 8;
-		//printf("hardware default eccbitmode %d\n", chip->eccbitmode);
-		
+#endif
 		if(chip->chipsize > (128 << 20)) {
 			dolphin->a_cycles = 5;
 		}
 		else {
 			dolphin->a_cycles = 4;
 		}
-
-		sprd_dolphin_nand_ecc_layout_gen(dolphin, &param1, &sprd_dolphin_nand_oob_default);
-		chip->ecc.layout = &sprd_dolphin_nand_oob_default;
-		dolphin->mtd = mtd;
 	}
-	dolphin->mtd = mtd;
 }
+
 #endif  //end CONFIG_NAND_SPL
 
 
@@ -518,7 +614,7 @@ typedef struct {
 	uint16_t s_size;
 } sprd_dolphin_nand_data_param;
 
-static unsigned int sprd_dolphin_data_trans(sprd_dolphin_nand_data_param *param)
+STATIC_FUNC unsigned int sprd_dolphin_data_trans(sprd_dolphin_nand_data_param *param)
 {
 	uint32_t cfg0 = 0;
 	uint32_t cfg1 = 0;
@@ -611,11 +707,11 @@ unsigned int sprd_ecc_encode(struct sprd_ecc_param *param)
 
 
 //add one macro instruction to nand controller
-/*static */void sprd_dolphin_nand_ins_init(struct sprd_dolphin_nand_info *dolphin)
+STATIC_FUNC void sprd_dolphin_nand_ins_init(struct sprd_dolphin_nand_info *dolphin)
 {
 	dolphin->ins_num = 0;
 }
-/*static */void sprd_dolphin_nand_ins_add(uint16_t ins, struct sprd_dolphin_nand_info *dolphin)
+STATIC_FUNC void sprd_dolphin_nand_ins_add(uint16_t ins, struct sprd_dolphin_nand_info *dolphin)
 {
 	uint16_t *buf = (uint16_t *)dolphin->ins;
 	if(dolphin->ins_num >= NAND_MC_BUFFER_SIZE)
@@ -626,7 +722,7 @@ unsigned int sprd_ecc_encode(struct sprd_ecc_param *param)
 	dolphin->ins_num++;
 }
 
-static void sprd_dolphin_nand_ins_exec(struct sprd_dolphin_nand_info *dolphin)
+STATIC_FUNC void sprd_dolphin_nand_ins_exec(struct sprd_dolphin_nand_info *dolphin)
 {
 	uint32_t i;
 	uint32_t cfg0;
@@ -656,7 +752,8 @@ static void sprd_dolphin_nand_ins_exec(struct sprd_dolphin_nand_info *dolphin)
 	sprd_dolphin_reg_write(NFC_CFG0_REG, cfg0);
 	sprd_dolphin_reg_write(NFC_START_REG, NFC_START);
 }
-static int sprd_dolphin_nand_wait_finish(struct sprd_dolphin_nand_info *dolphin)
+
+STATIC_FUNC int sprd_dolphin_nand_wait_finish(struct sprd_dolphin_nand_info *dolphin)
 {
 	unsigned int value;
 	unsigned int counter = 0;
@@ -670,14 +767,15 @@ static int sprd_dolphin_nand_wait_finish(struct sprd_dolphin_nand_info *dolphin)
 		counter ++;
 	}
 	sprd_dolphin_reg_write(NFC_INT_REG, 0xf00); //clear all interrupt status
-	if(counter > NFC_TIMEOUT_VAL)
+	if(counter >= NFC_TIMEOUT_VAL)
 	{
-		while (1);
+        //while (1);
 		return -1;
 	}
 	return 0;
 }
-static void sprd_dolphin_nand_wp_en(struct sprd_dolphin_nand_info *dolphin, int en)
+
+STATIC_FUNC void sprd_dolphin_nand_wp_en(struct sprd_dolphin_nand_info *dolphin, int en)
 {
 	if(en)
 	{
@@ -688,7 +786,7 @@ static void sprd_dolphin_nand_wp_en(struct sprd_dolphin_nand_info *dolphin, int 
 		dolphin->wp_en = 0;
 	}
 }
-static void sprd_dolphin_select_chip(struct mtd_info *mtd, int chip)
+STATIC_FUNC void sprd_dolphin_select_chip(struct mtd_info *mtd, int chip)
 {
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
 	if(chip < 0) { //for release caller
@@ -700,10 +798,12 @@ static void sprd_dolphin_select_chip(struct mtd_info *mtd, int chip)
 	nand_hardware_config(mtd,dolphin->nand);
 #endif
 }
-static void sprd_dolphin_nand_read_status(struct sprd_dolphin_nand_info *dolphin)
+
+STATIC_FUNC void sprd_dolphin_nand_read_status(struct sprd_dolphin_nand_info *dolphin)
 {
 	uint32_t *buf;
-	//DPRINT("sprd_dolphin_nand_read_status\r\n");
+    //DPRINT("%s enter\n", __func__);
+
 	sprd_dolphin_nand_ins_init(dolphin);
 	sprd_dolphin_nand_ins_add(NAND_MC_CMD(NAND_CMD_STATUS), dolphin);
 	sprd_dolphin_nand_ins_add(NAND_MC_NOP(10), dolphin);
@@ -716,11 +816,13 @@ static void sprd_dolphin_nand_read_status(struct sprd_dolphin_nand_info *dolphin
 	*buf = sprd_dolphin_reg_read(NFC_STATUS0_REG);
 	dolphin->buf_head = 0;
 	dolphin->_buf_tail = 1;
-	//DPRINT("--sprd_dolphin_nand_read_status--\r\n");
+
+    //DPRINT("%s leave\n", __func__);
 }
-static void sprd_dolphin_nand_read_id(struct sprd_dolphin_nand_info *dolphin, uint32_t *buf)
+STATIC_FUNC int sprd_dolphin_nand_read_id(struct sprd_dolphin_nand_info *dolphin, uint32_t *buf)
 {
-	//DPRINT("sprd_dolphin_nand_read_id\r\n");
+    //DPRINT("%s enter\n", __func__);
+	
 	sprd_dolphin_nand_ins_init(dolphin);
 	sprd_dolphin_nand_ins_add(NAND_MC_CMD(NAND_CMD_READID), dolphin);
 	sprd_dolphin_nand_ins_add(NAND_MC_ADDR(0), dolphin);
@@ -730,16 +832,23 @@ static void sprd_dolphin_nand_read_id(struct sprd_dolphin_nand_info *dolphin, ui
 	
 	sprd_dolphin_reg_write(NFC_CFG0_REG, NFC_ONLY_NAND_MODE);
 	sprd_dolphin_nand_ins_exec(dolphin);
-	sprd_dolphin_nand_wait_finish(dolphin);
+	if (sprd_dolphin_nand_wait_finish(dolphin) != 0)
+    {
+        return -1;
+    }
 	*buf = sprd_dolphin_reg_read(NFC_STATUS0_REG);
 	*(buf + 1) = sprd_dolphin_reg_read(NFC_STATUS1_REG);
 	dolphin->buf_head = 0;
 	dolphin->_buf_tail = 8;
-	//DPRINT("--sprd_dolphin_nand_read_id--\r\n");
+
+    //DPRINT("%s leave\n", __func__);
+
+    return 0;
 }
-static void sprd_dolphin_nand_reset(struct sprd_dolphin_nand_info *dolphin)
+STATIC_FUNC int sprd_dolphin_nand_reset(struct sprd_dolphin_nand_info *dolphin)
 {
-	//DPRINT("sprd_dolphin_nand_reset\r\n");
+    //DPRINT("%s enter\n", __func__);
+
 	sprd_dolphin_nand_ins_init(dolphin);
 	sprd_dolphin_nand_ins_add(NAND_MC_CMD(NAND_CMD_RESET), dolphin);
 	sprd_dolphin_nand_ins_add(NFC_MC_WRB0_ID, dolphin); //wait rb
@@ -747,10 +856,16 @@ static void sprd_dolphin_nand_reset(struct sprd_dolphin_nand_info *dolphin)
 	//config register
 	sprd_dolphin_reg_write(NFC_CFG0_REG, NFC_ONLY_NAND_MODE);
 	sprd_dolphin_nand_ins_exec(dolphin);
-	sprd_dolphin_nand_wait_finish(dolphin);
-	//DPRINT("--sprd_dolphin_nand_reset--\r\n");
+	if (sprd_dolphin_nand_wait_finish(dolphin) != 0)
+    {
+        return 0;
+    }
+
+    //DPRINT("%s leave\n", __func__);
+
+    return 0;
 }
-static u32 sprd_dolphin_get_decode_sts(u32 index)
+STATIC_FUNC u32 sprd_dolphin_get_decode_sts(u32 index)
 {
 	uint32_t err;
 	uint32_t shift;
@@ -773,7 +888,7 @@ static u32 sprd_dolphin_get_decode_sts(u32 index)
 
 #ifdef DOLPHIN_UBOOT
 //read large page
-static int sprd_dolphin_nand_read_lp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
+STATIC_FUNC int sprd_dolphin_nand_read_lp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
 {
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
 	struct nand_chip *chip = dolphin->nand;
@@ -901,7 +1016,7 @@ static int sprd_dolphin_nand_read_lp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t
 }
 
 
-static int sprd_dolphin_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
+STATIC_FUNC int sprd_dolphin_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
 {
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
 	struct nand_chip *chip = dolphin->nand;
@@ -1006,8 +1121,123 @@ static int sprd_dolphin_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, 
 
 
 #ifdef DOLPHIN_KERNEL
+
+#ifdef 	NAND_IRQ_EN
+STATIC_FUNC void sprd_dolphin_nand_ins_exec_irq(struct sprd_dolphin_nand_info *dolphin)
+{
+	uint32_t i;
+	uint32_t cfg0;
+	uint32_t value = 0;
+	
+    //DPRINT("%s enter\n", __func__);
+
+	for(i = 0; i < ((dolphin->ins_num + 1) >> 1); i++)
+	{
+		sprd_dolphin_reg_write(NFC_INST0_REG + (i << 2), dolphin->ins[i]);
+	}
+	cfg0 = sprd_dolphin_reg_read(NFC_CFG0_REG);
+	if(dolphin->wp_en)
+	{
+		cfg0 &= ~NFC_WPN;
+	}
+	else
+	{
+		cfg0 |= NFC_WPN;
+	}
+	if(dolphin->chip)
+	{
+		cfg0 |= CS_SEL;
+	}
+	else
+	{
+		cfg0 &= ~CS_SEL;
+	}
+	sprd_dolphin_reg_write(NFC_CFG0_REG, cfg0);
+
+	nfc_clear_interrupt();
+	nfc_enable_interrupt();
+
+	sprd_dolphin_reg_write(NFC_START_REG, NFC_START);
+
+    //DPRINT("%s leave\n", __func__);
+}
+
+STATIC_FUNC int sprd_dolphin_nand_wait_finish_irq(struct sprd_dolphin_nand_info *dolphin)
+{
+	unsigned int value;
+	unsigned int counter = 0;
+	
+    //DPRINT("%s enter\n", __func__);
+
+	nfc_wait_op_done();
+	if(handle_status==NAND_HANDLE_DONE)
+	{
+			ret_irq_en=NAND_NO_ERROR;
+		}
+		else if(handle_status==NAND_HANDLE_TIMEOUT)
+		{
+			ret_irq_en=NAND_ERR_NEED_RETRY;
+		}
+		else if(handle_status==NAND_HANDLE_ERR)
+		{
+			ret_irq_en=NAND_ERR_NEED_RETRY;
+		}
+
+    //DPRINT("%s leave\n", __func__);
+
+	return 0;
+}
+
+STATIC_FUNC void nfc_wait_op_done(void)
+{
+	if (!wait_for_completion_timeout(&nfc_op_completion, msecs_to_jiffies(IRQ_TIMEOUT)))
+	{
+		handle_status=NAND_HANDLE_ERR;
+		DPRINT(KERN_ERR "%s, wait irq timeout\n", __func__);
+    }
+}
+
+STATIC_FUNC irqreturn_t nfc_irq_handler(int irq, void *dev_id)
+{
+	unsigned int value;
+    
+    //DPRINT("%s enter\n", __func__); /*diable irq*/
+	nfc_disable_interrupt();
+
+	value = sprd_dolphin_reg_read(NFC_INT_REG);
+	//DPRINT("%s, NFC_INT_REG:0x%x\n", __func__, value);
+	/*record handle status*/
+	if(value & INT_TO_STS)
+	{
+		
+		DPRINT(KERN_ALERT "%s, timeout occur NFC_INT_REG:0x%x\n", __func__, value);
+		handle_status=NAND_HANDLE_TIMEOUT;
+	}
+	else if(value & INT_DONE_STS)
+	{
+		handle_status=NAND_HANDLE_DONE;
+	}
+	
+	/*clear irq status*/
+	//value = (INT_DONE_CLR | INT_TO_CLR);
+	//sprd_dolphin_reg_or(NFC_INT_REG, value); /* clear all interrupt status */
+
+	//value = NFC_CMD_CLR;
+	//sprd_dolphin_reg_or(NFC_START_REG, value); /* clear all interrupt status */
+	
+	nfc_clear_interrupt();
+
+	complete(&nfc_op_completion);
+
+    //DPRINT("%s leave\n", __func__);
+
+	return IRQ_HANDLED;
+}
+#endif
+
+
 //read large page
-static int sprd_dolphin_nand_read_lp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
+STATIC_FUNC int sprd_dolphin_nand_read_lp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
 {
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
 	struct nand_chip *chip = dolphin->nand;
@@ -1019,6 +1249,8 @@ static int sprd_dolphin_nand_read_lp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t
 	uint32_t i;
 	uint32_t err;
 	page_addr = dolphin->page;
+
+	//DPRINT("%s enter\n", __func__);
 	
 	if(sbuf) {
 		column = mtd->writesize;
@@ -1032,6 +1264,7 @@ static int sprd_dolphin_nand_read_lp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t
 		column >>= 1;
 	}
 	//DPRINT("sprd_dolphin_nand_read_lp,page_addr = %x,column = %x\r\n",page_addr, column);
+	
 	sprd_dolphin_nand_ins_init(dolphin);
 	sprd_dolphin_nand_ins_add(NAND_MC_CMD(NAND_CMD_READ0), dolphin);
 	sprd_dolphin_nand_ins_add(NAND_MC_ADDR(column & 0xff), dolphin);
@@ -1102,9 +1335,17 @@ static int sprd_dolphin_nand_read_lp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t
 	sprd_dolphin_reg_write(NFC_CFG0_REG, cfg0);
 	sprd_dolphin_reg_write(NFC_CFG1_REG, cfg1);
 	sprd_dolphin_reg_write(NFC_CFG2_REG, cfg2);
+
 	
+#ifdef NAND_IRQ_EN
+	sprd_dolphin_nand_ins_exec_irq(dolphin);
+	sprd_dolphin_nand_wait_finish_irq(dolphin);
+#else
 	sprd_dolphin_nand_ins_exec(dolphin);
 	sprd_dolphin_nand_wait_finish(dolphin);
+#endif
+
+
 	if(!raw) {
 		for(i = 0; i < dolphin->sct_pg; i++) {
 			err = sprd_dolphin_get_decode_sts(i);
@@ -1129,7 +1370,7 @@ static int sprd_dolphin_nand_read_lp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t
 
 
 
-static int sprd_dolphin_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
+STATIC_FUNC int sprd_dolphin_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
 {
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
 	struct nand_chip *chip = dolphin->nand;
@@ -1139,6 +1380,9 @@ static int sprd_dolphin_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, 
 	uint32_t cfg1;
 	uint32_t cfg2;
 	page_addr = dolphin->page;
+
+    //DPRINT("%s, page addr is %lx\n", __func__, page_addr);
+	
 	if(mbuf) {
 		column = 0;
 	}
@@ -1218,27 +1462,37 @@ static int sprd_dolphin_nand_write_lp(struct mtd_info *mtd,const uint8_t *mbuf, 
 	sprd_dolphin_reg_write(NFC_CFG0_REG, cfg0);
 	sprd_dolphin_reg_write(NFC_CFG1_REG, cfg1);
 	sprd_dolphin_reg_write(NFC_CFG2_REG, cfg2);
+
+	
+#ifdef NAND_IRQ_EN
+	sprd_dolphin_nand_ins_exec_irq(dolphin);
+	sprd_dolphin_nand_wait_finish_irq(dolphin);
+#else
 	sprd_dolphin_nand_ins_exec(dolphin);
 	sprd_dolphin_nand_wait_finish(dolphin);
+#endif
+
 	return 0;
 }
 #endif
 
 
 
-static int sprd_dolphin_nand_read_sp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
+STATIC_FUNC int sprd_dolphin_nand_read_sp(struct mtd_info *mtd,uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
 {
 	return 0;
 }
-static int sprd_dolphin_nand_write_sp(struct mtd_info *mtd,const uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
+STATIC_FUNC int sprd_dolphin_nand_write_sp(struct mtd_info *mtd,const uint8_t *mbuf, uint8_t *sbuf,uint32_t raw)
 {
 	return 0;
 }
-static void sprd_dolphin_erase(struct mtd_info *mtd, int page_addr)
+STATIC_FUNC void sprd_dolphin_erase(struct mtd_info *mtd, int page_addr)
 {
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
 	uint32_t cfg0 = 0;
-	//DPRINT("sprd_dolphin_erase, %x\r\n", page_addr);
+    
+	//DPRINT("%s, page addr is %x\r\n", __func__ , page_addr);
+    
 	sprd_dolphin_nand_ins_init(dolphin);
 	sprd_dolphin_nand_ins_add(NAND_MC_CMD(NAND_CMD_ERASE1), dolphin);
 	sprd_dolphin_nand_ins_add(NAND_MC_ADDR(page_addr & 0xff), dolphin);
@@ -1255,11 +1509,19 @@ static void sprd_dolphin_erase(struct mtd_info *mtd, int page_addr)
 	sprd_dolphin_nand_ins_add(NFC_MC_DONE_ID, dolphin);
 	cfg0 = NFC_WPN | NFC_ONLY_NAND_MODE;
 	sprd_dolphin_reg_write(NFC_CFG0_REG, cfg0);
+
+
+	#ifdef NAND_IRQ_EN
+	sprd_dolphin_nand_ins_exec_irq(dolphin);
+	sprd_dolphin_nand_wait_finish_irq(dolphin);
+	#else
 	sprd_dolphin_nand_ins_exec(dolphin);
 	sprd_dolphin_nand_wait_finish(dolphin);
-	//DPRINT("--sprd_dolphin_erase--\r\n");
+	#endif
+
+    //DPRINT("%s leave\n", __func__);
 }
-static uint8_t sprd_dolphin_read_byte(struct mtd_info *mtd)
+STATIC_FUNC uint8_t sprd_dolphin_read_byte(struct mtd_info *mtd)
 {
 	uint8_t ch = 0xff;
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
@@ -1269,7 +1531,7 @@ static uint8_t sprd_dolphin_read_byte(struct mtd_info *mtd)
 	}
 	return ch;
 }
-static uint16_t sprd_dolphin_read_word(struct mtd_info *mtd)
+STATIC_FUNC uint16_t sprd_dolphin_read_word(struct mtd_info *mtd)
 {
 	uint16_t data = 0xffff;
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
@@ -1281,18 +1543,18 @@ static uint16_t sprd_dolphin_read_word(struct mtd_info *mtd)
 	return data;
 }
 
-static int sprd_dolphin_waitfunc(struct mtd_info *mtd, struct nand_chip *chip)
+STATIC_FUNC int sprd_dolphin_waitfunc(struct mtd_info *mtd, struct nand_chip *chip)
 {
 	return 0;
 }
 
-static int sprd_dolphin_ecc_calculate(struct mtd_info *mtd, const uint8_t *data,
+STATIC_FUNC int sprd_dolphin_ecc_calculate(struct mtd_info *mtd, const uint8_t *data,
 				uint8_t *ecc_code)
 {
 	return 0;
 }
 
-static int sprd_dolphin_ecc_correct(struct mtd_info *mtd, uint8_t *data,
+STATIC_FUNC int sprd_dolphin_ecc_correct(struct mtd_info *mtd, uint8_t *data,
 				uint8_t *read_ecc, uint8_t *calc_ecc)
 {
 	return 0;
@@ -1328,7 +1590,7 @@ static int sprd_dolphin_read_page_raw(struct mtd_info *mtd, struct nand_chip *ch
 	}
 	return 0;
 }
-static int sprd_dolphin_read_oob(struct mtd_info *mtd, struct nand_chip *chip,
+STATIC_FUNC int sprd_dolphin_read_oob(struct mtd_info *mtd, struct nand_chip *chip,
 			   int page, int sndcmd)
 {
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
@@ -1343,7 +1605,7 @@ static int sprd_dolphin_read_oob(struct mtd_info *mtd, struct nand_chip *chip,
 	}
 	return 0;
 }
-static void sprd_dolphin_write_page(struct mtd_info *mtd, struct nand_chip *chip,
+STATIC_FUNC void sprd_dolphin_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 				const uint8_t *buf)
 {
 	if(512 == mtd->writesize)
@@ -1356,7 +1618,7 @@ static void sprd_dolphin_write_page(struct mtd_info *mtd, struct nand_chip *chip
 	}
 
 }
-static void sprd_dolphin_write_page_raw(struct mtd_info *mtd, struct nand_chip *chip,
+STATIC_FUNC void sprd_dolphin_write_page_raw(struct mtd_info *mtd, struct nand_chip *chip,
 					const uint8_t *buf)
 {
 	if(512 == mtd->writesize)
@@ -1368,7 +1630,7 @@ static void sprd_dolphin_write_page_raw(struct mtd_info *mtd, struct nand_chip *
 		sprd_dolphin_nand_write_lp(mtd, buf, chip->oob_poi, 1);	
 	}
 }
-static int sprd_dolphin_write_oob(struct mtd_info *mtd, struct nand_chip *chip,
+STATIC_FUNC int sprd_dolphin_write_oob(struct mtd_info *mtd, struct nand_chip *chip,
 				int page)
 {
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);	
@@ -1393,7 +1655,7 @@ static int sprd_dolphin_write_oob(struct mtd_info *mtd, struct nand_chip *chip,
  *
  * Check, if the block is bad.
  */
-static int sprd_dolphin_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
+STATIC_FUNC int sprd_dolphin_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 {
 	int page, chipnr, res = 0;
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
@@ -1434,7 +1696,7 @@ static int sprd_dolphin_block_bad(struct mtd_info *mtd, loff_t ofs, int getchip)
 	return res;
 }
 
-static void sprd_dolphin_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
+STATIC_FUNC void sprd_dolphin_nand_cmdfunc(struct mtd_info *mtd, unsigned int command,
 			    int column, int page_addr)
 {
 	struct sprd_dolphin_nand_info *dolphin = mtd_to_dolphin(mtd);
@@ -1468,76 +1730,11 @@ static void sprd_dolphin_nand_cmdfunc(struct mtd_info *mtd, unsigned int command
 		break;
 	}
 }
-static void sprd_dolphin_nand_hwecc_ctl(struct mtd_info *mtd, int mode)
+STATIC_FUNC void sprd_dolphin_nand_hwecc_ctl(struct mtd_info *mtd, int mode)
 {
 	return; //do nothing
 }
 
-
-
-static void dolphin_set_timing_config(struct sprd_dolphin_nand_info *dolphin , uint32_t nfc_clk_MHz) {
-	int index, array;
-	u8 id_buf[8];
-	u32 reg_val, temp_val;
-	struct sprd_dolphin_nand_param * param;
-
-	/* read id */
-	sprd_dolphin_nand_read_id(dolphin, (uint32_t *)id_buf);
-
-	/* get timing para */
-	array = ARRAY_SIZE(sprd_dolphin_nand_param_tb);
-	for (index = 0; index < array; index ++) {
-		param = sprd_dolphin_nand_param_tb + index;
-		if ((param->id[0] == id_buf[0])
-			&& (param->id[1] == id_buf[1])
-			&& (param->id[2] == id_buf[2])
-			&& (param->id[3] == id_buf[3])
-			&& (param->id[4] == id_buf[4]))
-			break;
-	}
-
-	if (index < array) {
-		reg_val = 0;
-
-		/* get acs value : 0ns */
-		reg_val |= ((2 & 0x1F) << NFC_ACS_OFFSET);
-
-		/* get ace value + 6ns read delay time, and rwl added */
-		temp_val = (param->ace_ns + 6) * nfc_clk_MHz / 1000;
-		if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
-			temp_val++;
-		}
-		reg_val |= ((temp_val & 0x1F) << NFC_ACE_OFFSET);
-
-		/* get rws value : 20 ns */
-		temp_val = 20 * nfc_clk_MHz / 1000;
-		if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
-			temp_val++;
-		}
-		reg_val |= ((temp_val & 0x3F) << NFC_RWS_OFFSET);
-
-		/* get rws value : 0 ns */
-		reg_val |= ((2 & 0x1F) << NFC_RWE_OFFSET);
-
-		/* get rwh value */
-		temp_val = (param->rwh_ns + 6) * nfc_clk_MHz / 1000;
-		if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
-			temp_val++;
-		}
-		reg_val |= ((temp_val & 0x1F) << NFC_RWH_OFFSET);
-
-		/* get rwl value, 6 is read delay time*/
-		temp_val = (param->rwl_ns + 6) * nfc_clk_MHz / 1000;
-		if (((param->ace_ns * nfc_clk_MHz) % 1000)  != 0) {
-			temp_val++;
-		}
-		reg_val |= (temp_val & 0x3F);
-
-		DPRINT("nand timing val: 0x%x\n\r", reg_val);
-
-		sprd_dolphin_reg_write(NFC_TIMING_REG, reg_val);
-	}
-}
 
 
 #ifdef DOLPHIN_UBOOT
@@ -1569,7 +1766,7 @@ static void dolphin_set_timing_config(struct sprd_dolphin_nand_info *dolphin , u
 #endif
 
 
-static void sprd_dolphin_nand_hw_init(struct sprd_dolphin_nand_info *dolphin)
+STATIC_FUNC void sprd_dolphin_nand_hw_init(struct sprd_dolphin_nand_info *dolphin)
 {
 	int i = 0;
 	uint32_t val;
@@ -1577,7 +1774,10 @@ static void sprd_dolphin_nand_hw_init(struct sprd_dolphin_nand_info *dolphin)
 	//sprd_dolphin_reg_and(DOLPHIN_NANC_CLK_CFG, ~(BIT(1) | BIT(0)));
 	//sprd_dolphin_reg_or(DOLPHIN_NANC_CLK_CFG, BIT(0));
 
-	sprd_dolphin_reg_or(DOLPHIN_AHB_BASE,BIT(19) | BIT(18) | BIT(17) | BIT(6));
+	sprd_dolphin_reg_or((REGS_AP_CLK_BASE + 0x44), BIT(1));
+	mdelay(1);
+
+	sprd_dolphin_reg_or(DOLPHIN_AHB_BASE, BIT(19) | BIT(18) | BIT(17) | BIT(6));
 
 	sprd_dolphin_reg_or(DOLPHIN_AHB_RST,BIT(9));
 	mdelay(1);
@@ -1587,26 +1787,6 @@ static void sprd_dolphin_nand_hw_init(struct sprd_dolphin_nand_info *dolphin)
 	sprd_dolphin_reg_write(DOLPHIN_NFC_TIMING_REG, val);
 	sprd_dolphin_reg_write(DOLPHIN_NFC_TIMEOUT_REG, 0xffffffff);
 	//sprd_dolphin_reg_write(DOLPHIN_NFC_REG_BASE + 0x118, 3);
-
-#if 0
-	sprd_tiger_reg_or(REG_PIN_NFRB, BIT_7);   //set PIN_NFRB pull up
-	for (i=REG_PIN_NFWPN; i<=REG_PIN_NFD15; i+=4)
-	{
-		sprd_tiger_reg_or( i, BIT_9);
-		sprd_tiger_reg_and(i, ~(BIT_8|BIT_10|BIT_6));
-	}
-#endif
-
-#if 0
-	sprd_dolphin_reg_or(DOLPHIN_PIN_BASE + REG_PIN_NFRB, BIT(7));
-	for (i = REG_PIN_NFWPN; i <= REG_PIN_NFD15; i += 4)
-	{
-		sprd_dolphin_reg_or(DOLPHIN_PIN_BASE + i, BIT(9));
-		sprd_dolphin_reg_and(DOLPHIN_PIN_BASE + i, ~(BIT(10) | BIT(8) | BIT(6)));
-		sprd_dolphin_reg_and(DOLPHIN_PIN_BASE + i, ~(BIT(4) | BIT(5)));
-	}
-
-#endif
 
 #if 0
 	sprd_dolphin_reg_or(DOLPHIN_PIN_BASE + REG_PIN_NFWPN, BIT(7) | BIT(8) | BIT(9));
@@ -1639,7 +1819,7 @@ static void sprd_dolphin_nand_hw_init(struct sprd_dolphin_nand_info *dolphin)
 
 int board_nand_init(struct nand_chip *chip)
 {
-	//DPRINT("board_nand_init\r\n");
+	DPRINT("board_nand_init\r\n");
 
 	sprd_dolphin_nand_hw_init(&g_dolphin);
 
@@ -1651,7 +1831,6 @@ int board_nand_init(struct nand_chip *chip)
 	chip->ecc.mode = NAND_ECC_HW;
 	chip->ecc.calculate = sprd_dolphin_ecc_calculate;
 	chip->ecc.hwctl = sprd_dolphin_nand_hwecc_ctl;
-	
 	chip->ecc.correct = sprd_dolphin_ecc_correct;
 	chip->ecc.read_page = sprd_dolphin_read_page;
 	chip->ecc.read_page_raw = sprd_dolphin_read_page_raw;
@@ -1665,15 +1844,22 @@ int board_nand_init(struct nand_chip *chip)
 	g_dolphin.ecc_mode = ecc_mode_convert(CONFIG_SYS_NAND_ECC_MODE);
 	g_dolphin.nand = chip;
 
-	dolphin_set_timing_config(&g_dolphin, 64);	/* 153 is current clock 153MHz */
+#ifdef DOLPHIN_KERNEL
+	chip->ecc.strength = CONFIG_SYS_NAND_ECC_MODE;
+#endif
 
+#ifdef DOLPHIN_UBOOT
 	chip->eccbitmode = CONFIG_SYS_NAND_ECC_MODE;
+#endif
+
+	//dolphin_set_timing_config(&g_dolphin, SPRD_NAND_CLOCK);	/* 153 is current clock 153MHz */
+
 	chip->ecc.size = CONFIG_SYS_NAND_ECCSIZE;
 
 	chip->chip_delay = 20;
 	chip->priv = &g_dolphin;
 
-	//printf("v2   board eccbitmode %d\n", chip->eccbitmode);
+	//DPRINT("v2   board eccbitmode %d\n", chip->eccbitmode);
 
 	chip->options = NAND_BUSWIDTH_16;
 
@@ -1781,7 +1967,7 @@ static struct mtd_info *sprd_mtd = NULL;
 const char *part_probes[] = { "cmdlinepart", NULL };
 #endif
 
-static int sprd_nand_dma_init(struct sprd_dolphin_nand_info *dolphin)
+STATIC_FUNC int sprd_nand_dma_init(struct sprd_dolphin_nand_info *dolphin)
 {
 	dma_addr_t phys_addr = 0;
 	void *virt_ptr = 0;
@@ -1803,18 +1989,31 @@ static int sprd_nand_dma_init(struct sprd_dolphin_nand_info *dolphin)
 	dolphin->p_oob = (u32)phys_addr;
 	return 0;
 }
-static void sprd_nand_dma_deinit(struct sprd_dolphin_nand_info *dolphin)
+STATIC_FUNC void sprd_nand_dma_deinit(struct sprd_dolphin_nand_info *dolphin)
 {
 	dma_free_coherent(NULL, dolphin->write_size, (void *)dolphin->v_mbuf, (dma_addr_t)dolphin->p_mbuf);
 	dma_free_coherent(NULL, dolphin->write_size, (void *)dolphin->v_oob, (dma_addr_t)dolphin->p_oob);
 }
-static int sprd_nand_probe(struct platform_device *pdev)
+STATIC_FUNC int sprd_nand_probe(struct platform_device *pdev)
 {
 	struct nand_chip *this;
 	struct resource *regs = NULL;
 	struct mtd_partition *partitions = NULL;
 	int num_partitions = 0;
 	int ret = 0;
+
+
+	#ifdef  NAND_IRQ_EN
+	int err = 0;
+	init_completion(&nfc_op_completion);
+	err = request_irq(IRQ_NFC_INT, nfc_irq_handler, 0, DRIVER_NAME, NULL);
+	if (err) {
+        DPRINT(KERN_ERR "request_irq error\n");
+		goto prob_err;	
+    }
+    DPRINT(KERN_ALERT "request_irq ok\n");
+	#endif
+	
 
 	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!regs) {
@@ -1835,7 +2034,7 @@ static int sprd_nand_probe(struct platform_device *pdev)
 	sprd_mtd->priv = this;
 
 	this->options |= NAND_BUSWIDTH_16;
-	this->options |= NAND_NO_READRDY;
+	//this->options |= NAND_NO_READRDY;
 
 	board_nand_init(this);
 
@@ -1843,7 +2042,7 @@ static int sprd_nand_probe(struct platform_device *pdev)
     if (sprd_dolphin_nand_reset(&g_dolphin) != 0)
     {
         ret = -ENXIO;
-        printk("nand reset failed!!!!!!!!!!!!!\n");
+        DPRINT(KERN_ERR "nand reset failed!!!!!!!!!!!!!\n");
         goto prob_err;
     }
     msleep(1);
@@ -1851,10 +2050,9 @@ static int sprd_nand_probe(struct platform_device *pdev)
     if (sprd_dolphin_nand_read_id(&g_dolphin, (uint32_t *)s_oob_data) != 0)
     {
         ret = -ENXIO;
-        printk("nand read id failed, no nand device!!!!!!!!!!!!!\n");
-        goto prob_err;
+        DPRINT(KERN_ERR "nand read id failed, no nand device!!!!!!!!!!!!!\n");
     }
-    printk("nand read id ok, nand exists!!!!!!!!!!!!!\n");
+    DPRINT(KERN_ALERT "nand read id ok, nand exists!!!!!!!!!!!!!\n");
 
 	//nand_scan(sprd_mtd, 1);
 	/* first scan to find the device and get the page size */
@@ -1881,7 +2079,7 @@ static int sprd_nand_probe(struct platform_device *pdev)
 	num_partitions = parse_mtd_partitions(sprd_mtd, part_probes, &partitions, 0);
 
 	if ((!partitions) || (num_partitions == 0)) {
-		DPRINT("No parititions defined, or unsupported device.\n");
+		DPRINT(KERN_ALERT "No parititions defined, or unsupported device.\n");
 		goto release;
 	}
 
@@ -1894,12 +2092,12 @@ release:
 	nand_release(sprd_mtd);
 	sprd_nand_dma_deinit(&g_dolphin);
 prob_err:
-	sprd_dolphin_reg_and(DOLPHIN_AHB_BASE,~(BIT(17) | BIT(18) | BIT(19) | BIT(6)));
+	sprd_dolphin_reg_and(DOLPHIN_AHB_BASE,~(BIT(19) | BIT(18) | BIT(17) | BIT(6)));
 	kfree(sprd_mtd);
 	return ret;
 }
 
-static int sprd_nand_remove(struct platform_device *pdev)
+STATIC_FUNC int sprd_nand_remove(struct platform_device *pdev)
 {
 	platform_set_drvdata(pdev, NULL);
 	nand_release(sprd_mtd);
@@ -1909,18 +2107,15 @@ static int sprd_nand_remove(struct platform_device *pdev)
 }
 
 #ifdef CONFIG_PM
-static int sprd_nand_suspend(struct platform_device *dev, pm_message_t pm)
+STATIC_FUNC int sprd_nand_suspend(struct platform_device *dev, pm_message_t pm)
 {
 	//nothing to do
 	return 0;
 }
 
-static int sprd_nand_resume(struct platform_device *dev)
+STATIC_FUNC int sprd_nand_resume(struct platform_device *dev)
 {
-	sprd_dolphin_reg_write(NFC_TIMING_REG, NFC_DEFAULT_TIMING);
-	sprd_dolphin_reg_write(NFC_TIMEOUT_REG, 0x80400000);
-	//close write protect
-	sprd_dolphin_nand_wp_en(&g_dolphin, 0);
+	sprd_dolphin_nand_hw_init(&g_dolphin);
 	return 0;
 }
 #else
@@ -1939,12 +2134,12 @@ static struct platform_driver sprd_nand_driver = {
 	},
 };
 
-static int __init sprd_nand_init(void)
+STATIC_FUNC int __init sprd_nand_init(void)
 {
 	return platform_driver_register(&sprd_nand_driver);
 }
 
-static void __exit sprd_nand_exit(void)
+STATIC_FUNC void __exit sprd_nand_exit(void)
 {
 	platform_driver_unregister(&sprd_nand_driver);
 }
