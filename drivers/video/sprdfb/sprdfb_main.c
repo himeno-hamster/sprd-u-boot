@@ -163,6 +163,27 @@ int white_led = 0;
 			__raw_writel(0x0480,0x400388d8);
 			printf("sprd backlight power on (SPX15 use WHITE_LED backlight control)\n");
 		}
+	//============================================both white led and pwm
+		{
+			/*backlight is driven by PWMC (PWMC=PWM2) */
+			__raw_bits_or((0x1 << 0), 0x402d0040);//use ext_26m for clk_pwm2 parent clk
+			if(0 == value) {
+				__raw_writel(0x0000, 0x40260040);
+				printf("sprd backlight power off (SPX15 use PWM2 for external backlight control)\n");
+			}
+			else {
+				value = (value & 0xff) >> 2;
+				/*enbale pwm2*/
+				__raw_bits_or((0x1 << 6), 0x402e0000);
+				/*config pwm2*/
+				__raw_writel((value << 8) | 0xff, 0x40260044);
+				__raw_writel(0xffff, 0x4026004c);
+				__raw_writel(0xffff, 0x40260050);
+				__raw_writel(0x0100, 0x40260040);
+				printf("sprd backlight power on (SPX15 use PWM2 for external backlight control)\n");
+			}
+		}
+	//============================================both white led and pwm
 	}
 	else {
 		/*backlight is driven by PWMC (PWMC=PWM2) */
