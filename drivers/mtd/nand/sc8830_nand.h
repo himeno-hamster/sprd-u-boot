@@ -164,8 +164,4 @@
  /* TODO : use global interface */
 #define AHB_SOFT_NFC_RST            (1 << 5)
 
-#define NAND_MC_BUFFER_SIZE         (24)
-#define CONFIG_SYS_NAND_ECCSIZE     (512)
-#define CONFIG_SYS_NAND_ECCBYTES    (4)
-#define CONFIG_SYS_NAND_ECC_MODE    (2)
 #endif
