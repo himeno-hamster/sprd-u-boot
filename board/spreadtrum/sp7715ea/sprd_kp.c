@@ -6,6 +6,8 @@
 #include <asm/arch/sprd_keypad.h>
 #include <asm/arch/chip_drv_common_io.h>
 
+
+#define mdelay(_ms) udelay(_ms*1000)
 struct key_map_info * sprd_key_map = 0;
 
 void board_keypad_init(void)
@@ -33,6 +35,9 @@ void board_keypad_init(void)
     /* init sprd keypad controller */
     REG32(REG_AON_APB_APB_EB0) |= BIT_8;
     REG32(REG_AON_APB_APB_RTC_EB) |= BIT_1;
+    REG32(REG_AON_APB_APB_RST0) |= BIT_8;
+    udelay(2000);
+     REG32(REG_AON_APB_APB_RST0) &= ~BIT_8;
 
     REG_KPD_INT_CLR = KPD_INT_ALL;
     REG_KPD_POLARITY = CFG_ROW_POLARITY | CFG_COL_POLARITY;
@@ -78,18 +83,19 @@ unsigned char board_key_scan(void)
 #ifdef KEYPAD_DEBUG
 	printf("key operation flags is %08x, key %08x\n", REG_KPD_INT_RAW_STATUS, REG_KPD_KEY_STATUS);
 #endif
+    mdelay(50);
     if((s_int_status & KPD_PRESS_INT0) || (s_int_status & KPD_LONG_KEY_INT0)){
         scan_code = s_key_status & (KPD1_ROW_CNT | KPD1_COL_CNT);
-        key_code = handle_scan_code(scan_code);
-    }else if((s_int_status & KPD_PRESS_INT1) || (s_int_status & KPD_LONG_KEY_INT1)){
-        scan_code = (s_key_status & (KPD2_ROW_CNT | KPD2_COL_CNT)>>8);
-        key_code = handle_scan_code(scan_code);
-    }else if((s_int_status & KPD_PRESS_INT2) || (s_int_status & KPD_LONG_KEY_INT2)){
+        key_code += handle_scan_code(scan_code);
+    } if((s_int_status & KPD_PRESS_INT1) || (s_int_status & KPD_LONG_KEY_INT1)){
+        scan_code = (s_key_status & (KPD2_ROW_CNT | KPD2_COL_CNT))>>8;
+        key_code += handle_scan_code(scan_code);
+    }if((s_int_status & KPD_PRESS_INT2) || (s_int_status & KPD_LONG_KEY_INT2)){
         scan_code = (s_key_status & (KPD3_ROW_CNT | KPD3_COL_CNT))>>16;
-        key_code = handle_scan_code(scan_code);
-    }else if((s_int_status & KPD_PRESS_INT3) || (s_int_status & KPD_LONG_KEY_INT3)){
+        key_code += handle_scan_code(scan_code);
+    }if((s_int_status & KPD_PRESS_INT3) || (s_int_status & KPD_LONG_KEY_INT3)){
         scan_code = (s_key_status & (KPD4_ROW_CNT | KPD4_COL_CNT))>>24;
-        key_code = handle_scan_code(scan_code);
+        key_code += handle_scan_code(scan_code);
     }
 
     if(s_int_status)
@@ -99,14 +105,12 @@ unsigned char board_key_scan(void)
 
 unsigned int check_key_boot(unsigned char key)
 {
-    if(KEY_MENU == key)
+    if(KEY_VOLUMEUP == key)
       return BOOT_CALIBRATE;
     else if(KEY_HOME == key)
       return BOOT_FASTBOOT;
-    else if(KEY_BACK == key)
+    else if(KEY_VOLUMEDOWN== key)
       return BOOT_RECOVERY;
-    else if(KEY_VOLUMEUP== key)
-      return BOOT_DLOADER;
     else 
       return 0;
 }
