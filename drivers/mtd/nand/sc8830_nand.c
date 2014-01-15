@@ -15,6 +15,7 @@
 
 #ifdef DOLPHIN_UBOOT
 #include <common.h>
+#include <malloc.h>
 #include <asm/io.h>
 #include <asm/errno.h>
 #include <config.h>
@@ -46,6 +47,8 @@
 #else
 #define DPRINT printf
 #endif
+#define ASSERT(cond) { assert(cond); }
+
 
 #define NFC_MC_ICMD_ID	(0xCD)
 #define NFC_MC_ADDR_ID	(0x0A)
@@ -101,11 +104,12 @@ static int mtdoobsize = 0;
 
 #include "sc8830_nand.h"
 #define DPRINT printk
+
 #endif  //DOLPHIN_KERNEL
 
 
 
-
+#define SPRD_ASSERT(cond) { if (!(cond)) while(1); }
 #define STATIC_FUNC static
 
 #include "sprd_nand_param.h"

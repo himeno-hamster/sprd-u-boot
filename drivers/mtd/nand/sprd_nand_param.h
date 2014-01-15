@@ -29,6 +29,7 @@
 #define SZ_INFO(n) (n)
 #define POS_INFO(n) (n)
 
+#define CALC_ECC_SIZE(n) ((14 * (n) + 7) / 8)
 
 
 struct sprd_nand_device {
@@ -161,36 +162,36 @@ struct sprd_nand_param sprd_nand_param_table[] = {
 	}, //timing
 };
 
-struct sprd_nand_maker* __FindMaker(uint8_t idMaker) {
+STATIC_FUNC struct sprd_nand_maker* __FindMaker(uint8_t idMaker) {
 	struct sprd_nand_maker* pmaker = maker_table;
-	
+
 	while (pmaker->idMaker != 0) {
 		if(pmaker->idMaker == idMaker) {
 			return pmaker;
 		}
 		pmaker++;
 	}
-	return NULL;		
+	return NULL;
 }
 
-struct sprd_nand_device* __FindDevice(struct sprd_nand_maker* pmaker, uint8_t idDevice) {
+STATIC_FUNC struct sprd_nand_device* __FindDevice(struct sprd_nand_maker* pmaker, uint8_t idDevice) {
 	struct sprd_nand_device* pdevice = pmaker->pDevTab;
-	
+
 	while (pdevice->idDevice != 0) {
 		if(pdevice->idDevice == idDevice) {
 			return pdevice;
 		}
 		pdevice++;
 	}
-	return NULL;		
+	return NULL;
 }
 
-void __PrintNandInfo(struct sprd_nand_param* p) {
+STATIC_FUNC void __PrintNandInfo(struct sprd_nand_param* p) {
 	struct sprd_nand_device* pdevice;
 	struct sprd_nand_maker* pmaker;
 
 	DPRINT("%s\n", __func__);
-	
+
 	pmaker = __FindMaker(p->idMaker);
 	pdevice = __FindDevice(pmaker, p->idDevice);
 	
@@ -202,9 +203,9 @@ void __PrintNandInfo(struct sprd_nand_param* p) {
 }
 
 
-void __ParseNandParam(uint8_t* id) {
+STATIC_FUNC void __ParseNandParam(uint8_t* id) {
 	struct sprd_nand_param* param = sprd_nand_param_table;
-	
+
 	while(param->idMaker != 0) {
 		if ((param->id[0] == id[0]) && 
 			(param->id[4] == id[1])) {
@@ -218,6 +219,42 @@ void __ParseNandParam(uint8_t* id) {
 	return;
 }
 
+STATIC_FUNC int __SprdCheckNancParam(struct sprd_nand_param* param) {
+	struct sprd_nand_device* pdevice;
+	struct sprd_nand_maker* pmaker;
+	struct sprd_nand_oob* poob = &param->sOOB;
+	uint8_t sector_num = param->nPageSize / param->nSecSize;
+
+	DPRINT("%s\n", __func__);
+
+	if (param->idMaker != param->id[0]) {
+		DPRINT("%s: id is not match!!!!!!!!!!!!!!!\n", __func__);
+		SPRD_ASSERT(0);
+	}
+	if (param->idDevice != param->id[1]) {
+		DPRINT("%s: id is not match!!!!!!!!!!!!!!!\n", __func__);
+		SPRD_ASSERT(0);
+	}
+	if (poob->nOOBSize * sector_num > param->nSpareSize) {
+		DPRINT("%s: OOB size is not match!!!!!!!!!!!!!!!\n", __func__);
+		SPRD_ASSERT(0);
+	}
+	if (poob->nEccPos + poob->nEccSize > poob->nOOBSize) {
+		DPRINT("%s: ECC size exceeds the oob!!!!!!!!!!!!!!!\n", __func__);
+		SPRD_ASSERT(0);
+	}
+	if (CALC_ECC_SIZE(poob->nEccBits) != poob->nEccSize) {
+		DPRINT("%s: ECC size is wrong!!!!!!!!!!!!!!!\n", __func__);
+		SPRD_ASSERT(0);
+	}
+	if (poob->nInfoPos + poob->nInfoSize != poob->nEccPos) {
+		DPRINT("%s: Info position is wrong!!!!!!!!!!!!!!!\n", __func__);
+		SPRD_ASSERT(0);
+	}	
+
+	return 0;	
+}
+
 struct sprd_nand_param* SprdGetNandParam(uint8_t* id) {
 	struct sprd_nand_param* param = sprd_nand_param_table;
 	int i;
@@ -229,15 +266,16 @@ struct sprd_nand_param* SprdGetNandParam(uint8_t* id) {
 	}
 
 	//__ParseNandParam(id);
-	
+
 	while(param->idMaker != 0) {
 		if ((param->id[0] == id[0]) && 
 			(param->id[1] == id[1]) &&
 			(param->id[2] == id[2]) &&
 			(param->id[3] == id[3]) &&
 			(param->id[4] == id[4])) {
-			
+
 			__PrintNandInfo(param);
+			__SprdCheckNancParam(param);
 			return param;
 		}
 		param++;
