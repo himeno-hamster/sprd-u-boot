@@ -17,7 +17,7 @@
 #define BIT_PIN_SLP_DCP (BIT_PIN_SLP_CP0|BIT_PIN_SLP_CP1)
 static pinmap_t  pinmap[] = {
 
-{REG_PIN_CTRL0,0},
+{REG_PIN_CTRL0,(1<<20/*gps real select*/)|(1<<26/*RFSDA2 source select function 2 of U0TXD*/)|0},
 {REG_PIN_CTRL1,0},
 {REG_PIN_CTRL2,(5<<20/*sim0->cp1,sim1->cp1*/)|0},
 {REG_PIN_CTRL3,0},

@@ -16,7 +16,7 @@
 
 static pinmap_t  pinmap[] = {
 
-{REG_PIN_CTRL0,0},
+{REG_PIN_CTRL0,(1<<20/*gps real select*/)|(1<<26/*RFSDA2 source select function 2 of U0TXD*/)|0},
 {REG_PIN_CTRL1,0},
 {REG_PIN_CTRL2,			(0<<22)/*CP0 Control SIM1*/|(0<<20)/*CP0 Control SIM0*/|(1<<16)|(2<<10)}, //ap_uart4-->cp0_uart0, ap_uart2-->cp1_uart1
 {REG_PIN_CTRL3,			0},	//modify it later
