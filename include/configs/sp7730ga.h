@@ -119,7 +119,7 @@
 
 #define FIXNV_SIZE		(2*128 * 1024)
 #define PRODUCTINFO_SIZE	(16 * 1024)
-#define MODEM_SIZE		(0x700000)
+#define MODEM_SIZE		(0x800000)
 #define DSP_SIZE		(0x200000)
 #define WCNMODEM_SIZE           (0x100000)
 #define VMJALUNA_SIZE		(0x64000) /* 400K */
