@@ -111,7 +111,7 @@ int main(void)
 		FDL_DlReg(BSL_REPARTITION,    	   FDL2_Repartition,       0);
 		FDL_DlReg(BSL_CMD_NORMAL_RESET,   FDL_McuResetNormal/*mcu_reset_boot*/,   0);
 		FDL_DlReg(BSL_CMD_READ_CHIP_TYPE, FDL_McuReadChipType, 0);  
-
+                FDL_DlReg(BSL_CMD_READ_MCP_TYPE, FDL_McuReadMcpType, 0);
 		//Send BSL_INCOMPATIBLE_PARTITION because of FDL2 will know nothing about new partition
 		FDL_SendAckPacket (BSL_INCOMPATIBLE_PARTITION);
 

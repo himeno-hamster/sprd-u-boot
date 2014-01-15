@@ -7,7 +7,7 @@
 #include <asm/arch/cmddef.h>
 #include <asm/arch/mocor_boot_mode.h>
 #include <asm/arch/chip.h>
-
+#include <nand.h>
 #ifndef HWRST_STATUS_NORMAL
 #define   HWRST_STATUS_NORMAL 			(0X40)
 #endif
@@ -122,4 +122,44 @@ int FDL_McuReadChipType (PACKET_T *packet, void *arg)
     FDL_SendPacket (packet);
     return 1;
 }
-
+/*unsigned int EndianModify (unsigned int value)
+{
+    unsigned int nTmp = 0;
+    nTmp = (value >> 24 | value << 24);
+    nTmp |= ( (value >> 8) & 0x0000FF00);
+    nTmp |= ( (value << 8) & 0x00FF0000);
+    return nTmp ;
+}*/
+int FDL_McuReadMcpType (PACKET_T *packet, void *arg)
+{
+    unsigned int pagesize;
+    unsigned int blocksize;
+    unsigned int size ;
+    char temp[sizeof(struct MCP_TYPE)];
+    struct mtd_info *nand ;
+    struct MCP_TYPE mcp_type;
+    int i =0,j=0;
+    if ((nand_curr_device < 0) || (nand_curr_device >= CONFIG_SYS_MAX_NAND_DEVICE)) {
+        printf("--->get curr nand device failed<---\n");
+        return NULL;
+    }
+    nand =&nand_info[nand_curr_device];
+    pagesize  = nand->writesize;
+    blocksize = nand->erasesize;
+    mcp_type.flag = 0;
+    mcp_type.pagesize  = pagesize;
+    mcp_type.blocksize = blocksize;
+    size = sizeof(struct MCP_TYPE);
+    packet->packet_body.type = BSL_REP_READ_MCP_TYPE;
+    packet->packet_body.size = 12;
+    memcpy(packet->packet_body.content, &mcp_type,size);
+    for(i=0 ; i<size ;i++)
+        temp[i] = packet->packet_body.content[i];
+    for(i=0; i<size; i++){
+        if((i%4) == 0)
+            j=i+4;
+        packet->packet_body.content[i]=temp[--j];
+    }
+    FDL_SendPacket (packet);
+    return 1;
+}
