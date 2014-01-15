@@ -270,7 +270,7 @@ typedef enum
 	PUBL_LPDDR2_DS_MAX   = 0x5,
 
 	PUBL_DDR3_DS_34OHM   = 0xd,
-	DDR3_DDR3_DS_40OHM   = 0xb
+	PUBL_DDR3_DS_40OHM   = 0xb
 
 }PUBL_DS_E;
 

@@ -338,10 +338,17 @@ void umctl2_low_power_open()
 	}
 	#endif
 	
-    umctl2_low_pd_set(UMCTL_AUTO_SF_DIS,
-                      UMCTL_AUTO_PD_EN,
-                      UMCTL_AUTO_DPD_DIS,
-                      UMCTL_AUTO_CKP_EN);
+	#ifdef DDR_DDR3
+        umctl2_low_pd_set(UMCTL_AUTO_SF_DIS,
+                          UMCTL_AUTO_PD_EN,
+                          UMCTL_AUTO_DPD_DIS,
+                          UMCTL_AUTO_CKP_DIS);
+	#else
+        umctl2_low_pd_set(UMCTL_AUTO_SF_DIS,
+                          UMCTL_AUTO_PD_EN,
+                          UMCTL_AUTO_DPD_DIS,
+                          UMCTL_AUTO_CKP_EN);
+	#endif
 	wait_pclk(50);
 	
 
