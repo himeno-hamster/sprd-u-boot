@@ -155,12 +155,23 @@ extern struct panel_spec lcd_ssd2075_mipi_spec;//thomaszhang@20130412
 extern struct panel_spec lcd_hx8369b_mipi_spec;
 #endif
 
+#ifdef CONFIG_FB_LCD_NT35502_MIPI
+extern struct panel_spec lcd_nt35502_mipi_spec;
+#endif
+
 static struct panel_cfg lcd_panel[] = {
 #ifdef CONFIG_SP8830SSW
-    [0]={
-        .lcd_id = 0x8369,
-        .panel = &lcd_hx8369b_mipi_spec ,
-        },
+#ifdef CONFIG_FB_LCD_NT35502_MIPI
+	[0]={
+	.lcd_id = 0x8370,
+	.panel = &lcd_nt35502_mipi_spec ,
+	},
+#else
+	[0]={
+	.lcd_id = 0x8369,
+	.panel = &lcd_hx8369b_mipi_spec ,
+	},
+#endif
 #else
     [0]={
         .lcd_id = 0x2075,
