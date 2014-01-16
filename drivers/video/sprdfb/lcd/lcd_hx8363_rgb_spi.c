@@ -16,7 +16,6 @@
  */
 
 #include <asm/arch/sprd_lcd.h>
-
 #define printk printf
 
 #define  LCD_DEBUG
@@ -426,9 +425,9 @@ static struct info_rgb lcd_hx8363_rgb_info = {
 struct panel_spec lcd_panel_hx8363_rgb_spi_spec = {
 	.width = 480,
 	.height = 854,
-#ifdef CONFIG_FB_LOW_RES_SIMU_SUPPORT
+#ifdef CONFIG_FB_LOW_RES_SIMU
 	.display_width = 320,
-	.display_height = 480,
+	.display_height = 512,
 #endif
 	.fps = 61,
 	.type = LCD_MODE_RGB,
