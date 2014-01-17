@@ -51,7 +51,18 @@ struct	dl_image_inf{
 	uint32_t data_size;
 }ImageInfo[2];
 
-#ifdef CONFIG_EXT4_SPARSE_DOWNLOAD
+#define NV_HEAD_LEN (512)
+#define NV_HEAD_MAGIC   (0x00004e56)
+#define NV_VERSION      (101)
+
+typedef struct  _NV_HEADER {
+     uint32_t magic;
+     uint32_t len;
+     uint32_t checksum;
+     uint32_t version;
+}nv_header_t;
+
+#ifdef CONFIG_EMMC_BOOT
 #include "../disk/part_uefi.h"
 #include "../drivers/mmc/card_sdio.h"
 #include "asm/arch/sci_types.h"
@@ -83,16 +94,6 @@ typedef struct{
 	uint32 hashLen;
 }EMMC_BootHeader;
 #endif
-
-
-typedef struct  _NV_HEADER {
-     uint32 magic;
-     uint32 len;
-     uint32 checksum;
-     uint32   version;
-}nv_header_t;
-#define NV_HEAD_MAGIC   0x00004e56
-#define NV_VERSION      101
 
 typedef enum
 {
@@ -129,32 +130,21 @@ static FB_PARTITION_INFO const s_fb_special_partition_cfg[]={
 	{PARTITION_USER,FB_PARTITION_PURPOSE_NV,FB_IMG_RAW,L"wfixnv1"},
 	{PARTITION_MAX,FB_PARTITION_PURPOSE_MAX,FB_IMG_TYPE_MAX,NULL}
 };
+#else
+
+typedef struct {
+	char *vol;
+	char *bakvol;
+}FB_NV_VOL_INFO;
+
+static FB_NV_VOL_INFO s_nv_vol_info[]={
+	{"fixnv1","fixnv2"},
+	{"wfixnv1","wfixnv2"},
+	{"tdfixnv1","tdfixnv2"},
+	{NULL,NULL}
+};
 
 #endif
-/*
-struct	dl_image_inf{
-	uint32 base_address;
-	uint32 max_size;
-	uint32 data_size;
-}ImageInfo[2];
-*/
-
-typedef struct {
-    unsigned char colParity;
-    unsigned lineParity;
-    unsigned lineParityPrime;
-} yaffs_ECCOther;
-typedef struct {
-    unsigned sequenceNumber;
-    unsigned objectId;
-    unsigned chunkId;
-    unsigned byteCount;
-} yaffs_PackedTags2TagsPart;
-
-typedef struct {
-    yaffs_PackedTags2TagsPart t;
-    yaffs_ECCOther ecc;
-} yaffs_PackedTags2;
 
 //#define FASTBOOT_DEBUG
 #ifdef FASTBOOT_DEBUG
@@ -169,10 +159,6 @@ typedef struct {
 #define FLASH_PAGE_SIZE 2048
 
 #define ROUND_TO_PAGE(x,y) (((x) + (y)) & (~(y)))
-
-int nand_do_write_ops(struct mtd_info *mtd, loff_t to,struct mtd_oob_ops *ops);
-int nand_do_write_oob(struct mtd_info *mtd, loff_t to,
-                             struct mtd_oob_ops *ops);
 
 #define GFP_ATOMIC ((gfp_t) 0)
 static int current_write_position;
@@ -481,7 +467,7 @@ static void cmd_download(const char *arg, void *data, unsigned sz)
 	fastboot_okay("");
 }
 
-#ifdef CONFIG_EXT4_SPARSE_DOWNLOAD
+#ifdef CONFIG_EMMC_BOOT
 unsigned short fastboot_eMMCCheckSum(const unsigned int *src, int len)
 {
 	unsigned int   sum = 0;
@@ -709,6 +695,28 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 					uint32  data_left = 0;
 
 					fb_printf("cmd_flash: raw data\n");
+
+					if(FB_PARTITION_PURPOSE_NV == partition_purpose)
+					{
+						nv_header_t *header_p = NULL;
+						uint8  header_buf[EMMC_SECTOR_SIZE];
+
+						memset(header_buf,0x00,EMMC_SECTOR_SIZE);
+						header_p = header_buf;
+						header_p->magic = NV_HEAD_MAGIC;
+						header_p->len = FIXNV_SIZE;
+						header_p->checksum =(uint32)calc_checksum((unsigned char *) data,FIXNV_SIZE);
+						header_p->version = NV_VERSION;
+						if(!Emmc_Write(partition_type, startblock, 1,header_buf)){
+							fastboot_fail("eMMC WRITE_NVHEADER_ERROR!");
+							return;
+						}
+						startblock++;
+						count = ((FIXNV_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1)))/EMMC_SECTOR_SIZE;
+
+						goto emmc_write;
+					}
+
 					//first part
 					data_left = ImageInfo[0].data_size%EMMC_SECTOR_SIZE;
 					count = ImageInfo[0].data_size/EMMC_SECTOR_SIZE;
@@ -759,25 +767,8 @@ void cmd_flash(const char *arg, void *data, unsigned sz)
 				}
 				else
 				{
-					if(FB_PARTITION_PURPOSE_NV == partition_purpose)
-					{
-						nv_header_t *header_p = NULL;
-						uint8  header_buf[EMMC_SECTOR_SIZE];
-
-						memset(header_buf,0x00,EMMC_SECTOR_SIZE);
-						header_p = header_buf;
-						header_p->magic = NV_HEAD_MAGIC;
-						header_p->len = FIXNV_SIZE;
-						header_p->checksum =(uint32)calc_checksum((unsigned char *) data,FIXNV_SIZE);
-						header_p->version = NV_VERSION;
-						if(!Emmc_Write(partition_type, startblock, 1,header_buf)){
-							fastboot_fail("eMMC WRITE_NVHEADER_ERROR!");
-							return;
-						}
-						startblock++;
-						count = ((FIXNV_SIZE +(EMMC_SECTOR_SIZE - 1)) & (~(EMMC_SECTOR_SIZE - 1)))/EMMC_SECTOR_SIZE;
-					}
-					goto emmc_write;
+					fastboot_fail("Image Format Unkown!");
+					return;
 				}
 			}
 		default:
@@ -853,158 +844,105 @@ void cmd_erase(const char *arg, void *data, unsigned sz)
 }
 
 #else
-char tempBuf[9*1024]={0};
 void cmd_flash(const char *arg, void *data, unsigned sz)
 {
-	struct mtd_info *nand;
-    struct mtd_device *dev;
-    struct part_info *part;
-	size_t size = 0;
-    u8 pnum;
-	unsigned extra = 0;
-    int ret;
-
-	data = ImageInfo[0].base_address; //previous downloaded date to download_base
+	int ret =-1;
+	int i;
 
 	fb_printf("%s, arg:%x date: 0x%x, sz 0x%x\n", __func__, arg, data, sz);
-    ret = mtdparts_init();
-    if(ret != 0){
-        fastboot_fail("mtdparts init error");
-        return;
-    }
 
-    ret = find_dev_and_part(arg, &dev, &pnum, &part);
-    if(ret){
-		fastboot_fail("unknown partition name");
-        return;
-    }else if(dev->id->type != MTD_DEV_TYPE_NAND){
-        fastboot_fail("mtd dev type error");
-        return;
-    }
-
-	nand = &nand_info[dev->id->num];
-
-    nand_erase_options_t opts;
-    memset(&opts, 0, sizeof(opts));
-    opts.offset = (loff_t)part->offset;
-    opts.length = (loff_t)part->size;
-    opts.jffs2 = 0;
-	opts.quiet = 1;
-
-    fb_printf("opts off  0x%08x\n", (uint32_t)opts.offset);
-    fb_printf("opts size 0x%08x\n", (uint32_t)opts.length);
-	fb_printf("nand write size 0x%08x\n", nand->writesize);
-    ret = nand_erase_opts(nand, &opts);
-
-    if(ret){
-      fastboot_fail("nand erase error");
-      return;
-    }
-	
-	if (!strcmp(part->name, "boot") || !strcmp(part->name, "recovery")) {
+	if (!strcmp(arg, "boot") || !strcmp(arg, "recovery")) {
 		if (memcmp((void *)data, BOOT_MAGIC, BOOT_MAGIC_SIZE)) {
 			fastboot_fail("image is not a boot image");
 			return;
 		}
 	}
 
-	if (!strcmp(part->name, "system") || !strcmp(part->name, "userdata"))
-		extra = 64;
-	else
-		sz = ROUND_TO_PAGE(sz, nand->writesize -1);
+	/**
+	 *	FIX ME!
+	 *	assume first image buffer is big enough for nv
+	 */
+	for(i=0;s_nv_vol_info[i].vol != NULL;i++) {
+		if(!strcmp(arg, s_nv_vol_info[i].vol)) {
+			nv_header_t *header = NULL;
+			uint8_t  tmp[NV_HEAD_LEN];
 
-	size = sz;
-	fb_printf("writing 0x%x bytes to '%s' offset: 0x%08x nand_curr_device=%d\n", size, part->name, part->offset,nand_curr_device);
-    if(!extra){ // boot or recovery partition write
-        ret = nand_write_skip_bad(nand, (loff_t)part->offset, &size, data);
-    }else{
-#ifndef CONFIG_SC7710G2
-        struct nand_chip *chip = nand->priv;
-        chip->ops.mode = MTD_OOB_AUTO;
-        chip->ops.len = nand->writesize;
-        chip->ops.ooblen = sizeof(yaffs_PackedTags2);
-        chip->ops.ooboffs = 0;
-        loff_t part_off = (loff_t)part->offset;
+			memset(tmp,0x00,NV_HEAD_LEN);
+			header = tmp;
+			header->magic = NV_HEAD_MAGIC;
+			header->len = FIXNV_SIZE;
+			header->checksum =(uint32_t)calc_checksum((unsigned char *) data,FIXNV_SIZE);
+			header->version = NV_VERSION;
+			//write org nv
+			ret = do_raw_data_write(arg, FIXNV_SIZE+NV_HEAD_LEN, NV_HEAD_LEN, 0, tmp);
+			if(ret)
+				goto end;
+			ret = do_raw_data_write(arg, 0, FIXNV_SIZE, NV_HEAD_LEN, data);
+			if(ret)
+				goto end;
+			//write bak nv
+			ret = do_raw_data_write(s_nv_vol_info[i].bakvol, FIXNV_SIZE+NV_HEAD_LEN, NV_HEAD_LEN, 0, tmp);
+			if(ret)
+				goto end;
+			ret = do_raw_data_write(s_nv_vol_info[i].bakvol, 0, FIXNV_SIZE, NV_HEAD_LEN, data);
+			goto end;
+		}
+	}
 
-        while(size){
-            chip->ops.datbuf = (uint8_t *)data;
-            chip->ops.oobbuf = (uint8_t *)(data + nand->writesize);
-            if(!nand_block_isbad(nand, part_off)){
-                ret = nand_do_write_ops(nand, part_off, &(chip->ops));
-                if(ret){
-                    //fastboot_fail("flash write failure");
-                    break;
-                    nand->block_markbad(nand, part_off);
-                    part_off += nand->writesize;
-                    continue;
-                }
-                data += (nand->writesize + nand->oobsize);
-                size -= (nand->writesize + nand->oobsize);
-            }
-			part_off += nand->writesize;
-        }
-#else
+	if(ImageInfo[1].data_size) {
+		uint32_t total_sz  = ImageInfo[0].data_size + ImageInfo[1].data_size;
+		ret = do_raw_data_write(arg, total_sz, ImageInfo[0].data_size, 0, ImageInfo[0].base_address);
+		if(ret)
+			goto end;
+		ret = do_raw_data_write(arg, 0, ImageInfo[1].data_size, ImageInfo[0].data_size, ImageInfo[1].base_address);
+	}
+	else {
+		ret = do_raw_data_write(arg, ImageInfo[0].data_size, ImageInfo[0].data_size, 0, ImageInfo[0].base_address);
+	}
 
-	int part_off = part->offset;
-	int copy_size = 12 * 1024;
-	set_current_write_pos(part_off);
-	init_yaffs_convert_variables(nand->writesize,nand->oobsize,1);
-
-	set_convert_buffer(data,size);
-	if (convert_buffer_is_full())
-		yaffs2_convertAndWrite(0,nand->writesize,nand->oobsize,tempBuf);
-	yaffs2_convertAndWrite(1,nand->writesize,nand->oobsize,tempBuf);
-#endif
-    }
-
+end:
 	if(!ret)
 		fastboot_okay("");
 	else
 		fastboot_fail("flash error");
+	return;
 }
 
 void cmd_erase(const char *arg, void *data, unsigned sz)
 {
 	struct mtd_info *nand;
-    struct mtd_device *dev;
-    struct part_info *part;
-    u8 pnum;
-	unsigned extra = 0;
-    int ret;
+	struct mtd_device *dev;
+	struct part_info *part;
+	nand_erase_options_t opts;
+	u8 pnum;
+	int ret;
+	char buf[1024];
 
 	fb_printf("%s\n", __func__);
 
-    ret = mtdparts_init();
-    if(ret != 0){
-        fastboot_fail("mtdparts init error");
-        return;
-    }
+	ret = find_dev_and_part(arg, &dev, &pnum, &part);
+	if(!ret){
+		nand = &nand_info[dev->id->num];
+		memset(&opts, 0, sizeof(opts));
+		opts.offset = (loff_t)part->offset;
+		opts.length = (loff_t)part->size;
+		opts.jffs2 = 0;
+		opts.quiet = 1;
+		ret = nand_erase_opts(nand, &opts);
+		if(ret)
+			goto end;
+	}
 
-    ret = find_dev_and_part(arg, &dev, &pnum, &part);
-    if(ret){
-		fastboot_fail("unknown partition name");
-        return;
-    }else if(dev->id->type != MTD_DEV_TYPE_NAND){
-        fastboot_fail("mtd dev type error");
-        return;
-    }
-	
-    nand = &nand_info[dev->id->num];
-    nand_erase_options_t opts;
-    memset(&opts, 0, sizeof(opts));
-    opts.offset = (loff_t)part->offset;
-    opts.length = (loff_t)part->size;
-    opts.jffs2 = 0;
-	opts.quiet = 1;
+	//just erase 1k now
+	memset(buf, 0x0, 1024);
+	ret = do_raw_data_write(arg, 1024, 1024, 0, buf);
 
-    fb_printf("opts off  0x%08x\n", (uint32_t)opts.offset);
-    fb_printf("opts size 0x%08x\n", (uint32_t)opts.length);
-	fb_printf("nand write size 0x%08x\n", nand->writesize);
-    ret = nand_erase_opts(nand, &opts);
-    if(ret)
-      fastboot_fail("nand erase error");
-    else
-      fastboot_okay("");
+end:
+	if(ret)
+		fastboot_fail("nand erase error");
+	else
+		fastboot_okay("");
+	return;
 }
 #endif
 
@@ -1229,18 +1167,16 @@ int fastboot_init(void *base, unsigned size, struct usb_ep * ep_in, struct usb_e
 */
 	fastboot_register("getvar:", cmd_getvar);
 	fastboot_register("download:", cmd_download);
-	//fastboot_register("flash:", cmd_flash);
 	fastboot_publish("version", "1.0");
 
 	fastboot_register("flash:", cmd_flash);
-    fastboot_register("erase:", cmd_erase);
+	fastboot_register("erase:", cmd_erase);
 	fastboot_register("boot", cmd_boot);
 	fastboot_register("reboot", cmd_reboot);
 	fastboot_register("powerdown", cmd_powerdown);
 	fastboot_register("continue", cmd_continue);
 	fastboot_register("reboot-bootloader", cmd_reboot_bootloader);
-	
-    //fastboot_register(
+
 	fastboot_handler(0);
 
 	return 0;

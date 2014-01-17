@@ -1,6 +1,8 @@
 #include <common.h>
 #include <linux/types.h>
 #include <linux/string.h>
+#include <nand.h>
+#include <jffs2/jffs2.h>
 #ifdef CONFIG_CMD_UBI
 #include <ubi_uboot.h>
 #endif
@@ -159,9 +161,98 @@ end:
 	return ret;
 }
 
-int do_raw_data_write(char *part, u32 size, u32 off, char *buf)
+int do_raw_data_write(char *part, u32 updsz, u32 size, u32 off, char *buf)
 {
-	/*not support*/
-	return -1;
+	int ret =-1;
+#ifdef  CONFIG_EMMC_BOOT
+	//TODO
+#else
+	int i =0;
+	int ubi_dev;
+	u8 pnum;
+	loff_t offset;
+	size_t length,wlen=0;
+	struct mtd_device *dev;
+	struct mtd_info *nand;
+	struct part_info *mtdpart;
+	struct ubi_volume_desc *vol;
+	nand_erase_options_t opts;
+
+try_mtd:
+	ret = find_dev_and_part(part, &dev, &pnum, &mtdpart);
+	if (ret)
+		goto try_ubi;
+	else if (dev->id->type != MTD_DEV_TYPE_NAND)
+		goto end;
+
+	offset = mtdpart->offset+off;
+	length = size;
+	nand = &nand_info[dev->id->num];
+	memset(&opts, 0x0, sizeof(opts));
+	opts.offset = offset;
+	opts.length = length;
+	opts.quiet = 1;
+	opts.spread = 1;
+
+	ret = nand_erase_opts(nand, &opts);
+	if (ret) {
+		printf("erase %s failed.\n",part);
+		goto end;
+	}
+	//write spl part with header
+	if(strcmp(part, "spl")==0){
+		ret = sprd_nand_write_spl(buf, nand);
+		goto end;
+	}
+
+	while((size != wlen) && (i++<0xff)) {
+		ret = nand_write_skip_bad(nand, offset, &length, buf);
+		wlen += length;
+		buf += length;
+		offset += length;
+
+		if(ret){
+			//mark a block as badblock
+			printf("nand write error %d, mark bad block 0x%llx\n",ret,offset&~(nand->erasesize-1));
+			nand->block_markbad(nand,offset &~(nand->erasesize-1));
+		}
+	}
+	goto end;
+
+try_ubi:
+	ubi_dev = nand_ubi_dev_init();
+	if (ubi_dev<0) {
+		printf("do_raw_data_write: ubi init failed.\n");
+		return ret;
+	}
+	vol = ubi_open_volume_nm(ubi_dev, part, UBI_READWRITE);
+	if (IS_ERR(vol)) {
+		printf("cannot open \"%s\", error %d",
+			  part, (int)PTR_ERR(vol));
+		return ret;
+	}
+
+	//set total size to be updated in this volume
+	if (updsz) {
+		ret = ubi_start_update(vol->vol->ubi, vol->vol, updsz);
+		if (ret < 0) {
+			printf("Cannot start volume %s update\n",part);
+			return ret;
+		}
+	}
+
+	ret = ubi_more_update_data(vol->vol->ubi, vol->vol, buf, size);
+	if (ret < 0) {
+		printf("Couldnt write data in volume %s\n",part);
+		return ret;
+	}
+	ret = 0;
+	ubi_close_volume(vol);
+#endif
+
+end:
+	if (ret)
+		printf("do_raw_data_write error.\n");
+	return ret;
 }
 

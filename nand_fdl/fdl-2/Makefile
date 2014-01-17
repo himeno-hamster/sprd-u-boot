@@ -51,7 +51,7 @@ FDL2_COBJS_LIST = migrate.o fdl2_signature.o fdl_main.o fdl_cmd_proc.o fdl_ldo.o
 ifdef CONFIG_EMMC_BOOT
 FDL2_COBJS_LIST += newfs_msdos.o fdl_emmc_operate.o
 else
-FDL2_COBJS_LIST += fdl_fill_spl.o fdl_nand_operate.o parsemtdparts.o fdl_mtdparts.o fdl_ubi.o
+FDL2_COBJS_LIST += fdl_nand_operate.o parsemtdparts.o fdl_mtdparts.o fdl_ubi.o
 endif
 
 ifdef FPGA_TRACE_DOWNLOAD

@@ -176,20 +176,22 @@ static int _fdl2_update_nv(char *vol, char *bakvol, int size, char *data)
 {
 	int ret,time=1;
 	char *buf;
+	char *nvbuf=NULL;
 	char *curvol;
 	char tmp[NV_HEAD_LEN];
 	nv_header_t *header;
 
 	if(size>dl_stat.bufsize){
-		buf = malloc(size+NV_HEAD_LEN);
-		if(!buf){
+		nvbuf = malloc(size+NV_HEAD_LEN);
+		if(!nvbuf){
 			printf("%s buf malloc failed.\n",__func__);
 			return -1;
 		}
+		buf = nvbuf;
 		fdl_ubi_volume_read(dl_stat.ubi.dev, dl_stat.ubi.cur_volnm, buf, size, 0);
 		if(size != ret) {
 			printf("%s read volume %s failed.\n",__func__,dl_stat.ubi.cur_volnm);
-			return -1;
+			goto err;
 		}
 	}else {
 		buf = data;
@@ -206,23 +208,27 @@ static int _fdl2_update_nv(char *vol, char *bakvol, int size, char *data)
 		ret = fdl_ubi_volume_start_update(dl_stat.ubi.dev, curvol, size+NV_HEAD_LEN);
 		if(ret) {
 			printf("%s: vol %s start update failed!\n",__func__,curvol);
-			return -1;
+			goto err;
 		}
 		ret = fdl_ubi_volume_write(dl_stat.ubi.dev, curvol, tmp, NV_HEAD_LEN);
 		if(ret) {
 			printf("%s volume write error %d!\n",curvol,ret);
-			return -1;
+			goto err;
 		}
 		ret = fdl_ubi_volume_write(dl_stat.ubi.dev, curvol, buf, size);
 		if(ret) {
 			printf("%s volume write error %d!\n",curvol,ret);
-			return -1;
+			goto err;
 		}
 		curvol = bakvol;
 	}while(time--);
 
 	printf("update nv success!\n");
 	return 0;
+err:
+	if(nvbuf)
+		free(nvbuf);
+	return -1;
 }
 
 static int _fdl2_check_nv(char *vol)
@@ -353,7 +359,7 @@ static void _fdl2_nand_write(nand_info_t *nand, unsigned long long offset, unsig
 
 	//TODO:temp here for step 1 debug
 	if(strcmp(dl_stat.mtd.name, "spl")==0){
-		fdl_nand_write_spl(buffer, dl_stat.nand);
+		sprd_nand_write_spl(buffer, dl_stat.nand);
 		printf("write spl\n");
 		dl_stat.wp =0;
 		dl_stat.unsv_size =0;

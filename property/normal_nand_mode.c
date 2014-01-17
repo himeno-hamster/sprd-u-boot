@@ -267,7 +267,11 @@ bak:
 		printf("%s: ubi vol %s read failed!\n",__func__,bakvol);
 	}
 end:
-	//TODO: restore damaged image need
+	if (!IS_ERR(vol_desc))
+		ubi_close_volume(vol_desc);
+	if (!IS_ERR(vol_desc))
+		ubi_close_volume(bakvol_desc);
+
 	switch(status){
 		case 0:
 			printf("vol %s:both org and bak are damaged!\n",vol);
@@ -276,10 +280,12 @@ end:
 		case 1:
 			printf("vol %s:bak is damaged!\n",vol);
 			memcpy(addr,buf+NV_HEAD_LEN,size);
+			do_raw_data_write(bakvol, len, len, 0, buf);
 			break;
 		case 2:
 			printf("vol %s:org is damaged!\n",vol);
 			memcpy(addr,bakbuf+NV_HEAD_LEN,size);
+			do_raw_data_write(vol, len, len, 0, bakbuf);
 			break;
 		case 3:
 			printf("vol %s:both org and bak are ok!\n",vol);
@@ -290,10 +296,6 @@ end:
 			break;
 	}
 
-	if (!IS_ERR(vol_desc))
-		ubi_close_volume(vol_desc);
-	if (!IS_ERR(vol_desc))
-		ubi_close_volume(bakvol_desc);
 	free(buf);
 	free(bakbuf);
 

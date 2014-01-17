@@ -20,7 +20,6 @@ void fastboot_mode(void)
 {
 	debugf("%s\n", __FUNCTION__);
 #ifdef CONFIG_SPLASH_SCREEN
-
 	vibrator_hw_init();
 	set_vibrator(1);
 	//read boot image header
@@ -41,15 +40,13 @@ void fastboot_mode(void)
 	lcd_display();
 	set_backlight(255);
 	set_vibrator(0);
-
+	free(bmp_img);
 #endif
-
 
 #ifdef CONFIG_CMD_FASTBOOT
 	dwc_otg_driver_init();
 	usb_fastboot_initialize();
 #endif
-#if defined CONFIG_SPLASH_SCREEN && defined CONFIG_EXT4_SPARSE_DOWNLOAD
-free(bmp_img);
-#endif
+
+	return;
 }
