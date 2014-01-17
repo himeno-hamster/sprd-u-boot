@@ -55,14 +55,18 @@ int do_cboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
         calibration_detect(2);
     }
 #ifndef CONFIG_MACH_CORI
-    if(is_bat_low()){
-        DBG("cboot:low battery and shutdown\n");
 #ifndef CONFIG_SP8830SSW
-     	mdelay(10000);
-	power_down_devices();
-        while(1);
-#endif
+    while(is_bat_low()) {
+        if(charger_connected()) {
+            DBG("cboot:low battery,charging...\n");
+            mdelay(200);
+        }else{
+            DBG("cboot:low battery and shutdown\n");
+            power_down_devices();
+            while(1);
+        }
     }
+#endif
 #endif    
 #ifdef CONFIG_SPRD_SYSDUMP
     write_sysdump_before_boot(rst_mode);
