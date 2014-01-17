@@ -38,7 +38,13 @@
 //#include <asm/arch/regs_cpc.h>
 //#include <asm/arch/pin_reg_v3.h>
 
-#define mdelay(ms) do{ int volatile i = 0; for(i; i < 0xFFFFF; i++); } while(0)
+#define udelay(x) \
+	do { \
+		volatile int i; \
+		int cnt = 1000 * x; \
+		for (i=0; i<cnt; i++);\
+	} while(0);
+#define mdelay(_ms) udelay((_ms)*1000)
 
 #define NAND_DBG
 
