@@ -57,6 +57,8 @@ static void TD_comm_misc_init(COMM_STD_MODE_E csm)
 	if(TD_MODE == csm){
 		REG32(REG_AON_APB_WTG_TEST) |= BIT_TG_DAC_OUT_SEL;
 	}
+	REG32(REG_AON_APB_BB_BG_CTRL) |= (BIT_BB_REF_AUTO_PD_EN|BIT_BB_LDO_FORCE_ON|BIT_BB_BG_FORCE_ON);
+	REG32(REG_AON_APB_RES_REG0) |= BIT_BB_LDO_AUTO_EN;
 }
 int board_init()
 {
@@ -71,10 +73,9 @@ int board_init()
 	sprd_gpio_init();
 	sound_init();
 	init_ldo_sleep_gr();
-	TDPllRefConfig(1);
+	//TDPllRefConfig(1);
 	cp2_rfctl_init();
 	TD_comm_misc_init(TD_MODE);
-
 	return 0;
 }
 
