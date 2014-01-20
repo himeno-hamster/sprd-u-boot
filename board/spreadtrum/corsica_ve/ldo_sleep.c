@@ -431,4 +431,9 @@ void init_ldo_sleep_gr(void)
 		BITS_SLP_OUT_WAIT_DCDCARM(8)		|
 		0
 	);
+
+	/*work round sin0 disconnect*/
+	reg_val	= CHIP_REG_GET(REG_AON_APB_SINDRV_CTRL);
+	reg_val |= BIT_SINDRV_ENA_SQUARE;
+	CHIP_REG_SET(REG_AON_APB_SINDRV_CTRL, reg_val);
 }
