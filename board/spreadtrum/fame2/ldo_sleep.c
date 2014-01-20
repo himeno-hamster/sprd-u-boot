@@ -302,7 +302,32 @@ void init_ldo_sleep_gr(void)
 		//BIT_WIFIPLL2_AP_SEL |
 		0
 	);
-	
+
+    CHIP_REG_SET(REG_PMU_APB_CGM_AP_EN,
+        BIT_CGM_208M_AP_EN |
+        BIT_CGM_12M_AP_EN |
+        BIT_CGM_24M_AP_EN |
+        BIT_CGM_48M_AP_EN |
+        BIT_CGM_51M2_AP_EN |
+        BIT_CGM_64M_AP_EN |
+        BIT_CGM_76M8_AP_EN |
+        BIT_CGM_96M_AP_EN |
+        BIT_CGM_128M_AP_EN |
+        BIT_CGM_153M6_AP_EN |
+        BIT_CGM_192M_AP_EN |
+        BIT_CGM_256M_AP_EN |
+        BIT_CGM_384M_AP_EN |
+        BIT_CGM_312M_AP_EN |
+        BIT_CGM_MPLL_AP_EN |
+        //BIT_CGM_WPLL_AP_EN |
+        //BIT_CGM_WIFIPLL1_AP_EN |
+        BIT_CGM_TDPLL_AP_EN |
+        //BIT_CGM_CPLL_AP_EN |
+        BIT_CGM_DPLL_AP_EN |
+        BIT_CGM_26M_AP_EN |
+        0
+    );
+
 	CHIP_REG_SET(REG_PMU_APB_PD_CA7_TOP_CFG,
 		BIT_PD_CA7_TOP_AUTO_SHUTDOWN_EN		|
 		BITS_PD_CA7_TOP_PWR_ON_DLY(8)     	|
