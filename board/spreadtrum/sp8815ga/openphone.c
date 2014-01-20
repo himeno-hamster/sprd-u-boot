@@ -21,7 +21,7 @@ extern void ADC_Init(void);
 extern int sound_init(void);
 extern void init_ldo_sleep_gr(void);
 
-#define GPIO_CP2_RFCTL      169
+#define GPIO_CP2_RFCTL      73
 
 #ifdef CONFIG_GENERIC_MMC
 int mv_sdh_init(u32 regbase, u32 max_clk, u32 min_clk, u32 quirks);

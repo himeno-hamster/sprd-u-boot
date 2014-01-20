@@ -27,6 +27,20 @@
 
 void init_ldo_sleep_gr(void)
 {
+       u32 reg_val;
+
+       ANA_REG_SET(ANA_REG_GLB_PWR_WR_PROT_VALUE,BITS_PWR_WR_PROT_VALUE(0x6e7f));
+
+       do{
+               reg_val = (ANA_REG_GET(ANA_REG_GLB_PWR_WR_PROT_VALUE) & BIT_PWR_WR_PROT);
+       }while(reg_val == 0);
+
+       reg_val = ANA_REG_GET(ANA_REG_GLB_LDO_PD_CTRL);
+       reg_val &= ~BIT_DCDC_WPA_PD;
+       ANA_REG_SET(ANA_REG_GLB_LDO_PD_CTRL,reg_val);
+
+       ANA_REG_SET(ANA_REG_GLB_PWR_WR_PROT_VALUE,BITS_PWR_WR_PROT_VALUE(0));
+
 	/**********************************************
 	 *   Following is AP LDO A DIE Sleep Control  *
 	 *********************************************/
