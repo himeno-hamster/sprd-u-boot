@@ -14,6 +14,31 @@
 
 
 #define msleep(a) udelay(a * 1000)
+#define PROD_PART "prodnv"
+
+extern void sprd_rtc_init(void);
+extern void sprd_rtc_set_alarm_sec(unsigned long secs);
+extern unsigned long sprd_rtc_get_alarm_sec(void);
+extern unsigned long sprd_rtc_get_sec(void);
+
+int alarm_file_check(char *time_buf)
+{
+	if(!do_fs_file_read(PROD_PART, "/alarm_flag", time_buf,200)){
+		return 1;
+	}else{
+		return -1;
+	}
+}
+
+int poweron_file_check(char *time_buf)
+{
+	if(!do_fs_file_read(PROD_PART, "/poweron_timeinmillis", time_buf,200)){
+		return 1;
+	}else{
+		return -1;
+	}
+}
+
 void alarm_mode(void)
 {
     printf("%s\n", __func__);
@@ -24,15 +49,8 @@ void alarm_mode(void)
     vlx_nand_boot(BOOT_PART, "androidboot.mode=alarm", BACKLIGHT_OFF);
 #endif
 }
-int alarm_file_check(char *time_buf);
-int poweron_file_check(char *time_buf);
 
-unsigned long sprd_rtc_get_alarm_sec(void);
-unsigned long sprd_rtc_get_sec(void);
-void sprd_rtc_set_alarm_sec(unsigned long secs);
-void sprd_rtc_init(void);
-char time_buf[200]={0};
-char time_buf1[200]={0};
+
 static void uboot_rtc_set_alarm_sec(unsigned long secs)
 {
    int i=0;
@@ -53,7 +71,6 @@ static void uboot_rtc_set_alarm_sec(unsigned long secs)
 
 int alarm_flag_check(void)
 {
-
 	int ret = -1,ret1 = -1;
 	long time = 0;
 	long time1 = 0;
@@ -61,6 +78,11 @@ int alarm_flag_check(void)
 	unsigned long time_rtc1= 0;
 	unsigned long now_rtc = 0;
 	int time_lead = 0;
+	char time_buf[200]={0};
+	char time_buf1[200]={0};
+
+	memset(time_buf,0x0,200);
+	memset(time_buf1,0x0,200);
 
 	ret = alarm_file_check(time_buf);
 	if(ret > 0){
@@ -110,5 +132,4 @@ int alarm_flag_check(void)
 
 	return ret;
 }
-
 
