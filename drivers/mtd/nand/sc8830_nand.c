@@ -38,12 +38,15 @@
 //#include <asm/arch/regs_cpc.h>
 //#include <asm/arch/pin_reg_v3.h>
 
+#ifdef CONFIG_NAND_SPL
 #define udelay(x) \
 	do { \
 		volatile int i; \
-		int cnt = 1000 * x; \
+		int cnt = 200 * (x); \
 		for (i=0; i<cnt; i++);\
 	} while(0);
+#endif
+
 #define mdelay(_ms) udelay((_ms)*1000)
 
 #define NAND_DBG
@@ -1785,9 +1788,8 @@ STATIC_FUNC void sprd_dolphin_nand_hw_init(struct sprd_dolphin_nand_info *dolphi
 	//sprd_dolphin_reg_or(DOLPHIN_NANC_CLK_CFG, BIT(0));
 
 	sprd_dolphin_reg_or((REGS_AP_CLK_BASE + 0x44), BIT(1));
-	mdelay(1);
 
-	sprd_dolphin_reg_or(DOLPHIN_AHB_BASE, BIT(19) | BIT(18) | BIT(17) | BIT(6));
+	sprd_dolphin_reg_or(DOLPHIN_AHB_BASE, BIT(6));
 
 	sprd_dolphin_reg_or(DOLPHIN_AHB_RST,BIT(9));
 	mdelay(1);
@@ -2102,7 +2104,7 @@ release:
 	nand_release(sprd_mtd);
 	sprd_nand_dma_deinit(&g_dolphin);
 prob_err:
-	sprd_dolphin_reg_and(DOLPHIN_AHB_BASE,~(BIT(19) | BIT(18) | BIT(17) | BIT(6)));
+	sprd_dolphin_reg_and(DOLPHIN_AHB_BASE,~(BIT(6)));
 	kfree(sprd_mtd);
 	return ret;
 }
