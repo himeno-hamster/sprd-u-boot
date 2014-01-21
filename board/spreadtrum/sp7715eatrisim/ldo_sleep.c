@@ -210,7 +210,7 @@ void init_ldo_sleep_gr(void)
 	
 	CHIP_REG_SET(REG_PMU_APB_XTL1_REL_CFG,
 		//BIT_XTL1_AP_SEL |
-		//BIT_XTL1_CP0_SEL |
+		BIT_XTL1_CP0_SEL |
 		//BIT_XTL1_CP1_SEL |
 		//BIT_XTL1_CP2_SEL |
 		0
@@ -235,7 +235,7 @@ void init_ldo_sleep_gr(void)
 	CHIP_REG_SET(REG_PMU_APB_XTLBUF1_REL_CFG,
 		//BIT_XTLBUF1_CP2_SEL |
 		//BIT_XTLBUF1_CP1_SEL |
-		//BIT_XTLBUF1_CP0_SEL |
+		BIT_XTLBUF1_CP0_SEL |
 		BIT_XTLBUF1_AP_SEL  |
 		0
 	);
