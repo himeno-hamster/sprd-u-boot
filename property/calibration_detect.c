@@ -169,9 +169,9 @@ void calibration_detect(int key)
               	if (caliberate_device == CALIBERATE_DEVICE_UART)
 					sprintf(cmd_buf, " androidboot.mode=cali calibration=%d,%d,130", caliberate_mode&0xff, (caliberate_mode&(~0xff)) >> 8);
 		str_len = strlen(cmd_buf);
-		sprintf(&cmd_buf[str_len], " %s",  "mem=480M init=/init " MTDPARTS_DEFAULT);
-		vlx_nand_boot(RECOVERY_PART,cmd_buf, BACKLIGHT_OFF);        
-	#else
+		sprintf(&cmd_buf[str_len], " %s", CONFIG_BOOTARGS);
+        vlx_nand_boot(RECOVERY_PART,cmd_buf, BACKLIGHT_OFF);
+    #else
 		vlx_nand_boot(BOOT_PART, cmd_buf, BACKLIGHT_OFF);
 	#endif
 #endif
