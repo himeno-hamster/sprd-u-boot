@@ -27,6 +27,7 @@
 
 void init_ldo_sleep_gr(void)
 {
+
 	/**********************************************
 	 *   Following is AP LDO A DIE Sleep Control  *
 	 *********************************************/
@@ -93,7 +94,7 @@ void init_ldo_sleep_gr(void)
 	*   Following is CP LDO Sleep Control  *
 	****************************************/
 	ANA_REG_SET(ANA_REG_GLB_PWR_XTL_EN0,
-	//BIT_LDO_XTL_EN |
+	BIT_LDO_XTL_EN |
 	//BIT_LDO_DCXO_EXT_XTL1_EN |
 	//BIT_LDO_DCXO_EXT_XTL0_EN |
 	//BIT_LDO_DCXO_XTL2_EN |
@@ -109,10 +110,10 @@ void init_ldo_sleep_gr(void)
 	0);
 
 	ANA_REG_SET(ANA_REG_GLB_PWR_XTL_EN1,
-	//BIT_LDO_RF0_EXT_XTL1_EN |
-	//BIT_LDO_RF0_EXT_XTL0_EN |
-	//BIT_LDO_RF0_XTL2_EN |
-	//BIT_LDO_RF0_XTL0_EN |
+	BIT_LDO_RF0_EXT_XTL1_EN |
+	BIT_LDO_RF0_EXT_XTL0_EN |
+	BIT_LDO_RF0_XTL2_EN |
+	BIT_LDO_RF0_XTL0_EN |
 	//BIT_LDO_VDD25_EXT_XTL1_EN |
 	//BIT_LDO_VDD25_EXT_XTL0_EN |
 	BIT_LDO_VDD25_XTL2_EN |
@@ -145,8 +146,8 @@ void init_ldo_sleep_gr(void)
 	//BIT_XO_XTL0_EN |
 	//BIT_BG_EXT_XTL1_EN |
 	//BIT_BG_EXT_XTL0_EN |
-	//BIT_BG_XTL2_EN |
-	//BIT_BG_XTL0_EN |
+	BIT_BG_XTL2_EN |
+	BIT_BG_XTL0_EN |
 	0);
 	
 	ANA_REG_SET(ANA_REG_GLB_PWR_XTL_EN4,
@@ -156,16 +157,16 @@ void init_ldo_sleep_gr(void)
 	//BIT_DCDC_WPA_XTL0_EN |
 	//BIT_DCDC_MEM_EXT_XTL1_EN |
 	//BIT_DCDC_MEM_EXT_XTL0_EN |
-	//BIT_DCDC_MEM_XTL2_EN |
-	//BIT_DCDC_MEM_XTL0_EN |
+	BIT_DCDC_MEM_XTL2_EN |
+	BIT_DCDC_MEM_XTL0_EN |
 	//BIT_DCDC_GEN_EXT_XTL1_EN |
 	//BIT_DCDC_GEN_EXT_XTL0_EN |
-	//BIT_DCDC_GEN_XTL2_EN |
-	//BIT_DCDC_GEN_XTL0_EN |
+	BIT_DCDC_GEN_XTL2_EN |
+	BIT_DCDC_GEN_XTL0_EN |
 	//BIT_DCDC_CORE_EXT_XTL1_EN |
 	//BIT_DCDC_CORE_EXT_XTL0_EN |
-	//BIT_DCDC_CORE_XTL2_EN |
-	//BIT_DCDC_CORE_XTL0_EN |
+	BIT_DCDC_CORE_XTL2_EN |
+	BIT_DCDC_CORE_XTL0_EN |
 	0);
 	/************************************************
 	*   Following is AP/CP LDO D DIE Sleep Control   *
@@ -180,8 +181,8 @@ void init_ldo_sleep_gr(void)
 	
 	CHIP_REG_SET(REG_PMU_APB_XTL1_REL_CFG,
 		//BIT_XTL1_AP_SEL |
-		//BIT_XTL1_CP0_SEL |
-		BIT_XTL1_CP1_SEL |
+		BIT_XTL1_CP0_SEL |
+		//BIT_XTL1_CP1_SEL |
 		//BIT_XTL1_CP2_SEL |
 		0
 	);
@@ -204,8 +205,8 @@ void init_ldo_sleep_gr(void)
 
 	CHIP_REG_SET(REG_PMU_APB_XTLBUF1_REL_CFG,
 		//BIT_XTLBUF1_CP2_SEL |
-		BIT_XTLBUF1_CP1_SEL |
-		//BIT_XTLBUF1_CP0_SEL |
+		//BIT_XTLBUF1_CP1_SEL |
+		BIT_XTLBUF1_CP0_SEL |
 		//BIT_XTLBUF1_AP_SEL  |
 		0
 	);
