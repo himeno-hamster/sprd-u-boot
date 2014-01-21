@@ -873,10 +873,11 @@ void addcmdline(char *buf)
 #endif
 {
 	char *sn = get_product_sn();
-	if(NULL != sn)
-	{
-		str_len = strlen(buf);
+	str_len = strlen(buf);
+	if(NULL != sn) {
 		sprintf(&buf[str_len], " androidboot.serialno=%s", sn);
+	} else {
+		sprintf(&buf[str_len], " androidboot.serialno=%s", "0123456789ABCDEF");
 	}
 }
 #if BOOT_NATIVE_LINUX_MODEM
