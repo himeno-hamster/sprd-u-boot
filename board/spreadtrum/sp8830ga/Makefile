@@ -25,7 +25,11 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).o
 
+ifdef CONFIG_SP8830WCN
+COBJS	:= openphone.o sprd_kp.o pinmap-sp8830wcn.o ldo_sleep.o
+else
 COBJS	:= openphone.o sprd_kp.o pinmap-sp8830.o ldo_sleep.o
+endif
 SOBJS	:=
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
