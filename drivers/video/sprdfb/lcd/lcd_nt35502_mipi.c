@@ -180,7 +180,7 @@ static uint32_t nt35502_readid(struct panel_spec *self)
 		read_rtn = mipi_force_read(0xdc,1,&read_data[2]);
 		LCD_PRINT("lcd_nt35502_mipi read id 0xdc value is 0x%x!\n",read_data[2]);
 
-		if((0x00 == read_data[0])&&(0x80 == read_data[1])&&(0x00 == read_data[2])){
+		if((0x55 == read_data[0])&&(0x4c == read_data[1])&&(0xc0 == read_data[2])){
 				printk("lcd_nt35502_mipi read id success!\n");
 				return 0x8370;
 			}
