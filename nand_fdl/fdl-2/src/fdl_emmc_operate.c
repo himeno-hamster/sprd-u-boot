@@ -11,6 +11,7 @@
 #include <asm/arch/secure_boot.h>
 #include "fdl_common.h"
 #include "fdl_emmc_operate.h"
+#include <ext_common.h>
 
 #define EFI_SECTOR_SIZE 		(512)
 #define EMMC_MAX_MUTIL_WRITE  (0x8000)
@@ -776,12 +777,12 @@ PUBLIC int fdl2_download_start(wchar_t* partition_name, unsigned long size, unsi
 	else
 	{
 		g_dl_eMMCStatus.curEMMCArea = PARTITION_USER;
-
+/*
 		if (IMG_WITH_SPARSE != g_dl_eMMCStatus.curImgType)
 			_emmc_real_erase_partition(g_dl_eMMCStatus.curUserPartitionName);
 		else
 			memset(g_eMMCBuf, 0, EMMC_BUF_SIZE);
-
+*/
 		g_dl_eMMCStatus.part_total_size = efi_GetPartSize(g_dl_eMMCStatus.curUserPartitionName);
 		if (size > g_dl_eMMCStatus.part_total_size) {
 			debugf("%s:size(0x%x) beyond max size:0x%x!\n", __FUNCTION__,size,g_dl_eMMCStatus.part_total_size);
@@ -949,9 +950,36 @@ PUBLIC int fdl2_read_start(wchar_t* partition_name, unsigned long size)
 		return FALSE;
 	}
 
-	FDL_SendAckPacket (BSL_REP_ACK);
+	if (wcscmp(L"prodnv", g_dl_eMMCStatus.curUserPartitionName) == 0)
+	{
+		struct ext2_sblock *sblock=NULL;
+		sblock = malloc(MAX(EFI_SECTOR_SIZE,sizeof(struct ext2_sblock)));
+		if(!sblock){
+			debugf("malloc sblock failed\n");
+			goto err;
+		}
 
+		if (!Emmc_Read(g_dl_eMMCStatus.curEMMCArea,
+				g_dl_eMMCStatus.base_sector + 2,/*superblock offset 2 sect*/
+				1,/*superblock take one sect*/
+				sblock)){
+			free(sblock);
+			goto err;
+		}
+
+		if(sblock->magic != EXT2_MAGIC){
+			debugf("bad prodnv image magic\n");
+			free(sblock);
+			goto err;
+		}
+		free(sblock);
+	}
+
+	FDL_SendAckPacket (BSL_REP_ACK);
 	return TRUE;
+err:
+	FDL2_eMMC_SendRep (EMMC_SYSTEM_ERROR);
+	return FALSE;
 }
 
 PUBLIC int fdl2_read_midst(unsigned long size, unsigned long off, unsigned char *buf)

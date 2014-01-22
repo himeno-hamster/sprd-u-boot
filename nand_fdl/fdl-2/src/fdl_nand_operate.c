@@ -58,6 +58,7 @@ typedef struct{
 	int autoresize;
 }fdl_ubi_vtbl_t;
 
+#define UBIFS_NODE_MAGIC  0x06101831
 #define AUTO_RESIZE_FLAG  0xFFFFFFFF
 #define FDL_BUF_LEN  (1*1024*1024)
 static dl_status_t dl_stat={0};
@@ -652,6 +653,20 @@ int fdl2_read_start(char* part, unsigned long size)
 			}
 			if(_is_nv_volume(dl_stat.ubi.cur_volnm)) {
 				_fdl2_check_nv(dl_stat.ubi.cur_volnm);
+			}
+			if(!strcmp(dl_stat.ubi.cur_volnm, "prodnv")) {
+				u32 magic;
+				fdl_ubi_volume_read(dl_stat.ubi.dev,
+								dl_stat.ubi.cur_volnm,
+								&magic,
+								sizeof(u32),
+								0);
+				if(magic != UBIFS_NODE_MAGIC) {
+					printf("bad ubifs node magic %#08x, expected %#08x\n",
+						magic, UBIFS_NODE_MAGIC);
+					ret = NAND_SYSTEM_ERROR;
+					goto err;
+				}
 			}
 			break;
 		default:
